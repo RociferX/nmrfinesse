@@ -66,7 +66,7 @@ def test_optimize_direct_window_changed_flag() -> None:
 
 
 def test_optimize_direct_window_no_signal_skips_gracefully() -> None:
-    """A signal-free FID raises nothing and returns keep-current."""
+    'A signal-free FID raises nothing and returns keep-current.'
     res = optimize_direct_window(np.zeros((8, 256), dtype=complex))
     assert res.changed is False
     assert any("跳过" in log for log in res.logs)
@@ -214,17 +214,16 @@ def test_indirect_windows_missing_fid_skips(
     assert any("跳过" in log for log in res.logs)
 
 
-def test_gm_in_direct_pool_requires_sw() -> None:
-    """GM joins the direct-dimension default candidates (0.2.192); it is skipped without SW and
-    scored with SW.
-
-    The indirect candidate pool gets no GM: the inflated SNR of an apodised resolution-limited
-    indirect dimension would overturn the no-window choice of a naturally decaying axis (0.2.190
-    requires keeping it).
-    """
+def test_gm_em_default_pools_require_sw() -> None:
+    """Two GM and two EM choices per axis, with real SW and resolution gates."""
     gm = {"type": "gaussian", "g1": 8.0, "g2": 15.0, "g3": 0.0, "c": 1.0}
     assert gm in DEFAULT_CANDIDATES
-    assert not any(c.get("type") == "gaussian" for c in INDIRECT_CANDIDATES)
+    for pool in (DEFAULT_CANDIDATES, INDIRECT_CANDIDATES):
+        assert len(pool) == 10
+        assert [(c["g1"], c["g2"]) for c in pool if c["type"] == "gaussian"] == [
+            (8.0, 15.0), (4.0, 8.0),
+        ]
+        assert [c["lb"] for c in pool if c["type"] == "exp"] == [3.0, 5.0]
 
     fid = _synth_fid()
     no_sw = optimize_direct_window(fid)
@@ -234,5 +233,8 @@ def test_gm_in_direct_pool_requires_sw() -> None:
     )
     with_sw = optimize_direct_window(fid, sw=20000.0)
     gm_scores = [s for s in with_sw.scores if "GM" in s["label"]]
-    assert len(gm_scores) == 1
-    assert gm_scores[0]["fwhm"] < 200.0  # plausible value (no garbage from sw=1.0)
+    assert len(gm_scores) == 2
+    assert all(s["fwhm"] < 200.0 for s in gm_scores)
+    assert len([s for s in with_sw.scores if "EM" in s["label"]]) == 2
+    indirect = optimize_indirect_windows(fid.T, {"F1": 0}, sw_map={"F1": 20000.0})
+    assert len(indirect.per_axis["F1"].scores) == 10

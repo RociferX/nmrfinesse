@@ -1,0 +1,194 @@
+{
+  "kind": "display_projection_comparison_not_independent_truth",
+  "projection": "signed_max_absolute_voxel; all-axis common crop before projection",
+  "source_ndim": 2,
+  "offset_fitted": false,
+  "reference_offset_ppm": {
+    "H": 0.07258459433886566,
+    "N": 0.05977570099166485
+  },
+  "offset_source": "frozen_20261009_strong_anchor_translation",
+  "matching": "same polarity; joint normalized distance <=1; greedy one-to-one",
+  "primary_metric": "reference_candidate_coverage; not true-peak recovery",
+  "requested_sigma_floor": 0.0,
+  "requested_sign_mode": "dominant",
+  "min_height_fraction": 0.1,
+  "tolerance_ppm": {
+    "H": 0.02,
+    "N": 0.2,
+    "C": 0.15
+  },
+  "spectrum_sha256": {
+    "automatic": "e1b00b0cb88d167aee736a6e40e2bd58aecb7ba050b584c1120c1d5c433e0f74",
+    "comparison": "3d4e1041c085b05e14cdf1bfb889670daa5d5caacaeeda5c1f58ce35dccb15d5"
+  },
+  "planes": {
+    "HN": {
+      "automatic": {
+        "requested_sigma_floor": 0.0,
+        "resolved_sigma_multiplier": 14.30203823440948,
+        "requested_sign_mode": "dominant",
+        "sign_mode": "dominant",
+        "positive_candidates": 135,
+        "negative_candidates": 0,
+        "detected_before_height_filter": 135,
+        "noise_estimate": 140750.9669015625,
+        "baseline": 7138.8984375,
+        "max_abs_centered_voxel": 20130257.1015625,
+        "height_cutoff": 2013025.71015625,
+        "count": 135,
+        "shape": [
+          510,
+          1028
+        ]
+      },
+      "comparison": {
+        "requested_sigma_floor": 0.0,
+        "resolved_sigma_multiplier": 17.718986622864392,
+        "requested_sign_mode": "dominant",
+        "sign_mode": "dominant",
+        "positive_candidates": 126,
+        "negative_candidates": 0,
+        "detected_before_height_filter": 126,
+        "noise_estimate": 1471.7418372070313,
+        "baseline": 356.9931640625,
+        "max_abs_centered_voxel": 260777.7392578125,
+        "height_cutoff": 26077.77392578125,
+        "count": 126,
+        "shape": [
+          256,
+          514
+        ]
+      },
+      "matched": 125,
+      "automatic_matched_fraction": 0.9259259259259259,
+      "comparison_matched_fraction": 0.9920634920634921,
+      "reference_candidate_coverage": 0.9920634920634921,
+      "automatic_unmatched_candidates": [
+        {
+          "candidate_index_1based": 125,
+          "ppm": {
+            "H": 7.561621850042283,
+            "N": 112.17666175377161
+          },
+          "intensity": 3372166.1015625,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 126,
+          "ppm": {
+            "H": 6.900656459494713,
+            "N": 112.16982865745969
+          },
+          "intensity": 3350021.6015625,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 127,
+          "ppm": {
+            "H": 7.637867554176423,
+            "N": 112.28324929773416
+          },
+          "intensity": 3047156.3515625,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 129,
+          "ppm": {
+            "H": 6.8474619674538175,
+            "N": 113.25245046344594
+          },
+          "intensity": 2682632.6015625,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 130,
+          "ppm": {
+            "H": 8.590705466870723,
+            "N": 123.49413665200439
+          },
+          "intensity": 2604490.8515625,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 131,
+          "ppm": {
+            "H": 6.847460048859737,
+            "N": 111.81331017115623
+          },
+          "intensity": 2246899.8515625,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 132,
+          "ppm": {
+            "H": 7.55981585368614,
+            "N": 113.17857319848875
+          },
+          "intensity": 2154769.6015625,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 133,
+          "ppm": {
+            "H": 7.5582278100007745,
+            "N": 110.92199806001514
+          },
+          "intensity": 2154723.6015625,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 134,
+          "ppm": {
+            "H": 7.472997320120045,
+            "N": 112.80806821649242
+          },
+          "intensity": 2132045.8515625,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 135,
+          "ppm": {
+            "H": 8.151978866120709,
+            "N": 124.26456572557107
+          },
+          "intensity": 2042790.7265625,
+          "sign": 1
+        }
+      ],
+      "reference_unmatched_candidates": [
+        {
+          "candidate_index_1based": 126,
+          "ppm": {
+            "H": 8.543705039745257,
+            "N": 129.7483741652692
+          },
+          "intensity": 29501.9521484375,
+          "sign": 1
+        }
+      ],
+      "median_abs_delta_ppm": {
+        "H": 0.00048589121537645497,
+        "N": 0.0075883716188229755
+      },
+      "windows_ppm": {
+        "H": [
+          6.4967250218616535,
+          10.498915245036136
+        ],
+        "N": [
+          100.21694636549852,
+          136.00736690393254
+        ]
+      },
+      "intensity_pearson": 0.9699740159475099,
+      "median_fwhm_ratio_by_nucleus": {
+        "H": 0.9412733622854402,
+        "N": 0.9182484747790618
+      }
+    }
+  },
+  "date": "2026-10-14",
+  "software_version": "1.0.7",
+  "api_version": "1.1.3"
+}

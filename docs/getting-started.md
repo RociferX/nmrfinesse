@@ -1,7 +1,7 @@
 # Getting started
 
-This guide covers first data inspection and the processing boundary. Linux desktop users can
-download the AppImage from the [NMRForge 1.0.6 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.6).
+This guide covers first data inspection and the processing boundary. For Linux desktop use,
+download the [1.0.7 AppImage](https://github.com/RociferX/nmrforge/releases/tag/v1.0.7).
 For source installation, follow the steps below.
 
 ## Install from source

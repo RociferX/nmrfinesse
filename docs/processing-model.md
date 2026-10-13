@@ -111,6 +111,23 @@ Explicit NUS direct-dimension candidates must use SP; the selected SP configurat
 in the full reconstruction. Unspecified stages/directions retain defaults. An entirely invalid
 pool raises an error instead of falling back. Reference score CSV rows record scores and application.
 
+The default window pool scores ten candidates on each direct and indirect dimension: no window,
+five SP candidates, two Gaussian/GM candidates (`g1/g2/g3/c = 8/15/0/1` and `4/8/0/1`), and two
+exponential/EM candidates (`lb/c = 3/1` and `5/1`). The Hz-based candidates require a valid sweep
+width for their logical axis. Direct and indirect resolution gates are capped at 1.25 and 1.15,
+respectively, and significant-peak spacing can tighten either gate. Default NUS direct-dimension
+processing retains its fixed SP window; its default candidate scores are comparative and do not
+replace that window. Explicit NUS direct candidates are restricted to SP and the selected SP is
+applied during final reconstruction.
+
+Window scoring probes at most 256 traces and formally scores at most 12 shared representative
+traces under an FFT-cache limit. The fast path looks for references at `12σ`; only if none qualify
+does it try `6σ` references with a supported line profile and frequency support on five traces (or
+all traces when fewer than five were scanned). Candidates share reference peaks and traces, including
+traces with zero score when no valid shared peak is present. If no qualifying reference trace exists,
+default optimization keeps the current/default settings and an explicit candidate request fails.
+Scoring diagnostics are recorded in `optimization_scores.csv`; the API peak table remains 38 columns.
+
 ## Ranges, phases and manual execution
 
 `final_ext_lo`/`final_ext_hi` set the final direct-dimension window. The optimisation-range switch

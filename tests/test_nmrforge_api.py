@@ -1,16 +1,15 @@
-"""Regression coverage for the current nmrforge_api v1.1.2 (2026-10-13).
+"""Regression coverage for the nmrforge_api v1.1.3 release (2026-10-14).
 
-Covers reference workflows (one script and one parabolic peak table), workflow IDs,
-three-layer parameter records, combined-mode localization tables selected by the caller,
-three-state statuses, complete logs and versions, independent references per condition,
-effective automatic parameters, software boundaries (no CSP/statistical analysis), the
-CLI, and operation without Qt.
+Covers reference workflows, workflow IDs, parameter records, caller-selected combined
+peak tables, three-state statuses, complete logs and versions, independent condition
+references, effective automatic parameters, software boundaries, the CLI, and operation
+without Qt.
 
-Gaussian fitting and its API were removed on 2026-09-26. Three-point parabolic
-localization is now the only method, with one peak table for references and combined
-workflows. Requests for ``gaussian`` or ``both`` must fail explicitly.
+Gaussian fitting and its API were removed on 2026-09-26. Three-point parabolic localization
+is now the only method, with one peak table for references and combined workflows. Requests
+for ``gaussian`` or ``both`` must fail explicitly.
 
-See the conformance ledger at ``docs/reviews/2026-09-13-api-spec-compliance.md``.
+See ``docs/external-api/03-api-reference.md`` for the public API reference.
 """
 
 from __future__ import annotations
@@ -184,7 +183,7 @@ def _write_peak_table(path: Path, sign: float = 1.0) -> Path:
 
 
 class _FakeSweepBackend:
-    """Simulate the NMRPipe backend: shift peaks linearly by ``window.F1.off``, write a real ft2."""
+    'Simulate the NMRPipe backend: shift peaks linearly by ``window.F1.off``, write a real ft2.'
 
     def __init__(self) -> None:
         self.work_dir = ""
@@ -543,13 +542,13 @@ def test_error_hierarchy() -> None:
     assert issubclass(SweepError, Exception)
 
 
-def test_api_version_is_1_1_2_with_a_single_definition() -> None:
-    """The current API version is 1.1.2 and has a single definition."""
+def test_api_version_is_1_1_3_with_a_single_definition() -> None:
+    """The current API version is 1.1.3 and has one definition point."""
     import nmrforge_api
     import nmrforge_api.records as records_module
     import nmrforge_api.session as session_module
 
-    assert API_VERSION == "1.1.2"
+    assert API_VERSION == "1.1.3"
     # Single definition point: the public surface re-exports the same object from session
     assert nmrforge_api.API_VERSION is session_module.API_VERSION
     # The record templates must use this constant, not a hard-coded version literal
@@ -562,7 +561,7 @@ def test_api_version_is_1_1_2_with_a_single_definition() -> None:
 def test_reference_workflow_writes_script_and_one_peak_table(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """Regression coverage: test reference workflow writes script and one peak table."""
+    'Regression coverage: test reference workflow writes script and one peak table.'
     backend = _FakeSweepBackend()
     result = run_parameter_study(
         tmp_path / "reference",
@@ -616,7 +615,7 @@ def test_reference_workflow_writes_script_and_one_peak_table(
 def test_reference_peak_table_has_unique_coordinates(
     tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Regression coverage: test reference peak table has unique coordinates."""
+    'Regression coverage: test reference peak table has unique coordinates.'
     monkeypatch.setattr(sys.modules[__name__], "_PEAK_A", (30, 60))
     monkeypatch.setattr(sys.modules[__name__], "_PEAK_B", (30, 62))
     result = run_parameter_study(
@@ -640,7 +639,7 @@ def test_reference_peak_table_has_unique_coordinates(
 def test_reference_peak_table_carries_cell_qc_columns(
     tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Unrepresentable cell geometry is NaN; intensity and shift diagnostics remain measured."""
+    'Unrepresentable cell geometry is NaN; intensity and shift diagnostics remain measured.'
     from core.peaks.peak_table import load_peaks
 
     monkeypatch.setattr(sys.modules[__name__], "_PEAK_A", (30, 60))
@@ -698,7 +697,7 @@ def test_reference_peak_table_carries_cell_qc_columns(
 def test_cell_edge_does_not_turn_a_merged_shoulder_into_a_peak(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A neighbor's shoulder must not be reported as a peak without local peak evidence."""
+    "A neighbor's shoulder must not be reported as a peak without local peak evidence."
     from core.peaks.peak_table import load_peaks
 
     spectrum = _write_ft2(tmp_path / "far.ft2")
@@ -772,7 +771,7 @@ def _reference_record_path(root: Path) -> Path:
 
 
 def _reference_record(root: Path) -> dict:
-    """Read the **condition-level** reference.json (not the ``records/`` summary snapshot)."""
+    'Read the **condition-level** reference.json (not the ``records/`` summary snapshot).'
     return json.loads(_reference_record_path(root).read_text(encoding="utf-8"))
 
 
@@ -820,7 +819,7 @@ def test_reference_records_the_direct_range_source(
 def test_combination_mode_refuses_a_silent_direct_range_override(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """P1-4: a direct-range override disagreeing with the reference needs an explicit switch."""
+    'P1-4: a direct-range override disagreeing with the reference needs an explicit switch.'
     root = tmp_path / "range_gate"
     backend = _FakeSweepBackend()
     run_reference_study(
@@ -865,7 +864,7 @@ def test_combination_mode_refuses_a_silent_direct_range_override(
 
 
 def test_duplicate_localization_marker_flags_every_shared_coordinate() -> None:
-    """P2-5: every row of a duplicated coordinate group is flagged; missing axes stay out."""
+    'P2-5: every row of a duplicated coordinate group is flagged; missing axes stay out.'
     rows: list[dict] = [
         {"H_ppm": 8.0, "N_ppm": 120.0},
         {"H_ppm": 8.0, "N_ppm": 120.0},
@@ -923,7 +922,7 @@ def test_workflow_tables_carry_parabolic_qc_and_duplicate_flag(
 def test_reference_parabolic_table_estimates_linewidth(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """P3-7: the reference parabolic table carries a linewidth too (was all NaN, O23)."""
+    'P3-7: the reference parabolic table carries a linewidth too (was all NaN, O23).'
     result = run_parameter_study(
         tmp_path / "reference_qc",
         bruker_dir / "hsqc_2d",
@@ -948,7 +947,7 @@ def test_reference_parabolic_table_estimates_linewidth(
 def test_intensity_ratio_handles_negative_peak_heights(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """Defect 1: a negative-peak .list has a negative Height, so the ratio needs |Height|."""
+    'Defect 1: a negative-peak .list has a negative Height, so the ratio needs |Height|.'
     ratios: dict[float, list[float]] = {}
     for sign in (1.0, -1.0):
         peaks = _write_peak_table(
@@ -977,7 +976,7 @@ def test_intensity_ratio_handles_negative_peak_heights(
 def test_rebuild_peak_tables_refreshes_version_and_records(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """Defects 2/3: rebuilding the tables must restamp version/commit and refresh records."""
+    'Defects 2/3: rebuilding the tables must restamp version/commit and refresh records.'
     root = tmp_path / "rebuild_refresh"
     run_reference_study(
         root,
@@ -1035,7 +1034,7 @@ def test_rebuild_peak_tables_refreshes_version_and_records(
 def test_workflows_are_traceable_and_use_parabolic_localization(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """Regression coverage: test workflows are traceable and use parabolic localization."""
+    'Regression coverage: test workflows are traceable and use parabolic localization.'
     root = tmp_path / "workflows"
     peaks = _write_peak_table(tmp_path / "reference.list")
     backend = _FakeSweepBackend()
@@ -1141,7 +1140,7 @@ def test_workflows_are_traceable_and_use_parabolic_localization(
 def test_zero_fill_keeps_physical_edge_margin_and_window(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """End to end: pick margins and per-combination measurement windows use physical width."""
+    'End to end: pick margins and per-combination measurement windows use physical width.'
     root = tmp_path / "zf_study"
     backend = _FakeSweepBackend()
     result = run_parameter_study(
@@ -1200,7 +1199,7 @@ def test_zero_fill_keeps_physical_edge_margin_and_window(
 def test_records_are_written_with_unified_peak_tables(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """records: manifest/workflows/runs/two long tables; no CSP/statistics artefacts."""
+    'records: manifest/workflows/runs/two long tables; no CSP/statistics artefacts.'
     root = tmp_path / "records"
     result = run_parameter_study(
         root,
@@ -1258,7 +1257,7 @@ def test_records_are_written_with_unified_peak_tables(
 def test_resume_invalidates_changed_plan_and_hides_stale_workflows(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """A changed W0001 input must rerun; after shortening the plan, old W0002 must not leak."""
+    'A changed W0001 input must rerun; after shortening the plan, old W0002 must not leak.'
     root = tmp_path / "resume_changed"
     backend = _FakeSweepBackend()
     peaks = _write_peak_table(tmp_path / "resume.list")
@@ -1336,7 +1335,7 @@ _GAUSSIAN_REMOVAL_WORDS = ("移除", "removed")
 
 
 def _assert_removal_error(exc: BaseException, requested: str) -> None:
-    """Regression coverage:  assert removal error."""
+    'Regression coverage:  assert removal error.'
     message = str(exc)
     lowered = message.lower()
     assert requested.lower() in lowered, message
@@ -1346,7 +1345,7 @@ def _assert_removal_error(exc: BaseException, requested: str) -> None:
 def test_non_2d_spectrum_gaussian_request_raises_removal_error(
     tmp_path: Path,
 ) -> None:
-    """Regression coverage: test non 2d spectrum gaussian request raises removal error."""
+    'Regression coverage: test non 2d spectrum gaussian request raises removal error.'
     from core.peaks.peak_table import load_peaks
 
     rows = load_peaks(_write_peak_table(tmp_path / "reference.list"))
@@ -1355,7 +1354,6 @@ def test_non_2d_spectrum_gaussian_request_raises_removal_error(
         measure_peak_positions(spectrum, rows, axes=_Fake3DAxes(), refine="gaussian")
     _assert_removal_error(excinfo.value, "gaussian")
     # Combined peak picking no longer accepts a method argument; algorithm selection was removed
-    # with Gaussian fitting.
     with pytest.raises(TypeError):
         detect_and_localize(spectrum, method="gaussian", axes=_Fake3DAxes())
 
@@ -1363,7 +1361,7 @@ def test_non_2d_spectrum_gaussian_request_raises_removal_error(
 def test_gaussian_localization_choices_are_removed_at_api_level(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """Regression coverage: test gaussian localization choices are removed at api level."""
+    'Regression coverage: test gaussian localization choices are removed at api level.'
     from nmrforge_api.localization_targets import split_target_specs
     from nmrforge_api.sweep import split_combo
 
@@ -1400,7 +1398,6 @@ def test_gaussian_localization_choices_are_removed_at_api_level(
         split_combo({"localization.targets.gaussian": "targets.csv"})
     _assert_removal_error(excinfo.value, "gaussian")
     # A per-combination gaussian request fails before processing; it is never silently changed to
-    # parabolic.
     bad_plan = plan_sweep(
         reference, combos=[{"zero_fill": 1, "localization": "gaussian"}]
     )
@@ -1412,7 +1409,7 @@ def test_gaussian_localization_choices_are_removed_at_api_level(
 def test_parabolic_runs_never_emit_gaussian_fallback_warnings(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """Regression coverage: test parabolic runs never emit gaussian fallback warnings."""
+    'Regression coverage: test parabolic runs never emit gaussian fallback warnings.'
     import nmrforge_api.sweep as sweep_module
 
     assert not hasattr(sweep_module, "WARN_GAUSSIAN_FALLBACK")
@@ -1491,7 +1488,7 @@ def test_two_conditions_share_parameters_and_build_independent_references(
 def test_two_conditions_use_their_own_reference_parameter_bases(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """A/B share combination overrides, but unoverridden parameters inherit their own reference."""
+    'A/B share combination overrides, but unoverridden parameters inherit their own reference.'
     from nmrforge_api.reference import save_reference
 
     root = tmp_path / "ab_reference_bases"
@@ -1533,7 +1530,7 @@ def test_two_conditions_use_their_own_reference_parameter_bases(
 def test_external_peak_identity_is_limited_to_the_primary_condition(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """An external peak table replaces only the primary condition's peak identities."""
+    "An external peak table replaces only the primary condition's peak identities."
     external = tmp_path / "one-reference.list"
     export_peaks_poky(
         external,
@@ -1572,7 +1569,7 @@ def test_external_peak_identity_is_limited_to_the_primary_condition(
 def test_stop_on_error_keeps_running_successful_conditions(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """stop_on_error stops only on failure: after a successful A, B must still run."""
+    'stop_on_error stops only on failure: after a successful A, B must still run.'
     result = run_parameter_study(
         tmp_path / "stop_success",
         datasets={
@@ -1641,7 +1638,7 @@ def test_run_parameter_study_nus_2d(tmp_path: Path, bruker_dir: Path) -> None:
 def test_reference_state_persists_across_sessions(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """Step-by-step CLI (separate process) can see registered fids/active spectra: state on disk."""
+    'Step-by-step CLI (separate process) can see registered fids/active spectra: state on disk.'
     root = tmp_path / "persist"
     backend = _FakeSweepBackend()
     run_parameter_study(
@@ -1683,7 +1680,7 @@ def test_old_absolute_base_sweep_plan_is_rejected() -> None:
 
 
 def test_nus_param_key_alias_normalized() -> None:
-    """Both nSigma/nsigma spellings must land on the backend input key nsigma."""
+    'Both nSigma/nsigma spellings must land on the backend input key nsigma.'
     from nmrforge_api.sweep import normalize_nus_params
 
     assert normalize_nus_params({"nSigma": 5, "thresh": 0.95}) == {
@@ -1761,7 +1758,7 @@ def test_combo_table_roundtrip_and_validation(tmp_path: Path) -> None:
 
 
 def test_plan_sweep_axis_scope_guards(tmp_path: Path, bruker_dir: Path) -> None:
-    """Locked keys error; deterministic/unknown keys only warn (deterministic params stay out)."""
+    'Locked keys error; deterministic/unknown keys only warn (deterministic params stay out).'
     session = open_study(tmp_path / "scope", backend=_FakeSweepBackend())
     session.dataset = add_dataset(session, bruker_dir / "hsqc_2d")
     reference = build_reference(session, params={"phase_route": "none"})
@@ -1808,7 +1805,7 @@ def test_phase_delta_axis_shifts_locked_phase(
 
 
 def test_sweep_rejects_3d_nus(tmp_path: Path, bruker_dir: Path) -> None:
-    """3D NUS is still unsupported: NUS is only available for 2D."""
+    '3D NUS is still unsupported: NUS is only available for 2D.'
     session = open_study(tmp_path / "study", backend=_FakeSweepBackend())
     session.dataset = add_dataset(session, bruker_dir / "nus_2d")
     reference = ReferenceSpectrum(
@@ -1837,7 +1834,7 @@ def test_add_dataset_rejects_non_bruker(tmp_path: Path) -> None:
 def test_add_dataset_rejects_duplicate_condition(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """Multiple conditions: labels must be unique (otherwise A/B share one dataset)."""
+    'Multiple conditions: labels must be unique (otherwise A/B share one dataset).'
     session = open_study(tmp_path / "dup", backend=_FakeSweepBackend())
     add_dataset(session, bruker_dir / "hsqc_2d", condition="A")
     with pytest.raises(DatasetError, match="条件标签"):
@@ -1897,7 +1894,7 @@ def test_cli_status_and_report(
 
 
 def test_api_does_not_import_qt() -> None:
-    """The public API must import without a Qt environment / on a cluster."""
+    'The public API must import without a Qt environment / on a cluster.'
     code = (
         "import sys, nmrforge_api; "
         "bad = sorted(m for m in sys.modules "
@@ -1987,7 +1984,7 @@ def test_position_uncertainty_formula() -> None:
 
 
 def test_position_uncertainty_requires_all_nuclei() -> None:
-    """The helper only counts runs where every probed nucleus was measured (half data out)."""
+    'The helper only counts runs where every probed nucleus was measured (half data out).'
     from nmrforge_api import position_uncertainty
 
     partial = PeakMeasurement(
@@ -2095,7 +2092,7 @@ def test_peak_threshold_is_chosen_with_reference_then_locked(
 def test_peak_threshold_defaults_to_35_sigma(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """When no threshold is given, the existing 35-sigma default stays (backwards compatible)."""
+    'When no threshold is given, the existing 35-sigma default stays (backwards compatible).'
     session = open_study(tmp_path / "default_threshold", backend=_FakeSweepBackend())
     add_dataset(session, bruker_dir / "hsqc_2d")
     reference = build_reference(session, params={"phase_route": "none"})
@@ -2109,7 +2106,7 @@ def test_peak_threshold_defaults_to_35_sigma(
 def test_peak_threshold_too_high_reports_error_instead_of_silence(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """A threshold too high to pick any peak errors out (no silent empty table as success)."""
+    'A threshold too high to pick any peak errors out (no silent empty table as success).'
     session = open_study(tmp_path / "bad_threshold", backend=_FakeSweepBackend())
     add_dataset(session, bruker_dir / "hsqc_2d")
     reference = build_reference(session, params={"phase_route": "none"})
@@ -2120,7 +2117,7 @@ def test_peak_threshold_too_high_reports_error_instead_of_silence(
 def test_peak_picking_keys_in_combination_table_are_rejected(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """The threshold is part of the reference definition: putting it in a combo table errors."""
+    'The threshold is part of the reference definition: putting it in a combo table errors.'
     session = open_study(tmp_path / "grid_hint", backend=_FakeSweepBackend())
     add_dataset(session, bruker_dir / "hsqc_2d")
     reference = build_reference(session, params={"phase_route": "none"})
@@ -2131,7 +2128,7 @@ def test_peak_picking_keys_in_combination_table_are_rejected(
 def test_reference_and_run_records_carry_software_commit(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """P0-1: reference.json / run.json / manifest.json each carry software_commit."""
+    'P0-1: reference.json / run.json / manifest.json each carry software_commit.'
     from core.version import software_commit, software_version
 
     result = run_parameter_study(
@@ -2277,7 +2274,7 @@ def test_frozen_default_threshold_cannot_be_changed_later(
 def test_workflow_records_reference_locked_threshold(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """Every workflow record states the pick threshold consistent with the reference."""
+    'Every workflow record states the pick threshold consistent with the reference.'
     result = run_parameter_study(
         tmp_path / "locked_records",
         bruker_dir / "hsqc_2d",
@@ -2322,7 +2319,7 @@ def _write_bruker_full_sampling_as_nus(tmp_path: Path) -> Path:
 
 
 def test_full_sampling_marked_nus_without_schedule_is_rejected(tmp_path: Path) -> None:
-    """Regression coverage: test full sampling marked nus without schedule is rejected."""
+    'Regression coverage: test full sampling marked nus without schedule is rejected.'
     dataset = _write_bruker_full_sampling_as_nus(tmp_path)
     backend = _FakeSweepBackend()
     with pytest.raises(DatasetError, match="没有有效采样表"):
@@ -2407,7 +2404,7 @@ def test_reference_mode_then_combination_mode_with_explicit_reference(
 def test_reference_mode_reports_one_peak_table(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """Regression coverage: test reference mode reports one peak table."""
+    'Regression coverage: test reference mode reports one peak table.'
     result = run_reference_study(
         tmp_path / "reference_mode",
         bruker_dir / "hsqc_2d",
@@ -2477,7 +2474,7 @@ def test_direct_range_parser_normalises_order() -> None:
 
 
 def test_reference_mode_accepts_direct_range(tmp_path: Path, bruker_dir: Path) -> None:
-    """Reference ranges are recorded; changes require force=True before rebuilding."""
+    'Reference ranges are recorded; changes require force=True before rebuilding.'
     root = tmp_path / "direct_range_reference"
     backend = _FakeSweepBackend()
     result = run_reference_study(
@@ -2638,7 +2635,7 @@ def test_combination_threshold_keys_are_rejected(
 def test_combination_localization_is_parabolic_only(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """Regression coverage: test combination localization is parabolic only."""
+    'Regression coverage: test combination localization is parabolic only.'
     backend = _FakeSweepBackend()
     result = run_parameter_study(
         tmp_path / "localization_only",
@@ -2658,7 +2655,6 @@ def test_combination_localization_is_parabolic_only(
         prow = read_peak_table(Path(run.peak_table_path("parabolic")))
         assert prow and all(row["localization_method"] == "parabolic" for row in prow)
         # Three-point parabolic localization includes QC (equivalent width and boundary); residual
-        # columns were removed with Gaussian fitting.
         assert prow[0]["fit_success"] is True
         assert prow[0]["FWHM_H"] > 0 and prow[0]["FWHM_N"] > 0
         assert "fit_rmse" not in prow[0]
@@ -2668,7 +2664,6 @@ def test_combination_localization_is_parabolic_only(
         assert detection["edge_margin_ppm"] == pytest.approx(0.5, rel=0.3)
 
     # Per-combination gaussian/both overrides fail before processing and are never silently changed
-    # to parabolic.
     session = result.session
     reference = result.reference
     for value in ("gaussian", "both"):
@@ -2683,7 +2678,7 @@ def test_combination_localization_is_parabolic_only(
 def test_rerun_removes_stale_gaussian_tables_from_run_and_records(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """Regression coverage: test rerun removes stale gaussian tables from run and records."""
+    'Regression coverage: test rerun removes stale gaussian tables from run and records.'
     root = tmp_path / "localization_cleanup"
     backend = _FakeSweepBackend()
     first = run_parameter_study(
@@ -2696,7 +2691,6 @@ def test_rerun_removes_stale_gaussian_tables_from_run_and_records(
     run_dir = Path(first.runs[0].run_dir)
     assert (run_dir / "peak_table_parabolic.csv").is_file()
     # Simulate stale older-release files: a Gaussian table and sidecar in the run directory, plus a
-    # summary table.
     stale_table = run_dir / "peak_table_gaussian.csv"
     stale_sidecar = run_dir / "peak_table_gaussian.csv.localization.json"
     stale_table.write_text("workflow_id\n", encoding="utf-8")
@@ -2727,7 +2721,7 @@ def test_rerun_removes_stale_gaussian_tables_from_run_and_records(
 def test_combination_detection_keys_do_not_reach_backend_params(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """detection-class keys affect picking only: they are never fed to the backend as params."""
+    'detection-class keys affect picking only: they are never fed to the backend as params.'
     backend = _FakeSweepBackend()
     result = run_parameter_study(
         tmp_path / "detection_keys",
@@ -2745,7 +2739,7 @@ def test_combination_detection_keys_do_not_reach_backend_params(
 
 
 class _Fake3DAxes:
-    """Minimal 3D spectrum-axis double: exposes only the attributes detect_and_localize uses."""
+    'Minimal 3D spectrum-axis double: exposes only the attributes detect_and_localize uses.'
 
     data = np.zeros((4, 4, 4))
     ppm = [np.linspace(0.0, 1.0, 4)] * 3
@@ -2755,10 +2749,9 @@ class _Fake3DAxes:
 
 
 def test_detect_and_localize_has_no_gaussian_method_choice(tmp_path: Path) -> None:
-    """Regression coverage: test detect and localize has no gaussian method choice."""
+    'Regression coverage: test detect and localize has no gaussian method choice.'
     spectrum = _write_ft2(tmp_path / "ref.ft2")
     # The old entry point with a method argument is gone; Python rejects the keyword instead of
-    # silently falling back.
     with pytest.raises(TypeError):
         detect_and_localize(spectrum, method="gaussian", axes=_Fake3DAxes())
     with pytest.raises(TypeError):
@@ -2923,7 +2916,7 @@ def test_legacy_reference_script_found_in_data_level_dir(
 def test_missing_workflow_script_is_reported_not_silent(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """When the script cannot be found, warn processing_script_not_found (no silent blank)."""
+    'When the script cannot be found, warn processing_script_not_found (no silent blank).'
     backend = _FakeSweepBackend()
     session = open_study(tmp_path / "script_missing", backend=backend)
     add_dataset(session, bruker_dir / "hsqc_2d")
@@ -2953,7 +2946,7 @@ def test_missing_workflow_script_is_reported_not_silent(
 
 # ---------------------------------- 2026-09-16: baseline rendering + optimize switch + self-check
 def test_baseline_order_renders_with_auto_flag(bruker_dir: Path, tmp_path: Path) -> None:
-    """mode=order must render ``POLY -ord N -auto``: a bare -ord N is a no-op in NMRPipe."""
+    'mode=order must render ``POLY -ord N -auto``: a bare -ord N is a no-op in NMRPipe.'
     from backend.script_generator import generate_process_script
     from core.planning.method_selector import select_method
     from nmrforge_api import add_dataset, open_study
@@ -3041,6 +3034,8 @@ def test_reference_optimization_scores_export_cache_and_legacy(
         {"stage": "window", "axis": "F2", "source": "fid", "candidate": "none",
          "parameters": {"type": "none"}, "score": 0.65, "fwhm": 2.4, "snr": 20.0,
          "shape": 0.8, "merged": 0.0, "n_ref": 2.0, "score_metric": "window_detection",
+         "sampling": {"reference_sigma": 6.0, "scanned_traces": 64,
+                      "used_traces": 7, "total_traces": 384, "trace_indices": [4, 8, 12]},
          "status": "scored", "selected": True, "applied": True},
     ]
     calls = []
@@ -3065,6 +3060,10 @@ def test_reference_optimization_scores_export_cache_and_legacy(
     assert rows[1]["fwhm_points"] == "2.4"
     assert rows[1]["type"] == "none"
     assert json.loads(rows[1]["parameters_json"]) == {"type": "none"}
+    assert rows[1]["reference_sigma"] == "6.0" and rows[1]["used_traces"] == "7"
+    assert rows[1]["scanned_traces"] == "64" and rows[1]["total_traces"] == "384"
+    assert json.loads(rows[1]["sampling_json"]) == observed[1]["sampling"]
+    assert rows[0]["reference_sigma"] == ""
     assert all(row["condition"] == "A" and row["run_id"] == reference.run_id for row in rows)
     assert "optimization_scores" not in reference.sweep_params
     assert "optimization_scores" not in reference.params
@@ -3263,7 +3262,7 @@ def test_cli_unexpected_error_is_actionable_not_a_traceback(
 def test_cli_debug_flag_and_env_show_the_traceback(
     tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Only --debug / NMRFORGE_DEBUG=1 prints the full traceback (default: hint only)."""
+    'Only --debug / NMRFORGE_DEBUG=1 prints the full traceback (default: hint only).'
     from nmrforge_api.cli import DEBUG_ENV
 
     bad = tmp_path / "not_a_dir.txt"
@@ -3316,7 +3315,7 @@ def test_reference_build_plumbs_the_indirect_flip_into_every_run(
 def test_combination_inherits_the_reference_flip(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """Combinations reuse the reference flip (not a fresh choice) and record it in params."""
+    'Combinations reuse the reference flip (not a fresh choice) and record it in params.'
     backend = _FakeSweepBackend()
     session = open_study(tmp_path / "flip_combo", backend=backend)
     add_dataset(session, bruker_dir / "hsqc_2d")
@@ -3340,7 +3339,7 @@ def test_combination_inherits_the_reference_flip(
 def test_sweep_allows_boolean_ft_sign_axes_but_locks_phase_routes(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
-    """FT sign booleans are sweepable; phase routes and phases remain locked to the reference."""
+    'FT sign booleans are sweepable; phase routes and phases remain locked to the reference.'
     backend = _FakeSweepBackend()
     session = open_study(tmp_path / "flip_locked", backend=backend)
     add_dataset(session, bruker_dir / "hsqc_2d")

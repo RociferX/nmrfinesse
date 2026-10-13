@@ -1,4 +1,4 @@
-# 06 · Output and records (v1.1.2)
+# 06 · Output and records (v1.1.3)
 
 ## 6.1 directory layout
 
@@ -58,6 +58,9 @@ print(reference.optimization_scores["path"])
 | `selected`, `applied` | Whether the optimizer selected the candidate and whether it was retained/applied; these can differ |
 | `status`, `reason` | Scored, vetoed, skipped, disabled or failed state and reason |
 | `fwhm_points`, `snr`, `shape`, `merged`, `n_ref` | Window score linewidth, SNR, shape and per-trace summaries; the latter values may be fractional medians, not full 3D peak counts |
+| `reference_sigma` | Whether the axis used 12σ references or the conditional 6σ fallback; this is not the final peak-table threshold |
+| `scanned_traces`, `used_traces`, `total_traces` | Probe count, shared scoring-trace count and total traces; at most 256 are probed and 12 are scored, subject to the cache limit |
+| `sampling_json` | Shared trace indices, reference peaks, deterministic supplementation reasons, probe budget and threshold diagnostics; it may be empty on non-window rows |
 
 Higher scores rank candidates only within the same stage, axis and optimization run. Window and
 baseline scores are not comparable and neither is a total score for the final spectrum. Window scores
@@ -65,6 +68,8 @@ include resolution gates and penalties; a candidate that fails a gate has score 
 `resolution_gate`. Baseline stripe vetoes occur before quality scoring: the score is empty and
 `status="vetoed"`, rather than exposing an internal veto sentinel as a quality score.
 
+Window candidates share the same representative traces and reference peaks. A shared trace with no
+valid reference peak contributes a zero score; the scoring target is not rebuilt from each candidate.
 The default baseline optimizer keeps `off` when the gain is at most 0.5 and skips candidate scoring
 when the baseline score is at least 95. An explicit baseline grid bypasses the score-at-least-95 early exit
 and the 0.5 gain rule, but stripe vetoes still apply; reference construction fails if all explicit
@@ -101,7 +106,7 @@ authentication. Legacy references without this evidence require an explicit `for
 calling reference mode again with its default cache policy is not enough. Resume fingerprints include
 the frozen FID evidence and strict input policy, so older permissive runs are not silently reused.
 
-The unified API v1.1.2 table has currently **38 columns**, in the order below. Reference peak tables must
+The unified API v1.1.3 table has **38 columns**, in the order below. Reference peak tables must
 match `nmrforge_api.peak_tables.PEAK_TABLE_COLUMNS`. Both modes use three-point parabolic refinement
 and write one table. `rebuild_reference_peak_tables()` can rebuild tables from the frozen spectrum;
 a missing or invalid input fingerprint requires explicit reference rebuilding with `force=True`.

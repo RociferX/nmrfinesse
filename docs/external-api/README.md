@@ -1,6 +1,6 @@
-# nmrforge_api guide (API 1.1.2)
+# nmrforge_api guide (API 1.1.3)
 
-`nmrforge_api` is the Qt-free Python/CLI interface for software **1.0.6**. It imports Bruker data,
+`nmrforge_api` is the Qt-free Python/CLI interface for software **1.0.7**. It imports Bruker data,
 builds and freezes an independent reference spectrum/table per condition, runs explicit parameter
 combinations and writes independently detected parabolic peak tables with provenance and QC records.
 

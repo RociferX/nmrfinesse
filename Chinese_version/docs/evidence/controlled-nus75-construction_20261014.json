@@ -1,0 +1,25 @@
+{
+  "actual_fraction": 0.7555555555555555,
+  "complex_grid": [
+    90
+  ],
+  "kind": "controlled_downsampling_of_uniform_raw_data",
+  "ndim": 2,
+  "nuslist_sha256": "38c50d3c83cf89082f91b81908488f58bb92696cba842ca7084b3da2448ab46e",
+  "raw_row_bytes": 8192,
+  "requested_fraction": 0.75,
+  "retained_rows": 136,
+  "row_order": "AQSEQ=0; y-fast; z-phase outer, y-phase inner",
+  "sample_count": 68,
+  "seed": 20261008,
+  "ser_sha256": "3024d049c1b4d472c0b4ee8f7c2bb1ec6812b9b573460e0b98c9ab36b381e6de",
+  "source": {
+    "files": {
+      "acqu2s": "61740de8bfc09baa1ad9c21e5467cdbd635dd3237470e18a189a97d98dca78ab",
+      "acqus": "c422d7ab064a4c7a2aaa841390f8ebdd90909b21c3fcb81b26a5db4566928dfc",
+      "pulseprogram": "9280d045d0a4d127e4d5866f230b63fd3e5102cf3d938720f0b57041b9ec0560",
+      "ser": "81564f263cb8d13f176adb2cc044cbdc79f672fb7147b45c5bd37b344ae2775e"
+    },
+    "sha256": "3b08975171cf6009ee1ee74cf9daf0b6b7e9b6060119a9f2dca7157b2a4ab487"
+  }
+}

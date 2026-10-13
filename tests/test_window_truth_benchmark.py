@@ -32,11 +32,11 @@ from workflow.truth_benchmark import (
     synthetic_fid,
     translated_decoys,
 )
-from workflow.window_optimize import _PEAK_SIGMA_MULT, optimize_direct_window
+from workflow.window_optimize import _PEAK_SIGMA_MULT, DEFAULT_CANDIDATES, optimize_direct_window
 
 
 # ---------------------------------------------------------------------------
-# Peak detection and matching conventions
+# ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
 def _profile(positions: list[tuple[float, float]], n: int = 512, width: float = 4.0) -> np.ndarray:
     axis = np.arange(n, dtype=float)
@@ -48,7 +48,7 @@ def _profile(positions: list[tuple[float, float]], n: int = 512, width: float = 
 
 
 def test_detect_peaks_finds_injected_pair() -> None:
-    """Inject two peaks at known positions: detection must report both within 2 points."""
+    'Inject two peaks at known positions: detection must report both within 2 points.'
     data = _profile([(120.0, 1.0), (300.0, 0.6)])
     peaks = detect_peaks(data, sigma_mult=10.0, min_sep=2)
     assert len(peaks) == 2
@@ -57,7 +57,7 @@ def test_detect_peaks_finds_injected_pair() -> None:
 
 
 def test_detect_peaks_threshold_removes_noise_peaks() -> None:
-    """Raising the threshold above the noise reports nothing (an empty set, not fake peaks)."""
+    'Raising the threshold above the noise reports nothing (an empty set, not fake peaks).'
     data = _profile([])
     assert detect_peaks(data, sigma_mult=8.0, min_sep=2) == []
     assert robust_noise_sigma(data) > 0.0
@@ -98,7 +98,7 @@ def test_unmatched_detections_are_not_called_false_peaks() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Decoy controls and reference calibration
+# ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
 def _truth_frame(n: int = 60) -> list[dict]:
     return [
@@ -108,7 +108,7 @@ def _truth_frame(n: int = 60) -> list[dict]:
 
 
 def test_translated_decoys_keep_minimum_shift() -> None:
-    """Decoy shifts are normalised by the matching radius: every draw is >= shift_radii."""
+    'Decoy shifts are normalised by the matching radius: every draw is >= shift_radii.'
     expected = _truth_frame(10)
     decoys = translated_decoys(
         expected, n_decoys=20, seed=7, shift_radii=5.0, tol_h=0.05, tol_n=0.5
@@ -121,7 +121,7 @@ def test_translated_decoys_keep_minimum_shift() -> None:
 
 
 def test_chance_match_stats_is_reproducible() -> None:
-    """Same seed and count -> identical background statistics (recomputable from the evidence)."""
+    'Same seed and count -> identical background statistics (recomputable from the evidence).'
     detected = _truth_frame(30)
     expected = _truth_frame(40)
     first = chance_match_stats(
@@ -184,7 +184,7 @@ def test_per_peak_decoys_defeat_the_recalibration_argument() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Window selection: two real peaks that are resolved may not be merged
+# ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
 def _close_pair_fid(lw: float = 8.0, separation: float = 12.0, noise: float = 0.005) -> np.ndarray:
     fid, _truth = synthetic_fid(
@@ -201,7 +201,12 @@ def _close_pair_fid(lw: float = 8.0, separation: float = 12.0, noise: float = 0.
 def test_window_optimizer_never_merges_a_resolvable_pair() -> None:
     """Synthetic close pair (separation about 1.5 times the natural line width): some candidates do
     merge it, but the optimiser may not pick one of them."""
-    result = optimize_direct_window(_close_pair_fid(), sw=20000.0)
+    # The old 12-point pair already has an unresolved magnitude valley. Use a
+    # genuinely resolved reference plus an intentionally excessive EM challenger.
+    result = optimize_direct_window(
+        _close_pair_fid(separation=16.0), sw=20000.0,
+        candidates=[*DEFAULT_CANDIDATES, {"type": "exp", "lb": 300.0, "c": 1.0}],
+    )
     merged = {row["label"]: row["merged"] for row in result.scores}
     assert any(value > 0.0 for value in merged.values()), "并峰判据没有触发,测试失去意义"
     chosen = [row for row in result.scores if row["selected"]]

@@ -45,6 +45,11 @@ SCORE_COLUMNS = (
     "merged",
     "n_ref",
     "parameters_json",
+    "reference_sigma",
+    "scanned_traces",
+    "used_traces",
+    "total_traces",
+    "sampling_json",
 )
 
 
@@ -98,6 +103,10 @@ def _write_table(path: Path, rows: list[dict[str, Any]]) -> dict[str, Any]:
         )
         flat["fwhm_points"] = row.get("fwhm")
         flat["parameters_json"] = json.dumps(params, ensure_ascii=False, sort_keys=True)
+        sampling = row.get("sampling") or {}
+        flat.update({key: sampling.get(key) for key in
+                     ("reference_sigma", "scanned_traces", "used_traces", "total_traces")})
+        flat["sampling_json"] = json.dumps(sampling, ensure_ascii=False, sort_keys=True)
         writer.writerow(flat)
     atomic_write_text(path, buffer.getvalue())
     return {

@@ -1,9 +1,9 @@
-# 04 · Command line reference (v1.1.2)
+# 04 · Command line reference (v1.1.3)
 
 Entry:`python -m nmrforge_api <Order> --study <Research roots>`.
 Public parameter:`--study`(required), `--name`(new research name), `--condition <A|B|…>`.
 (Default = all conditions).
-The CLI uses API **1.1.2** and software **1.0.6**, with the 38-column peak-table contract.
+The CLI uses API **1.1.3** and software **1.0.7**, with the retained 38-column peak-table contract.
 Install the source or wheel to use this entry point; see [installation](../installation.md).
 
 ## Init -- Create the study and import the dataset

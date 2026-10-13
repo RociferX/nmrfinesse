@@ -1,4 +1,4 @@
-# 07 · Methods and QC criteria (v1.1.2)
+# 07 · Methods and QC criteria (v1.1.3)
 
 > This page describes what the software **executed** and what QC records were left. Any
 > cross-combination or cross-condition statistic
@@ -103,14 +103,34 @@ low-level detector uses `sign_mode="auto"` by default.
 
 ### Reference window candidate scoring
 
-Scores are calculated on an in-memory magnitude spectrum. Reference peaks use a `12σ` threshold;
-for each trace, only significant peaks at or above 25% of that trace's strongest significant peak
-are retained. The score is `det_mean × nearby-peak merging penalty × strong-peak symmetry/side-lobe
-factors`; results across traces are summarized by the median. A candidate's FWHM must not exceed
-`min_fwhm × tol_used`, where `min_fwhm` is the narrowest valid candidate width. The tolerance is
-capped at 1.25 for the direct dimension and 1.15 for indirect dimensions; the nearest significant
-peak spacing can tighten it further. The indirect dimension also
-receives `exp(-max(fwhm/min_fwhm - 1, 0))` as an additional penalty.
+Scoring uses deterministic representative traces: at most 256 traces are probed, then up to 12
+shared traces are scored under the FFT-cache budget. The fast path searches energy-leading traces
+at `12σ`; if it finds fewer than four qualifying traces, deterministic supplementation uses energy
+rank and acquisition position. Only when the probe set has no qualifying `12σ` reference trace does
+the method try `6σ`. A `6σ` reference peak must have FWHM of at least two points, adjacent samples at
+least half its height, and frequency support on five traces (or every trace when fewer than five
+were scanned).
+
+All candidates share the same reference traces, threshold, peaks and already-resolved peak pairs.
+Responses are aggregated per trace, and a trace is never removed because a candidate performs poorly.
+For each trace, only significant peaks at or above 25% of that trace's strongest significant peak
+are retained. A trace without a valid shared reference peak scores zero. The score combines mean
+detection, a nearby-peak merging penalty, and strong-peak symmetry and side-lobe factors; results
+across traces use the median.
+
+The merge penalty is evaluated only for nearby pairs already resolved in the unwindowed reference:
+their spacing must be no more than 1.5 times the smaller reference FWHM, and the reference valley
+must be no higher than 0.6 times the smaller reference peak. A candidate counts as merged when its
+valley rises to at least 0.6 times the smaller candidate peak. The direct-dimension FWHM must not
+exceed the narrowest valid candidate width times the tolerance, capped at 1.25 for direct and 1.15
+for indirect dimensions. Nearby significant-peak spacing can tighten the limit. Indirect dimensions
+also receive `exp(-max(fwhm/min_fwhm - 1, 0))` as an additional penalty.
+
+If scanning finds no qualifying trace, the optimizer has no winner: ordinary optimization retains
+the current/default setting, while an explicit candidate request fails. The score attachment records
+`reference_sigma`, `scanned_traces`, `used_traces`, `total_traces` and optional `sampling_json`
+diagnostics; the 38-column peak table is unchanged. Frozen references must be rebuilt with
+`force=True` to use the new window-selection behavior.
 
 Scores rank candidates only within the same stage and axis. They do not estimate performance for all
 weak peaks or a globally optimal final spectrum. The per-candidate record is described in

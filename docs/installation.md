@@ -1,19 +1,19 @@
 # Installation
 
 Linux is the target runtime; Windows may be used to edit source but is not a supported runtime
-environment. Linux desktop users can use the AppImage from the [NMRForge 1.0.6 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.6).
+environment. Linux desktop users can use the AppImage; download the [1.0.7 AppImage](https://github.com/RociferX/nmrforge/releases/tag/v1.0.7) from the release.
 Install the Python API and command-line tools separately by following the source steps below.
 
 ## AppImage (Linux)
 
-Download `NMRForge-1.0.6-x86_64.AppImage` and `SHA256SUMS-v1.0.6.txt` from the release, then verify
-and start the AppImage in the same directory:
+Download `NMRForge-1.0.7-x86_64.AppImage` and
+`SHA256SUMS-v1.0.7.txt` from its release, then verify and start the AppImage in the same directory:
 
 ```bash
-sha256sum -c SHA256SUMS-v1.0.6.txt
-chmod +x NMRForge-1.0.6-x86_64.AppImage
-./NMRForge-1.0.6-x86_64.AppImage --licenses
-./NMRForge-1.0.6-x86_64.AppImage
+sha256sum -c SHA256SUMS-v1.0.7.txt
+chmod +x NMRForge-1.0.7-x86_64.AppImage
+./NMRForge-1.0.7-x86_64.AppImage --licenses
+./NMRForge-1.0.7-x86_64.AppImage
 ```
 
 The AppImage includes third-party licence notices, including those for PySide6/Qt. See the

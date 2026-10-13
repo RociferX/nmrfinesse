@@ -1,6 +1,6 @@
 # 快速开始
 
-本页介绍 1.0.6 的安装与首次处理。Linux 桌面用户可从 [1.0.6 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.6) 下载 AppImage；源码安装见下方步骤。公开 API 版本为 v1.1.2。
+本页介绍 1.0.7 的安装与首次处理。Linux 桌面用户可从 [1.0.7 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.7) 下载 AppImage；源码安装见下方步骤。公开 API 版本为 v1.1.3。
 
 ## 路线 A —— 源码安装与 GUI
 

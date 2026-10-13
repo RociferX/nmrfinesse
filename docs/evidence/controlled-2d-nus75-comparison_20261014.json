@@ -1,0 +1,227 @@
+{
+  "kind": "display_projection_comparison_not_independent_truth",
+  "projection": "signed_max_absolute_voxel; all-axis common crop before projection",
+  "source_ndim": 2,
+  "offset_fitted": false,
+  "reference_offset_ppm": {},
+  "offset_source": "none",
+  "matching": "same polarity; joint normalized distance <=1; greedy one-to-one",
+  "primary_metric": "reference_candidate_coverage; not true-peak recovery",
+  "requested_sigma_floor": 0.0,
+  "requested_sign_mode": "dominant",
+  "min_height_fraction": 0.1,
+  "tolerance_ppm": {
+    "H": 0.02,
+    "N": 0.2,
+    "C": 0.15
+  },
+  "spectrum_sha256": {
+    "automatic": "e798eb95644d9e7f42ef1cf400a1da339674223eeba2c355e284443fba1b1b1d",
+    "comparison": "e1b00b0cb88d167aee736a6e40e2bd58aecb7ba050b584c1120c1d5c433e0f74"
+  },
+  "planes": {
+    "HN": {
+      "automatic": {
+        "requested_sigma_floor": 0.0,
+        "resolved_sigma_multiplier": 10.351125195350226,
+        "requested_sign_mode": "dominant",
+        "sign_mode": "dominant",
+        "positive_candidates": 126,
+        "negative_candidates": 0,
+        "detected_before_height_filter": 126,
+        "noise_estimate": 98953.82912460937,
+        "baseline": 5477.26171875,
+        "max_abs_centered_voxel": 10242834.73828125,
+        "height_cutoff": 1024283.473828125,
+        "count": 126,
+        "shape": [
+          255,
+          1028
+        ]
+      },
+      "comparison": {
+        "requested_sigma_floor": 0.0,
+        "resolved_sigma_multiplier": 14.303482790758618,
+        "requested_sign_mode": "dominant",
+        "sign_mode": "dominant",
+        "positive_candidates": 135,
+        "negative_candidates": 0,
+        "detected_before_height_filter": 135,
+        "noise_estimate": 140736.69108515623,
+        "baseline": 7147.6103515625,
+        "max_abs_centered_voxel": 20130248.389648438,
+        "height_cutoff": 2013024.838964844,
+        "count": 135,
+        "shape": [
+          510,
+          1028
+        ]
+      },
+      "matched": 123,
+      "automatic_matched_fraction": 0.9761904761904762,
+      "comparison_matched_fraction": 0.9111111111111111,
+      "reference_candidate_coverage": 0.9111111111111111,
+      "automatic_unmatched_candidates": [
+        {
+          "candidate_index_1based": 22,
+          "ppm": {
+            "H": 8.595139436390705,
+            "N": 120.22983468713917
+          },
+          "intensity": 6511591.73828125,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 125,
+          "ppm": {
+            "H": 9.014643505227484,
+            "N": 115.62815435261084
+          },
+          "intensity": 1168800.98828125,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 126,
+          "ppm": {
+            "H": 8.521574776340092,
+            "N": 120.20997890851129
+          },
+          "intensity": 1159894.86328125,
+          "sign": 1
+        }
+      ],
+      "reference_unmatched_candidates": [
+        {
+          "candidate_index_1based": 103,
+          "ppm": {
+            "H": 9.276297610247397,
+            "N": 117.9978937955106
+          },
+          "intensity": 7034245.3896484375,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 125,
+          "ppm": {
+            "H": 7.561621850042283,
+            "N": 112.17666175377161
+          },
+          "intensity": 3372157.3896484375,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 126,
+          "ppm": {
+            "H": 6.900656459494713,
+            "N": 112.16982865745969
+          },
+          "intensity": 3350012.8896484375,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 127,
+          "ppm": {
+            "H": 7.637867554176423,
+            "N": 112.28324929773416
+          },
+          "intensity": 3047147.6396484375,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 128,
+          "ppm": {
+            "H": 8.131904193192819,
+            "N": 118.6164004614256
+          },
+          "intensity": 2751844.6396484375,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 129,
+          "ppm": {
+            "H": 6.8474619674538175,
+            "N": 113.25245046344594
+          },
+          "intensity": 2682623.8896484375,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 130,
+          "ppm": {
+            "H": 8.590705466870723,
+            "N": 123.49413665200439
+          },
+          "intensity": 2604482.1396484375,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 131,
+          "ppm": {
+            "H": 6.847460048859737,
+            "N": 111.81331017115623
+          },
+          "intensity": 2246891.1396484375,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 132,
+          "ppm": {
+            "H": 7.55981585368614,
+            "N": 113.17857319848875
+          },
+          "intensity": 2154760.8896484375,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 133,
+          "ppm": {
+            "H": 7.5582278100007745,
+            "N": 110.92199806001514
+          },
+          "intensity": 2154714.8896484375,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 134,
+          "ppm": {
+            "H": 7.472997320120045,
+            "N": 112.80806821649242
+          },
+          "intensity": 2132037.1396484375,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 135,
+          "ppm": {
+            "H": 8.151978866120709,
+            "N": 124.26456572557107
+          },
+          "intensity": 2042782.0146484375,
+          "sign": 1
+        }
+      ],
+      "median_abs_delta_ppm": {
+        "H": 0.0013672896344996133,
+        "N": 0.004406797270377183
+      },
+      "windows_ppm": {
+        "H": [
+          6.49513161791633,
+          10.501202506196154
+        ],
+        "N": [
+          100.28726153355045,
+          135.93705247365412
+        ]
+      },
+      "intensity_pearson": 0.9807876594333726,
+      "median_fwhm_ratio_by_nucleus": {
+        "H": 0.9091678113658315,
+        "N": 1.4972636242276411
+      }
+    }
+  },
+  "date": "2026-10-14",
+  "software_version": "1.0.7",
+  "api_version": "1.1.3"
+}

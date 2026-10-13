@@ -1,18 +1,18 @@
 # 安装
 
 Linux 是目标运行平台；Windows 可用于编辑源码，但不属于支持的运行环境。Linux 桌面用户可直接使用
-[NMRForge 1.0.6 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.6) 中的 AppImage。
+[NMRForge 1.0.7 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.7) 中的 AppImage。
 Python API 和命令行工具请按下方源码步骤单独安装。
 
 ## AppImage(Linux)
 
-下载 `NMRForge-1.0.6-x86_64.AppImage` 与 `SHA256SUMS-v1.0.6.txt`，在同一目录校验并启动：
+下载 `NMRForge-1.0.7-x86_64.AppImage` 与 `SHA256SUMS-v1.0.7.txt`，在同一目录校验并启动：
 
 ```bash
-sha256sum -c SHA256SUMS-v1.0.6.txt
-chmod +x NMRForge-1.0.6-x86_64.AppImage
-./NMRForge-1.0.6-x86_64.AppImage --licenses
-./NMRForge-1.0.6-x86_64.AppImage
+sha256sum -c SHA256SUMS-v1.0.7.txt
+chmod +x NMRForge-1.0.7-x86_64.AppImage
+./NMRForge-1.0.7-x86_64.AppImage --licenses
+./NMRForge-1.0.7-x86_64.AppImage
 ```
 
 它们捆绑 PySide6/Qt,这些库按 LGPL-3.0 随产物分发(许可与 nmrForge 源码的 Apache-2.0

@@ -1,0 +1,625 @@
+{
+  "date": "2026-10-14",
+  "software_version": "1.0.7",
+  "api_version": "1.1.3",
+  "cases": {
+    "uniform2d": {
+      "dimensions": [
+        {
+          "axis": "F2",
+          "nucleus": "1H",
+          "sw_hz": 9578.54406130268,
+          "sf_mhz": 599.50281765
+        },
+        {
+          "axis": "F1",
+          "nucleus": "15N",
+          "sw_hz": 2187.22659667542,
+          "sf_mhz": 60.7539755632779
+        }
+      ],
+      "sampling": "uniform",
+      "sampling_fraction_reader_summary": 1.0,
+      "unmatched_count": 1,
+      "observations": {
+        "local_response_without_independent_candidate": 1
+      },
+      "candidates": [
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 126,
+            "ppm": {
+              "H": 8.543705039745257,
+              "N": 129.7483741652692
+            },
+            "intensity": 29501.9521484375,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.10118649211908953,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "local_response_without_independent_candidate"
+        }
+      ]
+    },
+    "nus75": {
+      "dimensions": [
+        {
+          "axis": "F2",
+          "nucleus": "1H",
+          "sw_hz": 9578.54406130268,
+          "sf_mhz": 599.50281765
+        },
+        {
+          "axis": "F1",
+          "nucleus": "15N",
+          "sw_hz": 2187.22659667542,
+          "sf_mhz": 60.7539755632779
+        }
+      ],
+      "sampling": "nus",
+      "sampling_fraction_reader_summary": 0.75,
+      "unmatched_count": 12,
+      "observations": {
+        "local_response_without_independent_candidate": 6,
+        "below_10_percent": 6
+      },
+      "candidates": [
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 103,
+            "ppm": {
+              "H": 9.276297610247397,
+              "N": 117.9978937955106
+            },
+            "intensity": 7034245.3896484375,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.4345405692865954,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "local_response_without_independent_candidate"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 125,
+            "ppm": {
+              "H": 7.561621850042283,
+              "N": 112.17666175377161
+            },
+            "intensity": 3372157.3896484375,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.08719942512038655,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 126,
+            "ppm": {
+              "H": 6.900656459494713,
+              "N": 112.16982865745969
+            },
+            "intensity": 3350012.8896484375,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.14606549617457756,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "local_response_without_independent_candidate"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 127,
+            "ppm": {
+              "H": 7.637867554176423,
+              "N": 112.28324929773416
+            },
+            "intensity": 3047147.6396484375,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.11025259531530299,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "local_response_without_independent_candidate"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 128,
+            "ppm": {
+              "H": 8.131904193192819,
+              "N": 118.6164004614256
+            },
+            "intensity": 2751844.6396484375,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.08147006025221458,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 129,
+            "ppm": {
+              "H": 6.8474619674538175,
+              "N": 113.25245046344594
+            },
+            "intensity": 2682623.8896484375,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.20511941195624514,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "local_response_without_independent_candidate"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 130,
+            "ppm": {
+              "H": 8.590705466870723,
+              "N": 123.49413665200439
+            },
+            "intensity": 2604482.1396484375,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.19719235835490737,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "local_response_without_independent_candidate"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 131,
+            "ppm": {
+              "H": 6.847460048859737,
+              "N": 111.81331017115623
+            },
+            "intensity": 2246891.1396484375,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.09398230693730612,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 132,
+            "ppm": {
+              "H": 7.55981585368614,
+              "N": 113.17857319848875
+            },
+            "intensity": 2154760.8896484375,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.01730936268488507,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 133,
+            "ppm": {
+              "H": 7.5582278100007745,
+              "N": 110.92199806001514
+            },
+            "intensity": 2154714.8896484375,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.04516911700743543,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 134,
+            "ppm": {
+              "H": 7.472997320120045,
+              "N": 112.80806821649242
+            },
+            "intensity": 2132037.1396484375,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.08569727748321967,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 135,
+            "ppm": {
+              "H": 8.151978866120709,
+              "N": 124.26456572557107
+            },
+            "intensity": 2042782.0146484375,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.13030219635323403,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "local_response_without_independent_candidate"
+        }
+      ]
+    },
+    "uniform3d": {
+      "dimensions": [
+        {
+          "axis": "F3",
+          "nucleus": "1H",
+          "sw_hz": 12755.1020408163,
+          "sf_mhz": 850.10399616
+        },
+        {
+          "axis": "F2",
+          "nucleus": "15N",
+          "sw_hz": 2500.0,
+          "sf_mhz": 86.15004950643
+        },
+        {
+          "axis": "F1",
+          "nucleus": "13C",
+          "sw_hz": 3636.3636363636438,
+          "sf_mhz": 213.795329496533
+        }
+      ],
+      "sampling": "uniform",
+      "sampling_fraction_reader_summary": 1.0,
+      "unmatched_count": 21,
+      "observations": {
+        "local_response_without_independent_candidate": 2,
+        "below_10_percent": 11,
+        "candidate_competition": 8
+      },
+      "candidates": [
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 44,
+            "ppm": {
+              "H": 8.043762574643422,
+              "N": 117.37564503197245
+            },
+            "intensity": 124313259.6875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.3294745393533266,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "local_response_without_independent_candidate"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 77,
+            "ppm": {
+              "H": 9.405010631794523,
+              "N": 126.6513419662763
+            },
+            "intensity": 46543019.6875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.09674269296927308,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 78,
+            "ppm": {
+              "H": 9.15896805849872,
+              "N": 124.29158759474322
+            },
+            "intensity": 45856971.6875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.09900171335047481,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 83,
+            "ppm": {
+              "H": 9.892971013021548,
+              "N": 130.38422208340563
+            },
+            "intensity": 39644007.6875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.08812613582510005,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 84,
+            "ppm": {
+              "H": 9.009091147118186,
+              "N": 118.74459573555723
+            },
+            "intensity": 38609103.6875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.08154612532096402,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HC",
+          "reference_candidate": {
+            "candidate_index_1based": 9,
+            "ppm": {
+              "H": 7.225773786979872,
+              "C": 178.98296025170532
+            },
+            "intensity": 211832807.90625,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.598810580467726,
+          "automatic_candidates_within_tolerance": 1,
+          "observation": "candidate_competition"
+        },
+        {
+          "projection": "HC",
+          "reference_candidate": {
+            "candidate_index_1based": 32,
+            "ppm": {
+              "H": 7.115321162586878,
+              "C": 176.3256144552109
+            },
+            "intensity": 149275607.90625,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.42941988776491885,
+          "automatic_candidates_within_tolerance": 1,
+          "observation": "candidate_competition"
+        },
+        {
+          "projection": "HC",
+          "reference_candidate": {
+            "candidate_index_1based": 37,
+            "ppm": {
+              "H": 8.281199272777627,
+              "C": 172.9975258305316
+            },
+            "intensity": 144203879.90625,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.35548739093999787,
+          "automatic_candidates_within_tolerance": 1,
+          "observation": "candidate_competition"
+        },
+        {
+          "projection": "HC",
+          "reference_candidate": {
+            "candidate_index_1based": 53,
+            "ppm": {
+              "H": 8.558473366383067,
+              "C": 176.86744421762106
+            },
+            "intensity": 117384495.90625,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.3419200313781474,
+          "automatic_candidates_within_tolerance": 1,
+          "observation": "candidate_competition"
+        },
+        {
+          "projection": "HC",
+          "reference_candidate": {
+            "candidate_index_1based": 74,
+            "ppm": {
+              "H": 9.405010631794523,
+              "C": 174.18999798079557
+            },
+            "intensity": 46353111.90625,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.09606799770989331,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HC",
+          "reference_candidate": {
+            "candidate_index_1based": 75,
+            "ppm": {
+              "H": 9.15896805849872,
+              "C": 172.94421934773325
+            },
+            "intensity": 45667063.90625,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.0983287054844105,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HC",
+          "reference_candidate": {
+            "candidate_index_1based": 77,
+            "ppm": {
+              "H": 8.139413836605527,
+              "C": 175.0784586871997
+            },
+            "intensity": 44271907.90625,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.08546524379249655,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HC",
+          "reference_candidate": {
+            "candidate_index_1based": 80,
+            "ppm": {
+              "H": 9.892971013021548,
+              "C": 172.6314984787685
+            },
+            "intensity": 39454099.90625,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.08744500435954503,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HC",
+          "reference_candidate": {
+            "candidate_index_1based": 81,
+            "ppm": {
+              "H": 9.009091147118186,
+              "C": 176.40306007180544
+            },
+            "intensity": 38419195.90625,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.08086007886401145,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "NC",
+          "reference_candidate": {
+            "candidate_index_1based": 9,
+            "ppm": {
+              "N": 113.17953921568788,
+              "C": 178.98303320960008
+            },
+            "intensity": 211782384.875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.5981043638387339,
+          "automatic_candidates_within_tolerance": 1,
+          "observation": "candidate_competition"
+        },
+        {
+          "projection": "NC",
+          "reference_candidate": {
+            "candidate_index_1based": 32,
+            "ppm": {
+              "N": 106.48511632846702,
+              "C": 176.3256144552109
+            },
+            "intensity": 149225184.875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.42841549147774266,
+          "automatic_candidates_within_tolerance": 1,
+          "observation": "candidate_competition"
+        },
+        {
+          "projection": "NC",
+          "reference_candidate": {
+            "candidate_index_1based": 36,
+            "ppm": {
+              "N": 114.25392717607599,
+              "C": 172.9975258305316
+            },
+            "intensity": 144153456.875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.35435285074538375,
+          "automatic_candidates_within_tolerance": 1,
+          "observation": "candidate_competition"
+        },
+        {
+          "projection": "NC",
+          "reference_candidate": {
+            "candidate_index_1based": 49,
+            "ppm": {
+              "N": 121.67704629118617,
+              "C": 176.86744421762106
+            },
+            "intensity": 117334072.875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.34076160846263487,
+          "automatic_candidates_within_tolerance": 1,
+          "observation": "candidate_competition"
+        },
+        {
+          "projection": "NC",
+          "reference_candidate": {
+            "candidate_index_1based": 67,
+            "ppm": {
+              "N": 110.26610771878654,
+              "C": 173.93363656593286
+            },
+            "intensity": 55317892.875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.14254835577079278,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "local_response_without_independent_candidate"
+        },
+        {
+          "projection": "NC",
+          "reference_candidate": {
+            "candidate_index_1based": 70,
+            "ppm": {
+              "N": 124.29018301352941,
+              "C": 172.94421934773325
+            },
+            "intensity": 45616640.875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.0967414870008968,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "NC",
+          "reference_candidate": {
+            "candidate_index_1based": 71,
+            "ppm": {
+              "N": 130.38422208340563,
+              "C": 172.6314984787685
+            },
+            "intensity": 39403676.875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.08583862721843681,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        }
+      ]
+    },
+    "acquired3d": {
+      "dimensions": [
+        {
+          "axis": "F3",
+          "nucleus": "1H",
+          "sw_hz": 11160.7142857143,
+          "sf_mhz": 799.863759342
+        },
+        {
+          "axis": "F2",
+          "nucleus": "15N",
+          "sw_hz": 2269.63231956423,
+          "sf_mhz": 81.0585930599067
+        },
+        {
+          "axis": "F1",
+          "nucleus": "13C",
+          "sw_hz": 2816.9014084507,
+          "sf_mhz": 201.159852152
+        }
+      ],
+      "sampling": "nus",
+      "sampling_fraction_reader_summary": 0.25,
+      "unmatched_count": 0,
+      "observations": {},
+      "candidates": []
+    }
+  }
+}

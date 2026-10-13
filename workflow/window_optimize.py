@@ -1,14 +1,18 @@
 """Per-axis window selection from FID/reconstructed traces, without candidate engine reruns.
 
-Score the magnitude of the one-axis Fourier transform on up to 12 high-energy traces.
-Unwindowed reference peaks use 12-sigma detection; only peaks at least 25% of the strongest
+Score one-axis Fourier magnitudes on up to 12 shared, signal-bearing traces. If the
+energy leaders lack references, probe at most 256 traces stratified by energy and position.
+Unwindowed references use 12 sigma, falling back to 6 only when no 12-sigma trace qualifies;
+weak references also require continuous profiles and repeated frequency support.
+Only peaks at least 25% of the strongest
 reference peak in each trace enter the detection/near-neighbour criteria. Noise excludes all
 detected peaks where sufficient background remains.
 
 Each trace scores mean capped detection strength (height/noise, cap 30) times a near-pair
 separation factor times the strongest-peak shape factor (symmetry and side-wing penalty).
 Near pairs are within 1.5 times the smaller reference FWHM; a valley above 0.6 times the
-smaller candidate height counts as merged. Aggregate valid traces by the median.
+smaller candidate height counts as merged, provided the reference valley was resolved.
+Aggregate the same traces for every candidate, including degraded responses.
 
 Filter candidate FWHM at 1.25 times the narrowest (direct) or 1.15 times (indirect), tightened
 by significant reference spacing. Indirect scores also receive an exponential broadening
@@ -36,7 +40,7 @@ from workflow.truth_benchmark import detect_peaks, robust_noise_sigma
 
 @dataclass
 class WindowChoice:
-    """Candidate window evaluation results."""
+    'Candidate window evaluation results.'
 
     cfg: dict[str, Any]
     label: str
@@ -55,7 +59,7 @@ class WindowChoice:
 
 @dataclass
 class WindowOptimizeResult:
-    """Single-axis window optimisation result."""
+    'Single-axis window optimisation result.'
 
     choice: dict[str, Any]
     changed: bool
@@ -65,6 +69,7 @@ class WindowOptimizeResult:
     skipped_candidates: list[dict[str, Any]] = field(default_factory=list)
     status: str = "skipped"
     reason: str = ""
+    sampling: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -81,11 +86,16 @@ class MultiWindowOptimizeResult:
     reason: str = ""
 
 
-# Direct dimension candidate: user rule (0.2.189)0.5-0.98 is listed as the first choice, and other
-# commonly used combinations are compared; c maintains 0.5(NMRPipe SP -c, the memory window model is
-# consistent with direct_ft_traces and only models the sin term); gaussian(GM)0.2.192 is added
-# (0.2.191 has been measured point by point with NMRPipe Alignment, k=1/(2*sqrt(ln2))), GM/EM
-# depends on the spectrum width SW, not provided during scoring SW automatically skipped; indirect
+# GM/EM parameters are Hz, using the sweep width of the scored axis. Both axes
+# compare two mild configurations per family; resolution gates still apply.
+_HZ_CANDIDATES: list[dict[str, Any]] = [
+    {"type": "gaussian", "g1": 8.0, "g2": 15.0, "g3": 0.0, "c": 1.0},
+    {"type": "gaussian", "g1": 4.0, "g2": 8.0, "g3": 0.0, "c": 1.0},
+    {"type": "exp", "lb": 3.0, "c": 1.0},
+    {"type": "exp", "lb": 5.0, "c": 1.0},
+]
+
+# Preserve the preferred direct SP and indirect no-window tie order.
 DEFAULT_CANDIDATES: list[dict[str, Any]] = [
     {"type": "sine_bell", "off": 0.50, "end": 0.98, "pow": 2, "c": 0.5},
     {"type": "none"},
@@ -93,7 +103,7 @@ DEFAULT_CANDIDATES: list[dict[str, Any]] = [
     {"type": "sine_bell", "off": 0.45, "end": 0.98, "pow": 1, "c": 0.5},
     {"type": "sine_bell", "off": 0.45, "end": 0.90, "pow": 1, "c": 0.5},
     {"type": "sine_bell", "off": 0.45, "end": 0.98, "pow": 2, "c": 0.5},
-    {"type": "gaussian", "g1": 8.0, "g2": 15.0, "g3": 0.0, "c": 1.0},
+    *[dict(cfg) for cfg in _HZ_CANDIDATES],
 ]
 
 # Indirect dimension candidate: No window is listed as the first choice (natural attenuation
@@ -104,6 +114,7 @@ INDIRECT_CANDIDATES: list[dict[str, Any]] = [
     {"type": "sine_bell", "off": 0.45, "end": 0.90, "pow": 1, "c": 0.5},
     {"type": "sine_bell", "off": 0.45, "end": 0.98, "pow": 2, "c": 0.5},
     {"type": "sine_bell", "off": 0.50, "end": 0.98, "pow": 2, "c": 0.5},
+    *[dict(cfg) for cfg in _HZ_CANDIDATES],
 ]
 
 # Resolution priority line width tolerance (1.25x is optimal; 1.15x will exclude the user's
@@ -119,11 +130,14 @@ _INDIRECT_RES_TOL = 1.15
 # workflow/truth_benchmark.detect_peaks): threshold = noise sigma x 12 (**not** the product's
 # default peak-picking threshold of 35 sigma, see below); minimum separation 2 points.
 #
+#
 # The cap on d only affects the ordering among very strong peaks; 30 is an empirical value (higher
 # values do not change the window choice, they only amplify numerical noise).
 #
-# Why 12 sigma and not the pick-peaking default of 35 sigma (2026-09-22, user): 35 sigma is the
 _PEAK_SIGMA_MULT = 12.0
+_FALLBACK_SIGMA_MULT = 6.0
+_MAX_PROBE_TRACES = 256
+_MAX_SCORE_TRACES = 12
 _PEAK_MIN_SEP = 2
 _DETECTION_CAP = 30.0
 #: A local maximum below this fraction of the strongest reference peak is not an expected peak
@@ -196,7 +210,7 @@ def _window_vector(
 
 
 def _peak_fwhm(amp: np.ndarray, index: int) -> float:
-    """Half-height full width of the peak at ``index`` (points, linearly interpolated)."""
+    'Half-height full width of the peak at ``index`` (points, linearly interpolated).'
     peak = float(amp[index])
     if peak <= 0.0:
         return 1.0
@@ -238,7 +252,7 @@ def _noise_sigma_without_peaks(amp: np.ndarray, peaks: list[tuple[int, float]]) 
 
 
 def _shape_factor(amp: np.ndarray, index: int, fwhm: float) -> float:
-    """Line-shape factor: symmetry (0-1) x side-lobe penalty (same convention as 0.2.139)."""
+    'Line-shape factor: symmetry (0-1) x side-lobe penalty (same convention as 0.2.139).'
     peak = float(amp[index])
     if peak <= 0.0:
         return 0.0
@@ -262,14 +276,16 @@ def _shape_factor(amp: np.ndarray, index: int, fwhm: float) -> float:
     return sym / (1.0 + 5.0 * max(swell, 0.0))
 
 
-def _reference_peaks(amp: np.ndarray) -> list[tuple[int, float, float]]:
+def _reference_peaks(
+    amp: np.ndarray, sigma_mult: float = _PEAK_SIGMA_MULT, *, noise_sigma: float | None = None,
+) -> list[tuple[int, float, float]]:
     """The expected peaks on the un-windowed reference spectrum: ``[(position, height, FWHM)]``,
     sorted by position.
     """
     return [
         (index, height, _peak_fwhm(amp, index))
         for index, height in detect_peaks(
-            amp, sigma_mult=_PEAK_SIGMA_MULT, min_sep=_PEAK_MIN_SEP
+            amp, sigma_mult=sigma_mult, min_sep=_PEAK_MIN_SEP, noise_sigma=noise_sigma,
         )
     ]
 
@@ -329,9 +345,121 @@ def _effective_res_tol(res_tol: float, spacing: float, min_fwhm: float) -> float
     return float(min(max(spacing / float(min_fwhm), 1.0), float(res_tol)))
 
 
+def _resolved_pairs(
+    reference: list[tuple[int, float, float]], amp: np.ndarray,
+) -> list[tuple[int, int]]:
+    """Only penalize loss of valleys already resolved in the unwindowed reference."""
+    targets = _significant_reference(reference)
+    pairs = []
+    for left, right in zip(targets, targets[1:]):
+        a, b = int(left[0]), int(right[0])
+        if not 0 < b - a <= _MERGE_PAIR_SPAN * max(min(left[2], right[2]), 1.0):
+            continue
+        if np.min(amp[a:b + 1]) <= _MERGE_VALLEY_FRACTION * min(left[1], right[1]):
+            pairs.append((a, b))
+    return pairs
+
+
+def _mask_edges(amp: np.ndarray) -> None:
+    amp[..., :max(2, amp.shape[-1] // 80)] = 0.0
+    amp[..., -3:] = 0.0
+
+
+def _sample_references(
+    flat: np.ndarray, n_zf: int,
+) -> tuple[np.ndarray, list[list[tuple[int, float, float]]], np.ndarray, dict[str, Any]]:
+    """Bounded, deterministic rescue; candidate-independent references and trace IDs."""
+    total = len(flat)
+    energy = np.sum(np.abs(flat) ** 2, axis=-1)
+    order = np.argsort(-energy, kind="stable")
+    keep = min(total, max(int(np.ceil(total * 0.1)), 4), _MAX_SCORE_TRACES)
+    # Bound cached FFT magnitudes as well as trace count (large direct axes).
+    budget = min(total, _MAX_PROBE_TRACES, max(1, (64 * 1024**2) // (8 * n_zf)))
+    keep = min(keep, budget)
+    cache: dict[int, tuple[np.ndarray, float, list[tuple[int, float, float]]]] = {}
+
+    def probe(indices: list[int]) -> None:
+        fresh = [int(i) for i in indices if int(i) not in cache][:budget - len(cache)]
+        block = max(1, min(32, (8 * 1024**2) // (16 * n_zf)))
+        for start in range(0, len(fresh), block):
+            ids = fresh[start:start + block]
+            amps = np.abs(np.fft.fft(flat[ids], n_zf, axis=-1))
+            _mask_edges(amps)
+            med = np.median(amps, axis=1)
+            sigma = np.maximum(
+                1.4826 * np.median(np.abs(amps - med[:, None]), axis=1), np.finfo(float).eps,
+            )
+            for i, row, noise in zip(ids, amps, sigma):
+                refs = (_reference_peaks(row, noise_sigma=float(noise))
+                        if np.max(row) > _PEAK_SIGMA_MULT * noise else [])
+                cache[i] = (row, float(noise), refs)
+
+    probe(order[:keep].tolist())
+    qualified = [i for i, (_row, _noise, refs) in cache.items() if refs]
+    rescued = len(qualified) < min(4, keep)
+    if rescued:
+        for size in (64, 256):
+            ranks = np.linspace(0, total - 1, min(total, size // 2), dtype=int)
+            # Interleave energy quantiles and acquisition positions, deduplicating
+            # before truncation so the hard budget contains distinct traces.
+            ids = list(dict.fromkeys(int(i) for pair in zip(order[ranks], ranks) for i in pair))
+            probe(ids)
+            qualified = [i for i, (_row, _noise, refs) in cache.items() if refs]
+            if len(qualified) >= min(4, keep) or len(cache) >= budget:
+                break
+    threshold = _PEAK_SIGMA_MULT
+    strong_count = len(qualified)
+    reason = "stratified_rescue" if rescued else "energy_fast_path"
+    if not qualified:
+        threshold = _FALLBACK_SIGMA_MULT
+        weak: dict[int, list[tuple[int, float, float]]] = {}
+        support = np.zeros(n_zf, dtype=int)
+        for i, (amp, noise, _refs) in cache.items():
+            refs = _reference_peaks(amp, threshold, noise_sigma=noise)
+            refs = [p for p in refs if p[2] >= 2.0
+                    and max(amp[p[0] - 1], amp[p[0] + 1]) >= 0.5 * p[1]]
+            weak[i] = refs
+            bins = {j for p in refs for j in range(max(0, p[0] - 1), min(n_zf, p[0] + 2))}
+            if bins:
+                support[list(bins)] += 1
+        required = min(5, len(cache))
+        for i, refs in weak.items():
+            amp, noise, _old = cache[i]
+            cache[i] = (amp, noise, [p for p in refs if support[p[0]] >= required])
+        qualified = [i for i, (_row, _noise, refs) in cache.items() if refs]
+        reason = "six_sigma_fallback" if qualified else "no_supported_reference"
+    # A bounded diversity pass avoids spending all candidate FFTs on one frequency
+    # band when rescue found several. Within a band prefer stronger references.
+    ranked = sorted(qualified, key=lambda i: (-max(p[1] for p in cache[i][2]) / cache[i][1], i))
+    selected: list[int] = []
+    bands: set[int] = set()
+    for i in ranked:
+        strongest = max(cache[i][2], key=lambda p: p[1])[0]
+        band = min(15, 16 * strongest // n_zf)
+        if band not in bands:
+            selected.append(i)
+            bands.add(band)
+        if len(selected) >= keep:
+            break
+    selected.extend(i for i in ranked if i not in selected)
+    selected = selected[:keep]
+    diagnostic = {
+        "reference_sigma": threshold if selected else None,
+        "total_traces": total, "scanned_traces": len(cache), "used_traces": len(selected),
+        "trace_indices": selected, "probe_budget": budget,
+        "qualified_12": strong_count, "qualified_6": len(qualified) if threshold == 6 else 0,
+        "sampling_reason": reason, "budget_exhausted": len(cache) >= budget and budget < total,
+        "max_height_sigma": max((float(np.max(row)) / noise for row, noise, _ in cache.values()),
+                                default=0.0),
+    }
+    amps = np.stack([cache[i][0] for i in selected]) if selected else np.empty((0, n_zf))
+    return flat[selected], [cache[i][2] for i in selected], amps, diagnostic
+
+
 def _measure_trace(
     amp: np.ndarray,
     reference_peaks: list[tuple[int, float, float]] | None = None,
+    *, resolved_pairs: list[tuple[int, int]] | None = None,
 ) -> dict[str, float]:
     """Detection statistics of a single trace (the candidate spectrum is already apodised).
 
@@ -364,18 +492,19 @@ def _measure_trace(
     }
     if n < 16:
         return empty
-    peaks = detect_peaks(amp, sigma_mult=_PEAK_SIGMA_MULT, min_sep=_PEAK_MIN_SEP)
-    if not peaks:
+    # Shared references supply targets even when a candidate suppresses them below
+    # the detection threshold. Never replace an explicitly empty reference.
+    if reference_peaks is None:
+        reference_peaks = _reference_peaks(amp)
+    if not reference_peaks:
         return empty
+    peaks = [(int(p[0]), float(amp[int(p[0])])) for p in reference_peaks]
     sigma = _noise_sigma_without_peaks(amp, peaks)
     strongest_index, strongest_height = max(peaks, key=lambda item: item[1])
     fwhm = _peak_fwhm(amp, strongest_index)
     snr = float(strongest_height) / max(sigma, np.finfo(float).eps)
     shape = _shape_factor(amp, strongest_index, fwhm)
-    reference_all = reference_peaks if reference_peaks else [
-        (index, height, _peak_fwhm(amp, index)) for index, height in peaks
-    ]
-    targets = _significant_reference(reference_all)
+    targets = _significant_reference(reference_peaks)
     if not targets:
         return {**empty, "fwhm": fwhm, "snr": snr, "shape": shape, "score": snr * shape, "ok": True}
     det_sum = 0.0
@@ -387,15 +516,7 @@ def _measure_trace(
     # Merging criterion: a pair that is resolved in the reference spectrum must stay separated here
     merged = 0
     pairs = 0
-    for left, right in zip(targets, targets[1:]):
-        left_index = int(left[0])
-        right_index = int(right[0])
-        separation = float(right_index - left_index)
-        if separation <= 0.0:
-            continue
-        ref_fwhm = min(float(left[2]), float(right[2]))
-        if separation > _MERGE_PAIR_SPAN * max(ref_fwhm, 1.0):
-            continue
+    for left_index, right_index in resolved_pairs or []:
         pairs += 1
         valley = float(np.min(amp[left_index : right_index + 1]))
         smaller = min(float(amp[left_index]), float(amp[right_index]))
@@ -422,10 +543,12 @@ def _measure_trace(
 def _aggregate(
     amp_traces: np.ndarray,
     reference: list[list[tuple[int, float, float]]],
+    resolved_pairs: list[list[tuple[int, int]]],
 ) -> dict[str, float]:
-    """Detection statistics per trace, then the median (robust against individual noisy traces)."""
-    per = [_measure_trace(row, refs) for row, refs in zip(amp_traces, reference)]
-    ok = [m for m in per if m["ok"] and m["snr"] > 3.0]
+    'Detection statistics per trace, then the median (robust against individual noisy traces).'
+    per = [_measure_trace(row, refs, resolved_pairs=pairs)
+           for row, refs, pairs in zip(amp_traces, reference, resolved_pairs)]
+    ok = per  # Every candidate is measured on exactly the same traces.
     if not ok:
         return {"fwhm": float(amp_traces.shape[-1]), "snr": 0.0, "shape": 0.0,
                 "score": 0.0, "det_mean": 0.0, "n_ref": 0.0, "resolved": 0.0}
@@ -449,7 +572,7 @@ def _score_axis(
     resolution_penalty: float = 0.0,
     sw: float = 0.0,
     res_tol: float = _RES_TOL,
-) -> tuple[list[WindowChoice], WindowChoice | None, str]:
+) -> tuple[list[WindowChoice], WindowChoice | None, str, dict[str, Any]]:
     """Score the candidate windows along the given time axis; returns (choices, best, log rows).
 
     With resolution_penalty>0 an exponential penalty is applied to FWHM broadening relative to
@@ -460,11 +583,8 @@ def _score_axis(
     n = arr.shape[axis]
     moved = np.moveaxis(arr, axis, -1)
     flat = moved.reshape(-1, n)
-    energy = np.sum(np.abs(flat) ** 2, axis=-1)
-    order = np.argsort(energy)[::-1]
-    keep = min(max(int(np.ceil(order.size * 0.1)), 4), 12)
-    picked = flat[order[:keep]]
     n_zf = zf_size or n
+    picked, reference, ref_amp, sampling = _sample_references(flat, n_zf)
     # GM/EM depends on spectrum width SW; skip when SW is not provided to avoid sw=1.0 numerical
     # garbage virtual high (0.2.192 is required after adding GM).
     sw_dependent = {"gaussian", "exp"}
@@ -476,22 +596,15 @@ def _score_axis(
             continue
         scorable.append(cfg)
     # The un-windowed reference spectrum ("none" is a first-class candidate) defines the expected
-    ref_amp = np.abs(np.fft.fft(picked, n_zf, axis=-1))
-    ref_amp[:, : max(2, n_zf // 80)] = 0.0
-    ref_amp[:, n_zf - 3 :] = 0.0
-    reference = [_reference_peaks(row) for row in ref_amp]
+    resolved_pairs = [_resolved_pairs(refs, row) for refs, row in zip(reference, ref_amp)]
     reference_spacing = _min_reference_spacing(reference)
     measured: list[WindowChoice] = []
     for cfg in scorable:
         win = _window_vector(cfg, n, sw=sw)
-        work = picked * win
-        if n_zf > n:
-            work = np.pad(work, [(0, 0), (0, n_zf - n)])
-        amp = np.abs(np.fft.fft(work, axis=-1))
+        amp = np.abs(np.fft.fft(picked * win, n_zf, axis=-1))
         # Exclude low-frequency cutoff area and mirror end.
-        amp[:, : max(2, n_zf // 80)] = 0.0
-        amp[:, n_zf - 3 :] = 0.0
-        agg = _aggregate(amp, reference)
+        _mask_edges(amp)
+        agg = _aggregate(amp, reference, resolved_pairs)
         measured.append(
             WindowChoice(
                 cfg=cfg,
@@ -506,7 +619,7 @@ def _score_axis(
         )
     valid = [m for m in measured if m.snr > 0.0]
     if not valid:
-        return measured, None, tr("trace no valid signal")
+        return measured, None, tr("trace no valid signal"), sampling
     min_fwhm = min(m.fwhm for m in valid)
     # The resolution threshold comes from the closest significant pair of reference peaks
     tol_used = _effective_res_tol(res_tol, reference_spacing, min_fwhm)
@@ -522,7 +635,12 @@ def _score_axis(
         if resolution_penalty > 0.0:
             widen = max(m.fwhm / min_fwhm - 1.0, 0.0)
             m.score *= float(np.exp(-resolution_penalty * widen))
-    best = max(pool, key=lambda m: m.score)
+    positive = [m for m in pool if np.isfinite(m.score) and m.score > 0.0]
+    if not positive:
+        for m in pool:
+            m.status, m.reason = "rejected", "zero_score"
+        return measured, None, tr("trace no valid signal"), sampling
+    best = max(positive, key=lambda m: m.score)
     for m in measured:
         m.selected = m is best
     log = (
@@ -553,7 +671,7 @@ def _score_axis(
             "skip",
             p0=skipped_sw,
         )
-    return measured, best, log
+    return measured, best, log, sampling
 
 
 def optimize_axis_window(
@@ -589,7 +707,7 @@ def optimize_axis_window(
             )],
         )
     cands = candidates if candidates is not None else DEFAULT_CANDIDATES
-    measured, best, message = _score_axis(
+    measured, best, message, sampling = _score_axis(
         data, axis, cands, zf_size=zf_size,
         resolution_penalty=resolution_penalty,
         sw=sw,
@@ -600,7 +718,7 @@ def optimize_axis_window(
          "shape": m.shape, "score": m.score, "selected": m.selected,
          "merged": m.merged, "n_ref": m.n_ref,
          "status": m.status if best is not None else "rejected",
-         "reason": m.reason if best is not None else "no_valid_signal"}
+         "reason": m.reason or ("" if best is not None else "no_valid_signal")}
         for m in measured
     ]
     skipped = [dict(cfg) for cfg in cands
@@ -613,7 +731,9 @@ def optimize_axis_window(
             changed=False,
             scores=scores,
             skipped_candidates=skipped,
-            reason="no_valid_signal",
+            reason="zero_score" if any(m.reason == "zero_score" for m in measured)
+            else "no_valid_signal",
+            sampling=sampling,
             logs=[tr("{p0}: window optimisation skip:{p1}", p0=axis_label, p1=message)],
         )
     changed = best.cfg != (current or {})
@@ -632,6 +752,7 @@ def optimize_axis_window(
         status="scored",
         logs=logs,
         optimal_label=best.label,
+        sampling=sampling,
     )
 
 

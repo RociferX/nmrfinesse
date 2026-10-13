@@ -92,7 +92,7 @@ catalogues are `default.json`, `en.json`, and `zh.json`; packaging lists resourc
 
 ## Public interfaces and documentation
 
-Software version **1.0.6** and scripting API version **1.1.2** are versioned separately. For API
+Software version **1.0.7** and scripting API version **1.1.3** are versioned separately. For API
 changes, update the implementation, tests, compatibility declaration, API contract, and relevant
 external API pages together. Keep examples aligned with the supported arguments and outputs. See
 the [contributing guide](../CONTRIBUTING.md), [API contract](API_CONTRACT.md),

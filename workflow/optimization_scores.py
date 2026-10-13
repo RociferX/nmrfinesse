@@ -91,6 +91,7 @@ def window_rows(result: Any, axis: str, *, source: str, apply: bool = True) -> l
                 if selected and not apply
                 else value.get("reason", ""),
                 **{key: value.get(key) for key in ("fwhm", "snr", "shape", "merged", "n_ref")},
+                "sampling": dict(result.sampling),
             }
         )
     for cfg in result.skipped_candidates:
@@ -106,13 +107,16 @@ def window_rows(result: Any, axis: str, *, source: str, apply: bool = True) -> l
                 "applied": False,
             }
         )
-    return rows or unscored_rows(
+    rows = rows or unscored_rows(
         "window",
         [axis],
         source=source,
         status=result.status,
         reason=result.reason or "not_scored",
     )
+    for row in rows:
+        row["sampling"] = dict(result.sampling)
+    return rows
 
 
 def indirect_window_rows(result: Any, axes: list[str], *, source: str) -> list[dict[str, Any]]:

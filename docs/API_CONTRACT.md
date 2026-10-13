@@ -1,6 +1,6 @@
 # Shared interfaces and API contract
 
-Software **1.0.6** · Python/CLI API **1.1.2** · Project schema **1.4**.
+Software **1.0.7** · Python/CLI API **1.1.3** · Project schema **1.4**.
 
 ## 1. Acquisition data model
 
@@ -171,7 +171,7 @@ they do not establish independent 3D peak identities or resolve every overlap.
 
 ### 11.1 Workflow semantics
 
-API **v1.1.2** is defined once by `nmrforge_api.session.API_VERSION`. A study has labelled conditions,
+API **v1.1.3** is defined once by `nmrforge_api.session.API_VERSION`. A study has labelled conditions,
 each with an independent reference spectrum/table. Reference construction imports/converts/merges
 the specified sources and freezes the FID, schedule and conversion evidence.
 
@@ -237,7 +237,15 @@ explicit list replaces the corresponding default pool, and the highest-scoring v
 candidate is used to generate the reference. An entirely invalid pool raises an error; unspecified
 stages/directions retain defaults. Per-condition `optimization_scores.csv` records parameters and scores,
 selection and application state, plus skip or rejection reasons. These records are observational
-metadata and do not change workflow combination parameters.
+metadata and do not change workflow combination parameters. Window scoring probes at most 256 traces
+and scores up to 12 shared representative traces under an FFT-cache limit. Its fast path uses `12σ`;
+only when no eligible reference trace is found does it try `6σ`, with a supported line profile and
+five-trace frequency support (or all scanned traces when fewer than five exist). All candidates use
+the same reference peaks and traces; a trace with no valid shared reference peak contributes zero,
+and is not dropped because a candidate scores poorly. If no qualifying trace exists, ordinary
+optimization retains the current/default setting and explicit candidate requests fail. The score CSV
+includes `reference_sigma`, `scanned_traces`, `used_traces`, `total_traces` and optional `sampling_json`.
+The API signatures and 38-column peak table are unchanged.
 
 ### 11.6 Compatibility metadata
 

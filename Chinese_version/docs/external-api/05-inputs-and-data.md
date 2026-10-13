@@ -1,4 +1,4 @@
-# 05 · 输入:数据、条件与参数组合表(v1.1.2)
+# 05 · 输入:数据、条件与参数组合表(v1.1.3)
 
 ## 5.1 原始数据
 
@@ -298,7 +298,14 @@ window.F1.off,window.F2.off,zero_fill.F1,baseline.F2.enabled,points_per_line.F1
 
 ## 5.10 参考优化候选列表
 
-默认自动优化仍启用。`params["optimization_candidates"]` 显式限定窗函数和/或基线候选；
+默认自动优化仍启用。窗候选默认池在直接维和间接维各含10项：无窗、5个SP和4个Hz窗（GM/Gaussian
+`g1/g2/g3/c`分别为`8/15/0/1`、`4/8/0/1`；EM/exp的`lb/c`分别为`3/1`、`5/1`）。
+直接维同分顺序以SP`off=0.50,end=0.98,pow=2,c=0.5`优先；间接维同分顺序以无窗优先。
+四个Hz窗使用被评分逻辑轴的谱宽；该轴SW缺失或无效时跳过对应候选。分辨率门限保留直接维1.25、间接维1.15，
+显著峰间距可继续收紧。NUS直接维默认保持固定SP，默认评分候选仅作比较且不声称GM/EM应用于该维；
+显式NUS直接维候选仍只允许SP，选中项才应用。
+
+`params["optimization_candidates"]` 显式限定窗函数和/或基线候选；
 高层 `run_reference_study(params=...)` 与 `params_by_condition=...` 均接受该键，CLI 使用
 既有 `reference --params` / `--condition-params` 通道。
 
@@ -337,7 +344,8 @@ run_reference_study(
   评分行标识为`auto:1`；`order`需正整数阶数。显式基线候选网格
   不应用默认的≥95分提前跳过和增益不超过0.5时保留off规则；仍执行条纹否决，全部被否决时明确失败。
 - NUS直接维显式候选只允许SP系列，选中项写入最终重构脚本且`applied=True`；未指定时保持默认固定SP，
-  默认评分候选不覆盖该窗。NUS间接维支持SP、`none`、GM、EM。显式窗列表没有有效候选或输入不足时明确失败。
+  默认评分不改变该窗；显式直接维候选不接受GM/EM。NUS间接维支持SP、`none`、GM、EM。
+  显式窗列表没有有效候选或输入不足时明确失败。
 - 与同阶段`reference_optimize`测试开关或`phase_route="none"`冲突时前置报错。候选值和顺序进入完整参考
   输入指纹，改变后需`force=True` / CLI `--force`。候选列表不进入组合基底，组合只继承实际选中参数。
 

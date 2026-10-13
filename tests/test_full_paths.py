@@ -51,7 +51,7 @@ def _synthetic_preview(axis: int, p0: float) -> np.ndarray:
 
 
 def _spectrum_array() -> np.ndarray:
-    """Scoreable synthetic spectrum (with peaks)."""
+    'Scoreable synthetic spectrum (with peaks).'
     arr = np.zeros((64, 128), dtype=float)
     arr[30, 60] = 1000.0
     arr[20, 70] = 600.0
@@ -436,8 +436,7 @@ def test_auto_full_path(
 def test_compact_2d_nus_full_path_preserves_legal_high_coordinates(
     tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Regression for acquired-grid dimensions: keep 31 of 62 points (50%) without dropping high
-    coordinates."""
+    """Compact acquired-grid regression: preserve all 31 scheduled points and their coordinates."""
     import hashlib
     import re
 
@@ -484,7 +483,7 @@ def test_compact_2d_nus_full_path_preserves_legal_high_coordinates(
 def test_auto_full_path_1d_generates_ft1(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Regression coverage: test auto full path 1d generates ft1."""
+    'Regression coverage: test auto full path 1d generates ft1.'
     from core.data.bruker_reader import read_dataset
     from workflow.stepwise import generate_fid, generate_spectrum
 
@@ -585,7 +584,7 @@ def test_auto_uniform_runs_processing_optimization(
 
 
 # ----------------------------------------------------------------------
-# Manual path.
+# ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
 @pytest.mark.parametrize("dataset", ["hsqc_2d", "nus_2d", "hnca_3d", "nus_3d"])
 def test_explicit_reference_candidates_drive_final_processing(
@@ -631,8 +630,44 @@ def test_explicit_reference_candidates_drive_final_processing(
             assert row["candidate"] == "off:0"
         elif row["axis"] == f"F{ndim}":
             assert row["parameters"] == candidate
+            assert row["sampling"]["reference_sigma"] == 12
+            assert 0 < row["sampling"]["used_traces"] <= 12
+            assert row["sampling"]["scanned_traces"] <= 256
         else:
             assert row["parameters"] == {"type": "none"}
+            assert row["sampling"]["reference_sigma"] == 12
+
+
+@pytest.mark.parametrize("dataset", ["hsqc_2d", "nus_2d"])
+def test_weak_reference_window_scores_drive_final_processing(
+    tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch, dataset: str,
+) -> None:
+    from workflow.stepwise import generate_fid, generate_spectrum
+    from workflow.truth_benchmark import synthetic_fid
+
+    _install_spectrum_mocks(monkeypatch)
+    manager, exp_id, data_id, _raw = _manager_with_data(tmp_path, bruker_dir, dataset)
+    backend = FakeBackend(manager.data_dir(exp_id, data_id, "process"))
+    generate_fid(manager, exp_id, data_id, backend)
+    fid, _ = synthetic_fid(
+        [{"offset": 128.4, "amp": 0.6, "lw": 6}], n_points=512,
+        n_traces=64, noise=0.2, seed=57,
+    )
+    header = {"FDF1SW": 2000.0, "FDF2SW": 20000.0}
+    monkeypatch.setattr("workflow.window_optimize._load_fid", lambda *a: (fid, header))
+    candidate = {"type": "sine_bell", "off": .37, "end": .97, "pow": 1.3, "c": .5}
+    generate_spectrum(manager, exp_id, data_id, backend, params={
+        "optimization_candidates": {"window": {"direct": [candidate]},
+                                    "baseline": [{"mode": "off", "order": 0}]},
+        "_record_optimization_scores": True,
+    })
+    final = backend.reconstruct_params[-1] if dataset == "nus_2d" else backend.process_calls[-1][2]
+    assert final["window"]["F2"] == candidate
+    run = manager.last_run_for_data(exp_id, data_id, ["phase_optimize_unified"])
+    direct = [r for r in run.params["optimization_scores"]
+              if r["stage"] == "window" and r["axis"] == "F2"]
+    assert len(direct) == 1 and direct[0]["selected"] and direct[0]["applied"]
+    assert direct[0]["sampling"]["reference_sigma"] == 6
 
 
 def test_manual_full_path_uniform(

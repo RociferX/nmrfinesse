@@ -1,4 +1,4 @@
-# 05 · Input: data, condition and parameter combination table (v1.1.2)
+# 05 · Input: data, condition and parameter combination table (v1.1.3)
 
 ## 5.1 Raw data
 
@@ -145,7 +145,7 @@ run_parameter_study(..., peaks="library.list")   # or a peak_id,H_ppm,N_ppm CSV
 - All parameters that affect the result must be traceable: `parameters_requested` ->
   `parameters_used` -> `parameters_resolved` (automatic parameter actual result).
 
-### Reference cache, carrier and spectral width (v1.1.2)
+### Reference cache, carrier and spectral width (v1.1.3)
 
 Reference reuse requires an exact normalized processing request match, including phase route,
 direct range, and all parameters (nested mappings and equivalent dotted keys normalize alike).
@@ -283,7 +283,18 @@ window.F1.off,window.F2.off,zero_fill.F1,baseline.F2.enabled,points_per_line.F1
 
 ## 5.10 Explicit reference optimization candidates
 
-Reference optimization remains enabled by default. To evaluate a defined candidate set, pass
+Reference optimization remains enabled by default. Each direct and indirect dimension normally
+scores ten window candidates: no window, five SP candidates, two Gaussian/GM candidates with
+`g1/g2/g3/c = 8/15/0/1` and `4/8/0/1`, and two exponential/EM candidates with `lb/c = 3/1`
+and `5/1`. The direct-dimension tie order starts with SP `off=0.50,end=0.98,pow=2,c=0.5`;
+the indirect-dimension tie order prefers no window. The four Hz-based candidates require a valid
+sweep width for their logical axis and are skipped when it is unavailable. Resolution limits are
+1.25 for the direct dimension and 1.15 for indirect dimensions; nearby significant peaks can tighten
+those limits. Default NUS direct-dimension processing keeps its fixed SP window: default scores are
+comparative only and do not replace that window. Explicit NUS direct-dimension candidates accept SP
+types only and apply the selected SP in the final reconstruction.
+
+To evaluate a defined candidate set, pass
 `optimization_candidates` in the reference `params`. It is accepted by the high-level
 `run_reference_study(params=..., params_by_condition=...)` entry point and through the existing CLI
 `reference --params` / `--condition-params` JSON or YAML inputs; no new CLI option is required.
