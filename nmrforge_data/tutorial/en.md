@@ -5,8 +5,8 @@ typical session from importing data all the way to a peak table. Menu and button
 text the program shows (the interface language can be changed under `Settings → Software settings`,
 and this document follows it).
 
-This guide follows software 1.0.5 and API v1.1.1. The API uses the documented parameters and
-38-column peak-table contract. Download the Linux AppImage or source from the [1.0.5 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.5).
+This guide follows software 1.0.6 and API v1.1.2. The API uses the documented parameters and
+38-column peak-table contract. Download the Linux AppImage or source from the [1.0.6 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.6).
 
 ## 1. What the program does
 

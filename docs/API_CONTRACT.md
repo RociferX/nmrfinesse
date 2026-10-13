@@ -1,6 +1,6 @@
 # Shared interfaces and API contract
 
-Software **1.0.5** · Python/CLI API **1.1.1** · Project schema **1.4**.
+Software **1.0.6** · Python/CLI API **1.1.2** · Project schema **1.4**.
 
 ## 1. Acquisition data model
 
@@ -171,7 +171,7 @@ they do not establish independent 3D peak identities or resolve every overlap.
 
 ### 11.1 Workflow semantics
 
-API **v1.1.1** is defined once by `nmrforge_api.session.API_VERSION`. A study has labelled conditions,
+API **v1.1.2** is defined once by `nmrforge_api.session.API_VERSION`. A study has labelled conditions,
 each with an independent reference spectrum/table. Reference construction imports/converts/merges
 the specified sources and freezes the FID, schedule and conversion evidence.
 
@@ -231,6 +231,13 @@ Relative to the study root, studies write `study/study.json`, reference products
 Run records retain requested/resolved parameters, conversion/script provenance, warnings and tool versions.
 Resume checks workflow/condition inputs, parameters and reference evidence before reusing successful work.
 CLI `--study` and `--reference` must resolve to the same root.
+
+Reference construction accepts baseline/window pools through `optimization_candidates`. Each
+explicit list replaces the corresponding default pool, and the highest-scoring valid supplied
+candidate is used to generate the reference. An entirely invalid pool raises an error; unspecified
+stages/directions retain defaults. Per-condition `optimization_scores.csv` records parameters and scores,
+selection and application state, plus skip or rejection reasons. These records are observational
+metadata and do not change workflow combination parameters.
 
 ### 11.6 Compatibility metadata
 

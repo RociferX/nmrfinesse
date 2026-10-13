@@ -1,8 +1,8 @@
 # nmrForge documentation
 
-Software **1.0.5** · Python/CLI API **1.1.1**.
+Software **1.0.6** · Python/CLI API **1.1.2**.
 Start with the [project README](../README.md) for features, workflow, examples and evidence.
-For Linux desktop use, download the [AppImage](https://github.com/RociferX/nmrforge/releases/tag/v1.0.5)
+For Linux desktop use, download the [AppImage](https://github.com/RociferX/nmrforge/releases/tag/v1.0.6)
 and follow the [installation steps](installation.md). NMRPipe and SMILE are installed separately.
 
 ## Installation and use

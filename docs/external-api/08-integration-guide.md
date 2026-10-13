@@ -1,4 +1,4 @@
-# 08 · Handover to a downstream analysis program (v1.1.1)
+# 08 · Handover to a downstream analysis program (v1.1.2)
 
 This software ends at "spectrum + peak table + processing record". **Statistical inference and
 significance judgement belong to your own independent analysis program**, which should read the
@@ -15,6 +15,7 @@ products according to the following contract.
 | Availability of peaks | `SNR`, `fit_success`, `boundary_hit`, `fallback` (the combined mode peak table only contains detected peaks; the reference peak table also contains the reserved rows of `detected=false`) |
 | Reference | `study/records/manifest.json`: `references` (script/spectrum/peak-table hashes) and `peak_identity` |
 | Recalculation and citation | script / spectrum SHA-256, `grid_sha256`, `versions`, complete `log.txt` |
+| Reference candidate scores | `ReferenceSpectrum.optimization_scores` or the reference directory's `optimization_scores.csv`; window/baseline scores only, excluded from the combination base |
 
 ## 8.2 Minimum read example (read only, not calculated)
 

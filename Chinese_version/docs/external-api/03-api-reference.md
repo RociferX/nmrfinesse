@@ -1,6 +1,6 @@
-# 03 · API 参考(v1.1.1)
+# 03 · API 参考(v1.1.2)
 
-顶层导出见`nmrforge_api/__init__.py`，API **1.1.1**仅在`nmrforge_api.session.API_VERSION`定义。软件**1.0.5**与API分别版本化，统一峰表为38列。
+顶层导出见`nmrforge_api/__init__.py`，API **1.1.2**仅在`nmrforge_api.session.API_VERSION`定义。软件**1.0.6**与API分别版本化，统一峰表为38列。
 
 ## 3.1 会话与数据集
 
@@ -48,6 +48,8 @@ build_reference_peak_tables(session, reference, *, window_pts=None,
   相位优化),冻结谱与**实际执行的脚本**;自动相位识别的实际结果写入
   `direct_phase`(`ReferenceSpectrum.phase_record()` 给出 `phase_mode="auto"` +
   `actual_p0/actual_p1`);
+- `params["optimization_candidates"]` 可显式限定参考窗函数/基线候选；可用字段、校验、
+  默认值和评分边界见[05 §5.10](05-inputs-and-data.md#510-参考优化候选列表)。
 - `carrier_ppm: Mapping[str, float] | None` 可通过 `build_reference`、
   `run_reference_study` 或 `run_parameter_study` 的 keyword-only 参数指定，也可放在
   `params["carrier_ppm"]` 或 `params["carrier_ppm.F1"]` 中。显式 keyword 按轴覆盖公共
@@ -64,7 +66,7 @@ build_reference_peak_tables(session, reference, *, window_pts=None,
   记录 requested/resolved/source；载频参与完整参考输入指纹，变化后须 `force=True`
   重建。组合/sweep 沿用参考载频，不能用 `axes`、`combos` 或 `base_overrides` 扫描载频，
   因为这些运行复用转换后的 FID;
-- 参考输入以完整规范化请求绑定。指纹覆盖处理参数、`phase_route` 与规范化直接维范围;
+- 参考输入以完整规范化请求绑定。指纹覆盖处理参数（包括`optimization_candidates`及列表顺序）、`phase_route` 与规范化直接维范围;
   点号参数(如 `window.F1.off`)和等价的嵌套结构按相同规范形式处理。指纹保存为
   `reference.json.input_fingerprint = {"schema":"nmrforge_api.reference_input.v1",
   "params":{...},"sha256":"..."}`。仅完全一致的请求可复用参考;包括 FT、谱宽、范围、
@@ -94,6 +96,10 @@ build_reference_peak_tables(session, reference, *, window_pts=None,
 (定位 QC,只有 `parabolic` 键)、
 `stage_times_s`、`processing_audit`、`tool_versions`;方法:`direct_phase_override()`、`phase_record()`、
 `peak_table_parabolic_path`。
+
+参考构建还输出`optimization_scores.csv`；`ReferenceSpectrum.optimization_scores`提供
+路径、SHA-256、行数和结构化候选行。仅记录窗函数与基线在本轮自动优化中实际计算的分数，
+完整字段与缓存/跳过口径见[参考评分表](06-outputs-and-records.md#611-参考自动优化评分表)。
 
 ## 3.3 参数组合与 workflow 计划
 

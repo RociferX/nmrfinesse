@@ -1,6 +1,6 @@
 # 共享接口与API契约
 
-软件 **1.0.5** · Python/CLI API **1.1.1** · 项目schema **1.4**。
+软件 **1.0.6** · Python/CLI API **1.1.2** · 项目schema **1.4**。
 
 ## 1. 采集数据模型
 
@@ -139,7 +139,7 @@ GUI默认F3–F2视图、固定F1，也可保留选定平面。投影汇总三�
 
 ### 11.1 工作流语义
 
-API **v1.1.1**仅在`nmrforge_api.session.API_VERSION`定义。研究按条件标签组织，每条件有独立参考谱/峰表。
+API **v1.1.2**仅在`nmrforge_api.session.API_VERSION`定义。研究按条件标签组织，每条件有独立参考谱/峰表。
 参考构建导入、转换、合并指定源，并冻结FID、采样表和转换证据。
 
 组合研究只读复用冻结FID，执行显式参数组合/网格，逐workflow和条件独立检测/定位峰；
@@ -186,6 +186,11 @@ targeted定位只精修所选峰，不改变检出/行ID；其它检出峰保留
 相对研究根目录，产物包括`study/study.json`、参考产物、`study/workflows/<id>/<condition>/`产物，
 以及`study/records/manifest.json`、`study/records/workflows.json`、逐run记录与统一峰表。记录保留请求/采用参数、转换/脚本来源、warnings与引擎版本。
 续跑复用成功工作前核对workflow/条件输入、参数和参考证据。CLI的`--study`与`--reference`必须解析到同一根目录。
+
+参考构建可通过`optimization_candidates`接收基线/窗函数显式候选池。显式列表完整替代对应默认池，
+最高有效分候选实际用于生成参考；全部无效时报错。未指定阶段/方向保留默认策略。
+每条件的`optimization_scores.csv`记录候选参数与评分、选择及实际采用状态，以及跳过或否决原因。
+这些记录是观察性元数据，不改变workflow组合参数。
 
 ### 11.6 兼容元数据
 

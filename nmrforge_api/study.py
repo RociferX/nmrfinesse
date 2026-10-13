@@ -359,7 +359,9 @@ def run_reference_study(
                 "run",
             )
         )
-    direct = parse_direct_range(direct_range, ext_lo=ext_lo, ext_hi=ext_hi, params=params)
+    direct = parse_direct_range(
+        direct_range, ext_lo=ext_lo, ext_hi=ext_hi, params=params
+    )
     run_params = dict(params or {})
     if direct is not None:
         run_params.update(direct.params())
@@ -400,7 +402,11 @@ def run_reference_study(
                 )
             except ValueError as exc:
                 raise DatasetError(str(exc)) from exc
-        _reference_request(per_condition, direct, phase_route)
+        experiment = (
+            read_experiment(session.manager, ref.exp_id, ref.data_id)
+            if per_condition.get("optimization_candidates") else None
+        )
+        _reference_request(per_condition, direct, phase_route, experiment=experiment)
         reference = None if force else load_reference(session, ref)
         if reference is not None:
             validate_reference_input(reference, per_condition, direct_range=direct,
@@ -419,6 +425,7 @@ def run_reference_study(
                 force=True,
             )
         references[ref.key] = reference
+    # Every condition picks its own spectrum; peak IDs are local, not correspondences.
     for ref in session.datasets:
         references[ref.key] = ensure_reference_peaks(
             session,
@@ -431,11 +438,15 @@ def run_reference_study(
         # optional: the study's own table (public archive or assigned) becomes the primary identity
         primary = session.datasets[0]
         target = session.reference_dir_for(primary) / "reference.list"
-        target.write_text(Path(peaks).read_text(encoding="utf-8-sig"), encoding="utf-8")
+        target.write_text(
+            Path(peaks).read_text(encoding="utf-8-sig"), encoding="utf-8"
+        )
         primary_reference = set_reference_peaks(
             session, target, references[primary.key], source="external"
         )
-        references[primary.key] = build_reference_peak_tables(session, primary_reference)
+        references[primary.key] = build_reference_peak_tables(
+            session, primary_reference
+        )
         # Explicit external peaks apply only to the selected primary condition.
     records: dict[str, str] = {}
     if write:
@@ -561,7 +572,11 @@ def run_combination_study(
     """
     handle = parse_reference_spec(reference)
     session, target, ref = resolve_reference(reference, backend=backend)
-    targets = [target] if (handle.condition or handle.reference_json) else list(session.datasets)
+    targets = (
+        [target]
+        if (handle.condition or handle.reference_json)
+        else list(session.datasets)
+    )
     references: dict[str, ReferenceSpectrum] = {}
     for item in targets:
         if item.key == target.key:
@@ -722,12 +737,12 @@ def run_parameter_study(
     sigma_multiplier: float | None = None,
     max_peaks: int = 0,
     max_runs: int = DEFAULT_MAX_RUNS,
-    window_pts: int | None = None,  # legacy (unused in combination mode)
-    window_ppm: float | None = None,  # legacy (unused in combination mode)
+    window_pts: int | None = None,          # legacy (unused in combination mode)
+    window_ppm: float | None = None,        # legacy (unused in combination mode)
     sign: str = "abs",
-    localization: Any = "parabolic",
-    localize_peaks: Any = None,
-    edge_margin_ppm: float | None = None,
+    localization: Any = "parabolic",        # Combined-mode refinement method (parabolic only).
+    localize_peaks: Any = None,              # Combined-mode target peaks (CSV or indices).
+    edge_margin_ppm: float | None = None,   # Combined-mode peak-picking margin in physical width.
     force: bool = False,
     resume: bool = True,
     backend: Any | None = None,
@@ -862,7 +877,9 @@ def _summary(
                 "condition": ref.condition,
                 "peak_count": ref.peak_count,
                 "peak_source": ref.peak_source,
-                "sigma_multiplier": (ref.peak_params or {}).get("sigma_multiplier"),
+                "sigma_multiplier": (ref.peak_params or {}).get(
+                    "sigma_multiplier"
+                ),
                 "peak_tables": ref.peak_tables,
                 "script_sha256": ref.script_sha256,
                 "spectrum_sha256": ref.spectrum_sha256,

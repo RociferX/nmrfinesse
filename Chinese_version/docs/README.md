@@ -1,8 +1,8 @@
 # nmrForge 文档导航
 
-软件 **1.0.5** · Python/CLI API **1.1.1**。
+软件 **1.0.6** · Python/CLI API **1.1.2**。
 [项目README](../README.md)介绍功能、工作流、示例和证据。
-Linux桌面使用可直接下载[AppImage](https://github.com/RociferX/nmrforge/releases/tag/v1.0.5)，按[安装说明](installation.md)启动；NMRPipe和SMILE另行安装。
+Linux桌面使用可直接下载[AppImage](https://github.com/RociferX/nmrforge/releases/tag/v1.0.6)，按[安装说明](installation.md)启动；NMRPipe和SMILE另行安装。
 
 ## 安装与使用
 

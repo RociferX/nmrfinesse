@@ -5,9 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from core.data.bruker_reader import read_dataset
 from workflow.baseline_optimize import optimize_baseline
+from workflow.optimization_candidates import CandidateSelectionError
+from workflow.optimization_scores import baseline_rows
 
 
 def _write_ft2(path: Path, data: np.ndarray) -> None:
@@ -29,9 +32,12 @@ def _write_ft2(path: Path, data: np.ndarray) -> None:
     pipe.write(str(path), dic, data.astype(np.float32), overwrite=True)
 
 
-def test_optimize_baseline_direct_axis_slope(tmp_path: Path, bruker_dir: Path) -> None:
+def test_optimize_baseline_direct_axis_slope(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """Direct dimension (F2) linear drift: optimisation selects a correction (off score is below
-    the best)."""
+    the best).
+    """
     spec = np.zeros((32, 64))
     spec += np.linspace(-50.0, 50.0, 64)[np.newaxis, :]
     ft2 = tmp_path / "spec.ft2"
@@ -44,12 +50,15 @@ def test_optimize_baseline_direct_axis_slope(tmp_path: Path, bruker_dir: Path) -
     # The direct dimension has a correction, and off is not the best
     assert result.baseline["F2"]["enabled"] is True
     assert result.scores["F2"]["off:0"] < max(result.scores["F2"].values())
+    assert result.off_scores["F2"] == result.scores["F2"]["off:0"]
     joined = "\n".join(result.logs)
     assert "F2" in joined and "基线已优化" in joined
     assert "F1" in joined and "未优化" in joined
 
 
-def test_optimize_baseline_grid_contains_off_and_orders(tmp_path: Path, bruker_dir: Path) -> None:
+def test_optimize_baseline_grid_contains_off_and_orders(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     experiment = read_dataset(bruker_dir / "hsqc_2d")
     # Medium-quality spectrum (off score <95): the candidate grid must really run
     spec = np.full((32, 64), 100.0)
@@ -63,7 +72,9 @@ def test_optimize_baseline_grid_contains_off_and_orders(tmp_path: Path, bruker_d
     assert "order:3" in result.scores["F2"]
 
 
-def test_optimize_baseline_good_baseline_skips_grid(tmp_path: Path, bruker_dir: Path) -> None:
+def test_optimize_baseline_good_baseline_skips_grid(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """0.2.199-patch8: an axis with off score >= 95 skips the candidate grid and stays off."""
     experiment = read_dataset(bruker_dir / "hsqc_2d")
     spec = np.zeros((32, 64))
@@ -76,9 +87,71 @@ def test_optimize_baseline_good_baseline_skips_grid(tmp_path: Path, bruker_dir: 
     assert any("基线已良好" in line for line in result.logs)
 
 
-def test_optimize_baseline_reports_progress(tmp_path: Path, bruker_dir: Path) -> None:
+def test_explicit_baseline_grid_ignores_early_skip_and_off_gain_rule(
+    tmp_path: Path, bruker_dir: Path,
+) -> None:
+    experiment = read_dataset(bruker_dir / "hsqc_2d")
+    spectrum = tmp_path / "explicit.ft2"
+    _write_ft2(spectrum, np.zeros((32, 64)))
+    result = optimize_baseline(
+        experiment, spectrum, grid=[("order", 4), ("order", 2)],
+        score_fn=lambda array, axis: 100.0, strict_candidates=True,
+    )
+    for axis in ("F1", "F2"):
+        assert list(result.scores[axis]) == ["order:4", "order:2"]
+        assert result.baseline[axis] == {"enabled": True, "mode": "order", "order": 4}
+        assert result.selected_candidates[axis] == "order:4"
+    assert all(row["candidate"] != "off:0" for row in baseline_rows(result))
+
+
+def test_all_vetoed_explicit_baselines_fail_instead_of_adding_off(
+    tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    experiment = read_dataset(bruker_dir / "hsqc_2d")
+    spectrum = tmp_path / "vetoed.ft2"
+    _write_ft2(spectrum, np.zeros((32, 64)))
+    monkeypatch.setattr("workflow.baseline_optimize._has_stripe_artifact", lambda *a, **k: True)
+    with pytest.raises(CandidateSelectionError, match="No valid explicit baseline"):
+        optimize_baseline(experiment, spectrum, grid=[("order", 4)], strict_candidates=True)
+
+
+def test_non_finite_explicit_baseline_scores_fail(
+    tmp_path: Path, bruker_dir: Path,
+) -> None:
+    experiment = read_dataset(bruker_dir / "hsqc_2d")
+    spectrum = tmp_path / "nonfinite.ft2"
+    _write_ft2(spectrum, np.zeros((32, 64)))
+    with pytest.raises(CandidateSelectionError, match="No valid explicit baseline"):
+        optimize_baseline(
+            experiment, spectrum, grid=[("off", 0)], strict_candidates=True,
+            score_fn=lambda array, axis: float("nan"),
+        )
+
+
+def test_valid_explicit_baseline_beats_non_finite_candidate(
+    tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    experiment = read_dataset(bruker_dir / "hsqc_2d")
+    spectrum = tmp_path / "partly-valid.ft2"
+    _write_ft2(spectrum, np.zeros((32, 64)))
+    monkeypatch.setattr("workflow.baseline_optimize._has_stripe_artifact", lambda *a, **k: False)
+    scores = iter([0.0, float("nan"), 50.0] * 2)
+    result = optimize_baseline(
+        experiment, spectrum, grid=[("off", 0), ("order", 1)], strict_candidates=True,
+        score_fn=lambda array, axis: next(scores),
+    )
+    rows = baseline_rows(result)
+    assert all(row["candidate"] == "order:1" for row in rows if row["selected"])
+    rejected = [row for row in rows if row["candidate"] == "off:0"]
+    assert all(row["score"] is None and row["reason"] == "non_finite_score" for row in rejected)
+
+
+def test_optimize_baseline_reports_progress(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """0.2.199-patch7: baseline optimisation reports progress per axis/candidate (a candidate runs
-    only when off score <95)."""
+    only when off score <95).
+    """
     spec = np.full((32, 64), 100.0)
     spec += np.linspace(-1.0, 1.0, 64)[np.newaxis, :]
     ft2 = tmp_path / "spec.ft2"
@@ -90,9 +163,12 @@ def test_optimize_baseline_reports_progress(tmp_path: Path, bruker_dir: Path) ->
     assert any("score=" in m for m in messages)
 
 
-def test_optimize_baseline_cancelled_raises(tmp_path: Path, bruker_dir: Path) -> None:
+def test_optimize_baseline_cancelled_raises(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """0.2.199-patch7: with the cancel flag set, baseline optimisation raises an exception and
-    exits at once (off score <95)."""
+    exits at once (off score <95).
+    """
     import pytest
 
     spec = np.full((32, 64), 100.0)
@@ -116,7 +192,9 @@ def test_decimated_reduces_traces() -> None:
         assert dec.ndim == 3
 
 
-def test_optimize_baseline_small_max_traces_works(tmp_path: Path, bruker_dir: Path) -> None:
+def test_optimize_baseline_small_max_traces_works(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """0.2.199-patch8: small max_traces still yields a valid baseline config."""
     spec = np.zeros((32, 64))
     ft2 = tmp_path / "spec.ft2"

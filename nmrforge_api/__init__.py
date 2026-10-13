@@ -1,4 +1,4 @@
-"""NMRForge parameter-combination API (v1.1.1, current version identifier 2026-10-10).
+"""NMRForge parameter-combination API (v1.1.2, current version identifier 2026-10-13).
 
 What it does (Qt-free, scriptable, cluster friendly):
 

@@ -1,4 +1,4 @@
-# 02 · Get started quickly (v1.1.1)
+# 02 · Get started quickly (v1.1.2)
 
 ## 1. Two modes
 
@@ -50,6 +50,34 @@ for run in result.runs:
   supplying a sub-parameter for an axis whose reference window type is `none` or `off` raises an error;
 - Baseline: `baseline.<axis>.mode=order` renders `POLY -ord N -auto`; `mode=auto` renders
   `POLY -auto`. A condition whose spectrum does not change is recorded with `no_spectrum_change`.
+
+### Explicit reference optimization candidates
+
+Reference optimization uses default pools unless candidates are supplied. Explicit lists replace the
+corresponding pool in full; the optimizer scores only those candidates and selects the highest valid
+score. The parameter structure and validation limits are documented in [05 §5.10](05-inputs-and-data.md#510-explicit-reference-optimization-candidates).
+
+```python
+reference = run_reference_study(
+    "~/studies/hsqc_candidates",
+    datasets={"A": "~/data/bmr12345/1"},
+    params={"optimization_candidates": {
+        "window": {
+            "direct": [
+                {"type": "sine_bell", "off": 0.35, "end": 0.98, "pow": 1, "c": 0.5},
+                {"type": "sine_bell_squared", "off": 0.45, "end": 0.98, "pow": 2, "c": 0.5},
+            ],
+            "indirect": [
+                {"type": "sine_bell", "off": 0.35, "end": 0.98, "pow": 1, "c": 0.5},
+            ],
+        },
+        "baseline": [
+            {"mode": "off", "order": 0},
+            {"mode": "order", "order": 4},
+        ],
+    }},
+)
+```
 
 ## 2. The two conditions (A/B) are the same as parameter
 

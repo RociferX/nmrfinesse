@@ -1,87 +1,23 @@
-"""Window function optimisation: direct dimension + indirect dimension, one in-memory scoring
-engine (no re-running SMILE/process).
+"""Per-axis window selection from FID/reconstructed traces, without candidate engine reruns.
 
-The user rules (0.2.139) apply to every dimension:
-1. the evaluation only Fourier-transforms that dimension (the window goes in front of the FT),
-and
-   every candidate is scored in memory on the original FID / reconstructed plane traces;
-2. resolution first: filter by FWHM (points) and keep only candidates whose line width is
-   <= 1.25x the best one;
-3. inside the qualifying pool, balance signal-to-noise against line shape:
-   score = 0.5*snr_norm + 0.5*shape_norm;
-4. no window (none) is a first-class candidate: an axis with natural decay / a fully sampled FID
-   tail must be able to select no window correctly, while an axis that needs truncation ringing
-   suppressed or noise reduced gets the suitable window from the score.
+Score the magnitude of the one-axis Fourier transform on up to 12 high-energy traces.
+Unwindowed reference peaks use 12-sigma detection; only peaks at least 25% of the strongest
+reference peak in each trace enter the detection/near-neighbour criteria. Noise excludes all
+detected peaks where sufficient background remains.
 
-0.2.190 (restore real window selection): 0.2.189 hard-coded the indirect dimension to no window
---
-a misreading of the requirement in the previous window. The correct behaviour is that no window
-takes part in the scoring and is picked when it really is optimal (natural decay, where
-apodisation
-only broadens); the direct dimension likewise restores the 0.5-0.98 candidates into the scoring
-(the resolution filter is relaxed to 1.25x so a user's preferred mild window is not excluded up
-front).
+Each trace scores mean capped detection strength (height/noise, cap 30) times a near-pair
+separation factor times the strongest-peak shape factor (symmetry and side-wing penalty).
+Near pairs are within 1.5 times the smaller reference FWHM; a valley above 0.6 times the
+smaller candidate height counts as merged. Aggregate valid traces by the median.
 
-0.2.192 (GM returns): the GM (Lorentz-to-Gauss) formula is now aligned point by point with
-measured
-NMRPipe (0.2.191, k=1/(2*sqrt(ln2))), so it rejoins the direct-dimension default candidate pool
-(GM g1=8 g2=15). GM/EM depend on the spectral width SW, so they are skipped when the scoring
-gets
-no SW (that avoids the garbage inflation at sw=1.0); the indirect-dimension pool gets no GM --
-the
-inflated signal-to-noise of an apodised resolution-limited indirect dimension would overturn the
-no-window choice of a naturally decaying axis (0.2.190 requires keeping it).
+Filter candidate FWHM at 1.25 times the narrowest (direct) or 1.15 times (indirect), tightened
+by significant reference spacing. Indirect scores also receive an exponential broadening
+penalty. GM/EM require sweep width. The highest-scoring eligible candidate wins; ties keep
+input order. This proxy does not certify all weak peaks or final phased-spectrum quality.
 
-The selected configuration is written back to window[axis] (type=none/sine_bell/gaussian/exp,
-...)
-and applied by the final-run full script; any failure degrades to returning the current
-configuration and never blocks automatic processing.
-
-2026-09-22 (user: "fix the window selection"): the scoring moved from "peak/noise of the
-strongest
-peak only" to three **detection-oriented** factors, anchored on the ground-truth benchmark (see
-``workflow/truth_benchmark.py``) instead of a self-referential metric:
-
-1. **the noise estimate excludes every detected peak**, not just the neighbourhood of the
-strongest
-   one -- in a crowded region the old convention treated a neighbouring peak as noise,
-   overestimating the noise and flattening the differences between candidates;
-2. **merging peaks is penalised directly**: the peaks of the un-windowed reference spectrum are
-the
-   expected peaks, and every candidate is checked for whether each of them is still a
-   **separate**
-   local maximum; two expected peaks inside one maximum = one real peak lost (a false negative
-   in
-   the ground-truth benchmark), so the score is multiplied by (independent maxima / expected
-   peaks);
-3. **the resolution threshold is data driven**: the tolerance is no longer a fixed 1.25x but
-comes
-   from the **closest pair** of peaks in the reference spectrum (``_effective_res_tol``): the
-   worst
-   FWHM after apodisation may not exceed the closest spacing, and widely separated peaks are not
-   tightened further.
-
-The expected-peak threshold is ``_PEAK_SIGMA_MULT`` = **12 sigma**: it is not an arbitrarily low
-value (with a low threshold the truncation side lobes of the un-windowed spectrum are themselves
-counted as peaks and the merging criterion reads "the side lobes were always there" as "the
-window
-merged peaks" -- measured: at 6 sigma a single-peak synthetic spectrum reports a dozen expected
-peaks), and it is **not** the peak-picking default of 35 sigma either -- 35 sigma is the default
-prepared for strong-signal liquid spectra, whose value is that it stays applicable in more
-situations rather than being the peak set the window choice should look at. Window selection has
-to
-judge "did this window merge peaks that were resolved to begin with", so the peak set has to
-cover
-weak peaks.
-
-Score = median over traces of (mean detection d x independent-maxima fraction x line-shape
-factor);
-each factor has a clear job (detection strength / resolution loss / artefacts) instead of being
-normalised into one pool where they cancel out. The convention is locked by the synthetic
-ground-truth benchmark in ``tests/test_window_truth_benchmark.py``: on synthetic data with
-injected
-peaks, the window the optimiser picks must agree with the candidate that recovers the truth best
-(within tolerance).
+Default pools allow graceful fallback. Explicit pools use strict_candidates=True and fail
+when no valid choice is available, so they cannot silently use a default configuration.
+NUS direct-window application is coordinated by phase_routes because SMILE requires SP.
 """
 
 from __future__ import annotations
@@ -94,6 +30,7 @@ import numpy as np
 
 from core.data.internal_data_model import Experiment
 from ui_support.i18n import tr
+from workflow.optimization_candidates import CandidateSelectionError
 from workflow.truth_benchmark import detect_peaks, robust_noise_sigma
 
 
@@ -112,6 +49,8 @@ class WindowChoice:
     merged: float = 0.0
     #: number of expected peaks on the reference spectrum (denominator of the detection stats)
     n_ref: float = 0.0
+    status: str = "scored"
+    reason: str = ""
 
 
 @dataclass
@@ -123,6 +62,9 @@ class WindowOptimizeResult:
     scores: list[dict[str, Any]] = field(default_factory=list)
     logs: list[str] = field(default_factory=list)
     optimal_label: str = ""
+    skipped_candidates: list[dict[str, Any]] = field(default_factory=list)
+    status: str = "skipped"
+    reason: str = ""
 
 
 @dataclass
@@ -135,6 +77,8 @@ class MultiWindowOptimizeResult:
     changed: bool
     per_axis: dict[str, WindowOptimizeResult] = field(default_factory=dict)
     logs: list[str] = field(default_factory=list)
+    status: str = "skipped"
+    reason: str = ""
 
 
 # Direct dimension candidate: user rule (0.2.189)0.5-0.98 is listed as the first choice, and other
@@ -142,8 +86,6 @@ class MultiWindowOptimizeResult:
 # consistent with direct_ft_traces and only models the sin term); gaussian(GM)0.2.192 is added
 # (0.2.191 has been measured point by point with NMRPipe Alignment, k=1/(2*sqrt(ln2))), GM/EM
 # depends on the spectrum width SW, not provided during scoring SW automatically skipped; indirect
-# dimension candidate pool is not added GM (resolution is limited, indirect dimension will be
-# overturned due to GM falsely high signal-to-noise ratio without window).
 DEFAULT_CANDIDATES: list[dict[str, Any]] = [
     {"type": "sine_bell", "off": 0.50, "end": 0.98, "pow": 2, "c": 0.5},
     {"type": "none"},
@@ -155,7 +97,6 @@ DEFAULT_CANDIDATES: list[dict[str, Any]] = [
 ]
 
 # Indirect dimension candidate: No window is listed as the first choice (natural attenuation
-# indirect dimension should be able to correctly select no window), and the rest of the same family.
 INDIRECT_CANDIDATES: list[dict[str, Any]] = [
     {"type": "none"},
     {"type": "sine_bell", "off": 0.30, "end": 0.98, "pow": 1, "c": 0.5},
@@ -172,35 +113,24 @@ _RES_TOL = 1.25
 # The indirect dimension resolution pool is tighter (1.15x): indirect dimension resolution is
 # limited, and apodisation should be correctly dropped without a window when it is only widened.
 # After the 0.2.191 window formula is consistent with NMRPipe point by point (SP first point
-# multiplied by -c), the false high of the signal-to-noise ratio of apodisation will be amplified by
-# the 1.25x pool and overturned. Tightening the pool ensures that the natural attenuation axis is
-# deterministic and only leaves no window.
 _INDIRECT_RES_TOL = 1.15
 
 # Peak detection convention used for the detection statistics (same function as
 # workflow/truth_benchmark.detect_peaks): threshold = noise sigma x 12 (**not** the product's
 # default peak-picking threshold of 35 sigma, see below); minimum separation 2 points.
+#
 # The cap on d only affects the ordering among very strong peaks; 30 is an empirical value (higher
 # values do not change the window choice, they only amplify numerical noise).
 #
 # Why 12 sigma and not the pick-peaking default of 35 sigma (2026-09-22, user): 35 sigma is the
-# default prepared for **strong-signal liquid spectra**; its value is that it stays applicable in
-# more situations, not that it is the peak set the window choice should look at. Window selection
-# asks "did this window merge peaks that were resolved to begin with", so the peak set has to cover
-# weak peaks too; the higher the threshold, the earlier weak peaks disappear and the less the
-# merging criterion can see. 12 sigma is the threshold these real datasets use in the reference
-# workflow and it also keeps the synthetic close-pair criterion sensitive.
 _PEAK_SIGMA_MULT = 12.0
 _PEAK_MIN_SEP = 2
 _DETECTION_CAP = 30.0
 #: A local maximum below this fraction of the strongest reference peak is not an expected peak
-#: (truncation side lobes sit around 21%)
 _REFERENCE_MIN_FRACTION = 0.25
 #: Merging criterion: two reference peaks closer than this multiple of the smaller FWHM count as a
-#: pair that was resolved to begin with
 _MERGE_PAIR_SPAN = 1.5
 #: Merging criterion: the valley between them must drop below this fraction of the smaller peak;
-#: a valley that does not drop means the window merged the two peaks into one
 _MERGE_VALLEY_FRACTION = 0.6
 
 
@@ -218,7 +148,9 @@ def _label(cfg: dict[str, Any]) -> str:
     )
 
 
-def _window_vector(cfg: dict[str, Any], n: int, sw: float = 0.0) -> np.ndarray:
+def _window_vector(
+    cfg: dict[str, Any], n: int, sw: float = 0.0
+) -> np.ndarray:
     """NMRPipe-semantic window vector (0.2.191, aligned point by point with measured nmrPipe and
     its source).
 
@@ -260,6 +192,7 @@ def _window_vector(cfg: dict[str, Any], n: int, sw: float = 0.0) -> np.ndarray:
         c = float(cfg.get("c", 0.5))
     w[0] *= c
     return w
+
 
 
 def _peak_fwhm(amp: np.ndarray, index: int) -> float:
@@ -335,7 +268,9 @@ def _reference_peaks(amp: np.ndarray) -> list[tuple[int, float, float]]:
     """
     return [
         (index, height, _peak_fwhm(amp, index))
-        for index, height in detect_peaks(amp, sigma_mult=_PEAK_SIGMA_MULT, min_sep=_PEAK_MIN_SEP)
+        for index, height in detect_peaks(
+            amp, sigma_mult=_PEAK_SIGMA_MULT, min_sep=_PEAK_MIN_SEP
+        )
     ]
 
 
@@ -354,7 +289,11 @@ def _significant_reference(
     strongest = max((float(item[1]) for item in reference), default=0.0)
     if strongest <= 0.0:
         return []
-    return [item for item in reference if float(item[1]) >= _REFERENCE_MIN_FRACTION * strongest]
+    return [
+        item
+        for item in reference
+        if float(item[1]) >= _REFERENCE_MIN_FRACTION * strongest
+    ]
 
 
 def _min_reference_spacing(reference: list[list[tuple[int, float, float]]]) -> float:
@@ -420,14 +359,8 @@ def _measure_trace(
     """
     n = amp.size
     empty = {
-        "fwhm": float(n),
-        "snr": 0.0,
-        "shape": 0.0,
-        "score": 0.0,
-        "det_mean": 0.0,
-        "n_ref": 0.0,
-        "resolved": 0.0,
-        "ok": False,
+        "fwhm": float(n), "snr": 0.0, "shape": 0.0, "score": 0.0,
+        "det_mean": 0.0, "n_ref": 0.0, "resolved": 0.0, "ok": False,
     }
     if n < 16:
         return empty
@@ -439,17 +372,17 @@ def _measure_trace(
     fwhm = _peak_fwhm(amp, strongest_index)
     snr = float(strongest_height) / max(sigma, np.finfo(float).eps)
     shape = _shape_factor(amp, strongest_index, fwhm)
-    reference_all = (
-        reference_peaks
-        if reference_peaks
-        else [(index, height, _peak_fwhm(amp, index)) for index, height in peaks]
-    )
+    reference_all = reference_peaks if reference_peaks else [
+        (index, height, _peak_fwhm(amp, index)) for index, height in peaks
+    ]
     targets = _significant_reference(reference_all)
     if not targets:
         return {**empty, "fwhm": fwhm, "snr": snr, "shape": shape, "score": snr * shape, "ok": True}
     det_sum = 0.0
     for index, _height, _ref_fwhm in targets:
-        det_sum += min(float(amp[int(index)]) / max(sigma, np.finfo(float).eps), _DETECTION_CAP)
+        det_sum += min(
+            float(amp[int(index)]) / max(sigma, np.finfo(float).eps), _DETECTION_CAP
+        )
     det_mean = det_sum / len(targets)
     # Merging criterion: a pair that is resolved in the reference spectrum must stay separated here
     merged = 0
@@ -494,15 +427,8 @@ def _aggregate(
     per = [_measure_trace(row, refs) for row, refs in zip(amp_traces, reference)]
     ok = [m for m in per if m["ok"] and m["snr"] > 3.0]
     if not ok:
-        return {
-            "fwhm": float(amp_traces.shape[-1]),
-            "snr": 0.0,
-            "shape": 0.0,
-            "score": 0.0,
-            "det_mean": 0.0,
-            "n_ref": 0.0,
-            "resolved": 0.0,
-        }
+        return {"fwhm": float(amp_traces.shape[-1]), "snr": 0.0, "shape": 0.0,
+                "score": 0.0, "det_mean": 0.0, "n_ref": 0.0, "resolved": 0.0}
     return {
         "fwhm": float(np.median([m["fwhm"] for m in ok])),
         "snr": float(np.median([m["snr"] for m in ok])),
@@ -550,7 +476,6 @@ def _score_axis(
             continue
         scorable.append(cfg)
     # The un-windowed reference spectrum ("none" is a first-class candidate) defines the expected
-    # peaks that every candidate has to keep.
     ref_amp = np.abs(np.fft.fft(picked, n_zf, axis=-1))
     ref_amp[:, : max(2, n_zf // 80)] = 0.0
     ref_amp[:, n_zf - 3 :] = 0.0
@@ -584,7 +509,6 @@ def _score_axis(
         return measured, None, tr("trace no valid signal")
     min_fwhm = min(m.fwhm for m in valid)
     # The resolution threshold comes from the closest significant pair of reference peaks
-    # (data driven instead of a fixed multiple)
     tol_used = _effective_res_tol(res_tol, reference_spacing, min_fwhm)
     pool = [m for m in valid if m.fwhm <= min_fwhm * tol_used] or valid
     pool_ids = {id(m) for m in pool}
@@ -592,6 +516,8 @@ def _score_axis(
         if id(m) not in pool_ids:
             # Candidates outside the resolution pool are not compared (resolution first, 0.2.139)
             m.score = 0.0
+            m.status = "rejected"
+            m.reason = "resolution_gate" if m.snr > 0.0 else "no_valid_signal"
             continue
         if resolution_penalty > 0.0:
             widen = max(m.fwhm / min_fwhm - 1.0, 0.0)
@@ -599,28 +525,32 @@ def _score_axis(
     best = max(pool, key=lambda m: m.score)
     for m in measured:
         m.selected = m is best
-    log = tr(
-        "optimal {p0} (FWHM {p1:.2f}point, SNR {p2:.1f}, shape {p3:.3f}, score {p4:.3f}); "
-        "qualifying pool {p5}/{p6} candidate(s) (resolution >= "
-        "{p7:.2f}point)",
-        p0=best.label,
-        p1=best.fwhm,
-        p2=best.snr,
-        p3=best.shape,
-        p4=best.score,
-        p5=len(pool),
-        p6=len(measured),
-        p7=min_fwhm * tol_used,
+    log = (
+        tr(
+            "optimal {p0} (FWHM {p1:.2f}point, SNR {p2:.1f}, shape {p3:.3f}, score {p4:.3f}); "
+            "qualifying pool {p5}/{p6} candidate(s) (resolution >= "
+            "{p7:.2f}point)",
+            p0=best.label,
+            p1=best.fwhm,
+            p2=best.snr,
+            p3=best.shape,
+            p4=best.score,
+            p5=len(pool),
+            p6=len(measured),
+            p7=min_fwhm * tol_used,
+        )
     )
     if best.merged > 0.0:
         log += tr(
-            "; {p0}/{p1} expected peak(s) were merged into one detection by this window",
+            "; {p0}/{p1} expected peak(s) were merged into one detection by this "
+            "window",
             p0=int(round(best.merged)),
             p1=int(round(best.n_ref)),
         )
     if skipped_sw:
         log += tr(
-            "; {p0} spectral width dependent candidates (GM/EM) not provided SW skip",
+            "; {p0} spectral width dependent candidates (GM/EM) not provided SW "
+            "skip",
             p0=skipped_sw,
         )
     return measured, best, log
@@ -637,65 +567,69 @@ def optimize_axis_window(
     resolution_penalty: float = 0.0,
     sw: float = 0.0,
     res_tol: float = _RES_TOL,
+    strict_candidates: bool = False,
 ) -> WindowOptimizeResult:
     """Score candidate windows along arr's axis timeline (shared engine, used by the direct and
     indirect dimensions).
     """
     data = np.asarray(arr)
     if data.ndim < 1 or data.shape[axis] < 16:
+        if strict_candidates:
+            raise CandidateSelectionError(
+                f"Insufficient points for explicit window candidates: {axis_label}"
+            )
         return WindowOptimizeResult(
             choice=dict(current or {}),
             changed=False,
-            logs=[
-                tr(
-                    "{p0}: window optimisation skip: insufficient points in this axis",
-                    p0=axis_label,
-                )
-            ],
+            reason="insufficient_points",
+            logs=[tr(
+                "{p0}: window optimisation skip: insufficient points in this "
+                "axis",
+                p0=axis_label,
+            )],
         )
     cands = candidates if candidates is not None else DEFAULT_CANDIDATES
     measured, best, message = _score_axis(
-        data,
-        axis,
-        cands,
-        zf_size=zf_size,
+        data, axis, cands, zf_size=zf_size,
         resolution_penalty=resolution_penalty,
         sw=sw,
         res_tol=res_tol,
     )
+    scores = [
+        {"cfg": dict(m.cfg), "label": m.label, "fwhm": m.fwhm, "snr": m.snr,
+         "shape": m.shape, "score": m.score, "selected": m.selected,
+         "merged": m.merged, "n_ref": m.n_ref,
+         "status": m.status if best is not None else "rejected",
+         "reason": m.reason if best is not None else "no_valid_signal"}
+        for m in measured
+    ]
+    skipped = [dict(cfg) for cfg in cands
+               if cfg.get("type") in {"gaussian", "exp"} and sw <= 0.0]
     if best is None:
+        if strict_candidates:
+            raise CandidateSelectionError(f"No valid explicit window candidate for {axis_label}")
         return WindowOptimizeResult(
             choice=dict(current or {}),
             changed=False,
+            scores=scores,
+            skipped_candidates=skipped,
+            reason="no_valid_signal",
             logs=[tr("{p0}: window optimisation skip:{p1}", p0=axis_label, p1=message)],
         )
     changed = best.cfg != (current or {})
     logs = [tr("{p0}: window(memory score): {p1}", p0=axis_label, p1=message)]
     if not changed:
-        logs.append(
-            tr(
-                "{p0}: Window: The optimal configuration is consistent with the existing "
-                "configuration "
-                "and remains",
-                p0=axis_label,
-            )
-        )
+        logs.append(tr(
+            "{p0}: Window: The optimal configuration is consistent with the existing configuration "
+            "and remains",
+            p0=axis_label,
+        ))
     return WindowOptimizeResult(
         choice=dict(best.cfg),
         changed=changed,
-        scores=[
-            {
-                "label": m.label,
-                "fwhm": m.fwhm,
-                "snr": m.snr,
-                "shape": m.shape,
-                "score": m.score,
-                "selected": m.selected,
-                "merged": m.merged,
-                "n_ref": m.n_ref,
-            }
-            for m in measured
-        ],
+        scores=scores,
+        skipped_candidates=skipped,
+        status="scored",
         logs=logs,
         optimal_label=best.label,
     )
@@ -708,6 +642,7 @@ def optimize_direct_window(
     candidates: list[dict[str, Any]] | None = None,
     current: dict[str, Any] | None = None,
     sw: float = 0.0,
+    strict_candidates: bool = False,
 ) -> WindowOptimizeResult:
     """Score candidate windows on the original fid direct dimension trace (last axis), returning
     the optimal configuration.
@@ -720,6 +655,7 @@ def optimize_direct_window(
         current=current,
         axis_label=tr("direct dimension"),
         sw=sw,
+        strict_candidates=strict_candidates,
     )
 
 
@@ -731,6 +667,7 @@ def optimize_indirect_windows(
     current: dict[str, dict[str, Any]] | None = None,
     zf_mult: float = 2.0,
     sw_map: dict[str, float] | None = None,
+    strict_candidates: bool = False,
 ) -> MultiWindowOptimizeResult:
     """Score the candidate windows of every indirect-dimension timeline (no window included) and
     write the best one back per axis.
@@ -749,11 +686,18 @@ def optimize_indirect_windows(
     changed = False
     for axis_name, axis in axis_map.items():
         if axis >= data.ndim or data.shape[axis] < 16:
-            logs.append(
-                tr(
-                    "{p0}: indirect dimension window optimisation skip: insufficient points",
-                    p0=axis_name,
+            if strict_candidates:
+                raise CandidateSelectionError(
+                    f"Insufficient points for explicit window candidates: {axis_name}"
                 )
+            logs.append(tr(
+                "{p0}: indirect dimension window optimisation skip: insufficient "
+                "points",
+                p0=axis_name,
+            ))
+            per_axis[axis_name] = WindowOptimizeResult(
+                choice=dict(current.get(axis_name) or {}), changed=False,
+                reason="insufficient_points",
             )
             continue
         n = int(data.shape[axis])
@@ -768,6 +712,7 @@ def optimize_indirect_windows(
             resolution_penalty=1.0,
             sw=(sw_map or {}).get(axis_name, 0.0),
             res_tol=_INDIRECT_RES_TOL,
+            strict_candidates=strict_candidates,
         )
         per_axis[axis_name] = res
         logs += res.logs
@@ -775,9 +720,12 @@ def optimize_indirect_windows(
             choice[axis_name] = dict(res.choice)
             changed = True
     if not per_axis:
+        if strict_candidates:
+            raise CandidateSelectionError("No indirect time axis for explicit window candidates")
         logs.append(tr("indirect dimension window optimisation skip: no timeline available"))
-    return MultiWindowOptimizeResult(choice=choice, changed=changed, per_axis=per_axis, logs=logs)
-
+    return MultiWindowOptimizeResult(
+        choice=choice, changed=changed, per_axis=per_axis, logs=logs
+    )
 
 def _fid_paths(work: Path, experiment: Experiment) -> list[Path]:
     """Converted fid path: slice stream (fid/test*.fid), single file (dataset.fid) or the merged
@@ -813,7 +761,10 @@ def _load_fid(work: Path, experiment: Experiment) -> tuple[np.ndarray, dict] | N
     return fid, dic
 
 
-def _load_recon_planes(work: Path, experiment: Experiment) -> tuple[np.ndarray, dict] | None:
+
+def _load_recon_planes(
+    work: Path, experiment: Experiment
+) -> tuple[np.ndarray, dict] | None:
     """Load the SMILE reconstruction planes (indirect-dimension time domain) + header.
 
     0.2.199-patch29 (measured with manually sliced sampleB + sampleJ):
@@ -867,6 +818,7 @@ def _load_recon_planes(work: Path, experiment: Experiment) -> tuple[np.ndarray, 
     return planes, dic
 
 
+
 def _uniform_axis_map(experiment: Experiment) -> dict[str, int]:
     """Uniform fid layout: 2D (F1, F2), 3D (F1, F2, F3), indirect dimension takes the axis
     according to internal convention.
@@ -891,7 +843,9 @@ def _nus_axis_map(experiment: Experiment) -> dict[str, int]:
     return {"F1": 1}
 
 
-def _axis_sw(dic: dict[str, Any], axis: str, experiment: Experiment | None = None) -> float:
+def _axis_sw(
+    dic: dict[str, Any], axis: str, experiment: Experiment | None = None
+) -> float:
     """Spectral width (SW in Hz) of a logical axis, taken from the fid / plane header.
 
     0.2.199-patch29: match the logical nucleus against the header nucleus label (FDF{n}LABEL)
@@ -901,7 +855,9 @@ def _axis_sw(dic: dict[str, Any], axis: str, experiment: Experiment | None = Non
     axis).
     """
     if experiment is not None:
-        dim = next((d for d in experiment.dimensions if d.logical_axis == axis), None)
+        dim = next(
+            (d for d in experiment.dimensions if d.logical_axis == axis), None
+        )
         nucleus = (dim.nucleus or "").strip() if dim is not None else ""
         # Header LABEL is "15N", Bruker NUC1 is "<15N>", leaving only alphanumeric comparisons.
         norm = lambda v: "".join(ch for ch in v if ch.isalnum())  # noqa: E731
@@ -927,6 +883,7 @@ def optimize_direct_window_from_work(
     current: dict[str, Any] | None = None,
     zf_size: int | None = None,
     candidates: list[dict[str, Any]] | None = None,
+    strict_candidates: bool = False,
 ) -> WindowOptimizeResult:
     """Load the converted fid (work directory, slice streams supported) and optimise the direct
     dimension window without re-running SMILE/process. SW (spectral width) is read from the fid
@@ -936,15 +893,23 @@ def optimize_direct_window_from_work(
     try:
         loaded = _load_fid(work, experiment)
     except Exception as exc:  # noqa: BLE001
+        if strict_candidates:
+            raise CandidateSelectionError(
+                "Cannot read FID for explicit direct-window candidates"
+            ) from exc
         return WindowOptimizeResult(
             choice=dict(current or {}),
             changed=False,
+            status="error", reason="fid_read_failed",
             logs=[tr("direct dimension window optimisation failed (read fid): {p0}", p0=exc)],
         )
     if loaded is None:
+        if strict_candidates:
+            raise CandidateSelectionError("Missing FID for explicit direct-window candidates")
         return WindowOptimizeResult(
             choice=dict(current or {}),
             changed=False,
+            reason="missing_fid",
             logs=[tr("direct dimension window optimisation skipped: converted.fid not found")],
         )
     fid, dic = loaded
@@ -955,7 +920,9 @@ def optimize_direct_window_from_work(
         candidates=candidates,
         current=current,
         sw=_axis_sw(dic, direct_axis, experiment),
+        strict_candidates=strict_candidates,
     )
+
 
 
 def optimize_indirect_windows_from_work(
@@ -964,6 +931,7 @@ def optimize_indirect_windows_from_work(
     *,
     current: dict[str, dict[str, Any]] | None = None,
     candidates: list[dict[str, Any]] | None = None,
+    strict_candidates: bool = False,
 ) -> MultiWindowOptimizeResult:
     """Optimise every uniform indirect-dimension window from the converted fid (in-memory scoring,
     process is not re-run). Each axis's SW is read from the fid header so GM/EM can be modelled
@@ -973,23 +941,33 @@ def optimize_indirect_windows_from_work(
     try:
         loaded = _load_fid(work, experiment)
     except Exception as exc:  # noqa: BLE001
+        if strict_candidates:
+            raise CandidateSelectionError(
+                "Cannot read FID for explicit indirect-window candidates"
+            ) from exc
         return MultiWindowOptimizeResult(
             choice=dict(current or {}),
             changed=False,
+            status="error", reason="fid_read_failed",
             logs=[tr("indirect dimension window optimisation failed (reading fid): {p0}", p0=exc)],
         )
     if loaded is None:
+        if strict_candidates:
+            raise CandidateSelectionError("Missing FID for explicit indirect-window candidates")
         return MultiWindowOptimizeResult(
             choice=dict(current or {}),
             changed=False,
+            reason="missing_fid",
             logs=[tr("indirect dimension window optimisation skipped: converted.fid not found")],
         )
     fid, dic = loaded
     axis_map = _uniform_axis_map(experiment)
     sw_map = {axis: _axis_sw(dic, axis, experiment) for axis in axis_map}
     return optimize_indirect_windows(
-        fid, axis_map, candidates=candidates, current=current, sw_map=sw_map
+        fid, axis_map, candidates=candidates, current=current, sw_map=sw_map,
+        strict_candidates=strict_candidates,
     )
+
 
 
 def optimize_indirect_windows_from_recon(
@@ -998,6 +976,7 @@ def optimize_indirect_windows_from_recon(
     *,
     current: dict[str, dict[str, Any]] | None = None,
     candidates: list[dict[str, Any]] | None = None,
+    strict_candidates: bool = False,
 ) -> MultiWindowOptimizeResult:
     """Optimise every NUS indirect-dimension window from the SMILE reconstruction planes (in-memory
     scoring, SMILE is not re-run). Each axis's SW is read from the plane header so GM/EM can be
@@ -1007,34 +986,40 @@ def optimize_indirect_windows_from_recon(
     try:
         loaded = _load_recon_planes(work, experiment)
     except Exception as exc:  # noqa: BLE001
+        if strict_candidates:
+            raise CandidateSelectionError(
+                "Cannot read reconstruction for explicit window candidates"
+            ) from exc
         return MultiWindowOptimizeResult(
             choice=dict(current or {}),
             changed=False,
-            logs=[
-                tr(
-                    "Indirect dimension window optimisation failed (reading reconstruction plane): "
-                    "{p0}",
-                    p0=exc,
-                )
-            ],
+            status="error", reason="reconstruction_read_failed",
+            logs=[tr(
+                "Indirect dimension window optimisation failed (reading reconstruction plane): "
+                "{p0}",
+                p0=exc,
+            )],
         )
     if loaded is None:
+        if strict_candidates:
+            raise CandidateSelectionError("Missing reconstruction for explicit window candidates")
         return MultiWindowOptimizeResult(
             choice=dict(current or {}),
             changed=False,
-            logs=[
-                tr(
-                    "indirect dimension window optimisation skip: not found SMILE reconstruction "
-                    "plane",
-                )
-            ],
+            reason="missing_reconstruction",
+            logs=[tr(
+                "indirect dimension window optimisation skip: not found SMILE reconstruction "
+                "plane",
+            )],
         )
     planes, dic = loaded
     axis_map = _nus_axis_map(experiment)
     sw_map = {axis: _axis_sw(dic, axis, experiment) for axis in axis_map}
     return optimize_indirect_windows(
-        planes, axis_map, candidates=candidates, current=current, sw_map=sw_map
+        planes, axis_map, candidates=candidates, current=current, sw_map=sw_map,
+        strict_candidates=strict_candidates,
     )
+
 
 
 __all__ = [

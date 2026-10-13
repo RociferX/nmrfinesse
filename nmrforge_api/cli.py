@@ -64,11 +64,13 @@ from nmrforge_api.sweep import (
 )
 from ui_support.i18n import tr
 
+#: Peak localization method (Gaussian fitting was removed; only parabolic localization remains).
+#: The CLI no longer exposes algorithm selection (``--localization``/``--gaussian-roi-*``).
+#: Keep the constant so downstream code can discover the sole supported method.
 LOCALIZATION_CHOICES: tuple[str, ...] = ("parabolic",)
 
 
 #: When set to any non-empty value, print the full traceback to help troubleshooting; same
-#: as every subcommand's --debug (Phase 21)
 DEBUG_ENV = "NMRFORGE_DEBUG"
 
 
@@ -235,7 +237,9 @@ def cmd_reference(args: argparse.Namespace) -> int:
 
         rebuilt: list[dict[str, Any]] = []
         for target in _selected_datasets(session, args.condition):
-            reference = rebuild_reference_peak_tables(session, load_reference(session, target))
+            reference = rebuild_reference_peak_tables(
+                session, load_reference(session, target)
+            )
             rebuilt.append(
                 {
                     "condition": reference.condition,
@@ -246,13 +250,17 @@ def cmd_reference(args: argparse.Namespace) -> int:
                     "peak_table_sha256": reference.peak_table_sha256,
                     "peak_count": reference.peak_count,
                     "peak_tables": reference.peak_tables,
-                    "exclusive_windows": reference.peak_localization.get("exclusive_windows"),
+                    "exclusive_windows": reference.peak_localization.get(
+                        "exclusive_windows"
+                    ),
                 }
             )
         _print(rebuilt if len(rebuilt) > 1 else rebuilt[0])
         return 0
 
-    direct = parse_direct_range(getattr(args, "direct_range", None), params=params)
+    direct = parse_direct_range(
+        getattr(args, "direct_range", None), params=params
+    )
     if direct is not None:
         params = dict(params or {})
         params.update(direct.params())
@@ -295,7 +303,13 @@ def cmd_reference(args: argparse.Namespace) -> int:
                 )
             except ValueError as exc:
                 raise SensitivityError(str(exc)) from exc
-        _reference_request(target_params, direct, args.phase_route)
+        from workflow.stepwise import read_experiment
+
+        experiment = (
+            read_experiment(session.manager, target.exp_id, target.data_id)
+            if target_params.get("optimization_candidates") else None
+        )
+        _reference_request(target_params, direct, args.phase_route, experiment=experiment)
         existing = None if args.force else load_reference(session, target)
         if existing is not None:
             validate_reference_input(existing, target_params, direct_range=direct,
@@ -336,12 +350,11 @@ def cmd_peaks(args: argparse.Namespace) -> int:
     for target in _selected_datasets(session, args.condition):
         reference = load_reference(session, target)
         if reference is None:
-            raise SensitivityError(
-                tr(
-                    "condition {p0!r} has no reference spectrum yet",
-                    p0=target.condition,
-                )
-            )
+            raise SensitivityError(tr(
+                "condition {p0!r} has no reference spectrum "
+                "yet",
+                p0=target.condition,
+            ))
         if args.peak_table:
             # Optional: an external peak table (public database or already assigned)
             path = session.reference_dir_for(target) / "reference.list"
@@ -349,11 +362,15 @@ def cmd_peaks(args: argparse.Namespace) -> int:
                 Path(args.peak_table).read_text(encoding="utf-8-sig"),
                 encoding="utf-8",
             )
-            reference = set_reference_peaks(session, path, reference, source="external")
+            reference = set_reference_peaks(
+                session, path, reference, source="external"
+            )
             from nmrforge_api.reference import build_reference_peak_tables
 
             reference = build_reference_peak_tables(session, reference)
         else:
+            # By default, pick peaks automatically on the reference spectrum and create its peak
+            # table using three-point parabolic localization.
             reference = ensure_reference_peaks(
                 session,
                 reference,
@@ -472,7 +489,9 @@ def cmd_compat(args: argparse.Namespace) -> int:
     if args.golden:
         from nmrforge_api.conformance import check_conformance
 
-        manifest["golden_check"] = check_conformance(workdir=args.workdir or None)
+        manifest["golden_check"] = check_conformance(
+            workdir=args.workdir or None
+        )
     if args.out:
         manifest["manifest_path"] = str(write_compat_manifest(args.out))
     _print(manifest)
@@ -495,7 +514,6 @@ def cmd_report(args: argparse.Namespace) -> int:
     )
     # 2026-09-19: rebuilding the records through `report` refreshes the study-level
     # reference aggregate too - it used to be left alone, so an upgraded peak table kept
-    # showing the old SHA and version in records/reference.json.
     if references:
         records.update(refresh_reference_records(session, references))
     _print(
@@ -549,21 +567,19 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     parser.add_argument(
-        "--debug",
-        action="store_true",
-        help=tr(
-            "print the full traceback on error (same as NMRFORGE_DEBUG=1)",
-        ),
+        "--debug", action="store_true", help=tr(
+            "print the full traceback on error (same as "
+            "NMRFORGE_DEBUG=1)",
+        )
     )
 
     def _common(handler: argparse.ArgumentParser) -> None:
         handler.add_argument("--study", required=True, help=tr("study root directory"))
         handler.add_argument(
-            "--debug",
-            action="store_true",
-            help=tr(
-                "print the full traceback on error (same as NMRFORGE_DEBUG=1)",
-            ),
+            "--debug", action="store_true", help=tr(
+                "print the full traceback on error (same as "
+                "NMRFORGE_DEBUG=1)",
+            )
         )
         handler.add_argument("--name", default="", help=tr("project name when creating a study"))
         handler.add_argument(
@@ -574,15 +590,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     init = sub.add_parser("init", help=tr("create a study and import a Bruker dataset"))
     _common(init)
-    init.add_argument(
-        "--dataset",
-        action="append",
-        default=[],
-        help=tr(
-            "Bruker directory downloaded and unpacked from the public "
-            "archive (repeatable)",
-        ),
-    )
+    init.add_argument("--dataset", action="append", default=[], help=tr(
+        "Bruker directory downloaded and unpacked from the public "
+        "archive (repeatable)",
+    ))
     init.add_argument(
         "--segmented",
         action="store_true",
@@ -591,19 +602,15 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument("--title", default="", help=tr("experiment title"))
     init.set_defaults(func=cmd_init)
 
-    reference = sub.add_parser(
-        "reference",
-        help=tr(
-            "build and freeze the reference spectrum and script",
-        ),
-    )
+    reference = sub.add_parser("reference", help=tr(
+        "build and freeze the reference spectrum and "
+        "script",
+    ))
     _common(reference)
-    reference.add_argument(
-        "--params",
-        help=tr(
-            "input parameters for automatic processing (YAML/JSON)",
-        ),
-    )
+    reference.add_argument("--params", help=tr(
+        "input parameters for automatic processing "
+        "(YAML/JSON)",
+    ))
     reference.add_argument(
         "--condition-params",
         help=tr("JSON mapping condition labels to per-condition processing parameter objects"),
@@ -624,13 +631,10 @@ def build_parser() -> argparse.ArgumentParser:
         metavar=("HIGH_PPM", "LOW_PPM"),
         help=tr("direct-dimension range (ext_lo high, ext_hi low, ppm); changes require --force"),
     )
-    reference.add_argument(
-        "--force",
-        action="store_true",
-        help=tr(
-            "rebuild the reference spectrum",
-        ),
-    )
+    reference.add_argument("--force", action="store_true", help=tr(
+        "rebuild the reference "
+        "spectrum",
+    ))
     reference.add_argument(
         "--rebuild-peak-tables",
         action="store_true",
@@ -640,24 +644,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     peaks = sub.add_parser("peaks", help=tr("reference peak table: pick or register"))
     _common(peaks)
-    peaks.add_argument(
-        "--sigma",
-        type=float,
-        default=None,
-        help=tr(
-            "peak-picking threshold (multiples of sigma)",
-        ),
-    )
+    peaks.add_argument("--sigma", type=float, default=None, help=tr(
+        "peak-picking threshold (multiples of "
+        "sigma)",
+    ))
     peaks.add_argument(
         "--max-peaks", type=int, default=0, help=tr("keep only the N most intense peaks (0 = all)")
     )
-    peaks.add_argument(
-        "--force",
-        action="store_true",
-        help=tr(
-            "discard the existing peak table and pick again",
-        ),
-    )
+    peaks.add_argument("--force", action="store_true", help=tr(
+        "discard the existing peak table and pick "
+        "again",
+    ))
     peaks.add_argument(
         "--peak-table",
         default="",
@@ -731,21 +728,16 @@ def build_parser() -> argparse.ArgumentParser:
             "manual edge exclusion width (ppm); default uses acquisition and edge-peak evidence"
         ),
     )
-    sweep.add_argument(
-        "--no-resume",
-        action="store_true",
-        help=tr(
-            "do not skip completed workflows",
-        ),
-    )
+    sweep.add_argument("--no-resume", action="store_true", help=tr(
+        "do not skip completed "
+        "workflows",
+    ))
     sweep.set_defaults(func=cmd_sweep)
 
-    report = sub.add_parser(
-        "report",
-        help=tr(
-            "recompute the summary from existing records (no reprocessing)",
-        ),
-    )
+    report = sub.add_parser("report", help=tr(
+        "recompute the summary from existing records (no "
+        "reprocessing)",
+    ))
     _common(report)
     report.set_defaults(func=cmd_report)
 
@@ -754,10 +746,10 @@ def build_parser() -> argparse.ArgumentParser:
     status.set_defaults(func=cmd_status)
 
     compat = sub.add_parser(
-        "compat",
-        help=tr(
-            "behaviour compatibility manifest: fingerprint + change level (needs no study root)",
-        ),
+        "compat", help=tr(
+            "behaviour compatibility manifest: fingerprint + change level (needs no study "
+            "root)",
+        )
     )
     compat.add_argument("--out", default=None, help=tr("write the manifest to a JSON file"))
     compat.add_argument(

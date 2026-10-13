@@ -1,4 +1,4 @@
-# 04 · 命令行参考(v1.1.1)
+# 04 · 命令行参考(v1.1.2)
 
 入口:`python -m nmrforge_api <命令> --study <研究根>`。
 公共参数:`--study`(必填)、`--name`(新建研究名)、`--condition <A|B|…>`
@@ -23,7 +23,7 @@ python -m nmrforge_api init --study ~/studies/s1            # 只看已登记条
 每个段必须是完整 Bruker 原始数据目录。逐段动力学实验、缺少 `nuslist` 的 NUS 数据会拒绝；
 段的维数、核、有效 TD、谱宽、采样模式、采集轴布局、SFO 频率及载频必须一致。段可位于不同父目录。复用
 现有条件时，所有源段及其顺序都必须一致；要换段或改顺序请使用新条件或新研究根，
-`reference --force` 只重建参数参考，不更改源段绑定。版本号为 API v1.1.1 / 软件 1.0.5；
+`reference --force` 只重建参数参考，不更改源段绑定。版本号为 API v1.1.2 / 软件 1.0.6；
 此处描述的多段工程行为尚无真实 NMRPipe/SMILE 引擎验证。
 
 ## reference — 参考工作流(每个条件一份)
@@ -52,6 +52,23 @@ NaN/Inf、空映射、未知轴或超过数据维数的轴拒绝。未指定轴�
 参考脚本路径与 SHA-256、相位来源、采样方式、该条件是否支持参数组合。
 `--condition-params` 接受 JSON 对象,键为条件标签,值为该条件覆盖参数,例如
 `{"A":{"zero_fill":2},"B":{"sampling":{"ft_neg_f1":true}}}`;未知条件会报错。
+窗函数/基线候选使用已有的 `--params` 或 `--condition-params` 输入，不增加 CLI 选项。例如
+将以下内容保存为 `candidates.yaml`，运行 `reference --params candidates.yaml`：
+
+```yaml
+optimization_candidates:
+  window:
+    direct:
+      - {type: sine_bell, off: 0.35, end: 0.98, pow: 1, c: 0.5}
+      - {type: sine_bell_squared, off: 0.45, end: 0.98, pow: 2, c: 0.5}
+    indirect:
+      - {type: sine_bell, off: 0.35, end: 0.98, pow: 1, c: 0.5}
+  baseline:
+    - {mode: off, order: 0}
+    - {mode: order, order: 4}
+```
+
+候选及其顺序参与参考指纹，修改后需 `--force`。完整限制见[05 §5.10](05-inputs-and-data.md#510-参考优化候选列表)。
 参考模式每个条件独立生成峰表;外部 `--peak-table` 只应用到主条件,不会传播。
 
 `--rebuild-peak-tables` 只重算参考峰表(使用已有的冻结参考谱与 `reference.list`，不修改谱或

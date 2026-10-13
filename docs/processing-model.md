@@ -105,6 +105,12 @@ information. Final direct phase goes into the corresponding PS command; final in
 passed to SMILE and remain consistent with subsequent PS. The result is a full final run, rather
 than a display-only rotation of preview planes.
 
+API reference construction accepts `optimization_candidates`. Each explicit list replaces its
+corresponding default pool, and the highest-scoring valid candidate is applied in the final run.
+Explicit NUS direct-dimension candidates must use SP; the selected SP configuration is applied
+in the full reconstruction. Unspecified stages/directions retain defaults. An entirely invalid
+pool raises an error instead of falling back. Reference score CSV rows record scores and application.
+
 ## Ranges, phases and manual execution
 
 `final_ext_lo`/`final_ext_hi` set the final direct-dimension window. The optimisation-range switch

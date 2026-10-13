@@ -1,9 +1,9 @@
 # Python API
 
-The public scripting API version is `API_VERSION = "1.1.1"`; the software version is 1.0.5. API
+The public scripting API version is `API_VERSION = "1.1.2"`; the software version is 1.0.6. API
 parameters and the 38-column peak-table contract are defined by this API. Download the Linux
-AppImage or source from the [1.0.5 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.5).
-Install source containing API v1.1.1 and check `compat_manifest()` before reusing results.
+AppImage or source from the [1.0.6 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.6).
+Install source containing API v1.1.2 and check `compat_manifest()` before reusing results.
 
 | Surface | Import | Stability |
 | --- | --- | --- |

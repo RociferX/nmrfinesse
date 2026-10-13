@@ -12,7 +12,8 @@ from core.data.bruker_reader import read_dataset
 
 def _synthetic_preview(axis: int, p0: float) -> np.ndarray:
     """Complex Lorentzian: the evaluated axis is complex with a known phase, the
-    other axes real (isomorphic to the in-memory search tests)."""
+    other axes real (isomorphic to the in-memory search tests).
+    """
     n0, n1 = 96, 80
     k0 = np.arange(n0, dtype=float)
     k1 = np.arange(n1, dtype=float)
@@ -57,7 +58,9 @@ class _FakeBackend:
         params = dict(params or {})
         self.process_calls.append((experiment, plan, params, dict(direct_phase_override or {})))
         if script_name:
-            (self.work / script_name).write_text(f"# fake script {script_name}\n", encoding="utf-8")
+            (self.work / script_name).write_text(
+                f"# fake script {script_name}\n", encoding="utf-8"
+            )
         path = str(self.work / (out_file or "final.ft2"))
         Path(path).write_bytes(b"x")
         return {"success": True, "spectrum_path": path, "logs": []}
@@ -65,7 +68,6 @@ class _FakeBackend:
     def reconstruct_nus(self, experiment, params, progress=None):
         self.reconstruct_params.append(dict(params or {}))
         # Mimic the real backend: each call writes {dataset_id}_nus.com (for the
-        # first-run script retention assertion)
         script = self.work / f"{experiment.dataset_id}_nus.com"
         script.write_text(
             f"# fake nus script #{len(self.reconstruct_params)}\n",
@@ -106,7 +108,8 @@ def test_unified_route_uniform_dc_offset_poly_time_into_final(
 ) -> None:
     """0.2.165: when the uniform diagnostic detects a DC offset the final-run
     parameters carry direct_poly_time (POLY -time) while the first complex preview
-    does not -- aligned with the NUS path."""
+    does not -- aligned with the NUS path.
+    """
     from types import SimpleNamespace
 
     experiment = read_dataset(bruker_dir / "hsqc_2d")
@@ -148,7 +151,8 @@ def test_unified_route_uniform_magnitude_skips_phase_search(
 ) -> None:
     """0.2.167: a magnitude (QF) indirect dimension has no phase node -- unified
     uniform searches only the axes with PS (F2) and generates no F1 complex preview
-    (previously it wastefully searched the phase of the QF axis)."""
+    (previously it wastefully searched the phase of the QF axis).
+    """
     experiment = read_dataset(bruker_dir / "hsqc_2d")
     experiment.acquisition_parameters["acqu2s"]["FnMODE"] = 1  # QF/magnitude
     backend = _FakeBackend(tmp_path / "uni_qf_work")
@@ -164,7 +168,9 @@ def test_unified_route_uniform_magnitude_skips_phase_search(
     result = routes.unified_route(experiment, backend, work_dir=work)
     # F2 preview + joint (processing-parameter optimisation) + final run (no F1 preview)
     assert len(backend.process_calls) == 3
-    assert all(call[2].get("preview_axis") != "F1" for call in backend.process_calls)
+    assert all(
+        call[2].get("preview_axis") != "F1" for call in backend.process_calls
+    )
     assert set(result["phases"]) == {"F2"}
     assert result["spectrum_path"]
 
@@ -174,7 +180,8 @@ def test_unified_route_uniform_hmbc_skips_all_phase_search(
 ) -> None:
     """0.2.167: HMBC (magnitude spectrum, template auto_phase=false) skips the phase
     search on every axis -- no complex preview is generated and the phase stays
-    (0,0) (consistent with the NUS branch)."""
+    (0,0) (consistent with the NUS branch).
+    """
     experiment = read_dataset(bruker_dir / "hsqc_2d")
     experiment.experiment_type.name = "HMBC"
     experiment.acquisition_parameters["acqu2s"]["FnMODE"] = 1  # QF
@@ -183,7 +190,9 @@ def test_unified_route_uniform_hmbc_skips_all_phase_search(
     result = routes.unified_route(experiment, backend, work_dir=work)
     # No preview: joint + final run
     assert len(backend.process_calls) == 2
-    assert all(call[2].get("preview_axis") is None for call in backend.process_calls)
+    assert all(
+        call[2].get("preview_axis") is None for call in backend.process_calls
+    )
     assert result["phases"]["F2"] == (0.0, 0.0)
     assert any("幅度谱不自动调相" in line for line in result["logs"])
     assert result["spectrum_path"]
@@ -193,7 +202,8 @@ def test_unified_route_uniform_order_and_phases(
     tmp_path: Path, monkeypatch, bruker_dir: Path
 ) -> None:
     """uniform: F1 before F2 (the old algorithm's order); the F2 preview carries the
-    already-fixed F1 phase; the final run carries all phases."""
+    already-fixed F1 phase; the final run carries all phases.
+    """
     experiment = read_dataset(bruker_dir / "hsqc_2d")
     backend = _FakeBackend(tmp_path / "pv_work")
     work = backend.work
@@ -211,7 +221,6 @@ def test_unified_route_uniform_order_and_phases(
     # 0.2.163-patch6: uniform processing-parameter optimisation runs the joint
     # review spectrum first; 0.2.199-patch29dn/patch29dr: one indirect-dimension
     # re-search once the direct dimension is settled -> 5 process runs
-    # (F1 + F2 previews + F1 re-search + joint + final run)
     assert len(backend.process_calls) == 5
     preview1, preview2, preview_r2, joint, final = backend.process_calls
     assert joint[2].get("preview_axis") is None  # the joint run is not a preview
@@ -233,7 +242,8 @@ def test_unified_route_uniform_order_and_phases(
 
 def test_disambiguate_180_mixed_uses_region_sign_convention() -> None:
     """+-180 deg chemical-shift region disambiguation: the preset has C-alpha
-    negative / C-beta positive -- phase 0 does not flip, phase 180 flips back."""
+    negative / C-beta positive -- phase 0 does not flip, phase 180 flips back.
+    """
     from core.data.internal_data_model import (
         AxisRole,
         Dimension,
@@ -246,13 +256,12 @@ def test_disambiguate_180_mixed_uses_region_sign_convention() -> None:
 
     n = 64
     dims = [
-        Dimension(
-            logical_axis="F3", nucleus="1H", sf=600.0, sw=8196.0, o1p=4.7, role=AxisRole.DIRECT
-        ),
-        Dimension(logical_axis="F2", nucleus="15N", sf=60.8, sw=2189.0, o1p=118.0),
-        Dimension(
-            logical_axis="F1", nucleus="13C", sf=150.9, sw=11312.0, o1p=39.0, td=n, ft_size=n
-        ),
+        Dimension(logical_axis="F3", nucleus="1H", sf=600.0, sw=8196.0,
+                  o1p=4.7, role=AxisRole.DIRECT),
+        Dimension(logical_axis="F2", nucleus="15N", sf=60.8, sw=2189.0,
+                  o1p=118.0),
+        Dimension(logical_axis="F1", nucleus="13C", sf=150.9, sw=11312.0,
+                  o1p=39.0, td=n, ft_size=n),
     ]
     exp = Experiment(
         dataset_id="x",
@@ -329,7 +338,9 @@ def test_unified_route_carries_manual_flip_into_every_nus_run(
         "core.optimization.phase_consensus.search_direct_phase_real_ht",
         lambda arr, axis=-1, sign_mode="uniform", **kwargs: (0.0, 0.0, 80.0),
     )
-    monkeypatch.setattr(routes, "_read_real_ft3", lambda path: np.zeros((4, 8), dtype=float))
+    monkeypatch.setattr(
+        routes, "_read_real_ft3", lambda path: np.zeros((4, 8), dtype=float)
+    )
     monkeypatch.setattr(
         routes,
         "_read_complex_preview",
@@ -353,7 +364,8 @@ def test_optimize_nus_processing_carries_manual_flip_into_joint_spectrum(
     tmp_path: Path, monkeypatch, bruker_dir: Path
 ) -> None:
     """The joint evaluation spectrum (NUS) carries the manual flip too: the
-    baseline/window evaluation and the final run share the sign convention."""
+    baseline/window evaluation and the final run share the sign convention.
+    """
     experiment = read_dataset(bruker_dir / "nus_2d")
     backend = _FakeBackend(tmp_path / "flip_nus_joint_work")
     work = backend.work
@@ -367,7 +379,11 @@ def test_optimize_nus_processing_carries_manual_flip_into_joint_spectrum(
         {"F1": (0.0, 0.0)},
         {"sampling": {"flip_f1": True}},
     )
-    joint = [call for call in backend.finalize_calls if call["params"].get("zero_fill")]
+    joint = [
+        call
+        for call in backend.finalize_calls
+        if call["params"].get("zero_fill")
+    ]
     assert joint, backend.finalize_calls
     for call in joint:
         assert call["params"].get("sampling") == {"flip_f1": True}, call["params"]
@@ -379,14 +395,14 @@ def test_unified_route_nus_reconstruct_then_finalize(
     """NUS: first SMILE pass (search off) -> direct-dimension symmetry phase tuning
     -> indirect-dimension finalize complex preview + in-memory search -> joint
     review -> processing-parameter optimisation -> the final run is the full script
-    (every dimension's phase filled in, no rotated nus3d_rc_ph copy written)."""
+    (every dimension's phase filled in, no rotated nus3d_rc_ph copy written).
+    """
     from types import SimpleNamespace
 
     experiment = read_dataset(bruker_dir / "nus_2d")
     backend = _FakeBackend(tmp_path / "nus_work")
     work = backend.work
     # 0.2.156: the diagnostic detects a DC offset -> both the first pass and the
-    # final-run script carry direct_poly_time
     monkeypatch.setattr(
         "workflow.direct_diagnostics.run_direct_diagnostics",
         lambda wk, exp: SimpleNamespace(
@@ -410,8 +426,7 @@ def test_unified_route_nus_reconstruct_then_finalize(
         lambda arr, axis=-1, sign_mode="uniform", **kwargs: (30.0, 0.0, 80.0),
     )
     monkeypatch.setattr(
-        routes,
-        "_read_real_ft3",
+        routes, "_read_real_ft3",
         lambda path: np.zeros((32, 64), dtype=float),
     )
 
@@ -423,7 +438,6 @@ def test_unified_route_nus_reconstruct_then_finalize(
 
     monkeypatch.setattr(routes, "_read_complex_preview", fake_read)
     # The processing-parameter optimisation returns a fixed result (baseline/zero
-    # fill/window) and does not depend on the fake backend writing a spectrum
     monkeypatch.setattr(
         routes,
         "_optimize_nus_processing",
@@ -451,25 +465,24 @@ def test_unified_route_nus_reconstruct_then_finalize(
     }
     assert final_params["window"] is None
     # The last pass writes no rotated plane copies: no _apply_direct_phase call and
-    # no planes override
     assert not backend.apply_direct_calls
     assert all(call["planes"] is None for call in backend.finalize_calls)
     assert "处理参数优化(测试): 固定配置" in result["logs"]
     # 0.2.199-patch29do: iterative -> SMILE + F1 preview + direct-dimension preview
-    # + F1 re-search + final run
     assert result["backend_runs"] == 5
     # 0.2.199-patch29do (fix): the NUS finalize preview writes the preview axis' phase
     # from phases straight into PS (unlike the uniform preview, which filters it), so
     # the indirect-dimension re-search must exclude the preview axis itself -- otherwise
-    # generating with the old phase searches a residual (~0) and overwrites the lost
-    # absolute phase
-    f1_previews = [c for c in backend.finalize_calls if c["params"].get("preview_axis") == "F1"]
+    f1_previews = [
+        c
+        for c in backend.finalize_calls
+        if c["params"].get("preview_axis") == "F1"
+    ]
     assert len(f1_previews) == 2  # first search + re-search
     assert "F1" not in f1_previews[-1]["phases"]
     # 0.2.155/0.2.160: when the diagnostic detects a DC offset the final-run script
     # carries direct_poly_time (POLY -time); the first-pass script does not (avoiding
     # a biased direct-dimension phase search); the logs hold per-step timings and a
-    # closing summary
     assert "direct_poly_time" in final_params
     assert backend.reconstruct_params[0].get("direct_poly_time") is None
     assert final_params.get("direct_poly_time") is True
@@ -480,7 +493,6 @@ def test_unified_route_nus_reconstruct_then_finalize(
     assert any("相位搜索完成,耗时" in line for line in result["logs"])
     assert any("终跑完成,耗时" in line for line in result["logs"])
     # 0.2.156: the first-run script is kept as {dataset_id}_before_optimize.com
-    # (content = the first-pass script)
     no_opt = work / f"{experiment.dataset_id}_before_optimize.com"
     assert no_opt.is_file()
     assert "# fake nus script #1" in no_opt.read_text(encoding="utf-8")
@@ -488,11 +500,13 @@ def test_unified_route_nus_reconstruct_then_finalize(
     assert any("初跑脚本保留" in line for line in result["logs"])
 
 
+
 def test_optimize_nus_processing_baseline_and_window(
     tmp_path: Path, monkeypatch, bruker_dir: Path
 ) -> None:
     """Processing-parameter optimisation: baseline in-memory score written back plus
-    indirect-dimension window-function candidate scoring (SMILE is not re-run)."""
+    indirect-dimension window-function candidate scoring (SMILE is not re-run).
+    """
     import nmrglue as ng
 
     from workflow.baseline_optimize import BaselineOptimizeResult
@@ -590,7 +604,6 @@ def test_optimize_nus_processing_baseline_and_window(
     )
     assert proc["baseline"]["F1"]["order"] == 2
     # 0.2.190: real indirect-dimension window optimisation (candidates include no
-    # window) instead of the hard-coded windowless choice
     assert proc["window"] == {
         "F2": {"type": "sine_bell", "off": 0.45, "end": 0.95},
         "F1": {"type": "none"},
@@ -601,14 +614,16 @@ def test_optimize_nus_processing_baseline_and_window(
     # 0.2.199-patch29eb: the progress text carries the concrete product name
     # 0.2.199-patch29fg: removed the 2.1 indirect-dimension baseline re-render (a
     # dead render -- the window functions are scored in memory on recon/FID and zero
-    # filling has no candidates), leaving one finalize for the joint spectrum
     assert len(calls) == 1  # joint spectrum
     assert calls[0]["baseline"] == {}
 
 
-def test_unified_route_nus_progress_stages(tmp_path: Path, monkeypatch, bruker_dir: Path) -> None:
+def test_unified_route_nus_progress_stages(
+    tmp_path: Path, monkeypatch, bruker_dir: Path
+) -> None:
     """NUS: progress covers the first SMILE pass / processing-parameter optimisation
-    / full-script final run stages."""
+    / full-script final run stages.
+    """
     experiment = read_dataset(bruker_dir / "nus_2d")
     backend = _FakeBackend(tmp_path / "nus_prog_work")
     work = backend.work
@@ -624,13 +639,11 @@ def test_unified_route_nus_progress_stages(tmp_path: Path, monkeypatch, bruker_d
         lambda arr, axis=-1, sign_mode="uniform", **kwargs: (30.0, 0.0, 80.0),
     )
     monkeypatch.setattr(
-        routes,
-        "_read_real_ft3",
+        routes, "_read_real_ft3",
         lambda path: np.zeros((32, 64), dtype=float),
     )
     monkeypatch.setattr(
-        routes,
-        "_read_complex_preview",
+        routes, "_read_complex_preview",
         lambda path, unpack_axis=None: _synthetic_preview(0, -30.0),
     )
     monkeypatch.setattr(
@@ -644,7 +657,9 @@ def test_unified_route_nus_progress_stages(tmp_path: Path, monkeypatch, bruker_d
         },
     )
     messages: list[str] = []
-    result = routes.unified_route(experiment, backend, work_dir=work, progress=messages.append)
+    result = routes.unified_route(
+        experiment, backend, work_dir=work, progress=messages.append
+    )
     joined = "\n".join(messages)
     assert "第一遍 SMILE 完成" in joined, messages
     assert "F1 复型预览中" in joined, messages
@@ -657,12 +672,14 @@ def test_unified_route_nus_progress_stages(tmp_path: Path, monkeypatch, bruker_d
     assert result["backend_runs"] == 5
 
 
+
 def test_unified_route_nus_final_ext_apply_to_opt(
     tmp_path: Path, monkeypatch, bruker_dir: Path
 ) -> None:
     """0.2.162-patch15/0.2.199-patch3: final_ext has "apply this range to the
     optimisation" on by default, so the first-pass reconstruction shares the window;
-    when off only the final run applies the range."""
+    when off only the final run applies the range.
+    """
     from types import SimpleNamespace
 
     experiment = read_dataset(bruker_dir / "nus_2d")
@@ -690,8 +707,7 @@ def test_unified_route_nus_final_ext_apply_to_opt(
         lambda arr, axis=-1, sign_mode="uniform", **kwargs: (30.0, 0.0, 80.0),
     )
     monkeypatch.setattr(
-        routes,
-        "_read_real_ft3",
+        routes, "_read_real_ft3",
         lambda path: np.zeros((32, 64), dtype=float),
     )
     monkeypatch.setattr(
@@ -710,7 +726,6 @@ def test_unified_route_nus_final_ext_apply_to_opt(
         },
     )
     # "Apply this range to the optimisation" off: the first pass keeps the default
-    # window and only the final run uses the range
     result = routes.unified_route(
         experiment,
         backend,
@@ -730,7 +745,6 @@ def test_unified_route_nus_final_ext_apply_to_opt(
     assert "final_ext_lo" not in final_params
     assert result["spectrum_path"]
     # On by default: the range also enters the first-pass reconstruction/phase search
-    # (the reconstruction plane is the optimisation evaluation window)
     backend2 = _FakeBackend(tmp_path / "nus_ext_work_on")
     result2 = routes.unified_route(
         experiment,
@@ -752,7 +766,8 @@ def test_unified_route_uniform_optimization_passes_plan(
 ) -> None:
     """0.2.163-patch8: the joint/candidate process calls of uniform
     processing-parameter optimisation must carry a ProcessingPlan (fixing plan=None
-    making spectrum generation fail)."""
+    making spectrum generation fail).
+    """
     from core.planning.processing_plan import ProcessingPlan
 
     experiment = read_dataset(bruker_dir / "hsqc_2d")
@@ -780,7 +795,8 @@ def test_unified_route_uniform_runs_processing_optimization(
 ) -> None:
     """0.2.163-patch6: uniform processing-parameter optimisation -- candidate scoring
     for baseline/direct-dimension window/zero fill+indirect windows, with the
-    optimisation result in the final-run parameters; symmetric with NUS."""
+    optimisation result in the final-run parameters; symmetric with NUS.
+    """
     from workflow.baseline_optimize import BaselineOptimizeResult
     from workflow.window_optimize import WindowOptimizeResult
 
@@ -788,7 +804,6 @@ def test_unified_route_uniform_runs_processing_optimization(
     backend = _FakeBackend(tmp_path / "uni_opt_work")
     work = backend.work
     # Provide a scoreable synthetic spectrum (baseline/window optimisation read the
-    # spectrum file)
     for name in ("hsqc_2d_joint.ft2", "hsqc_2d_final.ft2"):
         path = work / name
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -804,14 +819,11 @@ def test_unified_route_uniform_runs_processing_optimization(
 
     monkeypatch.setattr(routes, "_read_complex_preview", fake_read)
     # Baseline/window optimisation degrades to the existing configuration (the fake
-    # spectrum is unreadable); verify the flow and the final-parameter wiring
     monkeypatch.setattr(
         "workflow.baseline_optimize.optimize_baseline",
         lambda experiment, path, **kwargs: BaselineOptimizeResult(
-            baseline={
-                "F1": {"enabled": True, "mode": "order", "order": 2},
-                "F2": {"enabled": False},
-            },
+            baseline={"F1": {"enabled": True, "mode": "order", "order": 2},
+                      "F2": {"enabled": False}},
             scores={},
             spectrum_path=str(path),
             logs=["测试基线"],
@@ -847,7 +859,9 @@ def test_unified_route_uniform_runs_processing_optimization(
     assert result["baseline"]["F1"]["order"] == 2
     assert result["window"]["F2"]["type"] == "sine_bell"
     assert "diagnostics" in result
-
+    # Uniform and NUS reports both include baseline, window, and zero-fill results.
+    # Reports use section headings, an overall verdict, and per-item grades. Since
+    # 2026-09-23, data-quality diagnostics belong to the Generate FID step instead.
     from workflow.optimization_report import spectrum_report_title
 
     assert spectrum_report_title() in result["logs"]
@@ -857,7 +871,6 @@ def test_unified_route_uniform_runs_processing_optimization(
     assert any("  零填充:" in line for line in result["logs"])
     assert not any("◆ 数据质量诊断" in line for line in result["logs"])
     # 0.2.166: the uniform first-run script is kept (a copy of the joint script that
-    # cleanup does not remove)
     no_opt = work / "hsqc_2d_before_optimize.com"
     assert no_opt.is_file()
     assert "# fake script hsqc_2d_joint.com" in no_opt.read_text(encoding="utf-8")
@@ -869,7 +882,8 @@ def test_unified_route_uniform_final_ext_apply_to_opt(
 ) -> None:
     """0.2.162-patch15/0.2.199-patch3: with uniform's switch on by default the complex
     preview/optimisation/final run share the window; when off only the final run
-    applies the range."""
+    applies the range.
+    """
     experiment = read_dataset(bruker_dir / "hsqc_2d")
     backend = _FakeBackend(tmp_path / "uni_ext_work")
     work = backend.work
@@ -884,7 +898,6 @@ def test_unified_route_uniform_final_ext_apply_to_opt(
 
     monkeypatch.setattr(routes, "_read_complex_preview", fake_read)
     # "Apply this range to the optimisation" off: the first complex preview keeps the
-    # default window and only the final run uses the range
     result = routes.unified_route(
         experiment,
         backend,
@@ -897,7 +910,6 @@ def test_unified_route_uniform_final_ext_apply_to_opt(
     )
     # 0.2.163-patch6: uniform processing-parameter optimisation runs the joint review
     # spectrum first; 0.2.199-patch29dn/patch29dr: an added F1 re-search preview -> 5
-    # process runs
     assert len(backend.process_calls) == 5
     preview1, preview2, preview_r2, _joint, final = backend.process_calls
     for preview in (preview1, preview2, preview_r2):
@@ -908,7 +920,6 @@ def test_unified_route_uniform_final_ext_apply_to_opt(
     assert "final_ext_lo" not in final[2]
     assert result["spectrum_path"]
     # On by default: the complex preview/optimisation evaluation/final run share the
-    # window
     backend2 = _FakeBackend(tmp_path / "uni_ext_work_on")
     result2 = routes.unified_route(
         experiment,
@@ -928,7 +939,8 @@ def test_unified_route_uniform_final_ext_apply_to_opt(
 
 def test_renormalize_direct_p1_scales_with_window_width() -> None:
     """0.2.162-patch16: p1 is scaled by the final-run/first-pass window-width ratio,
-    p0 unchanged; an identical window changes nothing."""
+    p0 unchanged; an identical window changes nothing.
+    """
     first = {"ext_lo": "10.5", "ext_hi": "6.5"}
     narrow = {"ext_lo": "8.5", "ext_hi": "6.5"}
     assert routes._renormalize_direct_p1((30.0, 20.0), first, narrow) == (
@@ -940,7 +952,6 @@ def test_renormalize_direct_p1_scales_with_window_width() -> None:
         20.0,
     )
     # When the first pass gives no explicit window it falls back to the configured
-    # default (10.5-6.5=4.0) and the ratio still holds
     assert routes._renormalize_direct_p1((30.0, 20.0), {}, narrow) == (
         30.0,
         10.0,
@@ -953,7 +964,8 @@ def test_unified_route_nus_final_ext_renormalizes_p1(
     """0.2.162-patch16: with "apply this range to the optimisation" off the final-run
     window narrows, the direct-dimension p1 is renormalised by the window width and
     enters the report; with it on (default) the first pass shares the window and no
-    scaling happens."""
+    scaling happens.
+    """
     from types import SimpleNamespace
 
     experiment = read_dataset(bruker_dir / "nus_2d")
@@ -981,8 +993,7 @@ def test_unified_route_nus_final_ext_renormalizes_p1(
         lambda arr, axis=-1, sign_mode="uniform", **kwargs: (30.0, 15.0, 80.0),
     )
     monkeypatch.setattr(
-        routes,
-        "_read_real_ft3",
+        routes, "_read_real_ft3",
         lambda path: np.zeros((32, 64), dtype=float),
     )
     monkeypatch.setattr(
@@ -1012,12 +1023,12 @@ def test_unified_route_nus_final_ext_renormalizes_p1(
     )
     final_params = backend.reconstruct_params[1]
     # First-pass window 10.5-6.5=4.0, final run 8.5-6.5=2.0 -> p1 15 deg -> 7.5 deg;
-    # p0 unchanged
     assert final_params["direct_phase_override"] == [30.0, 7.5]
     assert result["direct_phase"] == (30.0, 7.5)
-    assert any("窗口重归一化" in line and "7.50" in line for line in result["logs"])
+    assert any(
+        "窗口重归一化" in line and "7.50" in line for line in result["logs"]
+    )
     # On by default: the first-pass reconstruction and the final run share the window
-    # (8.5-6.5) and p1 is not renormalised
     backend2 = _FakeBackend(tmp_path / "nus_p1_work_on")
     result2 = routes.unified_route(
         experiment,
@@ -1028,7 +1039,9 @@ def test_unified_route_nus_final_ext_renormalizes_p1(
     final2 = backend2.reconstruct_params[1]
     assert final2["direct_phase_override"] == [30.0, 15.0]
     assert result2["direct_phase"] == (30.0, 15.0)
-    assert not any("窗口重归一化" in line for line in result2["logs"])
+    assert not any(
+        "窗口重归一化" in line for line in result2["logs"]
+    )
 
 
 def test_unified_route_uniform_progress_stages(
@@ -1081,20 +1094,23 @@ def test_finalize_nus_progress_callback(tmp_path: Path, monkeypatch, bruker_dir:
     resp = backend.finalize_nus(experiment, work_dir=work, progress=messages.append)
     assert resp["success"] is True, resp
     # 0.2.199-patch29eb: finalize no longer emits generic progress (the caller emits
-    # the concrete "phase optimisation: ...")
     assert messages == []
-
 
 def test_split_final_ext_apply_to_opt_default_on() -> None:
     """0.2.199-patch3: "apply this range to the optimisation" is on by default and the
-    parameters pass through the parser."""
+    parameters pass through the parser.
+    """
     from workflow.phase_routes import _split_final_ext
 
-    p, lo, hi, apply = _split_final_ext({"final_ext_lo": "8.0", "final_ext_hi": "6.0"})
+    p, lo, hi, apply = _split_final_ext(
+        {"final_ext_lo": "8.0", "final_ext_hi": "6.0"}
+    )
     assert (lo, hi, apply) == ("8.0", "6.0", True)
     assert "apply_ext_to_opt" not in p
     assert "final_ext_lo" not in p
-    p, lo, hi, apply = _split_final_ext({"final_ext_lo": "8.0", "apply_ext_to_opt": "0"})
+    p, lo, hi, apply = _split_final_ext(
+        {"final_ext_lo": "8.0", "apply_ext_to_opt": "0"}
+    )
     assert (lo, hi, apply) == ("8.0", None, False)
     p, lo, hi, apply = _split_final_ext({"apply_ext_to_opt": "off"})
     assert (lo, hi, apply) == (None, None, False)
@@ -1102,7 +1118,8 @@ def test_split_final_ext_apply_to_opt_default_on() -> None:
 
 def test_direct_phase_cache_roundtrip(tmp_path: Path) -> None:
     """Direct-dimension phase cache: save -> load hit; a shape/parameter change
-    invalidates it."""
+    invalidates it.
+    """
     from core.data.internal_data_model import (
         AxisRole,
         Dimension,
@@ -1136,7 +1153,9 @@ def test_direct_phase_cache_roundtrip(tmp_path: Path) -> None:
     assert fp == _direct_phase_params_fp(exp, dict(params))
     assert fp != _direct_phase_params_fp(exp, {"ext_lo": 9.0, "ext_hi": 7.0})
 
-    _save_direct_phase_cache(tmp_path, exp, params, shape, 12.5, -3.0, 40.0, 22.3)
+    _save_direct_phase_cache(
+        tmp_path, exp, params, shape, 12.5, -3.0, 40.0, 22.3
+    )
     data = _load_direct_phase_cache(tmp_path, exp, params, shape)
     assert data is not None
     assert float(data["p0"]) == 12.5
@@ -1144,9 +1163,13 @@ def test_direct_phase_cache_roundtrip(tmp_path: Path) -> None:
     assert float(data["duration_s"]) == 22.3
     assert data["version"] == 3
     assert _load_direct_phase_cache(tmp_path, exp, params, (21, 16, 12)) is None
-    assert _load_direct_phase_cache(tmp_path, exp, {"ext_lo": 9.0, "ext_hi": 7.0}, shape) is None
+    assert (
+        _load_direct_phase_cache(
+            tmp_path, exp, {"ext_lo": 9.0, "ext_hi": 7.0}, shape
+        )
+        is None
+    )
     # 0.2.166: the direct-dimension window affects the reconstruction plane, so the
-    # cache fingerprint must include window
     assert (
         _load_direct_phase_cache(
             tmp_path,
@@ -1161,7 +1184,7 @@ def test_direct_phase_cache_roundtrip(tmp_path: Path) -> None:
         )
         is None
     )
-    # The old v2 half-circle-folded cache must not be reused after the fix.
+    # Do not reuse version 2 cache entries with half-circle-wrapped 174-degree phases.
     import json
 
     data.update(version=2, p0=174.0)
@@ -1169,11 +1192,13 @@ def test_direct_phase_cache_roundtrip(tmp_path: Path) -> None:
     assert _load_direct_phase_cache(tmp_path, exp, params, shape) is None
 
 
+
 def test_append_final_summary_readable_report(tmp_path: Path) -> None:
     """0.2.169-patch: the closing report made readable -- ◆ sections, overall verdict,
     per-item grades and the reason the baseline is not flat. The data-quality
     diagnosis belongs to the "Generate FID" step since 2026-09-23 and is not in this
-    report."""
+    report.
+    """
     import nmrglue as ng
     import numpy as np
 
@@ -1224,7 +1249,7 @@ def test_append_final_summary_readable_report(tmp_path: Path) -> None:
     assert "基线指标" in text
     assert "建议复核:" in text
     assert "检测到基线倾斜/偏移" in text
-
+    # Diagnostics belong to the Generate FID step and are absent from this spectrum report.
     assert "◆ 数据质量诊断" not in text
     assert "POLY -time" not in text
     assert "◆ 处理设置" in text
@@ -1263,13 +1288,11 @@ def test_cleanup_unified_intermediates(tmp_path: Path) -> None:
         proc / f"{dataset_id}_win3.ft3",
         proc / f"{dataset_id}_win3_finalize.com",
         # 0.2.199-patch29em: leftovers of the old zero-fill/window candidates (winzf)
-        # are cleaned up too
         proc / f"{dataset_id}_winzf_auto.ft2",
         proc / f"{dataset_id}_winzf_auto.com",
         proc / f"{dataset_id}_winzf_1×TD.ft2",
         proc / f"{dataset_id}_winzf_2×TD.ft2",
         # 0.2.199-patch29dy: NUS reconstruction intermediate directories are not left
-        # behind
         proc / "nus3d_1" / "stage1.ft1",
         proc / "nus3d_rc_ph" / "test0001.ft1",
         proc / "nus2d" / "recon.ft1",
@@ -1279,7 +1302,6 @@ def test_cleanup_unified_intermediates(tmp_path: Path) -> None:
         p.write_text("x")
     # 2026-09-25 (user): the 3D NUS nus3d_rc (the indirect-dimension processing input)
     # is kept -- it lets an "indirect-dimension flip (FT -neg)" re-run only the final
-    # script instead of SMILE
     recon_kept = proc / "nus3d_rc" / "test0001.ft1"
     recon_kept.parent.mkdir(parents=True, exist_ok=True)
     recon_kept.write_text("x")
@@ -1293,7 +1315,6 @@ def test_cleanup_unified_intermediates(tmp_path: Path) -> None:
         proc / "fid" / "test001.fid",
         proc / "spectra" / f"{dataset_id}.ft3",
         # Keep the _c* / _j* old intermediates with prob 0 (0.2.77 cleanup scope, not
-        # touched here)
         proc / f"{dataset_id}_c_0.ft3",
         proc / f"{dataset_id}_j_0.ft3",
     ]
@@ -1302,7 +1323,6 @@ def test_cleanup_unified_intermediates(tmp_path: Path) -> None:
         p.write_text("x")
 
     # 0.2.199-patch29em: the backend's default-working-directory fallback (.nmrpipe)
-    # is deleted entirely
     fallback = tmp_path / f"{dataset_id}.nmrpipe"
     fallback.mkdir()
     (fallback / f"{dataset_id}_preview_F1.ft2").write_text("x")
@@ -1315,7 +1335,6 @@ def test_cleanup_unified_intermediates(tmp_path: Path) -> None:
     for p in intermediates:
         assert not p.exists(), f"中间产物未删: {p}"
     # The 3D NUS reconstruction planes must be kept (an indirect-dimension flip
-    # re-run starts from them)
     assert recon_kept.exists(), "nus3d_rc 被误删(间接维处理的输入)"
 
     # Verify the kept items are still there
@@ -1339,7 +1358,9 @@ def test_load_preview_memory_error_hint(tmp_path, monkeypatch) -> None:
     def boom(path, unpack_axis=None):
         raise MemoryError
 
-    monkeypatch.setattr("workflow.phase_routes._read_complex_preview", boom)
+    monkeypatch.setattr(
+        "workflow.phase_routes._read_complex_preview", boom
+    )
     import pytest
 
     with pytest.raises(RuntimeError) as ei:
@@ -1356,15 +1377,9 @@ def test_2d_seed_direct_residual_and_cache_are_absolute(tmp_path, monkeypatch, b
     experiment = read_dataset(bruker_dir / "nus_2d")
     backend = _FakeBackend(tmp_path / "seed_work")
     original = backend.reconstruct_nus
-    seed = {
-        "accepted": True,
-        "method": "zero_increment_quadrature",
-        "version": 1,
-        "backend_runs": 1,
-        "phases": {"F1": [90.0, 0.0]},
-        "direct_phase": [116.0, 0.0],
-        "log": "coarse seed",
-    }
+    seed = {"accepted": True, "method": "zero_increment_quadrature", "version": 1,
+            "backend_runs": 1, "phases": {"F1": [90.0, 0.0]},
+            "direct_phase": [116.0, 0.0], "log": "coarse seed"}
 
     def reconstruct(exp, params, progress=None):
         result = original(exp, params, progress)
@@ -1374,36 +1389,21 @@ def test_2d_seed_direct_residual_and_cache_are_absolute(tmp_path, monkeypatch, b
 
     backend.reconstruct_nus = reconstruct
     monkeypatch.setattr(routes, "_read_real_ft3", lambda path: np.zeros((32, 64)))
-    monkeypatch.setattr(
-        routes,
-        "_load_preview_with_memory_guard",
-        lambda *args, **kwargs: np.zeros((32, 64), dtype=complex),
-    )
-    monkeypatch.setattr(
-        "workflow.memory_phase_search.search_axis_memory",
-        lambda *args, **kwargs: SimpleNamespace(
-            phase=(90.0, 0.0), score=80.0, logs=[]
-        ),
-    )
+    monkeypatch.setattr(routes, "_load_preview_with_memory_guard",
+                        lambda *args, **kwargs: np.zeros((32, 64), dtype=complex))
+    monkeypatch.setattr("workflow.memory_phase_search.search_axis_memory",
+                        lambda *args, **kwargs: SimpleNamespace(phase=(90.0, 0.0),
+                                                               score=80.0, logs=[]))
     calls = []
 
     def residual(*args, **kwargs):
         calls.append(1)
-        return 178.0, 0.0, 80.0
+        return 178.0, 0.0, 80.0  # -2 degrees modulo 180, not absolute 178.
 
-    monkeypatch.setattr(
-        "core.optimization.phase_consensus.search_direct_phase_real_ht", residual
-    )
-    monkeypatch.setattr(
-        routes,
-        "_optimize_nus_processing",
-        lambda *args, **kwargs: {
-            "baseline": None,
-            "zero_fill": None,
-            "window": None,
-            "logs": [],
-        },
-    )
+    monkeypatch.setattr("core.optimization.phase_consensus.search_direct_phase_real_ht", residual)
+    monkeypatch.setattr(routes, "_optimize_nus_processing",
+                        lambda *args, **kwargs: {"baseline": None, "zero_fill": None,
+                                                "window": None, "logs": []})
     monkeypatch.setattr(routes, "_append_final_summary", lambda *args, **kwargs: None)
     for _ in range(2):
         result = routes.unified_route(experiment, backend, work_dir=backend.work)

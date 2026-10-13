@@ -10,16 +10,16 @@ nmrForge读取Bruker数据集，识别实验类型与采样方式，规划处理
 数据检查、自动与人工处理、参数优化、质量控制、选峰和查看在同一工作流中完成，
 实际采用的参数、脚本、告警和输出与结果一同留档，便于复现和核查。
 
-**软件版本：1.0.5 · Python/CLI API：1.1.1 · 目标平台：Linux**
+**软件版本：1.0.6 · Python/CLI API：1.1.2 · 目标平台：Linux**
 
 **Linux桌面用户最简单的使用方式是AppImage。**
-下载[1.0.5 AppImage](https://github.com/RociferX/nmrforge/releases/download/v1.0.5/NMRForge-1.0.5-x86_64.AppImage)
-及[校验文件](https://github.com/RociferX/nmrforge/releases/download/v1.0.5/SHA256SUMS-v1.0.5.txt)，
+下载[1.0.6 AppImage](https://github.com/RociferX/nmrforge/releases/download/v1.0.6/NMRForge-1.0.6-x86_64.AppImage)
+及[校验文件](https://github.com/RociferX/nmrforge/releases/download/v1.0.6/SHA256SUMS-v1.0.6.txt)，
 按[安装步骤](#安装)校验、赋予执行权限并启动，无需自行配置Python或Qt。
 真实谱图处理仍需单独安装NMRPipe，NUS重构还需要SMILE。
 
 桌面程序可通过AppImage或源码安装使用，Python/CLI API通过源码或Python包安装提供。
-API **v1.1.1**输出**38列**峰表；二进制的`BUILD_INFO.txt`记录版本、源码修订与依赖。
+API **v1.1.2**输出**38列**峰表；二进制的`BUILD_INFO.txt`记录版本、源码修订与依赖。
 
 作者：**李宣锋（Xuanfeng Li），中国科学技术大学**。
 源码许可：[Apache-2.0](../LICENSE)，署名见[NOTICE](../NOTICE)。
@@ -125,13 +125,13 @@ nmrForge 不会替你分发、下载或安装 NMRPipe/SMILE。它在运行时探
 
 ### Linux AppImage：最简单的桌面使用方式
 
-从[1.0.5发行页](https://github.com/RociferX/nmrforge/releases/tag/v1.0.5)下载
-`NMRForge-1.0.5-x86_64.AppImage`与`SHA256SUMS-v1.0.5.txt`，然后运行：
+从[1.0.6发行页](https://github.com/RociferX/nmrforge/releases/tag/v1.0.6)下载
+`NMRForge-1.0.6-x86_64.AppImage`与`SHA256SUMS-v1.0.6.txt`，然后运行：
 
 ```bash
-sha256sum -c SHA256SUMS-v1.0.5.txt
-chmod +x NMRForge-1.0.5-x86_64.AppImage
-./NMRForge-1.0.5-x86_64.AppImage
+sha256sum -c SHA256SUMS-v1.0.6.txt
+chmod +x NMRForge-1.0.6-x86_64.AppImage
+./NMRForge-1.0.6-x86_64.AppImage
 ```
 
 AppImage包含Python、Qt和桌面程序，无需自行创建Python环境或安装Python依赖；
@@ -244,7 +244,8 @@ for run in result.runs:
 也不计算下游统计。参考阶段转换原始输入，组合只读复用冻结FID。
 显式多段导入通过`segmented=True`开启；参考证据缺失或不兼容时需用`force=True`重建。
 
-API单独版本化，当前为**v1.1.1**。跨版本比较前可检查`compat_manifest()`；
+API单独版本化，当前为**v1.1.2**。跨版本比较前可检查`compat_manifest()`；
+参考构建可保存每条件的`optimization_scores.csv`评分记录，并支持显式候选池；传入池中评分最高且有效的候选用于生成参考。
 统一峰表为38列。详见[API指南](docs/external-api/README.md)、
 [Python参考](docs/python-api.md)及[输出与记录](docs/external-api/06-outputs-and-records.md)。
 

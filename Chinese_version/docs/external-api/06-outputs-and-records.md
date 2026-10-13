@@ -1,4 +1,4 @@
-# 06 · 输出与记录(v1.1.1)
+# 06 · 输出与记录(v1.1.2)
 
 ## 6.1 目录布局
 
@@ -11,6 +11,7 @@
         <data>.fid.conversion.json 转换快照(数字滤波元数据、脚本与命令证据)
     reference/<exp>_<data>/
         reference.json            参考状态(参数/哈希/峰表/版本/阶段溯源)
+        optimization_scores.csv   构建参考时的窗函数与基线逐候选评分
         process.com               参考运行实际执行的完整脚本
         reference.ft2             冻结参考谱
         reference.list            参考峰**身份**表(Poky,含 R0001…)
@@ -33,6 +34,45 @@
         measurement.json          测量口径与定位 QC 汇总
         peak_table_parabolic.csv  唯一的组合汇总长表(workflow × 条件)
 ```
+
+### 6.1.1 参考自动优化评分表
+
+`build_reference()`及`run_reference_study()`构建参考时，每个条件输出一张
+`study/reference/<exp>_<data>/optimization_scores.csv`。它记录本次优化实际计算的基线和窗函数
+候选分数，保留优化时精度。`reference.optimization_scores`及对应`reference.json`中的同名字段
+含`schema`、`path`、`sha256`、`n_rows`和结构化`rows`；`records/reference.json`引用该附件。
+
+```python
+reference = result.reference()  # run_reference_study()返回的结果
+print(reference.optimization_scores["path"])
+```
+
+| 字段 | 含义 |
+| --- | --- |
+| `condition`, `dataset_key`, `run_id` | 条件、数据集和参考运行身份 |
+| `stage`, `axis`, `source` | `baseline`/`window`、逻辑F轴、联合谱/FID/重构平面的评分来源 |
+| `candidate`, `score`, `score_metric` | 候选名称、实际评分及`baseline_quality`/`window_detection`口径 |
+| `type`, `off`, `end`, `pow`, `c`, `g1`, `g2`, `g3`, `lb` | 窗候选参数；不适用的列留空 |
+| `enabled`, `mode`, `order` | 基线候选参数，off是不校正；auto:1是自动一阶候选 |
+| `parameters_json` | 完整候选参数，便于程序读取 |
+| `selected`, `applied` | 优化器选中、最终保留或采用该配置；两者不总相同 |
+| `status`, `reason` | 评分、否决、跳过、关闭或失败状态及原因 |
+| `fwhm_points`, `snr`, `shape`, `merged`, `n_ref` | 窗评分的线宽点数、SNR、线形和逐迹统计量；后两者可为中位数小数，不是完整三维峰计数 |
+
+分数越高越优，但只在**同阶段、同轴、本轮候选**内比较，不能比较窗分和基线分，也不代表终谱质量总分。
+窗分保留优化器的分辨率门限与惩罚之后的数值；未通过门限的候选分为0，并注明`resolution_gate`。
+基线条纹否决发生在质量评分之前，CSV分数留空、状态为`vetoed`，不把内部否决哨兵当质量分。
+默认基线优化在增益不超过0.5时保留off，即使某个校正候选的原始分数略高；基线已良好时仅记录已算出的off分。
+显式候选网格不使用这两项提前保留规则。
+默认NUS直接维继续使用固定SP，默认评分候选不覆盖该窗；显式NUS直接维候选只允许SP系列，
+选中项进入最终重构脚本并记录`applied=True`。显式候选只对所给列表评分，不追加默认项；未指定的
+阶段/方向才用默认池。显式基线网格跳过≥95分提前跳过与0.5增益保留off规则，但条纹否决仍生效，
+全部候选被否决时参考构建失败。候选和列表顺序绑定参考指纹，变化需`force=True`。
+
+没有执行的评分留空并标原因，例如关闭优化、缺少FID、缺少谱宽、评分失败。
+`phase_route="none"`时写`not_run`，不补算分数。旧参考没有逐候选记录时标`not_recorded`；
+若需要完整分数，使用`force=True`重新构建参考。缓存复用保持原始评分；CSV丢失或损坏时
+从冻结的结构化行恢复，不重跑优化。评分附件不进入组合基底，不增加峰表列。
 
 ## 6.2 统一峰表字段(当前 **38 列**)
 

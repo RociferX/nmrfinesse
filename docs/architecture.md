@@ -1,7 +1,7 @@
 # Architecture
 
-NMRForge 1.0.5 combines a Qt desktop application, a reusable data and processing core, workflow
-orchestration, an NMRPipe backend, and a separate Python/CLI API (API 1.1.1). The components share
+NMRForge 1.0.6 combines a Qt desktop application, a reusable data and processing core, workflow
+orchestration, an NMRPipe backend, and a separate Python/CLI API (API 1.1.2). The components share
 the same project and processing capabilities, but have different entry points and output records.
 
 ```text
@@ -25,7 +25,7 @@ boundary and in its script generator.
 - `gui/` contains the main window, project tree, pipeline and group panels, import and script
   dialogs, settings, and logs. It accesses project state through `core.project` and invokes
   processing through `gui.processing.ProcessingController`.
-- `nmrforge_api/` provides the Qt-free Python and CLI entry points for version 1.1.1. It builds
+- `nmrforge_api/` provides the Qt-free Python and CLI entry points for version 1.1.2. It builds
   reference products and runs explicit parameter combinations; its records and outputs belong to
   API sessions rather than the active desktop project. See the [API contract](API_CONTRACT.md).
 - `workflow/` implements application operations: Bruker import, the import/FID/spectrum steps,

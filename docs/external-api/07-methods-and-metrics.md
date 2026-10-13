@@ -1,4 +1,4 @@
-# 07 · Methods and QC criteria (v1.1.1)
+# 07 · Methods and QC criteria (v1.1.2)
 
 > This page describes what the software **executed** and what QC records were left. Any
 > cross-combination or cross-condition statistic
@@ -100,6 +100,21 @@ low-level detector uses `sign_mode="auto"` by default.
   automatically before an Nth-order fit. Reference optimisation scores robust polynomial
   candidates in memory; the final script applies the corresponding baseline settings.
 - `mode=auto` renders `POLY -auto` with the engine's default order.
+
+### Reference window candidate scoring
+
+Scores are calculated on an in-memory magnitude spectrum. Reference peaks use a `12σ` threshold;
+for each trace, only significant peaks at or above 25% of that trace's strongest significant peak
+are retained. The score is `det_mean × nearby-peak merging penalty × strong-peak symmetry/side-lobe
+factors`; results across traces are summarized by the median. A candidate's FWHM must not exceed
+`min_fwhm × tol_used`, where `min_fwhm` is the narrowest valid candidate width. The tolerance is
+capped at 1.25 for the direct dimension and 1.15 for indirect dimensions; the nearest significant
+peak spacing can tighten it further. The indirect dimension also
+receives `exp(-max(fwhm/min_fwhm - 1, 0))` as an additional penalty.
+
+Scores rank candidates only within the same stage and axis. They do not estimate performance for all
+weak peaks or a globally optimal final spectrum. The per-candidate record is described in
+[06 §6.1.1](06-outputs-and-records.md#611-reference-optimization-score-table).
 
 ### Axis effects are reported according to conditions
 

@@ -51,13 +51,13 @@ from ui_support.i18n import tr
 
 STUDY_DIRNAME = "study"
 STUDY_STATE_FILENAME = "study.json"
-# Public API version (single definition point, 2026-10-10): v1.1.1 retains the
+# Public API version (single definition point, 2026-10-13): v1.1.2 retains the
 # independent-reference model, the 38-column peak table, and the complete cache-input
 # contract. v1.0/0.2 callers should follow the migration notes for columns, audits, and
 # reference caches. This is the **contract** version, not the package version (see
 # `core.__version__`); it is written into study.json, records/manifest.json, and
 # records/workflows.json, so this is its only definition.
-API_VERSION = "1.1.1"
+API_VERSION = "1.1.2"
 #: order in which condition labels are assigned (A/B/C...)
 CONDITION_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 

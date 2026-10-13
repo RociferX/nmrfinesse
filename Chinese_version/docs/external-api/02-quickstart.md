@@ -1,4 +1,4 @@
-# 02 · 快速上手(v1.1.1)
+# 02 · 快速上手(v1.1.2)
 
 ## 1. 两个模式
 
@@ -48,6 +48,37 @@ for run in result.runs:
   当参考窗型为 `none`/`off` 时，单独扫描这些子参数会报错；
 - 基线:`baseline.<轴>.mode=order` 渲染 `POLY -ord N -auto`；`mode=auto` 渲染
   `POLY -auto`；某条件的谱未发生变化时会记录 `no_spectrum_change`。
+
+### 显式限定参考优化候选
+
+默认参考优化使用程序候选池。若需固定候选集合，可在参考调用的 `params` 中传入
+`optimization_candidates`。显式给出的阶段/方向只评分所列候选，不追加默认项：
+
+```python
+reference = run_reference_study(
+    "~/studies/hsqc_candidates",
+    datasets={"A": "~/data/bmr12345/1"},
+    params={"optimization_candidates": {
+        "window": {
+            "direct": [
+                {"type": "sine_bell", "off": 0.35, "end": 0.98, "pow": 1, "c": 0.5},
+                {"type": "sine_bell_squared", "off": 0.45, "end": 0.98, "pow": 2, "c": 0.5},
+            ],
+            "indirect": [
+                {"type": "sine_bell", "off": 0.35, "end": 0.98, "pow": 1, "c": 0.5},
+            ],
+        },
+        "baseline": [
+            {"mode": "off", "order": 0},
+            {"mode": "order", "order": 4},
+        ],
+    }},
+)
+```
+
+CLI 用现有 `reference --params` / `--condition-params` 传同样的 JSON/YAML，不增加选项。
+候选及顺序绑定参考输入指纹；修改后需 `force=True`（CLI `--force`）重建。完整字段与
+NUS限制见[输入与数据 §5.10](05-inputs-and-data.md#510-参考优化候选列表)。
 
 ## 2. 两条件(A/B)同参数
 

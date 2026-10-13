@@ -1,9 +1,9 @@
-# 04 · Command line reference (v1.1.1)
+# 04 · Command line reference (v1.1.2)
 
 Entry:`python -m nmrforge_api <Order> --study <Research roots>`.
 Public parameter:`--study`(required), `--name`(new research name), `--condition <A|B|…>`.
 (Default = all conditions).
-The CLI uses API **1.1.1** and software **1.0.5**, with the 38-column peak-table contract.
+The CLI uses API **1.1.2** and software **1.0.6**, with the 38-column peak-table contract.
 Install the source or wheel to use this entry point; see [installation](../installation.md).
 
 ## Init -- Create the study and import the dataset
@@ -52,6 +52,25 @@ whether this condition supports parameter combinations.
 parameters per key. For carriers, `--carrier-ppm` is repeatable, and a repeated F axis is an error.
 Explicit CLI carrier values override the common params per axis; condition-specific carrier values
 then override them per axis.
+
+Reference window/baseline candidates use these existing parameter-file options, with no new CLI
+flag. For example, save this as `candidates.yaml` and pass it to `reference --params`:
+
+```yaml
+optimization_candidates:
+  window:
+    direct:
+      - {type: sine_bell, off: 0.35, end: 0.98, pow: 1, c: 0.5}
+      - {type: sine_bell_squared, off: 0.45, end: 0.98, pow: 2, c: 0.5}
+    indirect:
+      - {type: sine_bell, off: 0.35, end: 0.98, pow: 1, c: 0.5}
+  baseline:
+    - {mode: off, order: 0}
+    - {mode: order, order: 4}
+```
+
+Explicit lists replace the corresponding default pool. Unspecified stages/directions use defaults;
+changing candidates or their order requires `--force`. See [05 §5.10](05-inputs-and-data.md#510-explicit-reference-optimization-candidates).
 
 Reference reuse requires a complete normalized input fingerprint match; a mismatch or an old
 reference without a valid fingerprint raises an error and requires explicit --force (no automatic

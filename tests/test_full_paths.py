@@ -27,7 +27,8 @@ from core.project import ProjectManager
 
 def _synthetic_preview(axis: int, p0: float) -> np.ndarray:
     """Complex Lorentzian: complex on the evaluated axis + known phase, the other
-    axes real (isomorphic to the phase_routes test)."""
+    axes real (isomorphic to the phase_routes test).
+    """
     n0, n1 = 96, 80
     k0 = np.arange(n0, dtype=float)
     k1 = np.arange(n1, dtype=float)
@@ -59,7 +60,8 @@ def _spectrum_array() -> np.ndarray:
 
 class FakeBackend:
     """Simulated NMRPipe backend: writes a real readable fid; spectrum
-    paths/previews are provided via monkeypatch."""
+    paths/previews are provided via monkeypatch.
+    """
 
     def __init__(self, work: Path) -> None:
         self.work = Path(work)
@@ -74,14 +76,18 @@ class FakeBackend:
         return path
 
     def convert_to_fid(
-        self, experiment, data_dir, progress=None, params=None, fid_com_overrides=None
+        self, experiment, data_dir, progress=None,
+        params=None, fid_com_overrides=None
     ) -> dict:
         """Write a real readable fid (readable by diagnostics/direct-dimension
-        window optimisation) and fid.com (read manually)."""
+        window optimisation) and fid.com (read manually).
+        """
         work = self.work
         dataset_id = experiment.dataset_id
         work.mkdir(parents=True, exist_ok=True)
-        (work / "fid.com").write_text("#!/bin/csh\n# auto fid.com\n", encoding="utf-8")
+        (work / "fid.com").write_text(
+            "#!/bin/csh\n# auto fid.com\n", encoding="utf-8"
+        )
         n_direct = 128
         n_traces = 64
         if experiment.ndim >= 3:
@@ -109,7 +115,8 @@ class FakeBackend:
     @staticmethod
     def _write_spectrum_file(path: Path, ndim: int = 2) -> None:
         """Write a readable pipe spectrum (real values + valid header) for peak
-        picking and quality scoring to read."""
+        picking and quality scoring to read.
+        """
         import nmrglue as ng
         import nmrglue.fileio.pipe as pmod
 
@@ -150,7 +157,9 @@ class FakeBackend:
                 "FDDIMORDER4": 4.0,
             }
         )
-        for i, lab in enumerate(("FDF2LABEL", "FDF1LABEL", "FDF3LABEL", "FDF4LABEL")):
+        for i, lab in enumerate(
+            ("FDF2LABEL", "FDF1LABEL", "FDF3LABEL", "FDF4LABEL")
+        ):
             dic[lab] = ("1H", "15N", "13C", "")[i]
         dic.update(
             {
@@ -168,7 +177,7 @@ class FakeBackend:
         else:
             # NMRPipe stream data is (FDF3SIZE, FDSPECNUM, FDSIZE).
             data = np.zeros((n3, n2, n1), dtype="<f4")
-
+        # Add several peaks.
         if ndim == 1:
             data[60] = 1000.0
             data[70] = 600.0
@@ -182,7 +191,8 @@ class FakeBackend:
 
     def _write_fid_file(self, path: Path, n_traces: int, n_direct: int) -> None:
         """Write an nmrglue-readable fid: 512B header + (n_traces, n_direct) complex
-        interleaved."""
+        interleaved.
+        """
         import nmrglue as ng
         import nmrglue.fileio.pipe as pmod
 
@@ -229,7 +239,6 @@ class FakeBackend:
         data[3, 20] = 100 + 50j
         data[5, 40] = 80 + 20j
         # Complex -> real/imaginary interleaved reals (first axis doubled),
-        # matching the NMRPipe fid layout
         inter = np.empty((2 * n_traces, n_direct), dtype="<f4")
         inter[0::2] = data.real.astype("<f4")
         inter[1::2] = data.imag.astype("<f4")
@@ -249,7 +258,9 @@ class FakeBackend:
         progress=None,
     ) -> dict:
         params = dict(params or {})
-        self.process_calls.append((experiment, plan, params, dict(direct_phase_override or {})))
+        self.process_calls.append(
+            (experiment, plan, params, dict(direct_phase_override or {}))
+        )
         ext = {1: "ft1", 2: "ft2"}.get(experiment.ndim, "ft3")
         name = out_file or f"{experiment.dataset_id}.{ext}"
         path = self.work / name
@@ -259,7 +270,6 @@ class FakeBackend:
     def reconstruct_nus(self, experiment, params, progress=None) -> dict:
         self.reconstruct_params.append(dict(params or {}))
         # Write the reconstruction planes (2D nus2d/recon.ft1; 3D
-        # nus3d_rc/test*.ft1) for finalize to consume
         if experiment.ndim >= 3:
             plane_dir = self.work / "nus3d_rc"
             plane_dir.mkdir(parents=True, exist_ok=True)
@@ -310,7 +320,8 @@ def _manager_with_data(
 
 def _install_spectrum_mocks(monkeypatch: pytest.MonkeyPatch) -> None:
     """Inject the synthetic preview/spectrum readers (real process, simulated
-    file-reading layer)."""
+    file-reading layer).
+    """
 
     def _preview_3d(axis: int, p0: float) -> np.ndarray:
         arr = np.zeros((24, 32, 40), dtype=np.complex128)
@@ -344,16 +355,17 @@ def _install_spectrum_mocks(monkeypatch: pytest.MonkeyPatch) -> None:
             return _preview_3d(0, 0.0)
         return _synthetic_preview(0, 0.0)
 
-    monkeypatch.setattr("core.data.pipe_io.read_pipe_complex", fake_read_pipe_complex)
+    monkeypatch.setattr(
+        "core.data.pipe_io.read_pipe_complex", fake_read_pipe_complex
+    )
     # Baseline/zero-fill scoring: the spectrum file bytes are unreadable ->
-    # read the synthetic array directly
     import core.data.pipe_io
 
     monkeypatch.setattr(core.data.pipe_io, "read_pipe_complex", fake_read_pipe_complex)
 
 
 # ----------------------------------------------------------------------
-# Automatic path
+# ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
 @pytest.mark.parametrize(
     ("dataset", "exp_title"),
@@ -365,21 +377,21 @@ def _install_spectrum_mocks(monkeypatch: pytest.MonkeyPatch) -> None:
     ],
 )
 def test_auto_full_path(
-    tmp_path: Path,
-    bruker_dir: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    dataset: str,
-    exp_title: str,
+    tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch,
+    dataset: str, exp_title: str,
 ) -> None:
     """Automatic path: import -> generate FID -> generate spectrum (unified,
     diagnostics + optimisation) -> peak picking.
     The analysis (HSQC CSP) feature was removed by user decision (2026-09-12,
-    REPORT-008), so this path ends at peak picking."""
+    REPORT-008), so this path ends at peak picking.
+    """
     from workflow.pick_peaks import pick_peaks
     from workflow.stepwise import generate_fid, generate_spectrum
 
     _install_spectrum_mocks(monkeypatch)
-    manager, exp_id, data_id, _raw = _manager_with_data(tmp_path, bruker_dir, dataset, exp_title)
+    manager, exp_id, data_id, _raw = _manager_with_data(
+        tmp_path, bruker_dir, dataset, exp_title
+    )
     backend = FakeBackend(manager.data_dir(exp_id, data_id, "process"))
     fid_path = generate_fid(manager, exp_id, data_id, backend)
     assert fid_path
@@ -389,10 +401,18 @@ def test_auto_full_path(
     fid = Path(data.fid_path)
     assert fid.is_file() or (fid.is_dir() and list(fid.glob("test*.fid")))
 
-    spec = generate_spectrum(manager, exp_id, data_id, backend)
+    spec = generate_spectrum(
+        manager, exp_id, data_id, backend, params={"_record_optimization_scores": True},
+    )
     assert spec
     data = manager.data(exp_id, data_id)
     assert data.status == "processed"
+    spectrum_run = manager.last_run_for_data(exp_id, data_id, ["phase_optimize_unified"])
+    score_rows = spectrum_run.params["optimization_scores"]
+    assert {row["stage"] for row in score_rows} == {"baseline", "window"}
+    ndim = 3 if dataset in {"hnca_3d", "nus_3d"} else 2
+    assert {row["axis"] for row in score_rows} == {f"F{i}" for i in range(1, ndim + 1)}
+    assert "_record_optimization_scores" not in spectrum_run.params
     if backend.reconstruct_params:
         first = backend.reconstruct_params[0]
         if dataset == "nus_2d":
@@ -416,7 +436,8 @@ def test_auto_full_path(
 def test_compact_2d_nus_full_path_preserves_legal_high_coordinates(
     tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A compact 50% schedule keeps its declared grid and legal high coordinates."""
+    """Regression for acquired-grid dimensions: keep 31 of 62 points (50%) without dropping high
+    coordinates."""
     import hashlib
     import re
 
@@ -460,8 +481,10 @@ def test_compact_2d_nus_full_path_preserves_legal_high_coordinates(
     assert manager.data(entry.id, data.id).status == "processed"
 
 
-def test_auto_full_path_1d_generates_ft1(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    "Regression coverage: test auto full path 1d generates ft1."
+def test_auto_full_path_1d_generates_ft1(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Regression coverage: test auto full path 1d generates ft1."""
     from core.data.bruker_reader import read_dataset
     from workflow.stepwise import generate_fid, generate_spectrum
 
@@ -504,12 +527,11 @@ def test_auto_full_path_1d_generates_ft1(tmp_path: Path, monkeypatch: pytest.Mon
 
 
 def test_auto_uniform_runs_processing_optimization(
-    tmp_path: Path,
-    bruker_dir: Path,
-    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """uniform processing parameter optimisation: diagnostics + baseline +
-    direct-dimension window + zero filling/indirect window go into the final run."""
+    direct-dimension window + zero filling/indirect window go into the final run.
+    """
     from workflow.baseline_optimize import BaselineOptimizeResult
     from workflow.stepwise import generate_fid, generate_spectrum
     from workflow.window_optimize import (
@@ -518,7 +540,9 @@ def test_auto_uniform_runs_processing_optimization(
     )
 
     _install_spectrum_mocks(monkeypatch)
-    manager, exp_id, data_id, _raw = _manager_with_data(tmp_path, bruker_dir, "hsqc_2d")
+    manager, exp_id, data_id, _raw = _manager_with_data(
+        tmp_path, bruker_dir, "hsqc_2d"
+    )
     backend = FakeBackend(manager.data_dir(exp_id, data_id, "process"))
     generate_fid(manager, exp_id, data_id, backend)
     monkeypatch.setattr(
@@ -556,18 +580,67 @@ def test_auto_uniform_runs_processing_optimization(
     assert final_params["baseline"]["F1"]["order"] == 2
     assert final_params["window"]["F2"]["type"] == "sine_bell"
     assert "direct_poly_time" in final_params
+    run = manager.last_run_for_data(exp_id, data_id, ["phase_optimize_unified"])
+    assert "optimization_scores" not in run.params
 
 
 # ----------------------------------------------------------------------
-# Manual path
+# Manual path.
 # ----------------------------------------------------------------------
+@pytest.mark.parametrize("dataset", ["hsqc_2d", "nus_2d", "hnca_3d", "nus_3d"])
+def test_explicit_reference_candidates_drive_final_processing(
+    tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch, dataset: str,
+) -> None:
+    from workflow.stepwise import generate_fid, generate_spectrum
+
+    _install_spectrum_mocks(monkeypatch)
+    manager, exp_id, data_id, _raw = _manager_with_data(tmp_path, bruker_dir, dataset)
+    backend = FakeBackend(manager.data_dir(exp_id, data_id, "process"))
+    generate_fid(manager, exp_id, data_id, backend)
+    ndim = 3 if dataset in {"hnca_3d", "nus_3d"} else 2
+    shape = (32, 32, 64) if ndim == 3 else (32, 64)
+    fid = np.ones(shape, dtype=np.complex128)
+    for axis, length in enumerate(shape):
+        t = np.arange(length)
+        trace = np.exp(-t / (length * .8)) * np.exp(2j * np.pi * (.13 + axis * .04) * t)
+        view = [1] * ndim
+        view[axis] = length
+        fid *= trace.reshape(view)
+    header = {f"FDF{i}SW": 6000.0 for i in range(1, 4)}
+    monkeypatch.setattr("workflow.window_optimize._load_fid", lambda *a: (fid, header))
+    monkeypatch.setattr("workflow.window_optimize._load_recon_planes", lambda *a: (fid, header))
+    candidate = {"type": "sine_bell", "off": .37, "end": .97, "pow": 1.3, "c": .5}
+    pools = {"window": {"direct": [candidate], "indirect": [{"type": "none"}]},
+             "baseline": [{"mode": "off", "order": 0}]}
+    generate_spectrum(
+        manager, exp_id, data_id, backend,
+        params={"optimization_candidates": pools, "_record_optimization_scores": True},
+    )
+    final = (backend.reconstruct_params[-1] if dataset.startswith("nus")
+             else backend.process_calls[-1][2])
+    assert final["window"][f"F{ndim}"] == candidate
+    for i in range(1, ndim):
+        assert final["window"][f"F{i}"] == {"type": "none"}
+    assert all(not cfg["enabled"] for cfg in final["baseline"].values())
+    run = manager.last_run_for_data(exp_id, data_id, ["phase_optimize_unified"])
+    rows = run.params["optimization_scores"]
+    assert len([row for row in rows if row["stage"] == "baseline"]) == ndim
+    for row in rows:
+        assert row["selected"] and row["applied"]
+        if row["stage"] == "baseline":
+            assert row["candidate"] == "off:0"
+        elif row["axis"] == f"F{ndim}":
+            assert row["parameters"] == candidate
+        else:
+            assert row["parameters"] == {"type": "none"}
+
+
 def test_manual_full_path_uniform(
-    tmp_path: Path,
-    bruker_dir: Path,
-    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Manual path: manual_fid_com -> run_manual_fid_com -> manual_scripts ->
-    run_manual_spectrum."""
+    run_manual_spectrum.
+    """
     from workflow.manual import (
         manual_fid_com,
         manual_scripts,
@@ -584,15 +657,15 @@ def test_manual_full_path_uniform(
                 (work / "test.fid").write_bytes(b"fid")
             elif name in ("process.com", "nus.com"):
                 # The real script outputs {raw directory name}.ft2 (manual uses
-                # read_dataset dataset_id)
                 (work / "d_001.ft2").write_bytes(b"ft2")
             return SimpleNamespace(returncode=0, stderr="", stdout="")
 
     monkeypatch.setattr("workflow.manual.CshRuntime", lambda: Runtime())
-    manager, exp_id, data_id, raw = _manager_with_data(tmp_path, bruker_dir, "hsqc_2d")
+    manager, exp_id, data_id, raw = _manager_with_data(
+        tmp_path, bruker_dir, "hsqc_2d"
+    )
     backend = FakeBackend(manager.data_dir(exp_id, data_id, "process"))
     # 0.2.199-patch29dm: the manual path must auto-generate the FID first
-    # (fid.com written to disk) before it can be read
     generate_fid(manager, exp_id, data_id, backend)
     content = manual_fid_com(manager, exp_id, data_id, backend)
     assert "fid.com" in content
@@ -607,13 +680,18 @@ def test_manual_full_path_uniform(
     assert any(r.workflow_ref == "manual_process" for r in manager.project.workflow_runs)
 
 
-def test_manual_scripts_uses_data_id_for_single_fid(tmp_path: Path, bruker_dir: Path) -> None:
+def test_manual_scripts_uses_data_id_for_single_fid(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """0.2.163-patch10: for a 2D manual spectrum script, in_file uses the data_id
     (d_001) rather than the raw directory name (src_*), consistent with the
-    generate_fid product."""
+    generate_fid product.
+    """
     from workflow.manual import manual_scripts
 
-    manager, exp_id, data_id, _raw = _manager_with_data(tmp_path, bruker_dir, "hsqc_2d")
+    manager, exp_id, data_id, _raw = _manager_with_data(
+        tmp_path, bruker_dir, "hsqc_2d"
+    )
     work = manager.data_dir(exp_id, data_id, "process")
     work.mkdir(parents=True, exist_ok=True)
     (work / f"{data_id}.fid").write_bytes(b"fid")
@@ -624,13 +702,15 @@ def test_manual_scripts_uses_data_id_for_single_fid(tmp_path: Path, bruker_dir: 
     assert "src_hsqc_2d.fid" not in content
 
 
-def test_manual_reads_segmented_container(tmp_path: Path, bruker_dir: Path) -> None:
+def test_manual_reads_segmented_container(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """0.2.163-patch12: manual reading of a segmented acquisition container
-    directory (without acqus) no longer raises an error."""
+    directory (without acqus) no longer raises an error.
+    """
     from workflow.manual import manual_scripts
 
     # Segmented container: the root directory has no acqus, the two
-    # sub-segments contain acqus
     container = tmp_path / "seg_container"
     container.mkdir()
     for seg in ("s1", "s2"):
@@ -643,20 +723,26 @@ def test_manual_reads_segmented_container(tmp_path: Path, bruker_dir: Path) -> N
     manager.save()
     work = manager.data_dir(entry.id, data.id, "process")
     work.mkdir(parents=True, exist_ok=True)
-    (work / f"{data.id}_process.com").write_text("# existing script\n", encoding="utf-8")
+    (work / f"{data.id}_process.com").write_text(
+        "# existing script\n", encoding="utf-8"
+    )
     # manual_scripts prefers the existing script; if it can be read, no
-    # acqus error is reported
     scripts = manual_scripts(manager, entry.id, data.id)
     assert f"{data.id}_process.com" in scripts
 
 
-def test_manual_scripts_slice_in_file(tmp_path: Path, bruker_dir: Path) -> None:
+def test_manual_scripts_slice_in_file(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """0.2.163-patch9: after the 3D uniform manual spectrum script detects the
     slice fid, the rendered in_file is rewritten to fid/test%03d.fid (otherwise
-    the manual run fails)."""
+    the manual run fails).
+    """
     from workflow.manual import manual_scripts
 
-    manager, exp_id, data_id, _raw = _manager_with_data(tmp_path, bruker_dir, "hnca_3d")
+    manager, exp_id, data_id, _raw = _manager_with_data(
+        tmp_path, bruker_dir, "hnca_3d"
+    )
     work = manager.data_dir(exp_id, data_id, "process")
     slice_dir = work / "fid"
     slice_dir.mkdir(parents=True, exist_ok=True)
@@ -669,7 +755,11 @@ def test_manual_scripts_slice_in_file(tmp_path: Path, bruker_dir: Path) -> None:
     assert "-in src_hnca_3d.fid" not in content
 
 
-def test_manual_scripts_merged_fid_in_file(tmp_path: Path, bruker_dir: Path) -> None:
+
+
+def test_manual_scripts_merged_fid_in_file(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """2026-09-24 (user): for multi-segment merged products (merged/...) the -in
     must be rewritten to the actual location.
 
@@ -679,7 +769,9 @@ def test_manual_scripts_merged_fid_in_file(tmp_path: Path, bruker_dir: Path) -> 
     """
     from workflow.manual import manual_scripts
 
-    manager, exp_id, data_id, _raw = _manager_with_data(tmp_path, bruker_dir, "hnca_3d")
+    manager, exp_id, data_id, _raw = _manager_with_data(
+        tmp_path, bruker_dir, "hnca_3d"
+    )
     work = manager.data_dir(exp_id, data_id, "process")
     merged = work / "merged" / "fid"
     merged.mkdir(parents=True, exist_ok=True)
@@ -690,12 +782,17 @@ def test_manual_scripts_merged_fid_in_file(tmp_path: Path, bruker_dir: Path) -> 
     assert "-in merged/fid/test%03d.fid" in content
 
 
-def test_manual_scripts_merged_single_fid_in_file(tmp_path: Path, bruker_dir: Path) -> None:
+def test_manual_scripts_merged_single_fid_in_file(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """2026-09-24: when merged into a single file, -in is written as
-    merged/{dataset_id}.fid."""
+    merged/{dataset_id}.fid.
+    """
     from workflow.manual import manual_scripts
 
-    manager, exp_id, data_id, _raw = _manager_with_data(tmp_path, bruker_dir, "hnca_3d")
+    manager, exp_id, data_id, _raw = _manager_with_data(
+        tmp_path, bruker_dir, "hnca_3d"
+    )
     work = manager.data_dir(exp_id, data_id, "process")
     (work / "merged").mkdir(parents=True, exist_ok=True)
     (work / "merged" / f"{data_id}.fid").write_bytes(b"fid")
@@ -705,12 +802,11 @@ def test_manual_scripts_merged_single_fid_in_file(tmp_path: Path, bruker_dir: Pa
 
 
 def test_manual_spectrum_accepts_slice_fid(
-    tmp_path: Path,
-    bruker_dir: Path,
-    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Manual spectrum run: a 3D slice fid (fid/test*.fid) is not misjudged as a
-    missing fid."""
+    missing fid.
+    """
     from workflow.manual import run_manual_spectrum
 
     class Runtime:
@@ -720,7 +816,9 @@ def test_manual_spectrum_accepts_slice_fid(
             return SimpleNamespace(returncode=0, stderr="", stdout="")
 
     monkeypatch.setattr("workflow.manual.CshRuntime", lambda: Runtime())
-    manager, exp_id, data_id, _raw = _manager_with_data(tmp_path, bruker_dir, "hnca_3d")
+    manager, exp_id, data_id, _raw = _manager_with_data(
+        tmp_path, bruker_dir, "hnca_3d"
+    )
     work = manager.data_dir(exp_id, data_id, "process")
     slice_dir = work / "fid"
     slice_dir.mkdir(parents=True, exist_ok=True)
@@ -735,15 +833,14 @@ def test_manual_spectrum_accepts_slice_fid(
 
 
 # ----------------------------------------------------------------------
-# Batch path
+# ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
 def test_batch_full_path_group(
-    tmp_path: Path,
-    bruker_dir: Path,
-    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Batch path: group import -> batch processing of the data group (reference
-    data processing + optimisations in order)."""
+    data processing + optimisations in order).
+    """
     from gui.processing import ProcessingController
     from workflow.batch import run_batch
 
@@ -755,7 +852,6 @@ def test_batch_full_path_group(
         str(bruker_dir / "nus_2d"),
     ]
     # 0.2.199-patch29gl: batch import validates the raw data files; back-fill
-    # ser temporarily for the test
     (bruker_dir / "hsqc_2d" / "ser").write_bytes(b"")
     (bruker_dir / "nus_2d" / "ser").write_bytes(b"")
     controller = ProcessingController(manager)

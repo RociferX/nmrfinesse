@@ -1,5 +1,6 @@
 """Direct-dimension window function optimisation tests: synthetic FID in-memory scoring and
-explicit no-window support on the rendering side."""
+explicit no-window support on the rendering side.
+"""
 
 from __future__ import annotations
 
@@ -21,7 +22,8 @@ from workflow.window_optimize import (
 
 def _synth_fid(n_traces: int = 16, n: int = 512) -> np.ndarray:
     """Synthetic direct-dimension FID: an exponentially decaying single peak plus slight noise
-    (different traces, different amplitudes)."""
+    (different traces, different amplitudes).
+    """
     rng = np.random.default_rng(7)
     t = np.arange(n, dtype=float)
     sig = np.exp(-t / 120.0) * np.exp(2j * np.pi * 0.11 * t)
@@ -34,7 +36,8 @@ def _synth_fid(n_traces: int = 16, n: int = 512) -> np.ndarray:
 
 def test_optimize_direct_window_picks_best_candidate() -> None:
     """Every candidate is scored, the best one is the highest score; the returned structure matches
-    the configuration."""
+    the configuration.
+    """
     res = optimize_direct_window(_synth_fid(), sw=20000.0)
     assert isinstance(res, WindowOptimizeResult)
     assert res.choice in DEFAULT_CANDIDATES
@@ -44,19 +47,21 @@ def test_optimize_direct_window_picks_best_candidate() -> None:
     assert len(selected) == 1
     max_score = max(s["score"] for s in res.scores)
     assert selected[0]["score"] == max_score
+    assert selected[0]["cfg"] == res.choice
+    assert all(s["cfg"] in DEFAULT_CANDIDATES for s in res.scores)
     assert any(res.logs)
 
 
 def test_optimize_direct_window_changed_flag() -> None:
     """changed=False when the optimum matches the current configuration, which avoids a pointless
-    write-back."""
+    write-back.
+    """
     fid = _synth_fid()
     res = optimize_direct_window(fid)
     again = optimize_direct_window(fid, current=res.choice)
     assert again.changed is False
     assert again.choice == res.choice
     # A default current=None counts as differing from the optimum, unless the optimum is the first
-    # candidate
     assert optimize_direct_window(fid, current={}).changed is True
 
 
@@ -65,22 +70,30 @@ def test_optimize_direct_window_no_signal_skips_gracefully() -> None:
     res = optimize_direct_window(np.zeros((8, 256), dtype=complex))
     assert res.changed is False
     assert any("跳过" in log for log in res.logs)
+    assert res.scores and all(s["reason"] == "no_valid_signal" for s in res.scores)
+    assert not any(s["selected"] for s in res.scores)
 
 
 def test_optimize_direct_window_noise_resolution_trend() -> None:
     """Resolution trend: no window (rectangular) has the narrowest main lobe, so FWHM must not
-    exceed 1.5x that of the SP candidates."""
+    exceed 1.5x that of the SP candidates.
+    """
     res = optimize_direct_window(_synth_fid())
     fwhm_by_label = {s["label"]: s["fwhm"] for s in res.scores}
     none_fwhm = fwhm_by_label["无窗(线性)"]
-    sp_fwhms = [v for k, v in fwhm_by_label.items() if k.startswith("SP ")]
+    sp_fwhms = [
+        v for k, v in fwhm_by_label.items() if k.startswith("SP ")
+    ]
     assert sp_fwhms
     assert none_fwhm <= max(sp_fwhms) * 1.5
 
 
-def test_optimize_direct_window_from_work_missing_fid(tmp_path: Path, bruker_dir: Path) -> None:
+def test_optimize_direct_window_from_work_missing_fid(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """Skipped when the work directory has no converted .fid, without blocking the automatic
-    path."""
+    path.
+    """
     from core.data.bruker_reader import read_dataset
 
     exp = read_dataset(bruker_dir / "nus_3d")
@@ -93,7 +106,8 @@ def test_window_line_explicit_none_and_render(
     bruker_dir: Path,
 ) -> None:
     """With type=none the direct dimension still gets a fixed SP (a SMILE requirement); an explicit
-    SP parameter takes effect."""
+    SP parameter takes effect.
+    """
     from backend.script_generator import (
         _window_line,
         generate_3d_nus_script,
@@ -102,16 +116,19 @@ def test_window_line_explicit_none_and_render(
 
     assert _window_line({"type": "none"}) is None
     exp = read_dataset(bruker_dir / "nus_3d")
-    base = dict(in_file="e.fid", nuslist="nuslist", out_file="e.ft3", nuslist_count=4)
+    base = dict(in_file="e.fid", nuslist="nuslist", out_file="e.ft3",
+                nuslist_count=4)
     default = generate_3d_nus_script(exp, **base)
     assert "| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 2 -c 0.5" in default
-    none_script = generate_3d_nus_script(exp, window={"F3": {"type": "none"}}, **base)
+    none_script = generate_3d_nus_script(
+        exp, window={"F3": {"type": "none"}}, **base
+    )
     # 0.2.199-patch11: the direct dimension keeps a fixed SP, type=none no longer makes step1
-    # windowless
     assert "| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 2 -c 0.5" in none_script
     custom = generate_3d_nus_script(
         exp,
-        window={"F3": {"type": "sine_bell", "off": 0.30, "end": 0.98, "pow": 2, "c": 0.5}},
+        window={"F3": {"type": "sine_bell", "off": 0.30, "end": 0.98,
+                       "pow": 2, "c": 0.5}},
         **base,
     )
     assert "| nmrPipe -fn SP -off 0.3 -end 0.98 -pow 2 -c 0.5" in custom
@@ -119,11 +136,15 @@ def test_window_line_explicit_none_and_render(
 
 def test_window_candidates_include_none() -> None:
     """Both the direct and indirect candidate pools must contain no window (no window is a correctly
-    optimisable target, 0.2.190)."""
+    optimisable target, 0.2.190).
+    """
     assert {"type": "none"} in DEFAULT_CANDIDATES
     assert {"type": "none"} in INDIRECT_CANDIDATES
     # The direct candidates keep the user's preferred 0.5-0.98 combination (0.2.189)
-    assert {"type": "sine_bell", "off": 0.50, "end": 0.98, "pow": 2, "c": 0.5} in DEFAULT_CANDIDATES
+    assert (
+        {"type": "sine_bell", "off": 0.50, "end": 0.98, "pow": 2, "c": 0.5}
+        in DEFAULT_CANDIDATES
+    )
 
 
 def test_indirect_windows_selects_none_for_decayed_fid() -> None:
@@ -150,7 +171,8 @@ def test_indirect_windows_selects_none_for_decayed_fid() -> None:
 
 def test_indirect_windows_picks_window_for_truncated_fid() -> None:
     """Indirect-dimension truncated FID: no window has the narrowest main lobe but rings, so the
-    score should pick a mild window instead of no window."""
+    score should pick a mild window instead of no window.
+    """
     rng = np.random.default_rng(4)
     n_f1, n_f2 = 64, 256
     k0 = np.arange(n_f2, dtype=float)
@@ -164,9 +186,12 @@ def test_indirect_windows_picks_window_for_truncated_fid() -> None:
     assert res.per_axis["F1"].choice.get("type") != "none"
 
 
-def test_indirect_windows_missing_recon_skips(tmp_path: Path, bruker_dir: Path) -> None:
+def test_indirect_windows_missing_recon_skips(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """Indirect-dimension window optimisation is skipped when the work directory has no SMILE
-    reconstructed plane, without blocking."""
+    reconstructed plane, without blocking.
+    """
     from core.data.bruker_reader import read_dataset
 
     exp = read_dataset(bruker_dir / "nus_3d")
@@ -175,9 +200,12 @@ def test_indirect_windows_missing_recon_skips(tmp_path: Path, bruker_dir: Path) 
     assert any("跳过" in log for log in res.logs)
 
 
-def test_indirect_windows_missing_fid_skips(tmp_path: Path, bruker_dir: Path) -> None:
+def test_indirect_windows_missing_fid_skips(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """Uniform indirect-dimension window optimisation is skipped when the work directory has no
-    converted fid, without blocking."""
+    converted fid, without blocking.
+    """
     from core.data.bruker_reader import read_dataset
 
     exp = read_dataset(bruker_dir / "hsqc_2d")
@@ -201,6 +229,9 @@ def test_gm_in_direct_pool_requires_sw() -> None:
     fid = _synth_fid()
     no_sw = optimize_direct_window(fid)
     assert not any("GM" in s["label"] for s in no_sw.scores)
+    assert {"type": "gaussian", "g1": 8.0, "g2": 15.0, "g3": 0.0, "c": 1.0} in (
+        no_sw.skipped_candidates
+    )
     with_sw = optimize_direct_window(fid, sw=20000.0)
     gm_scores = [s for s in with_sw.scores if "GM" in s["label"]]
     assert len(gm_scores) == 1

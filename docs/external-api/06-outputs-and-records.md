@@ -1,4 +1,4 @@
-# 06 · Output and records (v1.1.1)
+# 06 · Output and records (v1.1.2)
 
 ## 6.1 directory layout
 
@@ -10,6 +10,7 @@
     work/                         shared fid plus each run's scripts/candidate spectra
     reference/<exp>_<data>/
         reference.json            reference state (parameters / hashes / parabolic peak table / versions)
+        optimization_scores.csv   per-candidate reference window and baseline scores
         process.com               the complete script the reference run actually executed
         reference.ft2             the frozen reference spectrum
         reference.list            reference peak **identity** table (Poky, with R0001...)
@@ -33,6 +34,51 @@
         peak_table_parabolic.csv  long table of workflow × condition
 ```
 
+### 6.1.1 Reference optimization score table
+
+`build_reference()` and `run_reference_study()` write one
+`study/reference/<exp>_<data>/optimization_scores.csv` per condition. It contains the window and
+baseline candidates actually scored during reference optimization, at their scoring precision.
+`ReferenceSpectrum.optimization_scores` and the same field in `reference.json` contain `schema`,
+`path`, `sha256`, `n_rows`, and structured `rows`; `records/reference.json` points to the attachment.
+
+```python
+reference = result.reference()  # result from run_reference_study()
+print(reference.optimization_scores["path"])
+```
+
+| Field | Meaning |
+| --- | --- |
+| `condition`, `dataset_key`, `run_id` | Condition, dataset and reference run identity |
+| `stage`, `axis`, `source` | `baseline`/`window`, logical F axis, and joint spectrum/FID/reconstruction-plane scoring source |
+| `candidate`, `score`, `score_metric` | Candidate label, score and `baseline_quality`/`window_detection` metric |
+| `type`, `off`, `end`, `pow`, `c`, `g1`, `g2`, `g3`, `lb` | Window candidate parameters; inapplicable cells are empty |
+| `enabled`, `mode`, `order` | Baseline candidate parameters; `off` means no correction and `auto:1` is automatic first order |
+| `parameters_json` | Full candidate parameters for programmatic use |
+| `selected`, `applied` | Whether the optimizer selected the candidate and whether it was retained/applied; these can differ |
+| `status`, `reason` | Scored, vetoed, skipped, disabled or failed state and reason |
+| `fwhm_points`, `snr`, `shape`, `merged`, `n_ref` | Window score linewidth, SNR, shape and per-trace summaries; the latter values may be fractional medians, not full 3D peak counts |
+
+Higher scores rank candidates only within the same stage, axis and optimization run. Window and
+baseline scores are not comparable and neither is a total score for the final spectrum. Window scores
+include resolution gates and penalties; a candidate that fails a gate has score zero and reason
+`resolution_gate`. Baseline stripe vetoes occur before quality scoring: the score is empty and
+`status="vetoed"`, rather than exposing an internal veto sentinel as a quality score.
+
+The default baseline optimizer keeps `off` when the gain is at most 0.5 and skips candidate scoring
+when the baseline score is at least 95. An explicit baseline grid bypasses the score-at-least-95 early exit
+and the 0.5 gain rule, but stripe vetoes still apply; reference construction fails if all explicit
+baseline candidates are vetoed. Default NUS direct-dimension processing retains its fixed SP window,
+which default scoring does not override. Explicit NUS direct-dimension SP candidates are applied in
+the final reconstruction script and record `applied=True`.
+
+Rows for work not performed have an empty score and a reason, such as disabled optimization, missing
+FID, missing sweep width or scoring failure. `phase_route="none"` records `not_run`; it does not
+calculate scores. Older references without per-candidate rows use `not_recorded`; rebuild with
+`force=True` to obtain scores. Cache reuse preserves existing scores, and a missing/damaged CSV is
+restored from frozen structured rows without rerunning optimization. The attachment is excluded from
+the combination base and adds no peak-table columns.
+
 ## 6.2 Unified peak table fields (**38 columns**)
 
 Multi-segment source provenance is recorded separately from the peak table. In `study.json` and the
@@ -55,7 +101,7 @@ authentication. Legacy references without this evidence require an explicit `for
 calling reference mode again with its default cache policy is not enough. Resume fingerprints include
 the frozen FID evidence and strict input policy, so older permissive runs are not silently reused.
 
-The unified API v1.1.1 table has currently **38 columns**, in the order below. Reference peak tables must
+The unified API v1.1.2 table has currently **38 columns**, in the order below. Reference peak tables must
 match `nmrforge_api.peak_tables.PEAK_TABLE_COLUMNS`. Both modes use three-point parabolic refinement
 and write one table. `rebuild_reference_peak_tables()` can rebuild tables from the frozen spectrum;
 a missing or invalid input fingerprint requires explicit reference rebuilding with `force=True`.

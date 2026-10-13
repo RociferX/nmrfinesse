@@ -1,16 +1,21 @@
-"""nmrforge_api v1.1.1 version regression (2026-10-10; parameters and 38-column contract unchanged).
+"""Regression coverage for the current nmrforge_api v1.1.2 (2026-10-13).
 
-Covers: reference workflows (1 script + 1 parabolic peak table), workflow_id,
-three-layer parameter archival, independently detected combination peak tables,
-status values, logs and versions, condition-specific reference bases,
-resolved automatic parameters, software boundaries (no CSP/statistics),
-the CLI and independence from Qt.
+Covers reference workflows (one script and one parabolic peak table), workflow IDs,
+three-layer parameter records, combined-mode localization tables selected by the caller,
+three-state statuses, complete logs and versions, independent references per condition,
+effective automatic parameters, software boundaries (no CSP/statistical analysis), the
+CLI, and operation without Qt.
 
-Spec-compliance ledger: ``docs/reviews/2026-09-13-api-spec-compliance.md``.
+Gaussian fitting and its API were removed on 2026-09-26. Three-point parabolic
+localization is now the only method, with one peak table for references and combined
+workflows. Requests for ``gaussian`` or ``both`` must fail explicitly.
+
+See the conformance ledger at ``docs/reviews/2026-09-13-api-spec-compliance.md``.
 """
 
 from __future__ import annotations
 
+import csv
 import hashlib
 import json
 import math
@@ -73,6 +78,9 @@ from nmrforge_api.reference import (
     sanitize_sweep_params,
 )
 
+# Synthetic geometry: axis 0 is indirect (15N, 64 points), axis 1 is direct (1H, 128 points).
+# Header ORIG is the last-grid-point frequency. When it matches CAR,
+# ppm[i] = CAR + (size/2 - i) * SW/(size*OBS). Zero is a valid origin.
 _N15_OBS, _N15_SW, _N15_CAR, _N15_SIZE = 60.8, 2000.0, 118.0, 64
 _H1_OBS, _H1_SW, _H1_CAR, _H1_SIZE = 600.0, 6000.0, 4.7, 128
 _PEAK_A = (30, 60)
@@ -102,7 +110,9 @@ def _write_ft2(path: Path, *, shift_y: float = 0.0, shift_x: float = 0.0) -> Pat
     return _write_ft2_grid(path, 1, shift_y=shift_y, shift_x=shift_x)
 
 
-def _write_ft2_grid(path: Path, factor: int, *, shift_y: float = 0.0, shift_x: float = 0.0) -> Path:
+def _write_ft2_grid(
+    path: Path, factor: int, *, shift_y: float = 0.0, shift_x: float = 0.0
+) -> Path:
     """``factor``-times grid version of the same spectrum (zero filling: point spacing
     1/factor, physical peak positions unchanged).
 
@@ -187,7 +197,8 @@ class _FakeSweepBackend:
         path.mkdir(parents=True, exist_ok=True)
         return path
 
-    def convert_to_fid(self, experiment, data_dir, progress=None, params=None, **_kwargs) -> dict:
+    def convert_to_fid(self, experiment, data_dir, progress=None,
+        params=None, **_kwargs) -> dict:
         self.convert_calls += 1
         work = self._work()
         (work / "fid.com").write_text("#!/bin/csh\n", encoding="utf-8")
@@ -264,13 +275,13 @@ class _FakeSweepBackend:
         work = self._work()
         script = work / (script_name or f"{experiment.dataset_id}_process.com")
         off = float((params.get("window") or {}).get("F1", {}).get("off", 0.40))
-        script.write_text(f"#!/bin/csh\n# window.F1.off={off}\n", encoding="utf-8")
+        script.write_text(
+            f"#!/bin/csh\n# window.F1.off={off}\n", encoding="utf-8"
+        )
         # 0.40 is the "reference"; a 0.01 deviation shifts 0.25 point
-        # (non-integer -> sub-pixel fitting is required to restore it)
         shift = (0.40 - off) * 25.0
         # Simulate zero filling (the motivation for plan A): zero_fill=k -> k-times grid,
         # point spacing 1/k, the peak's **physical position (ppm) unchanged**; the real
-        # backend likewise only changes the digital resolution.
         try:
             factor = max(1, int(params.get("zero_fill") or 1))
         except (TypeError, ValueError):
@@ -290,6 +301,8 @@ class _FakeSweepBackend:
                 "direct_phase": {"F2": [0.0, 0.0]},
             },
         }
+
+
 
 
 # ------------------------------------------------------------------ Unit layer
@@ -320,7 +333,6 @@ def test_measure_peak_positions_recovers_subpoint_shift(tmp_path: Path) -> None:
     peaks = _write_peak_table(tmp_path / "ref.list")
     rows = load_peaks(peaks)
     # After shifting +1.25 point (15N) / +0.625 point (1H), the measurement should come back
-    # to within 1/5 point
     spectrum = _write_ft2(tmp_path / "shift.ft2", shift_y=1.25, shift_x=0.625)
     measured = measure_peak_positions(spectrum, rows, window_pts=3)
     assert len(measured) == 2
@@ -363,7 +375,9 @@ def test_physical_window_is_scale_invariant_across_zero_fill(
     assert auto_one[0]["ppm"] == pytest.approx(1.5 * 15.0 / _N15_OBS, rel=0.02)
     assert auto_one[1]["ppm"] == pytest.approx(1.5 * 8.0 / _H1_OBS, rel=0.02)
     for axis in (0, 1):
-        assert auto_four[axis]["ppm"] == pytest.approx(auto_one[axis]["ppm"], rel=0.02)
+        assert auto_four[axis]["ppm"] == pytest.approx(
+            auto_one[axis]["ppm"], rel=0.02
+        )
         assert auto_four[axis]["nucleus"] == auto_one[axis]["nucleus"]
         # Point spacing gets denser with zero filling -> convert the point count by spacing
         assert auto_four[axis]["ppm_per_point"] == pytest.approx(
@@ -375,7 +389,9 @@ def test_physical_window_is_scale_invariant_across_zero_fill(
     win_four = window_points_by_axis(axes_four, window_ppm=1.0)
     for axis in (0, 1):
         assert win_one[axis]["source"] == "ppm(显式)"
-        assert win_four[axis]["points"] == pytest.approx(4 * win_one[axis]["points"], rel=0.15)
+        assert win_four[axis]["points"] == pytest.approx(
+            4 * win_one[axis]["points"], rel=0.15
+        )
         assert win_four[axis]["effective_ppm"] == pytest.approx(
             win_one[axis]["effective_ppm"], rel=0.15
         )
@@ -383,15 +399,18 @@ def test_physical_window_is_scale_invariant_across_zero_fill(
 
     # Peak position: the same physical window -> both resolutions give the same ppm
     rows = load_peaks(_write_peak_table(tmp_path / "reference.list"))
-    measured_one = measure_peak_positions(tmp_path / "zf1.ft2", rows, window_ppm=1.0)
-    measured_four = measure_peak_positions(tmp_path / "zf4.ft2", rows, window_ppm=1.0)
+    measured_one = measure_peak_positions(
+        tmp_path / "zf1.ft2", rows, window_ppm=1.0
+    )
+    measured_four = measure_peak_positions(
+        tmp_path / "zf4.ft2", rows, window_ppm=1.0
+    )
     assert len(measured_one) == len(measured_four) == 2
     for thin, fine in zip(measured_one, measured_four):
         assert abs(thin.positions["15N"] - fine.positions["15N"]) < 0.2 * _n15_step()
         assert abs(thin.positions["1H"] - fine.positions["1H"]) < 0.2 * _h1_step()
 
     # The point-count caliber (escape hatch) is still "points are points" and is not converted
-    # with zero filling
     pts_one = window_points_by_axis(axes_one, window_pts=3)
     pts_four = window_points_by_axis(axes_four, window_pts=3)
     for axis in (0, 1):
@@ -456,9 +475,12 @@ def test_reference_records_closer_than_the_window_stay_distinct(
     assert abs(found.positions["1H"] - _h1_ppm(60)) < 2.0 * _h1_step()
 
     # The legacy caliber (one shared fixed window for all peaks) can still be reproduced
-    # explicitly: both records land on the same grid point
-    legacy = measure_peak_positions(spectrum, rows, window_pts=3, exclusive_windows=False)
-    legacy_positions = [(item.positions["15N"], item.positions["1H"]) for item in legacy]
+    legacy = measure_peak_positions(
+        spectrum, rows, window_pts=3, exclusive_windows=False
+    )
+    legacy_positions = [
+        (item.positions["15N"], item.positions["1H"]) for item in legacy
+    ]
     assert legacy_positions[0] == legacy_positions[1]
 
 
@@ -500,10 +522,9 @@ def test_reference_phase_uses_all_axes_when_direct_missing() -> None:
     assert record["F2"]["actual_p0"] == pytest.approx(27.5)
     assert record["F2"]["actual_p1"] == pytest.approx(0.0)
     # direct_phase merges with phases: the direct dimension follows direct_phase
-    assert reference_phase({"direct_phase": {"F2": [1.0, 2.0]}, "phases": {"F1": [3.0, 0.0]}}) == {
-        "F1": [3.0, 0.0],
-        "F2": [1.0, 2.0],
-    }
+    assert reference_phase(
+        {"direct_phase": {"F2": [1.0, 2.0]}, "phases": {"F1": [3.0, 0.0]}}
+    ) == {"F1": [3.0, 0.0], "F2": [1.0, 2.0]}
 
 
 def test_reference_phase_handles_nus_flat_direct_phase() -> None:
@@ -522,15 +543,14 @@ def test_error_hierarchy() -> None:
     assert issubclass(SweepError, Exception)
 
 
-def test_api_version_is_1_1_1_with_a_single_definition() -> None:
-    """The current API version is 1.1.1 and has a single definition point."""
+def test_api_version_is_1_1_2_with_a_single_definition() -> None:
+    """The current API version is 1.1.2 and has a single definition."""
     import nmrforge_api
     import nmrforge_api.records as records_module
     import nmrforge_api.session as session_module
 
-    assert API_VERSION == "1.1.1"
+    assert API_VERSION == "1.1.2"
     # Single definition point: the public surface re-exports the same object from session
-    # (previously three places each had their own literal)
     assert nmrforge_api.API_VERSION is session_module.API_VERSION
     # The record templates must use this constant, not a hard-coded version literal
     source = Path(records_module.__file__).read_text(encoding="utf-8")
@@ -538,6 +558,7 @@ def test_api_version_is_1_1_1_with_a_single_definition() -> None:
     assert '"api_version": "' not in source
 
 
+# ------------------------------------------------------------ Reference workflow
 def test_reference_workflow_writes_script_and_one_peak_table(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
@@ -559,7 +580,7 @@ def test_reference_workflow_writes_script_and_one_peak_table(
     assert parabolic_path.is_file()
     header = parabolic_path.read_text(encoding="utf-8").splitlines()[0].split(",")
     assert header == list(PEAK_TABLE_COLUMNS)
-
+    # Gaussian tables were removed with the algorithm; each reference has this one table.
     assert list(ref.peak_tables) == ["parabolic"]
     assert not parabolic_path.with_name("reference_peak_table_gaussian.csv").exists()
     assert not hasattr(ref, "peak_table_gaussian_path")
@@ -567,14 +588,14 @@ def test_reference_workflow_writes_script_and_one_peak_table(
     assert [row["reference_peak_id"] for row in rows_p] == ["R0001", "R0002"]
     assert all(row["workflow_id"] == "reference" for row in rows_p)
     assert all(row["localization_method"] == "parabolic" for row in rows_p)
-
+    # Three-point parabolic fitting provides numeric QC (fit_success / FWHM_* / boundary_hit).
     assert rows_p[0]["fit_success"] is True
     assert rows_p[0]["FWHM_H"] > 0 and rows_p[0]["FWHM_N"] > 0
     assert rows_p[0]["boundary_hit"] is False
     assert rows_p[0]["fallback"] is False
     assert rows_p[0]["localization_requested"] == "parabolic"
     assert "fit_rmse" not in rows_p[0]
-
+    # peak_tables and peak_localization contain only the parabolic method key.
     assert ref.peak_localization["parabolic"]["n_peaks"] == 2
     assert "gaussian" not in ref.peak_localization
     assert set(ref.peak_localization) == {
@@ -588,7 +609,7 @@ def test_reference_workflow_writes_script_and_one_peak_table(
         "cell_geometry",
         "search_windows",
     }
-
+    # Record the actual phase found automatically for the reference.
     assert ref.phase_record()["F2"]["phase_mode"] == "auto"
 
 
@@ -639,33 +660,37 @@ def test_reference_peak_table_carries_cell_qc_columns(
     assert ref.peak_localization["exclusive_windows"] is True
     rows = read_peak_table(Path(ref.peak_table_parabolic_path))
     assert len(rows) == 2
-
+    # Keep documentation, code, and headers aligned: columns and order come from PEAK_TABLE_COLUMNS.
     assert list(rows[0]) == list(PEAK_TABLE_COLUMNS)
     for row in rows:
         # Joint multidimensional ownership has no separable cell geometry.
         for column in ("cell_low_H", "cell_high_H", "cell_low_N", "cell_high_N"):
             assert math.isnan(row[column]), (column, row[column])
         assert math.isnan(row["cell_edge"])
-
+        # Ratio = measured intensity / identity-table Height; values must be finite and positive.
         if not row["detected"]:
             assert math.isnan(row["H_ppm"]) and math.isnan(row["N_ppm"])
             assert math.isnan(row["intensity_ratio_vs_picked"])
             continue
         assert math.isfinite(row["intensity_ratio_vs_picked"])
         assert row["intensity_ratio_vs_picked"] > 0
-
+        # Shift = measured - picked in ppm, with the same axis and direction as H_ppm/N_ppm.
         index = int(str(row["reference_peak_id"])[1:]) - 1
         picked = peak_coordinates(identity[index], None)
-        assert row["shift_vs_picked_H"] == pytest.approx(row["H_ppm"] - picked["1H"], abs=1e-6)
-        assert row["shift_vs_picked_N"] == pytest.approx(row["N_ppm"] - picked["15N"], abs=1e-6)
-
+        assert row["shift_vs_picked_H"] == pytest.approx(
+            row["H_ppm"] - picked["1H"], abs=1e-6
+        )
+        assert row["shift_vs_picked_N"] == pytest.approx(
+            row["N_ppm"] - picked["15N"], abs=1e-6
+        )
+    # Summary counts in the frozen record match the table for downstream reuse.
     summary = ref.peak_localization["parabolic"]
     assert summary["n_cell_edge"] is None
     assert len(ref.peak_localization["search_windows"]) == 2
     ratio = summary["intensity_ratio_vs_picked"]
     ratios = sorted(row["intensity_ratio_vs_picked"] for row in rows if row["detected"])
     assert ratio["n"] == len(ratios) == 1
-
+    # With two peaks, the median and upper quantile equal the maximum.
     assert ratio["median"] == pytest.approx(ratios[0], rel=1e-6)
     assert ratio["max"] == pytest.approx(ratios[0], rel=1e-6)
 
@@ -679,14 +704,15 @@ def test_cell_edge_does_not_turn_a_merged_shoulder_into_a_peak(
     spectrum = _write_ft2(tmp_path / "far.ft2")
     rows = load_peaks(_write_peak_table(tmp_path / "reference.list"))
     for exclusive in (True, False):
-        measured = measure_peak_positions(spectrum, rows, window_pts=3, exclusive_windows=exclusive)
+        measured = measure_peak_positions(
+            spectrum, rows, window_pts=3, exclusive_windows=exclusive
+        )
         assert [item.cell_edge for item in measured] == [None, None]
         for item in measured:
             assert item.cell_low == item.cell_high == {}
             for bounds in item.localization["search_bounds_by_axis"].values():
                 assert bounds["high"] - bounds["low"] == 6
             # Stopped on its own peak top -> ratio close to 1 (~0.89 for the smoothed
-            # synthetic peak)
             assert item.intensity_ratio == pytest.approx(1.0, abs=0.2)
 
     # When close peaks merge, do not report each search interval's shoulder as a peak.
@@ -696,10 +722,8 @@ def test_cell_edge_does_not_turn_a_merged_shoulder_into_a_peak(
     near_rows = load_peaks(_write_peak_table(tmp_path / "near.list"))
     truncated = measure_peak_positions(near, near_rows, window_pts=3)
     assert sum(item.found for item in truncated) == 1
-    assert any(
-        item.localization["candidate_ownership_conflict"]
-        for item in truncated if not item.found
-    )
+    assert any(item.localization["candidate_ownership_conflict"]
+               for item in truncated if not item.found)
     assert all(item.cell_edge is None for item in truncated)
     for item in truncated:
         if not item.found:
@@ -708,7 +732,9 @@ def test_cell_edge_does_not_turn_a_merged_shoulder_into_a_peak(
             assert item.positions
 
 
-def test_workflow_peak_tables_write_nan_in_cell_columns(tmp_path: Path, bruker_dir: Path) -> None:
+def test_workflow_peak_tables_write_nan_in_cell_columns(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """P1-3: the combination (workflow) table picks and localizes in one step, so all 8
     columns are NaN and never a fabricated 1.0/0.
     """
@@ -730,10 +756,9 @@ def test_workflow_peak_tables_write_nan_in_cell_columns(tmp_path: Path, bruker_d
         for row in rows:
             for column in cell_columns:
                 value = row[column]
-                assert value is None or (isinstance(value, float) and math.isnan(value)), (
-                    column,
-                    value,
-                )
+                assert value is None or (
+                    isinstance(value, float) and math.isnan(value)
+                ), (column, value)
 
 
 def _reference_record_path(root: Path) -> Path:
@@ -751,7 +776,9 @@ def _reference_record(root: Path) -> dict:
     return json.loads(_reference_record_path(root).read_text(encoding="utf-8"))
 
 
-def test_reference_records_the_direct_range_source(tmp_path: Path, bruker_dir: Path) -> None:
+def test_reference_records_the_direct_range_source(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """P1-4: the reference record states the source of the direct-dimension range
     (explicit / params / default).
     """
@@ -796,7 +823,9 @@ def test_combination_mode_refuses_a_silent_direct_range_override(
     """P1-4: a direct-range override disagreeing with the reference needs an explicit switch."""
     root = tmp_path / "range_gate"
     backend = _FakeSweepBackend()
-    run_reference_study(root, bruker_dir / "hsqc_2d", direct_range=(10.5, 6.5), backend=backend)
+    run_reference_study(
+        root, bruker_dir / "hsqc_2d", direct_range=(10.5, 6.5), backend=backend
+    )
     with pytest.raises(SweepError) as excinfo:
         run_combination_study(
             str(root),
@@ -829,7 +858,9 @@ def test_combination_mode_refuses_a_silent_direct_range_override(
     run = allowed.runs[0]
     assert "direct_range_override" in {warning.get("code") for warning in run.warnings}
     payload = json.loads(Path(run.run_dir, "run.json").read_text(encoding="utf-8"))
-    assert "direct_range_override" in {warning["code"] for warning in payload["warnings"]}
+    assert "direct_range_override" in {
+        warning["code"] for warning in payload["warnings"]
+    }
     assert payload["parameters_resolved"]["direct_range"]["ext_lo"] == "9"
 
 
@@ -881,7 +912,7 @@ def test_workflow_tables_carry_parabolic_qc_and_duplicate_flag(
         assert row["boundary_hit"] is False
         assert row["duplicate_localization"] is False
         assert row["localization_method"] == "parabolic"
-
+    # Summary values use the table definitions; removed Gaussian residual columns are absent.
     summary = run.peak_localization["parabolic"]
     assert summary["n_peaks"] == 2
     assert summary["n_boundary_hit"] == 0
@@ -889,7 +920,9 @@ def test_workflow_tables_carry_parabolic_qc_and_duplicate_flag(
     assert rows_p[0]["localization_requested"] == "parabolic"
 
 
-def test_reference_parabolic_table_estimates_linewidth(tmp_path: Path, bruker_dir: Path) -> None:
+def test_reference_parabolic_table_estimates_linewidth(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """P3-7: the reference parabolic table carries a linewidth too (was all NaN, O23)."""
     result = run_parameter_study(
         tmp_path / "reference_qc",
@@ -912,11 +945,15 @@ def test_reference_parabolic_table_estimates_linewidth(tmp_path: Path, bruker_di
     assert summary["n_boundary_hit"] == 0
 
 
-def test_intensity_ratio_handles_negative_peak_heights(tmp_path: Path, bruker_dir: Path) -> None:
+def test_intensity_ratio_handles_negative_peak_heights(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """Defect 1: a negative-peak .list has a negative Height, so the ratio needs |Height|."""
     ratios: dict[float, list[float]] = {}
     for sign in (1.0, -1.0):
-        peaks = _write_peak_table(tmp_path / f"peaks_{sign:+.0f}" / "reference.list", sign=sign)
+        peaks = _write_peak_table(
+            tmp_path / f"peaks_{sign:+.0f}" / "reference.list", sign=sign
+        )
         result = run_reference_study(
             tmp_path / f"ratio_{sign:+.0f}",
             bruker_dir / "hsqc_2d",
@@ -931,8 +968,9 @@ def test_intensity_ratio_handles_negative_peak_heights(tmp_path: Path, bruker_di
         assert summary["n"] == len(rows), "负峰不能整列 NaN(n 必须等于行数)"
         assert math.isfinite(summary["median"])
     # Same data, only the identity-table Height negated -> the ratios must be identical,
-    # finite and positive
-    assert all(math.isfinite(value) and value > 0 for value in ratios[-1.0]), ratios[-1.0]
+    assert all(
+        math.isfinite(value) and value > 0 for value in ratios[-1.0]
+    ), ratios[-1.0]
     assert ratios[-1.0] == ratios[1.0]
 
 
@@ -960,7 +998,9 @@ def test_rebuild_peak_tables_refreshes_version_and_records(
     aggregate_record["nmrforge_version"] = "0.9.0"
     aggregate_record["references"][0]["peak_tables"]["parabolic"]["sha256"] = "deadbeef"
     aggregate_record["references"][0].pop("peak_localization", None)
-    aggregate.write_text(json.dumps(aggregate_record), encoding="utf-8", newline="\n")
+    aggregate.write_text(
+        json.dumps(aggregate_record), encoding="utf-8", newline="\n"
+    )
 
     session = open_study(root)
     rebuild_reference_peak_tables(session)
@@ -973,17 +1013,18 @@ def test_rebuild_peak_tables_refreshes_version_and_records(
 
     entry = json.loads(aggregate.read_text(encoding="utf-8"))["references"][0]
     table_path = Path(entry["peak_tables"]["parabolic"]["path"])
-    assert (
-        entry["peak_tables"]["parabolic"]["sha256"]
-        == hashlib.sha256(table_path.read_bytes()).hexdigest()
-    )
+    assert entry["peak_tables"]["parabolic"]["sha256"] == hashlib.sha256(
+        table_path.read_bytes()
+    ).hexdigest()
     assert entry["peak_tables"]["parabolic"]["sha256"] != "deadbeef"
     assert entry["peak_localization"]["exclusive_windows"] is True
 
     # `report` uses the same refresh path: break it again and the helper must repair it
     aggregate_record = json.loads(aggregate.read_text(encoding="utf-8"))
     aggregate_record["references"][0]["peak_tables"]["parabolic"]["sha256"] = "deadbeef"
-    aggregate.write_text(json.dumps(aggregate_record), encoding="utf-8", newline="\n")
+    aggregate.write_text(
+        json.dumps(aggregate_record), encoding="utf-8", newline="\n"
+    )
     refresh_reference_records(session)
     again = json.loads(aggregate.read_text(encoding="utf-8"))
     assert again["references"][0]["peak_tables"]["parabolic"]["sha256"] != "deadbeef"
@@ -1024,7 +1065,7 @@ def test_workflows_are_traceable_and_use_parabolic_localization(
             "run.json",
         ):
             assert (run_dir / name).is_file(), name
-
+        # No Gaussian peak table is produced; the algorithm and API were removed.
         assert not (run_dir / "peak_table_gaussian.csv").exists()
         assert run.status in (STATUS_SUCCESS, STATUS_WARNING)
         # Use the reference script as the template: record the reference script and hash
@@ -1045,14 +1086,16 @@ def test_workflows_are_traceable_and_use_parabolic_localization(
         assert run.phase_locked
         assert run.phase["F2"]["phase_mode"] == "auto_reference_locked"
         assert run.phase["F2"]["actual_p0"] == pytest.approx(0.0)
-        assert run.parameters_resolved["phase"]["F2"]["actual_p1"] == pytest.approx(0.0)
+        assert run.parameters_resolved["phase"]["F2"]["actual_p1"] == pytest.approx(
+            0.0
+        )
         # Version table (software + dependencies; a real machine also carries nmrpipe/smile)
         assert run.versions.get("nmrforge")
         payload = json.loads(Path(run.run_dir, "run.json").read_text(encoding="utf-8"))
         assert payload["workflow_id"] == run.workflow_id
         assert payload["parameters_requested"] and payload["parameters_used"]
         assert payload["versions"].get("nmrforge")
-
+        # The sole table contains peaks detected independently in this spectrum.
         assert not run.peak_table_path("gaussian")
         assert list(run.peak_tables) == ["parabolic"]
         rows_p = read_peak_table(Path(run.peak_table_path("parabolic")))
@@ -1065,7 +1108,7 @@ def test_workflows_are_traceable_and_use_parabolic_localization(
         assert all(row["SNR"] > 0 for row in rows_p)
         assert all(row["localization_method"] == "parabolic" for row in rows_p)
         assert run.parameters_resolved["peak_counts"] == {"parabolic": 2}
-
+        # Include the complete log, not only its tail.
         log = Path(run.log_path).read_text(encoding="utf-8")
         assert "parameters_used" in log
         assert "--- processing log ---" in log
@@ -1082,8 +1125,9 @@ def test_workflows_are_traceable_and_use_parabolic_localization(
     assert record["conditions"] == ["A"]
     assert (wf_dir / "log.txt").is_file()
     # Parameter -> peak position: 0.35 and 0.45 differ by 2.5 points (15N); sub-pixel
-    # measurement should restore it
-    by_off = {round(float(run.combo["window.F1.off"]), 3): run for run in result.runs}
+    by_off = {
+        round(float(run.combo["window.F1.off"]), 3): run for run in result.runs
+    }
     assert by_off[0.35].measurements[0].positions["15N"] == pytest.approx(
         _n15_ppm(_PEAK_A[0] + 1.25), abs=0.3 * _n15_step()
     )
@@ -1094,7 +1138,9 @@ def test_workflows_are_traceable_and_use_parabolic_localization(
     assert backend.convert_calls == 1
 
 
-def test_zero_fill_keeps_physical_edge_margin_and_window(tmp_path: Path, bruker_dir: Path) -> None:
+def test_zero_fill_keeps_physical_edge_margin_and_window(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """End to end: pick margins and per-combination measurement windows use physical width."""
     root = tmp_path / "zf_study"
     backend = _FakeSweepBackend()
@@ -1109,6 +1155,7 @@ def test_zero_fill_keeps_physical_edge_margin_and_window(tmp_path: Path, bruker_
     assert len(result.runs) == 2
     assert all(run.status in (STATUS_SUCCESS, STATUS_WARNING) for run in result.runs)
 
+    # Reference peak picking uses evidence screening by default, without an unconditional margin.
     detection = result.reference.peak_params["detection"]
     assert detection["edge_margin_source"] == "acquisition_and_spectral_evidence"
     assert detection["axis0_nucleus"] == "15N"
@@ -1118,19 +1165,26 @@ def test_zero_fill_keeps_physical_edge_margin_and_window(tmp_path: Path, bruker_
     assert detection["axes"][0]["ppm_per_point"] > 0
 
     # Per combination: the margin's physical width is the same, points get denser with filling
-    by_fill = {int(round(float(run.combo["zero_fill"]))): run.window for run in result.runs}
+    by_fill = {
+        int(round(float(run.combo["zero_fill"]))): run.window
+        for run in result.runs
+    }
     for factor in (1, 4):
         spec = by_fill[factor]["0"]
         assert spec["source"] == "ppm(显式)"
         assert spec["nucleus"] == "15N"
         assert spec["ppm"] == pytest.approx(3 * 15.0 / _N15_OBS, rel=0.02)
-    assert by_fill[4]["0"]["points"] == pytest.approx(4 * by_fill[1]["0"]["points"], rel=0.5)
+    assert by_fill[4]["0"]["points"] == pytest.approx(
+        4 * by_fill[1]["0"]["points"], rel=0.5
+    )
     assert by_fill[4]["0"]["ppm_per_point"] == pytest.approx(
         by_fill[1]["0"]["ppm_per_point"] / 4.0, rel=0.05
     )
 
     # Records: the conversion can be read directly from manifest and measurement.json
-    manifest = json.loads(Path(result.records["manifest"]).read_text(encoding="utf-8"))
+    manifest = json.loads(
+        Path(result.records["manifest"]).read_text(encoding="utf-8")
+    )
     measurement = manifest["measurement"]
     assert measurement["reference"][0]["edge_margin"] == detection
     seen = measurement["window_points_seen"]["0"]
@@ -1143,7 +1197,9 @@ def test_zero_fill_keeps_physical_edge_margin_and_window(tmp_path: Path, bruker_
     assert all(run["window"] for run in runs_json)
 
 
-def test_records_are_written_with_unified_peak_tables(tmp_path: Path, bruker_dir: Path) -> None:
+def test_records_are_written_with_unified_peak_tables(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """records: manifest/workflows/runs/two long tables; no CSP/statistics artefacts."""
     root = tmp_path / "records"
     result = run_parameter_study(
@@ -1163,10 +1219,12 @@ def test_records_are_written_with_unified_peak_tables(tmp_path: Path, bruker_dir
         "peak_table_parabolic",
     ):
         assert Path(result.records[name]).is_file(), name
-
+    # No Gaussian long table is recorded or written to the summary directory.
     assert "peak_table_gaussian" not in result.records
     assert not (result.session.records_dir / "peak_table_gaussian.csv").exists()
-    manifest = json.loads(Path(result.records["manifest"]).read_text(encoding="utf-8"))
+    manifest = json.loads(
+        Path(result.records["manifest"]).read_text(encoding="utf-8")
+    )
     assert "CSP" in manifest["boundary"]  # boundary declarations go into the manifest
     assert manifest["plan"]["workflow_ids"] == ["W0001", "W0002"]
     assert list(manifest["references"][0]["peak_tables"]) == ["parabolic"]
@@ -1238,7 +1296,9 @@ def _backend_calls(result) -> list:
     return list(getattr(result.session.backend, "process_calls", []))
 
 
-def test_combination_mode_picks_peaks_independently(tmp_path: Path, bruker_dir: Path) -> None:
+def test_combination_mode_picks_peaks_independently(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """2026-09-14 spec: combination mode does not do reference peak tracking; peaks come
     from the combination's own spectrum.
 
@@ -1260,10 +1320,11 @@ def test_combination_mode_picks_peaks_independently(tmp_path: Path, bruker_dir: 
     assert all(row["detected"] for row in table)
     assert all(row["reference_peak_id"] == "" for row in table)
     assert all(row["assignment"] == "" for row in table)
-    assert [int(row["peak_id"]) for row in table] == list(range(1, len(table) + 1))
+    assert [int(row["peak_id"]) for row in table] == list(
+        range(1, len(table) + 1)
+    )
     assert all(row["condition"] == "A" for row in table)
     # The legacy caliber (keep a row with detected=false when the reference has a peak this
-    # spectrum cannot measure) is abandoned
     assert not any(w["code"] == "peak_not_detected" for w in run.warnings)
     detection = run.parameters_resolved["detection"]
     assert detection["source"] == "reference(locked)"
@@ -1293,7 +1354,8 @@ def test_non_2d_spectrum_gaussian_request_raises_removal_error(
     with pytest.raises(MeasurementError) as excinfo:
         measure_peak_positions(spectrum, rows, axes=_Fake3DAxes(), refine="gaussian")
     _assert_removal_error(excinfo.value, "gaussian")
-
+    # Combined peak picking no longer accepts a method argument; algorithm selection was removed
+    # with Gaussian fitting.
     with pytest.raises(TypeError):
         detect_and_localize(spectrum, method="gaussian", axes=_Fake3DAxes())
 
@@ -1321,7 +1383,7 @@ def test_gaussian_localization_choices_are_removed_at_api_level(
                 resume=False,
             )
         _assert_removal_error(excinfo.value, value)
-
+    # Per-method target mappings (``{"gaussian": ...}``) and combined-table ``...targets.gaussian``
     with pytest.raises(SweepError) as excinfo:
         run_sweep(
             session,
@@ -1337,8 +1399,11 @@ def test_gaussian_localization_choices_are_removed_at_api_level(
     with pytest.raises(SweepError) as excinfo:
         split_combo({"localization.targets.gaussian": "targets.csv"})
     _assert_removal_error(excinfo.value, "gaussian")
-
-    bad_plan = plan_sweep(reference, combos=[{"zero_fill": 1, "localization": "gaussian"}])
+    # A per-combination gaussian request fails before processing; it is never silently changed to
+    # parabolic.
+    bad_plan = plan_sweep(
+        reference, combos=[{"zero_fill": 1, "localization": "gaussian"}]
+    )
     with pytest.raises(SweepError) as excinfo:
         run_sweep(session, bad_plan, reference=reference, resume=False)
     _assert_removal_error(excinfo.value, "gaussian")
@@ -1411,7 +1476,6 @@ def test_two_conditions_share_parameters_and_build_independent_references(
             assert Path(run.run_dir, "peak_table_parabolic.csv").is_file()
             rows = read_peak_table(Path(run.peak_table_path("parabolic")))
             # Independent combination picking: each condition gets the peak table of its own
-            # spectrum (reference_peak_id blank)
             assert rows
             assert all(row["reference_peak_id"] == "" for row in rows)
             assert all(row["condition"] == run.condition for row in rows)
@@ -1445,7 +1509,9 @@ def test_two_conditions_use_their_own_reference_parameter_bases(
     for condition, off in expected.items():
         reference = references.reference(condition)
         assert reference is not None
-        reference.sweep_params = merge_overrides(reference.sweep_params, {"window.F1.off": off})
+        reference.sweep_params = merge_overrides(
+            reference.sweep_params, {"window.F1.off": off}
+        )
         save_reference(references.session, reference)
 
     result = run_combination_study(
@@ -1456,7 +1522,9 @@ def test_two_conditions_use_their_own_reference_parameter_bases(
     )
     assert {run.condition for run in result.runs} == {"A", "B"}
     for run in result.runs:
-        assert run.parameters_used["window"]["F1"]["off"] == pytest.approx(expected[run.condition])
+        assert run.parameters_used["window"]["F1"]["off"] == pytest.approx(
+            expected[run.condition]
+        )
         assert run.parameters_used["zero_fill"] == 2
         assert run.parameters_used["ext_lo"] == "10"
         assert run.parameters_used["ext_hi"] == "6.5"
@@ -1549,7 +1617,6 @@ def test_run_parameter_study_nus_2d(tmp_path: Path, bruker_dir: Path) -> None:
     assert all(run.status in (STATUS_SUCCESS, STATUS_WARNING) for run in result.runs)
     assert all(run.phase_locked for run in result.runs)
     # Every combination isolates its product through reconstruct_nus's candidate output
-    # parameter
     candidate_calls = [c for c in backend.reconstruct_calls if c["out_file"]]
     assert len(candidate_calls) == 3
     assert all(c["params"]["direct_phase"] == [0.0, 0.0] for c in candidate_calls)
@@ -1560,17 +1627,20 @@ def test_run_parameter_study_nus_2d(tmp_path: Path, bruker_dir: Path) -> None:
     # SMILE's automatic binning actual result is archived (spec G2)
     for run in result.runs:
         smile = run.parameters_resolved["smile"]
-        assert smile["nsigma"]["actual"] == pytest.approx(float(run.combo["nSigma"]))
+        assert smile["nsigma"]["actual"] == pytest.approx(
+            float(run.combo["nSigma"])
+        )
         assert smile["nsigma"]["source"] == "user"
         assert run.parameters_resolved["spectrum_noise_sigma"]["value"] > 0
     # The default refinement method is parabolic -> only the parabola table is produced
-    # (Gaussian must be requested explicitly)
     for run in result.runs:
         assert Path(run.peak_table_path("parabolic")).is_file()
         assert not run.peak_table_path("gaussian")
 
 
-def test_reference_state_persists_across_sessions(tmp_path: Path, bruker_dir: Path) -> None:
+def test_reference_state_persists_across_sessions(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """Step-by-step CLI (separate process) can see registered fids/active spectra: state on disk."""
     root = tmp_path / "persist"
     backend = _FakeSweepBackend()
@@ -1594,8 +1664,11 @@ def test_reference_state_persists_across_sessions(tmp_path: Path, bruker_dir: Pa
     assert list(reference.peak_tables) == ["parabolic"]
     reference_dir = Path(reference.peak_table_parabolic_path).parent
     assert not (reference_dir / "reference_peak_table_gaussian.csv").exists()
-
-    assert any(run.workflow_ref == "pick_peaks" for run in session2.manager.project.workflow_runs)
+    # A pick_peaks run record is also persisted.
+    assert any(
+        run.workflow_ref == "pick_peaks"
+        for run in session2.manager.project.workflow_runs
+    )
     # The plan and run records can be read back
     loaded_plan = load_plan(session2)
     assert loaded_plan is not None
@@ -1625,7 +1698,9 @@ def test_nus_param_key_alias_normalized() -> None:
     assert normalize_nus_params({"zero_fill": 2}) == {"zero_fill": 2}
 
 
-def test_plan_sweep_accepts_explicit_combos(tmp_path: Path, bruker_dir: Path) -> None:
+def test_plan_sweep_accepts_explicit_combos(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """The design is decided externally: an explicit combination table runs as is (order
     preserved) and the interface makes no design decisions.
     """
@@ -1645,20 +1720,22 @@ def test_plan_sweep_accepts_explicit_combos(tmp_path: Path, bruker_dir: Path) ->
     assert plan.n_full == 4
     assert plan.n_workflows == 4
     assert plan.workflow_ids() == ["W0001", "W0002", "W0003", "W0004"]
-    assert [dict(c) for c in plan.combos] == rows  # as is, order preserved
+    assert [dict(c) for c in plan.combos] == rows      # as is, order preserved
     assert plan.diagnostics["n_runs"] == 4
     assert plan.diagnostics["duplicated_rows"] == 0
     assert plan.diagnostics["max_abs_correlation"] == 0.0
     assert plan.grid_sha256 == plan_sweep(reference, combos=rows).grid_sha256
 
-    calls_before = len(backend.process_calls)  # the reference run called it once already
+    calls_before = len(backend.process_calls)   # the reference run called it once already
     runs = run_sweep(session, plan, reference=reference, resume=False)
     assert [run.parameters_requested for run in runs] == rows
     assert all(run.status in (STATUS_SUCCESS, STATUS_WARNING) for run in runs)
     assert len(backend.process_calls) == calls_before + 4
 
 
-def test_plan_sweep_requires_exactly_one_design_input(tmp_path: Path, bruker_dir: Path) -> None:
+def test_plan_sweep_requires_exactly_one_design_input(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     session = open_study(tmp_path / "one_input", backend=_FakeSweepBackend())
     session.dataset = add_dataset(session, bruker_dir / "hsqc_2d")
     reference = build_reference(session, params={"phase_route": "none"})
@@ -1705,7 +1782,9 @@ def test_plan_sweep_axis_scope_guards(tmp_path: Path, bruker_dir: Path) -> None:
     assert "不在后端读取" in joined and "bogus.key" in joined
 
 
-def test_phase_delta_axis_shifts_locked_phase(tmp_path: Path, bruker_dir: Path) -> None:
+def test_phase_delta_axis_shifts_locked_phase(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """The phase identification deviation (+/-5 deg) as a parameter axis: applied on top of
     the reference phase, then passed to the backend and archived.
     """
@@ -1718,7 +1797,10 @@ def test_phase_delta_axis_shifts_locked_phase(tmp_path: Path, bruker_dir: Path) 
     plan = plan_sweep(reference, axes={"phase_delta.F2.p0": [-5, 5]})
     runs = run_sweep(session, plan, reference=reference, resume=False)
     assert [run.phase["F2"]["actual_p0"] for run in runs] == [-5.0, 5.0]
-    assert all(run.phase["F2"]["phase_mode"] == "manual_delta_from_reference" for run in runs)
+    assert all(
+        run.phase["F2"]["phase_mode"] == "manual_delta_from_reference"
+        for run in runs
+    )
     assert all(run.phase_locked for run in runs)
     phases = [call["phase"] for call in backend.process_calls if call["phase"]]
     assert phases[0] == {"F2": (-5.0, 0.0)}
@@ -1752,7 +1834,9 @@ def test_add_dataset_rejects_non_bruker(tmp_path: Path) -> None:
         add_dataset(session, tmp_path / "missing")
 
 
-def test_add_dataset_rejects_duplicate_condition(tmp_path: Path, bruker_dir: Path) -> None:
+def test_add_dataset_rejects_duplicate_condition(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """Multiple conditions: labels must be unique (otherwise A/B share one dataset)."""
     session = open_study(tmp_path / "dup", backend=_FakeSweepBackend())
     add_dataset(session, bruker_dir / "hsqc_2d", condition="A")
@@ -1773,7 +1857,9 @@ def test_condition_tokens_do_not_alias_and_reject_case_collisions(
         session.add_dataset_ref(DatasetRef("exp_002", "d_002", condition="a"))
 
 
-def test_cli_status_and_report(tmp_path: Path, bruker_dir: Path, capsys) -> None:
+def test_cli_status_and_report(
+    tmp_path: Path, bruker_dir: Path, capsys
+) -> None:
     root = tmp_path / "study"
     result = run_parameter_study(
         root,
@@ -1858,7 +1944,9 @@ def test_statistics_helper_is_not_in_processing_contract() -> None:
         ):
             assert token not in source, (name, token)
     # The module states its own scope (test/detection) so it is not taken for an artefact
-    first_line = Path(nmrforge_api.uncertainty.__file__).read_text(encoding="utf-8").splitlines()[0]
+    first_line = Path(nmrforge_api.uncertainty.__file__).read_text(
+        encoding="utf-8"
+    ).splitlines()[0]
     assert "测试" in first_line or "test" in first_line.lower()
 
 
@@ -1971,12 +2059,16 @@ def test_peak_threshold_is_chosen_with_reference_then_locked(
     # Threshold given externally when building the reference
     reference = ensure_reference_peaks(session, reference, sigma_multiplier=20)
     assert reference.peak_params["sigma_multiplier"] == pytest.approx(20.0)
-    assert reference.peak_params["detection"]["sigma_multiplier"] == pytest.approx(20.0)
+    assert reference.peak_params["detection"]["sigma_multiplier"] == pytest.approx(
+        20.0
+    )
     assert reference.peak_params["detection"]["threshold_source"] == "user"
 
     def _picks() -> int:
         return sum(
-            1 for run in session.manager.project.workflow_runs if run.workflow_ref == "pick_peaks"
+            1
+            for run in session.manager.project.workflow_runs
+            if run.workflow_ref == "pick_peaks"
         )
 
     picks = _picks()
@@ -1989,16 +2081,20 @@ def test_peak_threshold_is_chosen_with_reference_then_locked(
     # A different threshold -> rejected (the reference is locked)
     with pytest.raises(ReferenceError, match="锁定"):
         ensure_reference_peaks(session, reference, sigma_multiplier=60)
-    assert _picks() == picks  # no secret reselection
+    assert _picks() == picks                     # no secret reselection
     assert reference.peak_table_sha256 == frozen_sha
     # Only an explicit reference rebuild allows changing the threshold
-    reference = ensure_reference_peaks(session, reference, sigma_multiplier=60, force=True)
+    reference = ensure_reference_peaks(
+        session, reference, sigma_multiplier=60, force=True
+    )
     assert reference.peak_params["sigma_multiplier"] == pytest.approx(60.0)
     assert reference.peak_params["previous_sigma_multiplier"] == pytest.approx(20.0)
     assert _picks() > picks
 
 
-def test_peak_threshold_defaults_to_35_sigma(tmp_path: Path, bruker_dir: Path) -> None:
+def test_peak_threshold_defaults_to_35_sigma(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """When no threshold is given, the existing 35-sigma default stays (backwards compatible)."""
     session = open_study(tmp_path / "default_threshold", backend=_FakeSweepBackend())
     add_dataset(session, bruker_dir / "hsqc_2d")
@@ -2032,7 +2128,9 @@ def test_peak_picking_keys_in_combination_table_are_rejected(
         plan_sweep(reference, axes={"sigma_multiplier": [20], "zero_fill": [1]})
 
 
-def test_reference_and_run_records_carry_software_commit(tmp_path: Path, bruker_dir: Path) -> None:
+def test_reference_and_run_records_carry_software_commit(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """P0-1: reference.json / run.json / manifest.json each carry software_commit."""
     from core.version import software_commit, software_version
 
@@ -2053,7 +2151,9 @@ def test_reference_and_run_records_carry_software_commit(tmp_path: Path, bruker_
 
     study = Path(ref.frozen_spectrum).parents[2]
     reference_json = json.loads(
-        (Path(ref.frozen_spectrum).parent / "reference.json").read_text(encoding="utf-8")
+        (Path(ref.frozen_spectrum).parent / "reference.json").read_text(
+            encoding="utf-8"
+        )
     )
     assert reference_json["software_version"] == software_version()
     assert "software_commit" in reference_json
@@ -2065,7 +2165,9 @@ def test_reference_and_run_records_carry_software_commit(tmp_path: Path, bruker_
     assert "software_commit" in run_json
     assert run_json["versions"]["software_commit"] == software_commit()
 
-    manifest = json.loads((study / "records" / "manifest.json").read_text(encoding="utf-8"))
+    manifest = json.loads(
+        (study / "records" / "manifest.json").read_text(encoding="utf-8")
+    )
     assert manifest["nmrforge_version"] == software_version()
     assert "software_commit" in manifest
 
@@ -2095,8 +2197,10 @@ def test_rebuild_reference_peak_tables_keeps_spectrum_and_identity(
     identity = Path(ref.peak_table_path)
     spectrum_sha = sha256_file(spectrum)
     identity_sha = sha256_file(identity)
-
-    Path(ref.peak_tables["parabolic"]["path"]).write_text("workflow_id\n", encoding="utf-8")
+    # Dirty the peak table so rebuild must replace it (only one parabolic table since 2026-09-26).
+    Path(ref.peak_tables["parabolic"]["path"]).write_text(
+        "workflow_id\n", encoding="utf-8"
+    )
 
     updated = rebuild_reference_peak_tables(session, ref)
     assert sha256_file(spectrum) == spectrum_sha
@@ -2109,7 +2213,12 @@ def test_rebuild_reference_peak_tables_keeps_spectrum_and_identity(
     assert updated.peak_localization["exclusive_windows"] is True
 
     # The CLI entry likewise recomputes only the tables, with the spectrum SHA unchanged
-    assert cli_main(["reference", "--study", str(session.root), "--rebuild-peak-tables"]) == 0
+    assert (
+        cli_main(
+            ["reference", "--study", str(session.root), "--rebuild-peak-tables"]
+        )
+        == 0
+    )
     assert sha256_file(spectrum) == spectrum_sha
     assert sha256_file(identity) == identity_sha
 
@@ -2128,10 +2237,9 @@ def test_cli_peaks_applies_external_threshold_when_reference_is_built(
     backend = _FakeSweepBackend()
     session = open_study(tmp_path / "cli_threshold", backend=backend)
     add_dataset(session, bruker_dir / "hsqc_2d")
-    build_reference(session, params={"phase_route": "none"})  # reference spectrum/script only
+    build_reference(session, params={"phase_route": "none"})   # reference spectrum/script only
     root = session.root
     # The reference peak table does not exist yet -> giving the threshold now means choosing
-    # it while building the reference
     assert cli_main(["peaks", "--study", str(root), "--sigma", "20"]) == 0
     payload = json.loads(capsys.readouterr().out)
     assert payload["conditions"][0]["params"]["sigma_multiplier"] == pytest.approx(20.0)
@@ -2145,7 +2253,9 @@ def test_cli_peaks_applies_external_threshold_when_reference_is_built(
     assert "锁定" in captured.err
 
 
-def test_frozen_default_threshold_cannot_be_changed_later(tmp_path: Path, bruker_dir: Path) -> None:
+def test_frozen_default_threshold_cannot_be_changed_later(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """Once the reference is frozen at the default 35 sigma, any other threshold is rejected
     (only a matching one is allowed).
     """
@@ -2153,8 +2263,10 @@ def test_frozen_default_threshold_cannot_be_changed_later(tmp_path: Path, bruker
     session = open_study(tmp_path / "frozen_default", backend=backend)
     add_dataset(session, bruker_dir / "hsqc_2d")
     reference = build_reference(session, params={"phase_route": "none"})
-    reference = ensure_reference_peaks(session, reference)  # default 35 sigma
-    assert reference.peak_params["detection"]["sigma_multiplier"] == pytest.approx(35.0)
+    reference = ensure_reference_peaks(session, reference)      # default 35 sigma
+    assert reference.peak_params["detection"]["sigma_multiplier"] == pytest.approx(
+        35.0
+    )
     # Matching the reference (35 sigma) may be given explicitly -> reuse
     ensure_reference_peaks(session, reference, sigma_multiplier=35)
     # Not matching the reference -> rejected
@@ -2162,7 +2274,9 @@ def test_frozen_default_threshold_cannot_be_changed_later(tmp_path: Path, bruker
         ensure_reference_peaks(session, reference, sigma_multiplier=20)
 
 
-def test_workflow_records_reference_locked_threshold(tmp_path: Path, bruker_dir: Path) -> None:
+def test_workflow_records_reference_locked_threshold(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """Every workflow record states the pick threshold consistent with the reference."""
     result = run_parameter_study(
         tmp_path / "locked_records",
@@ -2181,7 +2295,9 @@ def test_workflow_records_reference_locked_threshold(tmp_path: Path, bruker_dir:
     assert locked["reference_matching"] == "external"
     assert result.reference.peak_params["sigma_multiplier"] == pytest.approx(25.0)
     payload = json.loads(Path(run.run_dir, "run.json").read_text(encoding="utf-8"))
-    assert payload["parameters_resolved"]["detection"]["source"] == ("reference(locked)")
+    assert payload["parameters_resolved"]["detection"]["source"] == (
+        "reference(locked)"
+    )
 
 
 def _write_bruker_full_sampling_as_nus(tmp_path: Path) -> Path:
@@ -2190,9 +2306,10 @@ def _write_bruker_full_sampling_as_nus(tmp_path: Path) -> Path:
     """
     ds = tmp_path / "full_as_nus"
     ds.mkdir(parents=True, exist_ok=True)
-    x_n, td_rows = 64, 16  # FnMODE=5 -> complex point grid 8, declared full grid 16 rows
+    x_n, td_rows = 64, 16            # FnMODE=5 -> complex point grid 8, declared full grid 16 rows
     (ds / "acqus").write_text(
-        f"##$TD= {x_n}\n##$FnMODE= 0\n##$NusAMOUNT= 25\n##$NusTD= 0\n##$DTYPE= 0\n",
+        f"##$TD= {x_n}\n##$FnMODE= 0\n##$NusAMOUNT= 25\n##$NusTD= 0\n"
+        "##$DTYPE= 0\n",
         encoding="utf-8",
     )
     (ds / "acqu2s").write_text(
@@ -2221,7 +2338,9 @@ def test_full_sampling_marked_nus_without_schedule_is_rejected(tmp_path: Path) -
     assert not backend.reconstruct_calls
 
 
-def test_combination_mode_requires_explicit_reference(tmp_path: Path, bruker_dir: Path) -> None:
+def test_combination_mode_requires_explicit_reference(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """Combination mode must be given a reference explicitly: empty or unbuilt references
     error out (no implicit fallback).
     """
@@ -2243,7 +2362,9 @@ def test_reference_mode_then_combination_mode_with_explicit_reference(
     """
     root = tmp_path / "two_modes"
     backend = _FakeSweepBackend()
-    reference_result = run_reference_study(root, bruker_dir / "hsqc_2d", backend=backend)
+    reference_result = run_reference_study(
+        root, bruker_dir / "hsqc_2d", backend=backend
+    )
     assert reference_result.conditions == ["A"]
     reference = reference_result.reference()
     assert reference is not None
@@ -2263,7 +2384,9 @@ def test_reference_mode_then_combination_mode_with_explicit_reference(
         )
 
     picks = _picks()
-    result = run_combination_study(f"{root}#A", combos=[{"zero_fill": 1}], backend=backend)
+    result = run_combination_study(
+        f"{root}#A", combos=[{"zero_fill": 1}], backend=backend
+    )
     assert [run.workflow_id for run in result.runs] == ["W0001"]
     assert result.summary["reference_spec"] == f"{root}#A"
     manifest = json.loads(Path(result.records["manifest"]).read_text(encoding="utf-8"))
@@ -2281,7 +2404,9 @@ def test_reference_mode_then_combination_mode_with_explicit_reference(
     assert again.summary["reference_spec"] == spec
 
 
-def test_reference_mode_reports_one_peak_table(tmp_path: Path, bruker_dir: Path) -> None:
+def test_reference_mode_reports_one_peak_table(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """Regression coverage: test reference mode reports one peak table."""
     result = run_reference_study(
         tmp_path / "reference_mode",
@@ -2330,16 +2455,15 @@ def test_direct_range_parser_normalises_order() -> None:
     }
     assert parse_direct_range(params={"ext_lo": "11", "ext_hi": "7"}).lo == 11.0
     # When several entries are given at once: explicit params cover direct_range, and
-    # direct_range covers params
     explicit = parse_direct_range(
-        (10.5, 6.5),
-        ext_lo="9.5",
-        ext_hi="7.0",
+        (10.5, 6.5), ext_lo="9.5", ext_hi="7.0",
         params={"ext_lo": "12", "ext_hi": "5"},
     )
     assert explicit is not None
     assert explicit.params() == {"ext_lo": "9.5", "ext_hi": "7"}
-    partial = parse_direct_range({"lo": 10.0}, ext_hi=6.0, params={"ext_lo": 12.0, "ext_hi": 5.0})
+    partial = parse_direct_range(
+        {"lo": 10.0}, ext_hi=6.0, params={"ext_lo": 12.0, "ext_hi": 5.0}
+    )
     assert partial is not None
     assert partial.params() == {"ext_lo": "10", "ext_hi": "6"}
     assert parse_direct_range(None) is None
@@ -2370,10 +2494,12 @@ def test_reference_mode_accepts_direct_range(tmp_path: Path, bruker_dir: Path) -
     assert calls and str(calls[-1].get("ext_lo")) == "10.5"
     assert str(calls[-1].get("ext_hi")) == "6.5"
     first_run_id = reference.run_id
-    # A changed range requires explicit authorization to rebuild.
+    # Changed ranges require explicit authorization to rebuild.
     with pytest.raises(ReferenceError, match="force=True"):
         run_reference_study(root, direct_range=(11.0, 6.0), backend=backend)
-    again = run_reference_study(root, direct_range=(11.0, 6.0), backend=backend, force=True)
+    again = run_reference_study(
+        root, direct_range=(11.0, 6.0), backend=backend, force=True
+    )
     rebuilt = again.reference()
     assert rebuilt is not None
     assert str(rebuilt.params.get("ext_lo")) == "11"
@@ -2381,7 +2507,9 @@ def test_reference_mode_accepts_direct_range(tmp_path: Path, bruker_dir: Path) -
     assert rebuilt.run_id != first_run_id  # the reference really reran
 
 
-def test_combination_mode_direct_range_override(tmp_path: Path, bruker_dir: Path) -> None:
+def test_combination_mode_direct_range_override(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """Combination mode can override the direct-dimension range (base value + per combination);
     the reference spectrum is not rebuilt.
     """
@@ -2419,10 +2547,16 @@ def test_empty_combo_cells_mean_unspecified(tmp_path: Path, bruker_dir: Path) ->
     """
     root = tmp_path / "empty_cells"
     backend = _FakeSweepBackend()
-    run_reference_study(root, bruker_dir / "hsqc_2d", direct_range=(10.0, 6.5), backend=backend)
+    run_reference_study(
+        root, bruker_dir / "hsqc_2d", direct_range=(10.0, 6.5), backend=backend
+    )
     table = tmp_path / "combos.csv"
-    table.write_text("zero_fill,ext_lo,ext_hi\n1,,\n1,9,7\n", encoding="utf-8")
-    result = run_combination_study(str(root), combos=load_combo_table(table), backend=backend)
+    table.write_text(
+        "zero_fill,ext_lo,ext_hi\n1,,\n1,9,7\n", encoding="utf-8"
+    )
+    result = run_combination_study(
+        str(root), combos=load_combo_table(table), backend=backend
+    )
     by_id = {run.workflow_id: run for run in result.runs}
     first = by_id["W0001"].parameters_resolved["direct_range"]
     # Empty cell -> inherits the reference base (10 / 6.5), and the source is not combo
@@ -2433,7 +2567,9 @@ def test_empty_combo_cells_mean_unspecified(tmp_path: Path, bruker_dir: Path) ->
     assert second["source"] == "combo"
 
 
-def test_combo_table_supports_per_dimension_keys(tmp_path: Path, bruker_dir: Path) -> None:
+def test_combo_table_supports_per_dimension_keys(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """The combination table is per dimension: dotted keys for window/baseline/zero_fill take
     effect axis by axis and are archived.
     """
@@ -2472,7 +2608,9 @@ def test_combo_table_supports_per_dimension_keys(tmp_path: Path, bruker_dir: Pat
 
 
 # ----------------------------------------- Combination mode: independent picking (2026-09-14)
-def test_combination_threshold_keys_are_rejected(tmp_path: Path, bruker_dir: Path) -> None:
+def test_combination_threshold_keys_are_rejected(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """The threshold is chosen only when building a reference: a threshold key in a
     combination table -> SweepError (it is locked in the reference).
     """
@@ -2490,7 +2628,6 @@ def test_combination_threshold_keys_are_rejected(tmp_path: Path, bruker_dir: Pat
         with pytest.raises(SweepError, match="选峰阈值"):
             plan_sweep(reference, combos=[{"zero_fill": 1, key: value}])
     # The only allowed detection key is the refinement method; other detection.* keys are
-    # unknown keys (errors are not silent)
     plan = plan_sweep(reference, combos=[{"zero_fill": 1, "localization": "both"}])
     assert plan.combos[0]["localization"] == "both"
     assert any("精修方式" in note for note in plan.notes)
@@ -2498,7 +2635,9 @@ def test_combination_threshold_keys_are_rejected(tmp_path: Path, bruker_dir: Pat
         plan_sweep(reference, combos=[{"zero_fill": 1, "detection.max_peaks": 5}])
 
 
-def test_combination_localization_is_parabolic_only(tmp_path: Path, bruker_dir: Path) -> None:
+def test_combination_localization_is_parabolic_only(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """Regression coverage: test combination localization is parabolic only."""
     backend = _FakeSweepBackend()
     result = run_parameter_study(
@@ -2509,7 +2648,7 @@ def test_combination_localization_is_parabolic_only(tmp_path: Path, bruker_dir: 
             {"zero_fill": 2, "localization": "parabolic"},
         ],
         params={"phase_route": "none"},
-        edge_margin_ppm=0.5,
+        edge_margin_ppm=0.5,          # Explicit physical margin in ppm.
         backend=backend,
     )
     for run in result.runs:
@@ -2518,19 +2657,24 @@ def test_combination_localization_is_parabolic_only(tmp_path: Path, bruker_dir: 
         assert run.parameters_resolved["detection"]["methods"] == ["parabolic"]
         prow = read_peak_table(Path(run.peak_table_path("parabolic")))
         assert prow and all(row["localization_method"] == "parabolic" for row in prow)
-
+        # Three-point parabolic localization includes QC (equivalent width and boundary); residual
+        # columns were removed with Gaussian fitting.
         assert prow[0]["fit_success"] is True
         assert prow[0]["FWHM_H"] > 0 and prow[0]["FWHM_N"] > 0
         assert "fit_rmse" not in prow[0]
-
+        # The caller supplies the margin; record the explicit ppm value for each workflow.
         detection = run.parameters_resolved["detection"]
         assert detection["edge_margin_source"] == "ppm(显式)"
         assert detection["edge_margin_ppm"] == pytest.approx(0.5, rel=0.3)
 
+    # Per-combination gaussian/both overrides fail before processing and are never silently changed
+    # to parabolic.
     session = result.session
     reference = result.reference
     for value in ("gaussian", "both"):
-        bad_plan = plan_sweep(reference, combos=[{"zero_fill": 1, "localization": value}])
+        bad_plan = plan_sweep(
+            reference, combos=[{"zero_fill": 1, "localization": value}]
+        )
         with pytest.raises(SweepError) as excinfo:
             run_sweep(session, bad_plan, reference=reference, resume=False)
         _assert_removal_error(excinfo.value, value)
@@ -2551,7 +2695,8 @@ def test_rerun_removes_stale_gaussian_tables_from_run_and_records(
     )
     run_dir = Path(first.runs[0].run_dir)
     assert (run_dir / "peak_table_parabolic.csv").is_file()
-
+    # Simulate stale older-release files: a Gaussian table and sidecar in the run directory, plus a
+    # summary table.
     stale_table = run_dir / "peak_table_gaussian.csv"
     stale_sidecar = run_dir / "peak_table_gaussian.csv.localization.json"
     stale_table.write_text("workflow_id\n", encoding="utf-8")
@@ -2612,13 +2757,16 @@ class _Fake3DAxes:
 def test_detect_and_localize_has_no_gaussian_method_choice(tmp_path: Path) -> None:
     """Regression coverage: test detect and localize has no gaussian method choice."""
     spectrum = _write_ft2(tmp_path / "ref.ft2")
-
+    # The old entry point with a method argument is gone; Python rejects the keyword instead of
+    # silently falling back.
     with pytest.raises(TypeError):
         detect_and_localize(spectrum, method="gaussian", axes=_Fake3DAxes())
     with pytest.raises(TypeError):
         detect_and_localize(spectrum, method="lorentzian", axes=_Fake3DAxes())
-
-    rows, meta = detect_and_localize(spectrum, sigma_multiplier=20.0, edge_margin_ppm=0.5)
+    # Three-point parabolic localization is the only method; metadata reports no fallback.
+    rows, meta = detect_and_localize(
+        spectrum, sigma_multiplier=20.0, edge_margin_ppm=0.5
+    )
     assert rows
     assert meta["localization_method"] == "parabolic"
     assert meta["n_fallback"] == 0
@@ -2661,7 +2809,9 @@ def test_combination_zero_peak_warning_is_explicit(
 
 
 # ------------------------- Reference decisions inherited + workflow scripts (2026-09-15)
-def test_combination_inherits_reference_runtime_decisions(tmp_path: Path, bruker_dir: Path) -> None:
+def test_combination_inherits_reference_runtime_decisions(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """Automatic reference decisions (e.g. direct-dimension POLY -time) must be inherited by
     combinations; values given explicitly by a combination win.
     """
@@ -2691,7 +2841,6 @@ def test_combination_inherits_reference_runtime_decisions(tmp_path: Path, bruker
     reference = build_reference(session, params={"phase_route": "none"})
     reference = ensure_reference_peaks(session, reference)
     # Emulate an old record from reference-peak-table creation: the decision lives only in
-    # params.diagnostics
     reference.params["diagnostics"] = {"apply_poly_time": True}
     reference.sweep_params.pop("direct_poly_time", None)
     save_reference(session, reference)
@@ -2699,8 +2848,8 @@ def test_combination_inherits_reference_runtime_decisions(tmp_path: Path, bruker
     plan = plan_sweep(reference, combos=[{"zero_fill": 2}])
     runs = run_sweep(session, plan, reference=reference, resume=False)
     used = runs[0].parameters_used
-    assert used["direct_poly_time"] is True  # the reference decision is inherited
-    assert used["zero_fill"] == 2  # the combination's own value still applies
+    assert used["direct_poly_time"] is True      # the reference decision is inherited
+    assert used["zero_fill"] == 2                # the combination's own value still applies
 
     plan2 = plan_sweep(reference, combos=[{"direct_poly_time": False}])
     runs2 = run_sweep(session, plan2, reference=reference, resume=False)
@@ -2727,7 +2876,7 @@ def test_workflow_script_is_saved_in_run_dir_and_reference_work_dir(
     assert reference is not None and reference.work_dir
     work = Path(reference.work_dir)
     assert work.is_dir()
-    assert (work / "W0001_A.com").is_file()  # candidate script shares the reference directory
+    assert (work / "W0001_A.com").is_file()      # candidate script shares the reference directory
 
     run = result.runs[0]
     saved = Path(run.script_path)
@@ -2740,7 +2889,9 @@ def test_workflow_script_is_saved_in_run_dir_and_reference_work_dir(
     assert payload["script_path"] == run.script_path and payload["script_sha256"]
 
 
-def test_legacy_reference_script_found_in_data_level_dir(tmp_path: Path, bruker_dir: Path) -> None:
+def test_legacy_reference_script_found_in_data_level_dir(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """When an old reference has no work_dir, the combination script can still be found and
     archived from the data-level <data>.nmrpipe.
     """
@@ -2751,7 +2902,7 @@ def test_legacy_reference_script_found_in_data_level_dir(tmp_path: Path, bruker_
     add_dataset(session, bruker_dir / "hsqc_2d")
     reference = build_reference(session, params={"phase_route": "none"})
     reference = ensure_reference_peaks(session, reference)
-    reference.work_dir = ""  # emulate an old reference (no work dir recorded)
+    reference.work_dir = ""                      # emulate an old reference (no work dir recorded)
     save_reference(session, reference)
 
     plan = plan_sweep(reference, combos=[{"zero_fill": 1}])
@@ -2769,7 +2920,9 @@ def test_legacy_reference_script_found_in_data_level_dir(tmp_path: Path, bruker_
     assert (data_level / "W0001_A.com").is_file()
 
 
-def test_missing_workflow_script_is_reported_not_silent(tmp_path: Path, bruker_dir: Path) -> None:
+def test_missing_workflow_script_is_reported_not_silent(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """When the script cannot be found, warn processing_script_not_found (no silent blank)."""
     backend = _FakeSweepBackend()
     session = open_study(tmp_path / "script_missing", backend=backend)
@@ -2795,7 +2948,7 @@ def test_missing_workflow_script_is_reported_not_silent(tmp_path: Path, bruker_d
     assert run.status == STATUS_WARNING
     assert any(w["code"] == "processing_script_not_found" for w in run.warnings)
     assert run.script_path == "" and run.script_sha256 == ""
-    assert Path(run.peak_table_path("parabolic")).is_file()  # the peak table is still produced
+    assert Path(run.peak_table_path("parabolic")).is_file()   # the peak table is still produced
 
 
 # ---------------------------------- 2026-09-16: baseline rendering + optimize switch + self-check
@@ -2820,18 +2973,16 @@ def test_baseline_order_renders_with_auto_flag(bruker_dir: Path, tmp_path: Path)
             "F2": {"enabled": True, "mode": "auto", "order": 0},
         },
     )
-    assert "| nmrPipe -fn POLY -ord 3 -auto" in script  # frequency-domain order mode
-    assert "| nmrPipe -fn POLY -auto \\" in script  # auto mode kept
-    assert "| nmrPipe -fn POLY -ord 3 \\" not in script  # bare -ord not allowed
+    assert "| nmrPipe -fn POLY -ord 3 -auto" in script      # frequency-domain order mode
+    assert "| nmrPipe -fn POLY -auto \\" in script          # auto mode kept
+    assert "| nmrPipe -fn POLY -ord 3 \\" not in script     # bare -ord not allowed
     off = generate_process_script(
         experiment,
         plan,
         in_file="d_001.fid",
         out_file="out.ft2",
-        baseline={
-            "F1": {"enabled": False, "mode": "order", "order": 3},
-            "F2": {"enabled": False, "mode": "auto", "order": 0},
-        },
+        baseline={"F1": {"enabled": False, "mode": "order", "order": 3},
+                  "F2": {"enabled": False, "mode": "auto", "order": 0}},
     )
     assert "POLY -ord" not in off and "POLY -auto" not in off
 
@@ -2863,16 +3014,97 @@ def test_reference_optimize_switch_is_external_and_recorded(
     assert reference is not None
     # The switch is recorded (auditable), and the caller's baseline is kept
     assert reference.params["reference_optimize"] == {
-        "baseline": "off",
-        "window": "off",
+        "baseline": "off", "window": "off",
     }
     assert reference.params["baseline"]["F1"]["enabled"] is False
     # A reference-stage switch is not a processing parameter and must not enter the base
     assert "reference_optimize" not in reference.sweep_params
-    assert Path(reference.script_path).is_file()  # the reference script freezes as usual
+    assert Path(reference.script_path).is_file()   # the reference script freezes as usual
+    with Path(reference.optimization_scores["path"]).open(encoding="utf-8", newline="") as stream:
+        scores = list(csv.DictReader(stream))
+    assert len(scores) == 4
+    assert {row["stage"] for row in scores} == {"baseline", "window"}
+    assert all(row["status"] == "not_run" and not row["score"] for row in scores)
 
 
-def test_window_subparam_without_type_is_rejected(tmp_path: Path, bruker_dir: Path) -> None:
+def test_reference_optimization_scores_export_cache_and_legacy(
+    tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Only reference builds persist observed scores; cache repairs do not invent or rerun them."""
+    import workflow.phase_routes as routes
+
+    observed = [
+        {"stage": "baseline", "axis": "F1", "source": "joint_spectrum",
+         "candidate": "off:0", "parameters": {"enabled": False, "mode": "off", "order": 0},
+         "score": 91.25, "score_metric": "baseline_quality", "status": "scored",
+         "selected": True, "applied": True},
+        {"stage": "window", "axis": "F2", "source": "fid", "candidate": "none",
+         "parameters": {"type": "none"}, "score": 0.65, "fwhm": 2.4, "snr": 20.0,
+         "shape": 0.8, "merged": 0.0, "n_ref": 2.0, "score_metric": "window_detection",
+         "status": "scored", "selected": True, "applied": True},
+    ]
+    calls = []
+
+    def fake_route(experiment, backend, *, plan=None, base_params=None, **kwargs):
+        calls.append(1)
+        response = backend.process(experiment, plan, params=base_params)
+        return {**response, "optimization_scores": observed}
+
+    monkeypatch.setattr(routes, "unified_route", fake_route)
+    backend = _FakeSweepBackend()
+    session = open_study(tmp_path / "score_export", backend=backend)
+    add_dataset(session, bruker_dir / "hsqc_2d", condition="A")
+    reference = build_reference(session)
+    table = Path(reference.optimization_scores["path"])
+    data = table.read_bytes()
+    assert reference.optimization_scores["sha256"] == hashlib.sha256(data).hexdigest()
+    assert reference.optimization_scores["n_rows"] == 2
+    with table.open(encoding="utf-8", newline="") as stream:
+        rows = list(csv.DictReader(stream))
+    assert rows[0]["score"] == "91.25"
+    assert rows[1]["fwhm_points"] == "2.4"
+    assert rows[1]["type"] == "none"
+    assert json.loads(rows[1]["parameters_json"]) == {"type": "none"}
+    assert all(row["condition"] == "A" and row["run_id"] == reference.run_id for row in rows)
+    assert "optimization_scores" not in reference.sweep_params
+    assert "optimization_scores" not in reference.params
+    assert all(
+        "_record_optimization_scores" not in call["params"] for call in backend.process_calls
+    )
+    assert load_reference(session).optimization_scores == reference.optimization_scores
+    records = refresh_reference_records(session)
+    record = json.loads(Path(records["reference"]).read_text(encoding="utf-8"))
+    assert (
+        record["references"][0]["optimization_scores"]["sha256"]
+        == hashlib.sha256(data).hexdigest()
+    )
+    assert not (session.records_dir / "reference_optimization_scores.csv").exists()
+
+    table.unlink()
+    cached = build_reference(session)
+    assert table.read_bytes() == data
+    table.write_text("damaged table", encoding="utf-8")
+    build_reference(session)
+    assert table.read_bytes() == data
+    assert len(calls) == backend.convert_calls == 1
+    assert cached.optimization_scores["rows"] == observed
+
+    state = table.parent / "reference.json"
+    legacy = json.loads(state.read_text(encoding="utf-8"))
+    legacy.pop("optimization_scores")
+    state.write_text(json.dumps(legacy), encoding="utf-8")
+    old = build_reference(session)
+    assert {row["status"] for row in old.optimization_scores["rows"]} == {"not_recorded"}
+    assert all("score" not in row for row in old.optimization_scores["rows"])
+    assert len(calls) == 1
+    rebuilt = build_reference(session, force=True)
+    assert rebuilt.optimization_scores["rows"] == observed
+    assert len(calls) == backend.convert_calls == 2
+
+
+def test_window_subparam_without_type_is_rejected(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """Window parameters must be paired with a window type: writing off/end/... while the axis
     type=none errors out (it used to do nothing).
     """
@@ -2899,7 +3131,9 @@ def test_window_subparam_without_type_is_rejected(tmp_path: Path, bruker_dir: Pa
     assert any("order 不会生效" in note for note in plan2.notes)
 
 
-def test_no_spectrum_change_warning_and_script_diff(tmp_path: Path, bruker_dir: Path) -> None:
+def test_no_spectrum_change_warning_and_script_diff(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """A parameter that did not change the spectrum -> no_spectrum_change warning plus
     script_diff archive (conditionally).
     """
@@ -2909,7 +3143,6 @@ def test_no_spectrum_change_warning_and_script_diff(tmp_path: Path, bruker_dir: 
     reference = build_reference(session, params={"phase_route": "none"})
     reference = ensure_reference_peaks(session, reference)
     # The fake backend only changes the spectrum via window.F1.off / zero_fill -> writing
-    # neither means "the spectrum did not change"
     plan = plan_sweep(reference, combos=[{"baseline.F1.order": 3}])
     runs = run_sweep(session, plan, reference=reference, resume=False)
     run = runs[0]
@@ -2920,7 +3153,6 @@ def test_no_spectrum_change_warning_and_script_diff(tmp_path: Path, bruker_dir: 
     assert payload["script_diff"]
 
     # The parameter really changed (the fake backend shifts peaks by off) -> the spectrum
-    # changes -> the warning is no longer reported
     plan2 = plan_sweep(reference, combos=[{"window.F1.off": 0.45, "zero_fill": 2}])
     runs2 = run_sweep(session, plan2, reference=reference, resume=False)
     run2 = runs2[0]
@@ -2945,7 +3177,9 @@ def test_sweep_failure_is_isolated_and_parameters_recorded(
     add_dataset(session, bruker_dir / "hsqc_2d")
     reference = build_reference(session, params={"phase_route": "none"})
     reference = ensure_reference_peaks(session, reference)
-    plan = plan_sweep(reference, combos=[{"zero_fill.F1": 1}, {"zero_fill.F1": 2}])
+    plan = plan_sweep(
+        reference, combos=[{"zero_fill.F1": 1}, {"zero_fill.F1": 2}]
+    )
 
     real_process = backend.process
     calls = {"n": 0}
@@ -2967,13 +3201,14 @@ def test_sweep_failure_is_isolated_and_parameters_recorded(
     assert ok.status in ("success", "success_with_warning")
 
     # requested = the user's values as given; used = the merged actual parameters (kept even
-    # on failure)
     assert failed.parameters_requested == {"zero_fill.F1": 1}
     assert ok.parameters_requested == {"zero_fill.F1": 2}
     assert failed.parameters_used["zero_fill"]["F1"] == 1
     assert ok.parameters_used["zero_fill"]["F1"] == 2
 
-    failed_payload = json.loads(Path(failed.run_dir, "run.json").read_text(encoding="utf-8"))
+    failed_payload = json.loads(
+        Path(failed.run_dir, "run.json").read_text(encoding="utf-8")
+    )
     assert failed_payload["status"] == "failed"
     assert failed_payload["parameters_requested"] == {"zero_fill.F1": 1}
     assert failed_payload["parameters_used"]["zero_fill"]["F1"] == 1
@@ -2985,14 +3220,12 @@ def test_sweep_failure_is_isolated_and_parameters_recorded(
     assert Path(ok.peak_table_path("parabolic")).is_file()
 
     # Phase 22: a failed run leaves a run.log with the traceback; a successful run does not
-    # produce an empty log
     failed_log = Path(failed.run_dir, "run.log")
     assert failed_log.is_file(), "失败 run 必须留下 run.log(logging 通道)"
     logged = failed_log.read_text(encoding="utf-8")
     assert "forced workflow failure" in logged and "Traceback" in logged
     assert "结束: status=failed" in logged
     # Phase 22: a successful run also gets a run.log (start/end lines, independent of the log
-    # level)
     ok_log = Path(ok.run_dir, "run.log")
     assert ok_log.is_file()
     ok_text = ok_log.read_text(encoding="utf-8")
@@ -3017,11 +3250,12 @@ def test_cli_unexpected_error_is_actionable_not_a_traceback(
     assert "Traceback" not in captured.err, "默认不能把裸 traceback 甩给用户"
 
     # Exception -> hint mapping: paths, missing fields and invalid content each say what to do
-    assert "找不到文件或目录" in describe_exception(FileNotFoundError(2, "no such file", "x.json"))
+    assert "找不到文件或目录" in describe_exception(
+        FileNotFoundError(2, "no such file", "x.json")
+    )
     assert "缺少必需字段" in describe_exception(KeyError("peak_id"))
     assert "输入内容不合法" in describe_exception(ValueError("bad axis spec"))
     # Structure-mismatch class: keep the original text but always add an explanation (never
-    # only the name NoneType/KeyError)
     structure = describe_exception(AttributeError("'NoneType' object has no attribute 'x'"))
     assert structure.startswith("输入数据与预期结构不符")
 
@@ -3039,7 +3273,7 @@ def test_cli_debug_flag_and_env_show_the_traceback(
     captured = capsys.readouterr()
     assert captured.out == ""
     assert "完整堆栈(debug)" in captured.err
-    assert "Traceback" in captured.err, "Stack traces use stderr rather than JSON stdout."
+    assert "Traceback" in captured.err, "堆栈走 stderr(debug 通道),不混进 JSON stdout"
 
     monkeypatch.setenv(DEBUG_ENV, "1")
     assert cli_main(["status", "--study", str(bad)]) == 2
@@ -3047,8 +3281,7 @@ def test_cli_debug_flag_and_env_show_the_traceback(
 
 
 # ----------------------------------------------------------------------
-# Indirect-dimension flip (FT -neg) when building the reference: 2026-09-25 user request
-# that "building the reference through the API must wire it in too"
+# ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
 def test_reference_build_plumbs_the_indirect_flip_into_every_run(
     tmp_path: Path, bruker_dir: Path
@@ -3063,21 +3296,26 @@ def test_reference_build_plumbs_the_indirect_flip_into_every_run(
     backend = _FakeSweepBackend()
     session = open_study(tmp_path / "flip_reference", backend=backend)
     add_dataset(session, bruker_dir / "hsqc_2d")
-    reference = build_reference(session, params={"sampling": {"flip_f1": True}})
+    reference = build_reference(
+        session, params={"sampling": {"flip_f1": True}}
+    )
     assert backend.process_calls, "参考建立应该跑过后端"
     for call in backend.process_calls:
         assert call["params"].get("sampling") == {"flip_f1": True}, call["params"]
     # Reference archive: the frozen FT sign/direction choice (for combinations to reuse and
-    # for third-party review)
     assert reference.sampling_flags == {"flip_f1": True}
     record = json.loads(
-        (session.reference_dir_for(session.dataset) / "reference.json").read_text(encoding="utf-8")
+        (
+            session.reference_dir_for(session.dataset) / "reference.json"
+        ).read_text(encoding="utf-8")
     )
     assert record["sampling_flags"] == {"flip_f1": True}
     assert reference.sweep_params["sampling"] == {"flip_f1": True}
 
 
-def test_combination_inherits_the_reference_flip(tmp_path: Path, bruker_dir: Path) -> None:
+def test_combination_inherits_the_reference_flip(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """Combinations reuse the reference flip (not a fresh choice) and record it in params."""
     backend = _FakeSweepBackend()
     session = open_study(tmp_path / "flip_combo", backend=backend)
@@ -3094,7 +3332,9 @@ def test_combination_inherits_the_reference_flip(tmp_path: Path, bruker_dir: Pat
     assert sampling["flags"] == {"flip_f1": True}
     assert sampling["flags_source"] == "reference"
     payload = json.loads(Path(run.run_dir, "run.json").read_text(encoding="utf-8"))
-    assert payload["parameters_resolved"]["sampling"]["flags"] == {"flip_f1": True}
+    assert payload["parameters_resolved"]["sampling"]["flags"] == {
+        "flip_f1": True
+    }
 
 
 def test_sweep_allows_boolean_ft_sign_axes_but_locks_phase_routes(
@@ -3128,3 +3368,82 @@ def test_sweep_allows_boolean_ft_sign_axes_but_locks_phase_routes(
         plan_sweep(reference, combos=[{"phase_route": "unified"}])
     with pytest.raises(SweepError, match="phases"):
         plan_sweep(reference, combos=[{"phases": {"F2": [1.0, 0.0]}}])
+
+
+def test_api_explicit_candidates_bind_cache_and_selected_reference_params(
+    tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import workflow.phase_routes as routes
+    from workflow.optimization_scores import window_rows
+    from workflow.window_optimize import optimize_direct_window
+
+    backend = _FakeSweepBackend()
+    session = open_study(tmp_path / "explicit_candidates", backend=backend)
+    add_dataset(session, bruker_dir / "hsqc_2d")
+    t = np.arange(256)
+    fid = np.tile(np.exp(-t / 70) * np.exp(2j * np.pi * .13 * t), (8, 1))
+    calls = []
+
+    def fake_route(experiment, backend, *, plan=None, base_params=None, **kwargs):
+        pool = base_params["optimization_candidates"]["window"]["direct"]
+        result = optimize_direct_window(fid, candidates=pool, sw=6000, strict_candidates=True)
+        calls.append(result)
+        window = {"F2": result.choice}
+        response = backend.process(experiment, plan, params={"window": window})
+        return {**response, "window": window,
+                "optimization_scores": window_rows(result, "F2", source="fid")}
+
+    monkeypatch.setattr(routes, "unified_route", fake_route)
+    params = {"optimization_candidates": {"window": {"direct": [
+        {"type": "sp", "off": .37, "end": .97, "pow": 1.3},
+        {"type": "sp", "off": .41, "end": .96, "pow": 1.1},
+    ]}}}
+    reference = build_reference(session, params=params)
+    pool = reference.params["optimization_candidates"]["window"]["direct"]
+    assert reference.params["window"]["F2"] in pool
+    assert reference.params["window"]["F2"] == calls[-1].choice
+    assert backend.process_calls[-1]["params"]["window"]["F2"] == calls[-1].choice
+    assert "optimization_candidates" not in reference.sweep_params
+    assert [row["parameters"] for row in reference.optimization_scores["rows"]] == pool
+    assert build_reference(session, params=params).run_id == reference.run_id
+    assert backend.convert_calls == len(calls) == 1
+    changed = {"optimization_candidates": {"window": {"direct": list(reversed(pool))}}}
+    with pytest.raises(ReferenceError, match="force"):
+        build_reference(session, params=changed)
+    assert backend.convert_calls == 1
+    rebuilt = build_reference(session, params=changed, force=True)
+    assert rebuilt.params["window"]["F2"] == calls[-1].choice
+    assert backend.convert_calls == len(calls) == 2
+
+
+def test_explicit_candidate_preflight_checks_all_conditions_before_processing(
+    tmp_path: Path, bruker_dir: Path,
+) -> None:
+    backend = _FakeSweepBackend()
+    with pytest.raises(ReferenceError, match="NUS direct-window"):
+        run_reference_study(
+            tmp_path / "preflight_candidates",
+            datasets={"A": bruker_dir / "hsqc_2d", "B": bruker_dir / "nus_2d"},
+            params={"optimization_candidates": {"window": {"direct": [{"type": "none"}]}}},
+            backend=backend,
+        )
+    assert backend.convert_calls == 0
+    assert not backend.process_calls and not backend.reconstruct_calls
+
+
+def test_cli_explicit_candidates_conflict_is_rejected_before_processing(
+    tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys,
+) -> None:
+    backend = _FakeSweepBackend()
+    session = open_study(tmp_path / "cli_candidates", backend=backend)
+    add_dataset(session, bruker_dir / "hsqc_2d")
+    params = tmp_path / "candidates.json"
+    params.write_text(json.dumps({"optimization_candidates": {
+        "window": {"direct": [{"type": "none"}]},
+    }}), encoding="utf-8")
+    monkeypatch.setattr("nmrforge_api.cli.open_study", lambda *a, **k: session)
+    code = cli_main(["reference", "--study", str(session.root), "--params", str(params),
+                     "--phase-route", "none"])
+    assert code == 2
+    assert "unified" in capsys.readouterr().err
+    assert backend.convert_calls == 0 and not backend.process_calls

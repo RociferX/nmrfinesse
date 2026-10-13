@@ -1,9 +1,9 @@
 {
   "title": "nmrForge: automation, parameter optimisation and quality control for Bruker multidimensional NMR data",
   "upload_type": "software",
-  "publication_date": "2026-10-10",
-  "description": "nmrForge automates Bruker multidimensional NMR processing with NMRPipe and SMILE, records parameters and quality-control decisions, and provides spectrum viewing and peak localization. Version 1.0.5 is a patch release packaging existing phase/NUS fixes and evidence organization. The API version is 1.1.1; API parameters and the 38-column peak-table contract are unchanged. The 1.0.5 release provides the source and one Linux AppImage; see https://github.com/RociferX/nmrforge/releases for artifact availability and validation status. Version 1.0.2 is retained as a historical release. Dated real-data evidence and historical measurements are not new real-engine validation of this release.",
-  "version": "1.0.5",
+  "publication_date": "2026-10-13",
+  "description": "nmrForge automates Bruker multidimensional NMR processing with NMRPipe and SMILE, records parameters and quality-control decisions, and provides spectrum viewing and peak localization. Version 1.0.6 with API 1.1.2 adds per-reference window and baseline optimization score tables and optional explicit candidate pools. Each supplied pool replaces its corresponding defaults, and the highest-scoring valid candidate is used to build the reference. The 38-column peak-table contract is retained. The release includes source code and a Linux AppImage. Processing methods, four-path comparisons and their limitations are documented in the repository.",
+  "version": "1.0.6",
   "language": "eng",
   "creators": [
     {

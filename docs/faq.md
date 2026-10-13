@@ -13,8 +13,8 @@ editable repository checkout.
 ### Can I run it on Windows or macOS?
 
 Linux is the target runtime; Windows is an editing environment. macOS has not been validated.
-The current version is software 1.0.5 / API v1.1.1. Download the Linux AppImage or source from the
-[1.0.5 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.5). API parameters and the
+The current version is software 1.0.6 / API v1.1.2. Download the Linux AppImage or source from the
+[1.0.6 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.6). API parameters and the
 38-column peak-table contract are documented in the [Python API](python-api.md).
 
 ### Does nmrForge send my data anywhere?

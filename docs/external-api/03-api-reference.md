@@ -1,6 +1,6 @@
-# 03 · API reference (v1.1.1)
+# 03 · API reference (v1.1.2)
 
-Top-level exports are defined in `nmrforge_api/__init__.py`; `nmrforge_api.session.API_VERSION` defines API **1.1.1**. Software **1.0.5** and the API have separate version identifiers. The unified peak table has 38 columns.
+Top-level exports are defined in `nmrforge_api/__init__.py`; `nmrforge_api.session.API_VERSION` defines API **1.1.2**. Software **1.0.6** and the API have separate version identifiers. The unified peak table has 38 columns.
 
 ## 3.1 Sessions and Datasets
 
@@ -48,10 +48,14 @@ build_reference_peak_tables(session, reference, *, window_pts=None,
   including unified phase optimisation), then freezes the spectrum and the actually executed
   script. `direct_phase` records the phase result; `ReferenceSpectrum.phase_record()` reports
   `phase_mode="auto"` with `actual_p0` and `actual_p1`;
+- Reference entry points accept `params["optimization_candidates"]` to constrain window and/or
+  baseline optimization. The schema, validation, NUS behavior and scoring limits are described in
+  [05 §5.10](05-inputs-and-data.md#510-explicit-reference-optimization-candidates).
 - `ensure_reference_peaks`: each condition independently selects peaks on its own reference
   spectrum. An external peak table applies to the main condition only. Every condition has its own
   reference.list and reference peak table; conditions do not share peak identities.
-- Reference reuse requires an exact normalized request match, including parameters, phase route,
+- Reference reuse requires an exact normalized request match, including parameters (and
+  `optimization_candidates` values and list order), phase route,
   and direct range. The reference record stores the nmrforge_api.reference_input.v1 fingerprint.
   Any mismatch or missing/invalid legacy fingerprint raises ReferenceError and requires explicit
   force=True (CLI --force); no automatic rebuild occurs. All conditions are preflighted before

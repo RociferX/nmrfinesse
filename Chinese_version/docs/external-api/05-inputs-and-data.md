@@ -1,4 +1,4 @@
-# 05 · 输入:数据、条件与参数组合表(v1.1.1)
+# 05 · 输入:数据、条件与参数组合表(v1.1.2)
 
 ## 5.1 原始数据
 
@@ -296,32 +296,55 @@ window.F1.off,window.F2.off,zero_fill.F1,baseline.F2.enabled,points_per_line.F1
   会被 `SweepError` 拒绝(真机实例:参考窗型选到 none 后,`window.F1.off`
   全程没有渲染出任何窗函数行);基底没有 `type` 时给提示(会按默认 sine_bell 渲染)。
 
-## 5.10 参考优化开关(**仅测试/复现/审计;真实实验不可用**)
+## 5.10 参考优化候选列表
 
-> ⚠️ **真实实验请保持默认(参考自动优化)**。下面这些开关会关掉/限定参考阶段的
-> 自动优化,使参考不再“自动优化生成”;一旦使用,必须在处理记录与论文方法里
-> 明确写出“参考未做自动优化/优化被限定”,否则参考的合法性不成立。
+默认自动优化仍启用。`params["optimization_candidates"]` 显式限定窗函数和/或基线候选；
+高层 `run_reference_study(params=...)` 与 `params_by_condition=...` 均接受该键，CLI 使用
+既有 `reference --params` / `--condition-params` 通道。
 
 ```python
 run_reference_study(
     root, dataset,
     params={
-        "reference_optimize": {
-            "baseline": "off",            # off / auto / {"grid": [["off",0],["auto",1],["order",2],["order",3]]}
-            "window": "off",              # off / auto / {"direct_candidates": [...], "indirect_candidates": [...]}
+        "optimization_candidates": {
+            "window": {
+                "direct": [
+                    {"type": "sine_bell", "off": 0.35, "end": 0.98, "pow": 1, "c": 0.5},
+                    {"type": "sine_bell_squared", "off": 0.45, "end": 0.98, "pow": 2, "c": 0.5},
+                ],
+                "indirect": [
+                    {"type": "sine_bell", "off": 0.35, "end": 0.98, "pow": 1, "c": 0.5},
+                ],
+            },
+            "baseline": [
+                {"mode": "off", "order": 0},
+                {"mode": "order", "order": 4},
+            ],
         },
-        "baseline": {"F1": {"enabled": False}},   # 关掉优化时,这份配置被终跑直接使用
-        "window": {"F1": {"type": "sine_bell", "off": 0.45, "end": 0.98}},
     },
 )
 ```
 
-- `baseline="off"` / `window="off"`:跳过对应优化器,参考终跑直接用你给的
-  `baseline` / `window` 配置;`{"grid": …}` / `{…_candidates: …}` 只限定候选集合,
-  仍由评分挑最优;
-- 开关原样落档在 `reference.json.params.reference_optimize`(可审计),**不会**
-  进入组合基底(sweep_params);
-- 组合模式(参数扰动阶段)本来就逐组合显式控制窗/基线,不需要这个开关。
+- 顶层接受 `window` 和 `baseline`。`window.direct`、`window.indirect` 分别对应直接维和间接维，
+  每项为窗候选字典；`baseline` 为候选字典列表。显式给出的阶段/方向只评分所列项目，绝不追加默认候选；
+  未指定的阶段/方向才用默认池。程序补齐候选默认参数、去重，列表顺序决定同分优先顺序。
+- 列表不可为空。未知键、非有限数值、无效类型或非法参数在处理前报错，不回退到默认池。窗别名
+  `sp`/`gm`/`em`/`off`可用；`sine_bell_squared`归一为`sine_bell`且`pow=2`。SP系列支持
+  `off/end`在[0,1]及非负有限`pow/c`（`pow`可为非整数）；`gaussian`使用`g1/g2`，`exp`使用有限`lb`。
+  GM当前仅支持`g3=0,c=1`；EM支持`c=1`且没有`g3`参数。uniform任意方向支持
+  `none`、`sine_bell`、`sine_bell_squared`、`gaussian`、`exp`。
+- 基线`off`须为`order: 0`；`auto`的0/1阶归一为`{"mode": "auto", "order": 1}`，
+  评分行标识为`auto:1`；`order`需正整数阶数。显式基线候选网格
+  不应用默认的≥95分提前跳过和增益不超过0.5时保留off规则；仍执行条纹否决，全部被否决时明确失败。
+- NUS直接维显式候选只允许SP系列，选中项写入最终重构脚本且`applied=True`；未指定时保持默认固定SP，
+  默认评分候选不覆盖该窗。NUS间接维支持SP、`none`、GM、EM。显式窗列表没有有效候选或输入不足时明确失败。
+- 与同阶段`reference_optimize`测试开关或`phase_route="none"`冲突时前置报错。候选值和顺序进入完整参考
+  输入指纹，改变后需`force=True` / CLI `--force`。候选列表不进入组合基底，组合只继承实际选中参数。
+
+### reference_optimize 测试开关
+
+旧式`reference_optimize`开关仅用于测试/复现/审计；与同阶段显式`optimization_candidates`同时传入会报错。
+参考优化候选列表优先用于正常参考自动优化配置。
 
 
 ## 5.11 限定峰的定位（targeted localization）

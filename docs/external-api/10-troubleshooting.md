@@ -1,4 +1,4 @@
-# 10 - Troubleshooting (v1.1.1)
+# 10 - Troubleshooting (v1.1.2)
 
 ## 10.1 Common errors and what to do
 
@@ -13,6 +13,9 @@
 | `SweepError: 'phases'/'direct_phase' in the grid would break phase locking` | a phase dictionary was given directly | use `phase_delta.<axis>.p0\|p1` or `phase.<axis>.p0\|p1` |
 | `SweepError: only 2D NUS parameter combinations are supported` | 3D NUS | 3D NUS supports reference construction; parameter-combination execution is unsupported |
 | `plan.notes` mentions "not in the list of parameters the backend reads" | a key name is misspelled | check the key table in 05; notes only warn and never fail a run |
+| `optimization_candidates` validation fails | an empty list, unknown key, invalid candidate, or conflict with a test switch | correct the request using [05 §5.10](05-inputs-and-data.md#510-explicit-reference-optimization-candidates); validation fails before processing and does not fall back to defaults |
+| Reference input no longer matches after candidate changes | candidate values or list order differ from the frozen request | rebuild explicitly with `force=True` / `reference --force` |
+| All explicit candidates are vetoed or cannot be scored | stripe veto, insufficient input, or no valid window candidate | inspect the candidates and input data; the optimizer does not append default candidates |
 
 ## 10.2 The status is `success_with_warning`
 

@@ -1,4 +1,4 @@
-# 08 · 向使用者分析程序交接(v1.1.1)
+# 08 · 向使用者分析程序交接(v1.1.2)
 
 本软件止于「谱 + 峰表 + 处理记录」。**统计推断与显著性判断
 属于你的独立分析程序**,请按下述契约读取产物。
@@ -14,6 +14,7 @@
 | 峰的可用性 | `SNR`、`fit_success`、`boundary_hit`、`fallback`(组合模式峰表只含检出的峰;参考峰表另带 `detected=false` 的保留行) |
 | 参考基准 | `study/records/manifest.json` 的 `references`(脚本/谱/参考峰表哈希)与 `peak_identity` |
 | 复算与引用 | 脚本/谱 SHA-256、`grid_sha256`、`versions`、完整 `log.txt` |
+| 参考候选评分 | `ReferenceSpectrum.optimization_scores` 或参考目录 `optimization_scores.csv`；仅含窗/基线候选评分，不进入组合参数基底 |
 
 ## 8.2 最小读取示例(只读,不计算)
 

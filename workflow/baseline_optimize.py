@@ -1,18 +1,14 @@
-"""Dimension-by-dimension baseline optimisation (user plan, G2B-007 point 4). Use
-core.qc.baseline_quality to score each dimension (direct + indirect), grid mode ∈ {off, auto} x
-order ∈ {1,2,3}, select the optimal write-back baseline configuration for each dimension; the
-final spectrum is rendered by the real pipeline (baseline write-back -> render_scripts /
-backend.process, uniform and NUS are both supported). score Can be injected. 0.2.132 (stripe
-artifact repair): - Score axis correction: score_fn uses the numpy axis corresponding to the
-logical axis (axis_index), which is consistent with the correction axis of baseline.apply (the
-old code misuses the enumerate serial number, evaluates the wrong axis for the dimensions in
-front of the direct dimension, and the indirect axis high score correction "flatten" the entire
-column is wrongly selected); - Hard stripe rejection: trace-by-trace correction (plain polyfit,
-and the real script POLY Consistent) When an obvious trace gap is introduced on the corrected
-spectrum (mean jump at adjacent trace ends >> median level), the candidate is not counted in the
-selection -> only off; ensure that the written back POLY will not cause vertical lines to appear
-in the final spectrum; - no substantial gain remains off: gain <= 0.5 (scoring unit) no longer
-writes POLY -auto.
+"""Dimension-by-dimension baseline optimisation using in-memory quality scores.
+
+For each direct or indirect axis, score baseline candidates and write the selected
+configuration back to the processing parameters. The default grid covers off, automatic,
+and polynomial orders 1–3. Keep baseline correction off when the gain is at most 0.5
+score units or a candidate introduces visible striping. The final spectrum is produced by
+the normal backend pipeline for both uniform and NUS data.
+
+Failures with the default candidate pool are handled gracefully. Explicit candidate pools
+are strict: if no valid candidate can be evaluated, raise CandidateSelectionError rather
+than falling back to a default configuration.
 """
 
 from __future__ import annotations
@@ -29,6 +25,7 @@ from core.data.internal_data_model import Experiment
 from core.processing import baseline as baseline_proc
 from core.processing.axes import file_axis_index
 from ui_support.i18n import tr
+from workflow.optimization_candidates import CandidateSelectionError
 
 
 @dataclass
@@ -41,6 +38,9 @@ class BaselineOptimizeResult:
     logs: list[str] = field(default_factory=list)
     optimized: list[str] = field(default_factory=list)
     skipped: list[str] = field(default_factory=list)
+    off_scores: dict[str, float] = field(default_factory=dict)
+    selected_candidates: dict[str, str] = field(default_factory=dict)
+    strict_candidates: bool = False
 
 
 def _default_score(data: np.ndarray, axis: int) -> float:
@@ -61,7 +61,6 @@ def _fmt_cfg(cfg: dict[str, Any]) -> str:
 
 
 # Hard stripe rejected candidate scores (finite negative numbers, avoid -inf into GUI/JSON
-# serialization).
 _VETOED_SCORE = -1e9
 
 
@@ -121,7 +120,11 @@ def _decimated(data: np.ndarray, axis: int, max_traces: int) -> np.ndarray:
         int(math.ceil((n_traces / max_traces) ** (1.0 / (data.ndim - 1)))),
     )
     slices = [
-        (slice(None, None, per) if (a != axis and data.shape[a] >= 2 * per) else slice(None))
+        (
+            slice(None, None, per)
+            if (a != axis and data.shape[a] >= 2 * per)
+            else slice(None)
+        )
         for a in range(data.ndim)
     ]
     return data[tuple(slices)]
@@ -167,21 +170,24 @@ def optimize_baseline(
     progress: Callable[[str], None] | None = None,
     cancel: Callable[[], bool] | None = None,
     max_traces: int = 4096,
+    strict_candidates: bool = False,
 ) -> BaselineOptimizeResult:
-    """Dimension-by-dimension baseline optimisation: the grid of every dimension is
-    mode∈{off,auto} × order∈{1,2,3}, scored in memory, and the best configuration per
-    dimension is written back to the baseline config. The whole grid is optimised directly; the
-    off configuration is kept when there is no substantial gain (<=0.5) or a candidate
-    introduces visible striping. The log explains the configuration change and the score gain
-    axis by axis. score_fn(data, np_axis) returns the baseline quality score of that axis
-    (default baseline_quality); off=no correction. progress outputs progress
-    axis-by-axis/candidate. When
-    cancel is set, check and throw "task canceled" between candidates (0.2.199-patch7: 3D robust
-    trace-by-trace fitting can reach tens of thousands of traces, requiring progress and
-    cancellation); max_traces: trace subsampling upper limit of candidate score (0.2.199-patch8,
-    default 4096, the smaller the faster, the score is approximately unchanged; off axis with
-    score >= 95 is skipped candidate directly remains off). Returns {"baseline", "scores",
-    "logs", "optimized", "skipped"}.
+    """Optimize baseline correction independently for each logical axis.
+
+    The default grid evaluates off, automatic, and polynomial orders 1–3 in memory, then
+    writes the selected configuration back to the baseline parameters. Keep correction off
+    when there is no substantial gain (at most 0.5 score units) or a candidate introduces
+    visible striping. ``score_fn(data, np_axis)`` returns the baseline quality score; the
+    standard implementation uses ``baseline_quality``. Progress is reported by axis and
+    candidate, and cancellation is checked between candidates. ``max_traces`` limits the
+    number of traces used for scoring.
+
+    With the default candidate pool, evaluation failures degrade gracefully and preserve the
+    existing or default configuration. When ``strict_candidates=True`` for an explicit pool,
+    invalid or failed evaluation raises ``CandidateSelectionError`` instead of falling back.
+
+    Returns the chosen ``baseline`` configuration, candidate ``scores``, ``logs``, and the
+    ``optimized`` and ``skipped`` axes.
     """
     import nmrglue as ng
 
@@ -190,18 +196,12 @@ def optimize_baseline(
     if np.iscomplexobj(arr):
         arr = arr.real
     axes = [dim.logical_axis for dim in experiment.dimensions]
-    grid = (
-        grid
-        if grid is not None
-        else [
-            ("off", 0),
-            # It is order 1, which is the same as order1. It removes duplicates and does not repeat
-            # scoring.
-            ("auto", 1),
-            ("order", 2),
-            ("order", 3),
-        ]
-    )
+    grid = grid if grid is not None else [
+        ("off", 0),
+        ("auto", 1),  # Auto is order 1; deduplicate it to avoid scoring twice.
+        ("order", 2),
+        ("order", 3),
+    ]
     score_fn = score_fn or _default_score
     off_cfg: dict[str, Any] = {"enabled": False, "mode": "auto", "order": 0}
     # Keep off when there is no substantial gain (scoring unit), avoid nonsense/harmful writeback.
@@ -211,6 +211,8 @@ def optimize_baseline(
     logs: list[str] = []
     optimized: list[str] = []
     unchanged: list[str] = []
+    off_scores: dict[str, float] = {}
+    selected_candidates: dict[str, str] = {}
     for index, axis in enumerate(axes, start=1):
         if progress is not None:
             progress(
@@ -228,14 +230,18 @@ def optimize_baseline(
 
         # 0.2.199-patch9: No subsampling is performed when the original spectrum has obvious stripes
         # (>8) -- thin stripes may be missed by subsampling, and stripe veto/The rating must be
-        # fully assessed to be correct.; clean spectrum is subsampled.
         orig_ratio = _stripe_ratio(arr, np_axis)
         # 0.2.199-patch29u: First find the peak-free trace and then sample it as the scoring basis
         # (user plan) to avoid strong peaks biasing the baseline estimate; the peak-free trace is
-        # not enough to fall back to full trace downsampling.
-        base2d, _keep_idx = _peak_free_traces(arr, np_axis, max_traces=max_traces)
+        base2d, _keep_idx = _peak_free_traces(
+            arr, np_axis, max_traces=max_traces
+        )
         if base2d is None:
-            base = arr if orig_ratio > 8.0 else _decimated(arr, np_axis, max_traces)
+            base = (
+                arr
+                if orig_ratio > 8.0
+                else _decimated(arr, np_axis, max_traces)
+            )
             score_axis = np_axis
             base_ratio = orig_ratio
         else:
@@ -243,14 +249,16 @@ def optimize_baseline(
             score_axis = -1
             base_ratio = _stripe_ratio(base, -1)
         current_score = float(score_fn(base, score_axis))
+        off_scores[axis] = current_score
         # When the baseline is good (>= 95), the entire axis candidate is skipped and kept off
-        # directly (full grid fitting is omitted).
-        if current_score >= 95.0:
+        if current_score >= 95.0 and not strict_candidates:
+            selected_candidates[axis] = "off:0"
             baseline_cfg[axis] = dict(off_cfg)
             scores[axis] = {"off:0": current_score}
             logs.append(
                 tr(
-                    "{p0}: The baseline is good (score={p1:.1f}≥95),keep off (candidates skipped)",
+                    "{p0}: The baseline is good (score={p1:.1f}≥95),keep off (candidates "
+                    "skipped)",
                     p0=axis,
                     p1=current_score,
                 )
@@ -274,23 +282,29 @@ def optimize_baseline(
                         order=max(order, 1),
                         np_axis=score_axis,
                     ),
+
                 )
                 # Hard stripe rejection: If there is an obvious trace gap after correction, the
                 # candidate cannot be written back (otherwise, vertical lines will appear in the
                 # final spectrum); relative rejection -- only reject candidates that are
-                # significantly worse than the base (0.2.199-patch9).
-                if _has_stripe_artifact(work, score_axis, baseline_ratio=base_ratio):
+                if _has_stripe_artifact(
+                    work, score_axis, baseline_ratio=base_ratio
+                ):
                     axis_scores[f"{mode}:{order}"] = _VETOED_SCORE
                     _vetoed_count += 1
                     continue
             value = float(score_fn(work, score_axis))
+            if strict_candidates and not np.isfinite(value):
+                axis_scores[f"{mode}:{order}"] = value
+                continue
             axis_scores[f"{mode}:{order}"] = value
             if best is None or value > best[0]:
                 best = (value, mode, order)
             if progress is not None:
                 progress(
                     tr(
-                        "Baseline optimisation(memory score): {p0} {p1}:{p2} score={p3:.1f}",
+                        "Baseline optimisation(memory score): {p0} {p1}:{p2} "
+                        "score={p3:.1f}",
                         p0=axis,
                         p1=mode,
                         p2=order,
@@ -298,6 +312,8 @@ def optimize_baseline(
                     )
                 )
         if best is None:
+            if strict_candidates:
+                raise CandidateSelectionError(f"No valid explicit baseline candidate for {axis}")
             best = (float(current_score), "off", 0)
             axis_scores["off:0"] = float(current_score)
         score, mode, order = best
@@ -308,20 +324,25 @@ def optimize_baseline(
         else:
             new_cfg = {"enabled": True, "mode": "order", "order": order}
         gain = score - current_score
-        if gain <= min_gain:
+        selected_candidates[axis] = (
+            "off:0" if gain <= min_gain and not strict_candidates else f"{mode}:{order}"
+        )
+        if gain <= min_gain and not strict_candidates:
             # Trace-by-trace correction has no substantial gain -> keep off (0.2.132: no longer
             # write POLY -auto, to avoid trace-by-trace mean correction introducing stripes when
-            # there is no baseline problem).
             baseline_cfg[axis] = dict(off_cfg)
             if _vetoed_count == _non_off:
                 reason = tr("All candidates were rejected by the striping check")
             elif _vetoed_count > 0:
                 reason = tr(
-                    "Some candidates were rejected by striping, and the rest had insufficient gain",
+                    "Some candidates were rejected by striping, and the rest had insufficient "
+                    "gain",
                 )
             else:
                 reason = tr("Candidate is not better than current configuration")
-            logs.append(tr("{p0}: {p1}, keep off (score={p2:.1f})", p0=axis, p1=reason, p2=score))
+            logs.append(
+                tr("{p0}: {p1}, keep off (score={p2:.1f})", p0=axis, p1=reason, p2=score)
+            )
             unchanged.append(axis)
         else:
             baseline_cfg[axis] = new_cfg
@@ -343,16 +364,12 @@ def optimize_baseline(
         tr("Baseline optimisation summary: ")
         + (tr("optimisation ") + ",".join(optimized) if optimized else tr("optimisation None"))
         + "; "
-        + (
-            tr(
-                "Not optimisation ",
-            )
-            + ",".join(unchanged)
-            if unchanged
-            else tr(
-                "Not optimisation None",
-            )
-        )
+        + (tr(
+            "Not optimisation ",
+        ) + ",".join(unchanged) if unchanged else tr(
+            "Not optimisation "
+            "None",
+        ))
     )
     return BaselineOptimizeResult(
         baseline=baseline_cfg,
@@ -361,6 +378,9 @@ def optimize_baseline(
         logs=logs,
         optimized=optimized,
         skipped=[],
+        off_scores=off_scores,
+        selected_candidates=selected_candidates,
+        strict_candidates=strict_candidates,
     )
 
 

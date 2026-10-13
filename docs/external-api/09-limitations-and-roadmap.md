@@ -1,4 +1,4 @@
-# 09 · Support and execution boundaries (v1.1.1)
+# 09 · Support and execution boundaries (v1.1.2)
 
 ## 9.1 Support matrix
 
@@ -102,3 +102,12 @@ require conversion/merge raise an error requiring `force=True` at reference cons
 (`reference --force` on the CLI). `force` does not enable conversion on demand during combinations.
 Fingerprints use content SHA-256 up to 8 MiB and `size + mtime_ns` for larger files; the latter
 detects metadata changes rather than authenticating full file content.
+
+## 9.10 Reference optimization candidate boundaries
+
+`optimization_candidates` controls reference window/baseline scoring. An explicit list is the full
+pool for that stage/direction; only unspecified stages/directions use defaults. Candidate values
+and list order are part of the reference fingerprint, so changes require a forced rebuild. The
+default NUS direct-dimension window remains fixed SP; explicit NUS direct-dimension candidates are
+limited to SP types and are applied to the final reconstruction script. Scores compare candidates
+within one stage and axis; they do not estimate all weak peaks or a globally optimal final spectrum.

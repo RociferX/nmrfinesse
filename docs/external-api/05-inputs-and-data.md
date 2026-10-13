@@ -1,4 +1,4 @@
-# 05 · Input: data, condition and parameter combination table (v1.1.1)
+# 05 · Input: data, condition and parameter combination table (v1.1.2)
 
 ## 5.1 Raw data
 
@@ -145,7 +145,7 @@ run_parameter_study(..., peaks="library.list")   # or a peak_id,H_ppm,N_ppm CSV
 - All parameters that affect the result must be traceable: `parameters_requested` ->
   `parameters_used` -> `parameters_resolved` (automatic parameter actual result).
 
-### Reference cache, carrier and spectral width (v1.1.1)
+### Reference cache, carrier and spectral width (v1.1.2)
 
 Reference reuse requires an exact normalized processing request match, including phase route,
 direct range, and all parameters (nested mappings and equivalent dotted keys normalize alike).
@@ -281,32 +281,68 @@ window.F1.off,window.F2.off,zero_fill.F1,baseline.F2.enabled,points_per_line.F1
   Will be rejected by `SweepError` (real machine example: after selecting none in the reference window, `window.F1.off`.
   No window function lines are rendered in the whole process); a prompt will be given when the base does not have `type` (it will be rendered by default sine_bell).
 
-## 5.10 Reference optimisation switch (**Test only/Recurrence/audit; not available for real experiments**)
+## 5.10 Explicit reference optimization candidates
 
-> ⚠️ **Please keep the default for real experiments (refer to automatic optimisation)**. The following switches will turn off/Limited to the reference stage
-> Automatic optimisation, so that the reference is no longer "automatically optimised"; once used, it must be in the processing record and paper method
-> Clearly write "the reference is not automatically optimised / optimisation is qualified", otherwise the legality of the reference will not be established
+Reference optimization remains enabled by default. To evaluate a defined candidate set, pass
+`optimization_candidates` in the reference `params`. It is accepted by the high-level
+`run_reference_study(params=..., params_by_condition=...)` entry point and through the existing CLI
+`reference --params` / `--condition-params` JSON or YAML inputs; no new CLI option is required.
 
 ```python
 run_reference_study(
     root, dataset,
     params={
-        "reference_optimize": {
-            "baseline": "off",            # off / auto / {"grid": [["off",0],["auto",1],["order",2],["order",3]]}
-            "window": "off",              # off / auto / {"direct_candidates": [...], "indirect_candidates": [...]}
+        "optimization_candidates": {
+            "window": {
+                "direct": [
+                    {"type": "sine_bell", "off": 0.35, "end": 0.98, "pow": 1, "c": 0.5},
+                    {"type": "sine_bell_squared", "off": 0.45, "end": 0.98, "pow": 2, "c": 0.5},
+                ],
+                "indirect": [
+                    {"type": "sine_bell", "off": 0.35, "end": 0.98, "pow": 1, "c": 0.5},
+                ],
+            },
+            "baseline": [
+                {"mode": "off", "order": 0},
+                {"mode": "order", "order": 4},
+            ],
         },
-        "baseline": {"F1": {"enabled": False}},   # with optimisation off, the final run uses this configuration directly
-        "window": {"F1": {"type": "sine_bell", "off": 0.45, "end": 0.98}},
     },
 )
 ```
 
-- `baseline="off"` / `window="off"`: Skip the corresponding optimizer, refer to the final run and use the one you gave directly
-  `baseline` / `window` configuration; `{"grid": …}` / `{…_candidates: …}` only limits the candidate set.
-  The best ones are still selected by scoring;
-- The switch is left as is in `reference.json.params.reference_optimize` (auditable), **won't**
-  Into combined base(sweep_params);
-- The combination mode (parameter perturbation stage) inherently controls the explicit control window/baseline one by one and does not require this switch
+The top-level object accepts `window` and `baseline`. Window candidates are grouped by `direct` and
+`indirect`; baseline candidates are a list. For each explicitly supplied stage or direction, the
+provided list is the complete candidate pool: the optimizer scores those candidates and selects the
+highest valid score, without appending defaults. Unspecified stages or directions use the normal
+default pool. Candidate defaults are filled by the program, duplicates are removed, and input order
+breaks score ties.
+
+- Candidate lists must be non-empty. Unknown keys, non-finite values, invalid types, and invalid
+  parameters fail before processing; they do not fall back to default candidates.
+- Window type aliases `sp`, `gm`, `em` and `off` are accepted. `sine_bell_squared` normalizes to
+  `sine_bell` with `pow=2`. SP candidates accept `off`/`end` in [0, 1] and finite non-negative
+  `pow`/`c` (`pow` may be non-integer). `gaussian` accepts `g1`/`g2`; `exp` accepts finite `lb`.
+  The automatic model and script support GM only with `g3=0,c=1`; EM supports `c=1` and has no
+  `g3` parameter. For uniform data, either direction supports `none`, `sine_bell`,
+  `sine_bell_squared`, `gaussian` and `exp`.
+- Baseline `off` requires `order=0`. `auto` with order 0 or 1 normalizes to
+  `{"mode": "auto", "order": 1}` (score-row ID `auto:1`); `order` requires
+  a positive integer. An explicit baseline grid skips the default score-at-least-95 early exit and
+  the rule that keeps `off` when the gain is at most 0.5. Stripe vetoes still apply; if every
+  candidate is vetoed, reference construction fails.
+- For NUS, explicit direct-dimension candidates may use SP types only and the selected candidate is
+  applied in the final reconstruction script. If no direct candidates are specified, the default
+  fixed SP window remains in effect and default scoring does not override it. Indirect dimensions
+  support SP, `none`, GM and EM. An explicit window list with no valid candidate or insufficient
+  input fails rather than falling back to defaults.
+- Candidates and list order are part of the full reference input fingerprint. Changing them requires
+  `force=True` / CLI `--force`. The candidate specification itself is excluded from the combination
+  base; combinations inherit only selected processing parameters. Explicit candidates conflict with
+  the test-only `reference_optimize` switch for the same stage and with `phase_route="none"`.
+
+The legacy `reference_optimize` switch is for testing/reproduction/audit only. It cannot be combined
+with explicit candidates for the same stage.
 
 
 ## 5.11 Targeted localization
