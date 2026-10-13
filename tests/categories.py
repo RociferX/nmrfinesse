@@ -151,7 +151,6 @@ CATEGORIES: dict[str, str] = {
     "test_smile_scan_script_split.py": "unit",
     "test_smile_scan_workflow.py": "integration",
     "test_ui_i18n.py": "regression",
-    "test_public_tree_sync.py": "regression",
     "test_test_categories.py": "regression",
     "test_smoke.py": "unit",
     "test_stepwise.py": "integration",

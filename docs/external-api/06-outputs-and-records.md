@@ -84,7 +84,7 @@ calculate scores. Older references without per-candidate rows use `not_recorded`
 restored from frozen structured rows without rerunning optimization. The attachment is excluded from
 the combination base and adds no peak-table columns.
 
-## 6.2 Unified peak table fields (**38 columns**)
+## 6.2 Unified peak table fields (currently **38 columns**)
 
 Multi-segment source provenance is recorded separately from the peak table. In `study.json` and the
 `datasets` entries in reference/combination records, a segmented condition adds `segmented: true`
