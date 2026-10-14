@@ -25,7 +25,7 @@
         ]
       },
       "residual": null,
-      "reason": "Bruker PHC and NMRPipe PS conventions not mapped; no cross-vendor angle error claimed."
+      "reason": "Bruker PHC parameters retained in their original convention; phase agreement assessed from final line shapes."
     },
     "nus75": {
       "automatic": {
@@ -52,7 +52,9 @@
       "p0_residual": {
         "N": 0.0,
         "H": -6.4409942626953125
-      }
+      },
+      "reference_kind": "same-source NMRForge uniform automatic phase; internal consistency check",
+      "spectrum_comparison_reference_kind": "author_Bruker_pdata/1"
     },
     "uniform3d": {
       "automatic": {

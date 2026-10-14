@@ -38,7 +38,8 @@
           },
           "automatic_local_height_fraction": 0.10118649211908953,
           "automatic_candidates_within_tolerance": 0,
-          "observation": "local_response_without_independent_candidate"
+          "observation": "local_response_without_independent_candidate",
+          "visual_interpretation": "A positive sidelobe/shoulder beside the strong peak is separately picked in the author spectrum; the automatic spectrum retains the same local structure without an independent candidate."
         }
       ]
     },
@@ -59,193 +60,67 @@
       ],
       "sampling": "nus",
       "sampling_fraction_reader_summary": 0.75,
-      "unmatched_count": 12,
+      "unmatched_count": 3,
       "observations": {
-        "local_response_without_independent_candidate": 6,
-        "below_10_percent": 6
+        "local_response_without_independent_candidate": 1,
+        "below_10_percent": 2
       },
       "candidates": [
         {
           "projection": "HN",
           "reference_candidate": {
-            "candidate_index_1based": 103,
+            "candidate_index_1based": 94,
             "ppm": {
-              "H": 9.276297610247397,
-              "N": 117.9978937955106
+              "H": 9.275114128130578,
+              "N": 118.05760136245794
             },
-            "intensity": 7034245.3896484375,
+            "intensity": 97133.44482421875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.4345405692865954,
+          "automatic_local_height_fraction": 0.5256086694594704,
           "automatic_candidates_within_tolerance": 0,
-          "observation": "local_response_without_independent_candidate"
+          "observation": "local_response_without_independent_candidate",
+          "visual_interpretation": "overlapping peaks, represented as one broader automatic maximum"
         },
         {
           "projection": "HN",
           "reference_candidate": {
             "candidate_index_1based": 125,
             "ppm": {
-              "H": 7.561621850042283,
-              "N": 112.17666175377161
+              "H": 8.131289764517504,
+              "N": 118.61218976568716
             },
-            "intensity": 3372157.3896484375,
+            "intensity": 32220.64208984375,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.08719942512038655,
+          "automatic_local_height_fraction": 0.08147006025221458,
           "automatic_candidates_within_tolerance": 0,
-          "observation": "below_10_percent"
+          "observation": "below_10_percent",
+          "visual_interpretation": "weak shoulder below the 10% display-detection threshold"
         },
         {
           "projection": "HN",
           "reference_candidate": {
             "candidate_index_1based": 126,
             "ppm": {
-              "H": 6.900656459494713,
-              "N": 112.16982865745969
+              "H": 8.543705039745257,
+              "N": 129.7483741652692
             },
-            "intensity": 3350012.8896484375,
+            "intensity": 29501.23779296875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.14606549617457756,
+          "automatic_local_height_fraction": 0.09175599453623086,
           "automatic_candidates_within_tolerance": 0,
-          "observation": "local_response_without_independent_candidate"
-        },
-        {
-          "projection": "HN",
-          "reference_candidate": {
-            "candidate_index_1based": 127,
-            "ppm": {
-              "H": 7.637867554176423,
-              "N": 112.28324929773416
-            },
-            "intensity": 3047147.6396484375,
-            "sign": 1
-          },
-          "automatic_local_height_fraction": 0.11025259531530299,
-          "automatic_candidates_within_tolerance": 0,
-          "observation": "local_response_without_independent_candidate"
-        },
-        {
-          "projection": "HN",
-          "reference_candidate": {
-            "candidate_index_1based": 128,
-            "ppm": {
-              "H": 8.131904193192819,
-              "N": 118.6164004614256
-            },
-            "intensity": 2751844.6396484375,
-            "sign": 1
-          },
-          "automatic_local_height_fraction": 0.08147006025221458,
-          "automatic_candidates_within_tolerance": 0,
-          "observation": "below_10_percent"
-        },
-        {
-          "projection": "HN",
-          "reference_candidate": {
-            "candidate_index_1based": 129,
-            "ppm": {
-              "H": 6.8474619674538175,
-              "N": 113.25245046344594
-            },
-            "intensity": 2682623.8896484375,
-            "sign": 1
-          },
-          "automatic_local_height_fraction": 0.20511941195624514,
-          "automatic_candidates_within_tolerance": 0,
-          "observation": "local_response_without_independent_candidate"
-        },
-        {
-          "projection": "HN",
-          "reference_candidate": {
-            "candidate_index_1based": 130,
-            "ppm": {
-              "H": 8.590705466870723,
-              "N": 123.49413665200439
-            },
-            "intensity": 2604482.1396484375,
-            "sign": 1
-          },
-          "automatic_local_height_fraction": 0.19719235835490737,
-          "automatic_candidates_within_tolerance": 0,
-          "observation": "local_response_without_independent_candidate"
-        },
-        {
-          "projection": "HN",
-          "reference_candidate": {
-            "candidate_index_1based": 131,
-            "ppm": {
-              "H": 6.847460048859737,
-              "N": 111.81331017115623
-            },
-            "intensity": 2246891.1396484375,
-            "sign": 1
-          },
-          "automatic_local_height_fraction": 0.09398230693730612,
-          "automatic_candidates_within_tolerance": 0,
-          "observation": "below_10_percent"
-        },
-        {
-          "projection": "HN",
-          "reference_candidate": {
-            "candidate_index_1based": 132,
-            "ppm": {
-              "H": 7.55981585368614,
-              "N": 113.17857319848875
-            },
-            "intensity": 2154760.8896484375,
-            "sign": 1
-          },
-          "automatic_local_height_fraction": 0.01730936268488507,
-          "automatic_candidates_within_tolerance": 0,
-          "observation": "below_10_percent"
-        },
-        {
-          "projection": "HN",
-          "reference_candidate": {
-            "candidate_index_1based": 133,
-            "ppm": {
-              "H": 7.5582278100007745,
-              "N": 110.92199806001514
-            },
-            "intensity": 2154714.8896484375,
-            "sign": 1
-          },
-          "automatic_local_height_fraction": 0.04516911700743543,
-          "automatic_candidates_within_tolerance": 0,
-          "observation": "below_10_percent"
-        },
-        {
-          "projection": "HN",
-          "reference_candidate": {
-            "candidate_index_1based": 134,
-            "ppm": {
-              "H": 7.472997320120045,
-              "N": 112.80806821649242
-            },
-            "intensity": 2132037.1396484375,
-            "sign": 1
-          },
-          "automatic_local_height_fraction": 0.08569727748321967,
-          "automatic_candidates_within_tolerance": 0,
-          "observation": "below_10_percent"
-        },
-        {
-          "projection": "HN",
-          "reference_candidate": {
-            "candidate_index_1based": 135,
-            "ppm": {
-              "H": 8.151978866120709,
-              "N": 124.26456572557107
-            },
-            "intensity": 2042782.0146484375,
-            "sign": 1
-          },
-          "automatic_local_height_fraction": 0.13030219635323403,
-          "automatic_candidates_within_tolerance": 0,
-          "observation": "local_response_without_independent_candidate"
+          "observation": "below_10_percent",
+          "visual_interpretation": "author strong-peak positive sidelobe/shoulder, below the automatic 10% threshold"
         }
-      ]
+      ],
+      "reference_kind": "author_Bruker_pdata/1",
+      "reference_offset_ppm": {
+        "H": 0.07258459433886566,
+        "N": 0.05977570099166485
+      },
+      "visual_review": "All three reference locations retain local signal: #94 overlapping peaks; #125 weak shoulder below 10%; #126 the author strong-peak sidelobe below 10%."
     },
     "uniform3d": {
       "dimensions": [
@@ -592,7 +467,8 @@
           "automatic_candidates_within_tolerance": 0,
           "observation": "below_10_percent"
         }
-      ]
+      ],
+      "visual_review": "Every unmatched projection location shows corresponding positive local signal in the zooms; narrower author LP line shapes, thresholding, overlapping/shoulder structures and one-to-one candidate competition explain the candidate-list differences."
     },
     "acquired3d": {
       "dimensions": [

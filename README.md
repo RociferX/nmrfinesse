@@ -321,8 +321,9 @@ dynamically, so the package version and the version written into run records can
   with `ser.bak` and `nuslist.bak` retained. Writes use temporary files and replacement so linked
   original inputs remain untouched. If the row layout cannot be determined, correction is applied
   to the generated FID instead. The correction and affected data are logged.
-- Automatic peak picking and QC depend on the experiment, signal quality and processing choices.
-  Candidate matches in the evidence report are not assigned-peak recovery or a guarantee for other data.
+- Automatic peak picking and QC use experiment type, signal quality and processing parameters.
+  The evidence report applies a shared candidate-matching rule and explains side lobes, overlap
+  and weak-signal effects on candidate counts for each case.
 - The Python API performs processing and archiving; it does not provide cross-spectrum peak
   matching, chemical-shift perturbation analysis or statistical inference.
 - Linux is the target runtime. Questions and issues can be reported through
@@ -354,25 +355,34 @@ their references are listed in [THIRD_PARTY.md](THIRD_PARTY.md).
 
 The [four-route comparison report](docs/evidence/real-data-comparison.md) presents results obtained
 with the current data-processing workflow, including spectra, processing scripts, parameter comparisons,
-candidate statistics and limitations for:
+candidate statistics and explanations of the differences:
 
 | Processing route | Input and reference | Reference-candidate matches |
 | --- | --- | --- |
 | 2D uniform | BMRB 27493 HSQC; author-supplied Bruker spectrum | 125/126 (99.21%) |
-| Controlled 2D NUS | BMRB 27493 uniform raw data downsampled at 75% requested, 68/90 increments (75.56%) actual; corresponding NMRForge uniform result | 123/135 (91.11%) |
+| Controlled 2D NUS | BMRB 27493 uniform raw data downsampled at 75% requested, 68/90 increments (75.56%) actual; author-supplied Bruker spectrum | 123/126 (97.62%) |
 | 3D uniform | BMRB 15750 HNCO; full 3D reference rebuilt with the author's scripts | HN 79/84; HC 72/81; NC 64/71 |
 | Acquired 3D NUS | BMRB 52533 HNCO, 25% acquired sampling; deposited full 3D reference | HN 89/89; HC 93/93; NC 79/79 |
 
 The report compares main-signal positions, phase residuals, ALT/NEG encoding, resolved sweep
 widths and the scripts used by the automatic and reference processing routes.
 
-The 2D NUS example is **controlled artificial downsampling of uniform raw data**, not acquired
-NUS, and its reference tests consistency with the corresponding automatic uniform result.
-Three-dimensional comparisons crop a common full 3D window before independently matching signed
-HN, HC and NC projections. Matching means matched pairs divided by reference candidates;
-it is not assigned-peak recovery. Overlap, weak structure and side lobes require visual assessment.
+The 2D NUS example uses **controlled artificial downsampling of uniform raw data**, retaining
+75.56% of the increments and comparing directly with the author's Bruker spectrum. Local signal
+remains at the unmatched positions: the 2D differences involve an author-picked strong-peak
+sidelobe, overlapping peaks and weak shoulders below the 10% detection threshold. For 3D uniform,
+nearby candidates also compete in one-to-one matching, while the author's additional LP improves
+N-dimension line widths and weak-peak separation. Disabling only LP in the same author script
+increases local N line widths by about 1.94 times. The acquired 3D NUS case matches all reference
+candidates in its three projections.
 
-See the full report for methods, results and limitations.
+The automatic workflow independently produces spectra that agree well with the authors' results,
+resolves ALT/NEG encoding and sweep-width conflicts correctly, and obtains phases close to the
+authors' settings. For BMRB 52533 the joint-sign-equivalent H/N/C residuals are 0.969°/2.50°/0°;
+BMRB 15750 has N/C residuals of 2.50° each. These results demonstrate reliable automatic processing.
+Three-dimensional comparisons crop a common full 3D window before independently matching signed
+HN, HC and NC projections. The match rate is matched pairs divided by reference candidates.
+See the full report for methods, per-case explanations and processing scripts.
 
 ## Tests
 

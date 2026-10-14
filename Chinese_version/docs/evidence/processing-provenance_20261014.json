@@ -3011,6 +3011,16 @@
       "d_001_before_optimize.com": "3439a8e4f0f603428cc8f0ad0e1b6449779ad55903b6a455d7167995aa094a4c",
       "d_001_nus.com": "f523f1586f1471aef2eda535d52e709d4ed924b4c28f74114860ebb5a759eac1",
       "d_001_phase_seed.com": "0618d9b2bee79c98b42ae7708c50d81a01535b923bcbb51bdcae4cc889a5ca3a"
+    },
+    "comparison_reference": {
+      "kind": "author_Bruker_pdata/1",
+      "spectrum_sha256": "3d4e1041c085b05e14cdf1bfb889670daa5d5caacaeeda5c1f58ce35dccb15d5",
+      "reference_offset_ppm": {
+        "H": 0.07258459433886566,
+        "N": 0.05977570099166485
+      },
+      "offset_source": "frozen_20261009_strong_anchor_translation; same author reference convention as uniform2d",
+      "comparison_revision_date": "2026-10-14"
     }
   },
   "uniform3d": {
