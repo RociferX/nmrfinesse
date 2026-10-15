@@ -94,7 +94,7 @@ def test_preexisting_overlap_is_not_counted_as_window_merging() -> None:
 
 def test_all_zero_scores_have_no_winner(monkeypatch: pytest.MonkeyPatch) -> None:
     fid, _ = synthetic_fid([{"offset": 50, "lw": 4}], n_points=256)
-    monkeypatch.setattr(win, "_shape_factor", lambda *args: 0.0)
+    monkeypatch.setattr(win, "_shape_components", lambda *args: (0.0, 1.0))
     result = win.optimize_direct_window(fid, current={"type": "none"})
     assert result.status == "skipped" and not result.changed
     assert not any(s["selected"] for s in result.scores)

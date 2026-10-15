@@ -29,8 +29,8 @@ authors:
   - family-names: "Li"
     given-names: "Xuanfeng"
     affiliation: "University of Science and Technology of China"
-version: 1.0.7
-date-released: "2026-10-14"
+version: 1.0.8
+date-released: 2026-10-15
 repository-code: "https://github.com/RociferX/nmrforge"
 doi: "10.5281/zenodo.22909415"
 identifiers:

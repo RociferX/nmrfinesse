@@ -1,4 +1,4 @@
-# 02 · Get started quickly (v1.1.3)
+# 02 · Get started quickly (v1.1.4)
 
 ## 1. Two modes
 

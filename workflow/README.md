@@ -21,6 +21,7 @@ It may use `core/` and `backend/`, and must not import `gui/` or `viewer/`.
 | `optimization_report.py` | writing the quality and optimisation record |
 | `ucsf_export.py` | exporting processed spectra |
 
+Reference baseline scores come from `baseline_optimize` calling `core.qc.baseline_quality.evaluate`; the score combines slope, offset, curvature and stripe penalties. The attachment records those raw metrics and their separate score components. Window scoring takes the median of per-trace detection-strength, peak-separation, symmetry and sidelobe products, then applies the continuous `width_ratio^-2` resolution factor on every logical axis.
 One documented exception to the boundary rule: `stepwise.py` reads the experiment-type labels from
 `gui/notes.py`, so that the GUI list and the stepwise path cannot drift apart.
 

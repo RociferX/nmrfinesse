@@ -1,4 +1,4 @@
-# 05 · Input: data, condition and parameter combination table (v1.1.3)
+# 05 · Input: data, condition and parameter combination table (v1.1.4)
 
 ## 5.1 Raw data
 
@@ -145,7 +145,7 @@ run_parameter_study(..., peaks="library.list")   # or a peak_id,H_ppm,N_ppm CSV
 - All parameters that affect the result must be traceable: `parameters_requested` ->
   `parameters_used` -> `parameters_resolved` (automatic parameter actual result).
 
-### Reference cache, carrier and spectral width (v1.1.3)
+### Reference cache, carrier and spectral width (v1.1.4)
 
 Reference reuse requires an exact normalized processing request match, including phase route,
 direct range, and all parameters (nested mappings and equivalent dotted keys normalize alike).
@@ -287,12 +287,7 @@ Reference optimization remains enabled by default. Each direct and indirect dime
 scores ten window candidates: no window, five SP candidates, two Gaussian/GM candidates with
 `g1/g2/g3/c = 8/15/0/1` and `4/8/0/1`, and two exponential/EM candidates with `lb/c = 3/1`
 and `5/1`. The direct-dimension tie order starts with SP `off=0.50,end=0.98,pow=2,c=0.5`;
-the indirect-dimension tie order prefers no window. The four Hz-based candidates require a valid
-sweep width for their logical axis and are skipped when it is unavailable. Resolution limits are
-1.25 for the direct dimension and 1.15 for indirect dimensions; nearby significant peaks can tighten
-those limits. Default NUS direct-dimension processing keeps its fixed SP window: default scores are
-comparative only and do not replace that window. Explicit NUS direct-dimension candidates accept SP
-types only and apply the selected SP in the final reconstruction.
+the indirect-dimension tie order prefers no window. The four Hz-based candidates require a valid sweep width for their logical axis and are skipped when it is unavailable. Window candidates share reference peaks and representative traces. The raw score is the median of per-trace detection-strength, peak-separation, symmetry and sidelobe products; the final score multiplies it by the continuous resolution factor `width_ratio^-2`, where `width_ratio = candidate_fwhm / min_valid_fwhm` and is at least 1. All logical axes use this rule without a hard width gate. See [the score attachment reference](06-outputs-and-records.md#611-reference-optimization-score-table) for components and cache details. Default NUS direct-dimension processing keeps its fixed SP window: default scores are comparative only and do not replace that window. Explicit NUS direct-dimension candidates accept SP types only and apply the selected SP in the final reconstruction.
 
 To evaluate a defined candidate set, pass
 `optimization_candidates` in the reference `params`. It is accepted by the high-level

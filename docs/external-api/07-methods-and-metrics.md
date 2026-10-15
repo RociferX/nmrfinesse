@@ -1,4 +1,4 @@
-# 07 · Methods and QC criteria (v1.1.3)
+# 07 · Methods and QC criteria (v1.1.4)
 
 > This page describes what the software **executed** and what QC records were left. Any
 > cross-combination or cross-condition statistic
@@ -114,24 +114,25 @@ were scanned).
 All candidates share the same reference traces, threshold, peaks and already-resolved peak pairs.
 Responses are aggregated per trace, and a trace is never removed because a candidate performs poorly.
 For each trace, only significant peaks at or above 25% of that trace's strongest significant peak
-are retained. A trace without a valid shared reference peak scores zero. The score combines mean
-detection, a nearby-peak merging penalty, and strong-peak symmetry and side-lobe factors; results
-across traces use the median.
+are retained. A trace without a valid shared reference peak scores zero. The raw score is the median
+of the per-trace products of detection strength, peak-separation, symmetry and sidelobe factors.
+Those four components are also recorded as separate medians over the same traces, so multiplying
+them need not reproduce `raw_score`.
 
 The merge penalty is evaluated only for nearby pairs already resolved in the unwindowed reference:
 their spacing must be no more than 1.5 times the smaller reference FWHM, and the reference valley
 must be no higher than 0.6 times the smaller reference peak. A candidate counts as merged when its
-valley rises to at least 0.6 times the smaller candidate peak. The direct-dimension FWHM must not
-exceed the narrowest valid candidate width times the tolerance, capped at 1.25 for direct and 1.15
-for indirect dimensions. Nearby significant-peak spacing can tighten the limit. Indirect dimensions
-also receive `exp(-max(fwhm/min_fwhm - 1, 0))` as an additional penalty.
+valley rises to at least 0.6 times the smaller candidate peak. The final score is
+`score = raw_score * resolution_score`, where `resolution_score = width_ratio^-2` and
+`width_ratio = candidate_fwhm / min_valid_fwhm` is at least 1. All logical axes use this same
+continuous resolution factor; there are no hard width limits or additional dimension-specific
+resolution penalties. A valid wider candidate therefore retains a nonzero resolution factor.
 
 If scanning finds no qualifying trace, the optimizer has no winner: ordinary optimization retains
-the current/default setting, while an explicit candidate request fails. The score attachment records
-`reference_sigma`, `scanned_traces`, `used_traces`, `total_traces` and optional `sampling_json`
-diagnostics; the 38-column peak table is unchanged. Frozen references must be rebuilt with
-`force=True` to use the new window-selection behavior.
-
+the current/default setting, while an explicit candidate request fails. The score attachment also
+records baseline raw metrics and their component scores; see
+[06 §6.1.1](06-outputs-and-records.md#611-reference-optimization-score-table) for the complete
+53-column schema and cache-reuse behavior. The unified peak table remains at 38 columns.
 Scores rank candidates only within the same stage and axis. They do not estimate performance for all
 weak peaks or a globally optimal final spectrum. The per-candidate record is described in
 [06 §6.1.1](06-outputs-and-records.md#611-reference-optimization-score-table).

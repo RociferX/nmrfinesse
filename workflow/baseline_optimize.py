@@ -41,14 +41,32 @@ class BaselineOptimizeResult:
     off_scores: dict[str, float] = field(default_factory=dict)
     selected_candidates: dict[str, str] = field(default_factory=dict)
     strict_candidates: bool = False
+    components: dict[str, dict[str, dict[str, float]]] = field(default_factory=dict)
+
+
+def _default_measure(data: np.ndarray, axis: int) -> tuple[float, dict[str, float]]:
+    """Measure the default baseline score and its component values."""
+    from core.qc import baseline_quality
+
+    moved = np.moveaxis(np.asarray(data), axis, -1)
+    quality = baseline_quality.evaluate(moved)
+    components = {
+        "baseline_slope": float(quality.slope),
+        "baseline_offset": float(quality.offset),
+        "baseline_curvature": float(quality.curvature),
+        "baseline_stripe": float(quality.stripe),
+        "baseline_slope_score": 100.0 * (1.0 - min(1.0, 4.0 * abs(quality.slope))),
+        "baseline_offset_score": 100.0 * (1.0 - min(1.0, 2.0 * abs(quality.offset))),
+        "baseline_curvature_score": 100.0
+        * (1.0 - min(1.0, 6.0 * quality.curvature)),
+        "baseline_stripe_score": 100.0 * (1.0 - min(1.0, quality.stripe)),
+    }
+    return float(quality.score), components
 
 
 def _default_score(data: np.ndarray, axis: int) -> float:
     """Default rating: core.qc.baseline_quality (axis moved to end for evaluation)."""
-    from core.qc import baseline_quality
-
-    moved = np.moveaxis(np.asarray(data), axis, -1)
-    return float(baseline_quality.evaluate(moved).score)
+    return _default_measure(data, axis)[0]
 
 
 def _fmt_cfg(cfg: dict[str, Any]) -> str:
@@ -60,7 +78,7 @@ def _fmt_cfg(cfg: dict[str, Any]) -> str:
     )
 
 
-# Hard stripe rejected candidate scores (finite negative numbers, avoid -inf into GUI/JSON
+
 _VETOED_SCORE = -1e9
 
 
@@ -198,13 +216,11 @@ def optimize_baseline(
     axes = [dim.logical_axis for dim in experiment.dimensions]
     grid = grid if grid is not None else [
         ("off", 0),
-        ("auto", 1),  # Auto is order 1; deduplicate it to avoid scoring twice.
+        ("auto", 1),
         ("order", 2),
         ("order", 3),
     ]
-    score_fn = score_fn or _default_score
     off_cfg: dict[str, Any] = {"enabled": False, "mode": "auto", "order": 0}
-    # Keep off when there is no substantial gain (scoring unit), avoid nonsense/harmful writeback.
     min_gain = 0.5
     baseline_cfg: dict[str, dict[str, Any]] = {}
     scores: dict[str, dict[str, float]] = {}
@@ -213,6 +229,10 @@ def optimize_baseline(
     unchanged: list[str] = []
     off_scores: dict[str, float] = {}
     selected_candidates: dict[str, str] = {}
+    components: dict[str, dict[str, dict[str, float]]] = {}
+    uses_default_score = score_fn is None
+    if uses_default_score:
+        score_fn = _default_score
     for index, axis in enumerate(axes, start=1):
         if progress is not None:
             progress(
@@ -228,11 +248,11 @@ def optimize_baseline(
         _non_off = sum(1 for m, _o in grid if m != "off")
         np_axis = file_axis_index(axis, arr.ndim)
 
-        # 0.2.199-patch9: No subsampling is performed when the original spectrum has obvious stripes
-        # (>8) -- thin stripes may be missed by subsampling, and stripe veto/The rating must be
+
+
         orig_ratio = _stripe_ratio(arr, np_axis)
-        # 0.2.199-patch29u: First find the peak-free trace and then sample it as the scoring basis
-        # (user plan) to avoid strong peaks biasing the baseline estimate; the peak-free trace is
+
+
         base2d, _keep_idx = _peak_free_traces(
             arr, np_axis, max_traces=max_traces
         )
@@ -248,13 +268,19 @@ def optimize_baseline(
             base = base2d
             score_axis = -1
             base_ratio = _stripe_ratio(base, -1)
-        current_score = float(score_fn(base, score_axis))
+        if uses_default_score:
+            current_score, current_components = _default_measure(base, score_axis)
+        else:
+            current_score = float(score_fn(base, score_axis))
+            current_components = {}
         off_scores[axis] = current_score
-        # When the baseline is good (>= 95), the entire axis candidate is skipped and kept off
+
         if current_score >= 95.0 and not strict_candidates:
             selected_candidates[axis] = "off:0"
             baseline_cfg[axis] = dict(off_cfg)
             scores[axis] = {"off:0": current_score}
+            if uses_default_score:
+                components[axis] = {"off:0": current_components}
             logs.append(
                 tr(
                     "{p0}: The baseline is good (score={p1:.1f}≥95),keep off (candidates "
@@ -266,12 +292,18 @@ def optimize_baseline(
             unchanged.append(axis)
             continue
         axis_scores: dict[str, float] = {}
+        axis_components: dict[str, dict[str, float]] = {}
         best: tuple[float, str, int] | None = None
         for mode, order in grid:
             if cancel is not None and cancel():
                 raise RuntimeError(tr("Task cancelled: Baseline optimisation terminated by user"))
             if mode == "off":
-                work = base  # Score directly without correction, no need to copy.
+                work = base
+                if uses_default_score:
+                    value, measured = current_score, current_components
+                else:
+                    value = float(score_fn(work, score_axis))
+                    measured = {}
             else:
                 work = base.copy()
                 work = baseline_proc.apply(
@@ -284,20 +316,26 @@ def optimize_baseline(
                     ),
 
                 )
-                # Hard stripe rejection: If there is an obvious trace gap after correction, the
-                # candidate cannot be written back (otherwise, vertical lines will appear in the
-                # final spectrum); relative rejection -- only reject candidates that are
+
+
+
                 if _has_stripe_artifact(
                     work, score_axis, baseline_ratio=base_ratio
                 ):
                     axis_scores[f"{mode}:{order}"] = _VETOED_SCORE
                     _vetoed_count += 1
                     continue
-            value = float(score_fn(work, score_axis))
+                if uses_default_score:
+                    value, measured = _default_measure(work, score_axis)
+                else:
+                    value = float(score_fn(work, score_axis))
+                    measured = {}
             if strict_candidates and not np.isfinite(value):
                 axis_scores[f"{mode}:{order}"] = value
                 continue
             axis_scores[f"{mode}:{order}"] = value
+            if uses_default_score:
+                axis_components[f"{mode}:{order}"] = measured
             if best is None or value > best[0]:
                 best = (value, mode, order)
             if progress is not None:
@@ -316,6 +354,8 @@ def optimize_baseline(
                 raise CandidateSelectionError(f"No valid explicit baseline candidate for {axis}")
             best = (float(current_score), "off", 0)
             axis_scores["off:0"] = float(current_score)
+            if uses_default_score:
+                axis_components["off:0"] = current_components
         score, mode, order = best
         if mode == "off":
             new_cfg: dict[str, Any] = {"enabled": False, "mode": "auto", "order": 0}
@@ -328,8 +368,8 @@ def optimize_baseline(
             "off:0" if gain <= min_gain and not strict_candidates else f"{mode}:{order}"
         )
         if gain <= min_gain and not strict_candidates:
-            # Trace-by-trace correction has no substantial gain -> keep off (0.2.132: no longer
-            # write POLY -auto, to avoid trace-by-trace mean correction introducing stripes when
+
+
             baseline_cfg[axis] = dict(off_cfg)
             if _vetoed_count == _non_off:
                 reason = tr("All candidates were rejected by the striping check")
@@ -360,6 +400,8 @@ def optimize_baseline(
             )
             optimized.append(axis)
         scores[axis] = axis_scores
+        if uses_default_score:
+            components[axis] = axis_components
     logs.append(
         tr("Baseline optimisation summary: ")
         + (tr("optimisation ") + ",".join(optimized) if optimized else tr("optimisation None"))
@@ -381,6 +423,7 @@ def optimize_baseline(
         off_scores=off_scores,
         selected_candidates=selected_candidates,
         strict_candidates=strict_candidates,
+        components=components,
     )
 
 

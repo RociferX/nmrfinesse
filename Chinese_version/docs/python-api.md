@@ -1,7 +1,7 @@
 # Python API
 
-当前公开脚本契约为 `API_VERSION = "1.1.3"`；软件版本为 1.0.7。API 参数和 38 列峰表契约按 v1.1.3 定义。
-Linux AppImage 与源码可从 [1.0.7 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.7) 获取。源码安装请使用包含 API v1.1.3 的版本。
+当前公开脚本契约为 `API_VERSION = "1.1.4"`；软件版本为 1.0.8。API 参数和 38 列峰表契约按 v1.1.4 定义。
+Linux AppImage 与源码可从 [1.0.8 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.8) 获取。源码安装请使用包含 API v1.1.4 的版本。
 
 项目里有两套 Python 接口,稳定性承诺不同。
 

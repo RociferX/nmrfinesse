@@ -1,7 +1,7 @@
 # Getting started
 
 This guide covers first data inspection and the processing boundary. For Linux desktop use,
-download the [1.0.7 AppImage](https://github.com/RociferX/nmrforge/releases/tag/v1.0.7).
+download the [1.0.8 AppImage](https://github.com/RociferX/nmrforge/releases/tag/v1.0.8).
 For source installation, follow the steps below.
 
 ## Install from source

@@ -1,4 +1,4 @@
-"""Regression coverage for the nmrforge_api v1.1.3 release (2026-10-14).
+"""Regression coverage for the nmrforge_api v1.1.4 release (2026-10-15).
 
 Covers reference workflows, workflow IDs, parameter records, caller-selected combined
 peak tables, three-state statuses, complete logs and versions, independent condition
@@ -543,12 +543,12 @@ def test_error_hierarchy() -> None:
 
 
 def test_api_version_is_1_1_3_with_a_single_definition() -> None:
-    """The current API version is 1.1.3 and has one definition point."""
+    """The current API version is 1.1.4 and has one definition point."""
     import nmrforge_api
     import nmrforge_api.records as records_module
     import nmrforge_api.session as session_module
 
-    assert API_VERSION == "1.1.3"
+    assert API_VERSION == "1.1.4"
     # Single definition point: the public surface re-exports the same object from session
     assert nmrforge_api.API_VERSION is session_module.API_VERSION
     # The record templates must use this constant, not a hard-coded version literal
@@ -3030,10 +3030,14 @@ def test_reference_optimization_scores_export_cache_and_legacy(
         {"stage": "baseline", "axis": "F1", "source": "joint_spectrum",
          "candidate": "off:0", "parameters": {"enabled": False, "mode": "off", "order": 0},
          "score": 91.25, "score_metric": "baseline_quality", "status": "scored",
+         "raw_score": 91.25, "baseline_slope": 0.0, "baseline_slope_score": 0.0,
          "selected": True, "applied": True},
         {"stage": "window", "axis": "F2", "source": "fid", "candidate": "none",
          "parameters": {"type": "none"}, "score": 0.65, "fwhm": 2.4, "snr": 20.0,
          "shape": 0.8, "merged": 0.0, "n_ref": 2.0, "score_metric": "window_detection",
+         "raw_score": 0.72, "detection_score": 0.7, "separation_score": 0.6,
+         "symmetry_score": 0.5, "sidelobe_score": 0.4, "resolution_score": 0.3,
+         "width_ratio": 1.25, "resolution_reference_fwhm": 2.5, "resolution_weight": 0.2,
          "sampling": {"reference_sigma": 6.0, "scanned_traces": 64,
                       "used_traces": 7, "total_traces": 384, "trace_indices": [4, 8, 12]},
          "status": "scored", "selected": True, "applied": True},
@@ -3057,7 +3061,16 @@ def test_reference_optimization_scores_export_cache_and_legacy(
     with table.open(encoding="utf-8", newline="") as stream:
         rows = list(csv.DictReader(stream))
     assert rows[0]["score"] == "91.25"
+    assert rows[0]["raw_score"] == "91.25"
+    assert rows[0]["baseline_slope"] == "0.0"
+    assert rows[0]["baseline_slope_score"] == "0.0"
+    assert rows[0]["selected"] == "True" and rows[0]["applied"] == "True"
     assert rows[1]["fwhm_points"] == "2.4"
+    assert rows[1]["raw_score"] == "0.72"
+    assert rows[1]["resolution_score"] == "0.3"
+    assert rows[1]["width_ratio"] == "1.25"
+    assert rows[1]["resolution_reference_fwhm"] == "2.5"
+    assert rows[1]["resolution_weight"] == "0.2"
     assert rows[1]["type"] == "none"
     assert json.loads(rows[1]["parameters_json"]) == {"type": "none"}
     assert rows[1]["reference_sigma"] == "6.0" and rows[1]["used_traces"] == "7"
@@ -3095,6 +3108,16 @@ def test_reference_optimization_scores_export_cache_and_legacy(
     old = build_reference(session)
     assert {row["status"] for row in old.optimization_scores["rows"]} == {"not_recorded"}
     assert all("score" not in row for row in old.optimization_scores["rows"])
+    with table.open(encoding="utf-8", newline="") as stream:
+        restored_old_rows = list(csv.DictReader(stream))
+    optional_fields = (
+        "raw_score", "detection_score", "separation_score", "symmetry_score",
+        "sidelobe_score", "resolution_score", "width_ratio", "resolution_reference_fwhm",
+        "resolution_weight", "baseline_slope", "baseline_offset", "baseline_curvature",
+        "baseline_stripe", "baseline_slope_score", "baseline_offset_score",
+        "baseline_curvature_score", "baseline_stripe_score",
+    )
+    assert all(row[field] == "" for row in restored_old_rows for field in optional_fields)
     assert len(calls) == 1
     rebuilt = build_reference(session, force=True)
     assert rebuilt.optimization_scores["rows"] == observed

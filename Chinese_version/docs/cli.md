@@ -6,8 +6,8 @@
 python -m nmrforge_api --help
 ```
 
-当前命令行属于 API v1.1.3，统一峰表为38列。安装源码或wheel后使用命令行入口。
-Linux AppImage 与源码可从 [1.0.7 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.7) 获取；见
+当前命令行属于 API v1.1.4，统一峰表为38列。安装源码或wheel后使用命令行入口。
+Linux AppImage 与源码可从 [1.0.8 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.8) 获取；见
 [installation.md](installation.md)。
 
 ## 子命令

@@ -1,4 +1,4 @@
-# 06 · Output and records (v1.1.3)
+# 06 · Output and records (v1.1.4)
 
 ## 6.1 directory layout
 
@@ -47,6 +47,8 @@ reference = result.reference()  # result from run_reference_study()
 print(reference.optimization_scores["path"])
 ```
 
+A newly written attachment contains 53 columns. Existing valid CSV files are reused as-is and may retain an older set of columns; use `force=True` to rebuild a reference with the complete current score fields.
+
 | Field | Meaning |
 | --- | --- |
 | `condition`, `dataset_key`, `run_id` | Condition, dataset and reference run identity |
@@ -57,33 +59,24 @@ print(reference.optimization_scores["path"])
 | `parameters_json` | Full candidate parameters for programmatic use |
 | `selected`, `applied` | Whether the optimizer selected the candidate and whether it was retained/applied; these can differ |
 | `status`, `reason` | Scored, vetoed, skipped, disabled or failed state and reason |
-| `fwhm_points`, `snr`, `shape`, `merged`, `n_ref` | Window score linewidth, SNR, shape and per-trace summaries; the latter values may be fractional medians, not full 3D peak counts |
-| `reference_sigma` | Whether the axis used 12σ references or the conditional 6σ fallback; this is not the final peak-table threshold |
+| `fwhm_points`, `snr`, `shape`, `merged`, `n_ref` | Window linewidth, SNR, shape and per-trace summaries; the last two may be fractional medians, not full 3D peak counts |
+| `raw_score`, `detection_score`, `separation_score`, `symmetry_score`, `sidelobe_score`, `resolution_score` | Window score and its components. Detection is 0–30; separation, symmetry and sidelobe factors are each 0–1. `raw_score` is the median of per-trace products of detection strength, peak-separation, symmetry and sidelobe factors. Each component is also stored as its median over the same traces, so multiplying component medians need not reproduce `raw_score` |
+| `width_ratio`, `resolution_reference_fwhm`, `resolution_weight` | Resolution audit values: `width_ratio = candidate_fwhm / min_valid_fwhm` and is at least 1; `resolution_reference_fwhm` is the smallest valid candidate FWHM in points; `resolution_weight` defaults to 2 |
+| `baseline_slope`, `baseline_offset`, `baseline_curvature`, `baseline_stripe` | Raw metrics from the same `baseline_quality.evaluate` call; populated on baseline rows only |
+| `baseline_slope_score`, `baseline_offset_score`, `baseline_curvature_score`, `baseline_stripe_score` | Interpretable 0–100 baseline components, respectively `100*(1-min(1,4*abs(slope)))`, `100*(1-min(1,2*abs(offset)))`, `100*(1-min(1,6*curvature))`, and `100*(1-min(1,stripe))`; populated on baseline rows only. `raw_score` equals the total baseline `score` |
+| `reference_sigma` | Reference threshold used on the axis, 12 or the conditional 6σ fallback; this is not the final peak-table threshold |
 | `scanned_traces`, `used_traces`, `total_traces` | Probe count, shared scoring-trace count and total traces; at most 256 are probed and 12 are scored, subject to the cache limit |
 | `sampling_json` | Shared trace indices, reference peaks, deterministic supplementation reasons, probe budget and threshold diagnostics; it may be empty on non-window rows |
 
-Higher scores rank candidates only within the same stage, axis and optimization run. Window and
-baseline scores are not comparable and neither is a total score for the final spectrum. Window scores
-include resolution gates and penalties; a candidate that fails a gate has score zero and reason
-`resolution_gate`. Baseline stripe vetoes occur before quality scoring: the score is empty and
-`status="vetoed"`, rather than exposing an internal veto sentinel as a quality score.
+Scores rank candidates only within the same stage, axis and optimization run; window and baseline scores are not comparable and neither is a total score for the final spectrum. Window candidates share the same representative traces, reference peaks, thresholds and resolved peak pairs. A shared trace with no valid reference peak contributes zero. The scoring target is not rebuilt from each candidate.
 
-Window candidates share the same representative traces and reference peaks. A shared trace with no
-valid reference peak contributes a zero score; the scoring target is not rebuilt from each candidate.
-The default baseline optimizer keeps `off` when the gain is at most 0.5 and skips candidate scoring
-when the baseline score is at least 95. An explicit baseline grid bypasses the score-at-least-95 early exit
-and the 0.5 gain rule, but stripe vetoes still apply; reference construction fails if all explicit
-baseline candidates are vetoed. Default NUS direct-dimension processing retains its fixed SP window,
-which default scoring does not override. Explicit NUS direct-dimension SP candidates are applied in
-the final reconstruction script and record `applied=True`.
+For each trace, the raw window score is the product of detection strength, peak-separation, symmetry and sidelobe factors. `raw_score` is the median of those products across all shared traces, including zero-score traces. The component columns are separate medians over the same traces, so their product need not equal `raw_score`. The final window score is `score = raw_score * resolution_score`, with `resolution_score = width_ratio^-2` for every logical axis. A valid but wider candidate retains a continuous nonzero resolution factor instead of failing a hard width gate; higher detection or shape quality can compensate for moderate broadening. Other quality components can still make `raw_score` zero. No winner is produced without valid reference signal or when all final candidate scores are non-positive.
 
-Rows for work not performed have an empty score and a reason, such as disabled optimization, missing
-FID, missing sweep width or scoring failure. `phase_route="none"` records `not_run`; it does not
-calculate scores. Older references without per-candidate rows use `not_recorded`; rebuild with
-`force=True` to obtain scores. Cache reuse preserves existing scores, and a missing/damaged CSV is
-restored from frozen structured rows without rerunning optimization. The attachment is excluded from
-the combination base and adds no peak-table columns.
+Baseline total score follows `baseline_quality.evaluate`: `clip(100*(1-min(1,4*abs(slope)+2*abs(offset)+6*curvature+stripe)),0,100)`. Components are clipped separately for interpretation and cannot be multiplied or averaged to recover the total. A stripe veto happens before quality scoring: the CSV score is empty and `status="vetoed"`, rather than exposing an internal veto sentinel. The default baseline optimizer keeps `off` when the gain is at most 0.5 and skips candidate scoring when the baseline score is at least 95. An explicit baseline grid bypasses those two early-retention rules, but stripe vetoes still apply; reference construction fails if every explicit baseline candidate is vetoed.
 
+Default NUS direct-dimension processing retains its fixed SP window, which default scoring does not override. Explicit NUS direct-dimension candidates accept SP only; a selected candidate is applied in the final reconstruction script and records `applied=True`. Explicit candidate lists are scored as supplied, without appending defaults; unspecified stages or directions use their default pools. Candidate values and list order are part of the reference fingerprint, so a change requires `force=True`.
+
+Rows for work not performed have an empty score and a reason, such as disabled optimization, missing FID, missing sweep width or scoring failure. `phase_route="none"` records `not_run`; it does not calculate scores. Older references without per-candidate rows use `not_recorded`. Cache reuse preserves existing scores. A missing or damaged CSV is restored from frozen structured rows, with absent fields left blank, without rerunning optimization or reconstructing scores from the old reference spectrum. New score columns are appended after the existing CSV columns; JSON rows use the same field set under schema `v1`. Valid older CSVs are reused as-is, and old JSON rows may lack newer keys. The attachment is excluded from the combination base and does not change the unified peak table, which remains at 38 columns.
 ## 6.2 Unified peak table fields (currently **38 columns**)
 
 Multi-segment source provenance is recorded separately from the peak table. In `study.json` and the
@@ -106,7 +99,7 @@ authentication. Legacy references without this evidence require an explicit `for
 calling reference mode again with its default cache policy is not enough. Resume fingerprints include
 the frozen FID evidence and strict input policy, so older permissive runs are not silently reused.
 
-The unified API v1.1.3 table has **38 columns**, in the order below. Reference peak tables must
+The unified API v1.1.4 table has **38 columns**, in the order below. Reference peak tables must
 match `nmrforge_api.peak_tables.PEAK_TABLE_COLUMNS`. Both modes use three-point parabolic refinement
 and write one table. `rebuild_reference_peak_tables()` can rebuild tables from the frozen spectrum;
 a missing or invalid input fingerprint requires explicit reference rebuilding with `force=True`.

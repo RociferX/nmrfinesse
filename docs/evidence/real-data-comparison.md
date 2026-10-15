@@ -1,8 +1,8 @@
 # Four Processing Routes: 2D Spectra and 3D Projection Comparisons
 
-This page presents final spectra produced by software 1.0.7 / API v1.1.3 under the current
+This page presents final spectra produced by software 1.0.8 / API v1.1.4 under the current
 processing workflow. All four cases were reprocessed from raw data, measured and plotted on
-2026-10-14. Each comparison uses the automatic workflow to generate final phases and processing
+2026-10-15. Each comparison uses the automatic workflow to generate final phases and processing
 parameters; the reference source for each case is listed below.
 
 ## How to read the figures
@@ -75,27 +75,28 @@ performance across these cases.
 
 ## 2D uniform: comparison with the author's Bruker spectrum
 
-![2D uniform compared with the author's Bruker spectrum](evidence-uniform2d_20261014.png)
+![2D uniform compared with the author's Bruker spectrum](evidence-uniform2d_20261015.png)
 
-NMRForge detected 135 candidates and the author spectrum 126; 125 pairs matched (99.21%). **The
+NMRForge detected 147 candidates and the author spectrum 126; 125 pairs matched (99.21%). **The
 only unmatched candidate is a relatively strong positive side lobe next to an author's strong peak,
-selected as a separate candidate** (about H 8.544, N 129.748 ppm). This shoulder/side-lobe response
-remains in the automatic spectrum but is not listed as a separate peak, so the difference reflects
-candidate splitting while the main signal agrees. The automatic N dimension uses GM 4/8 Hz, unlike
-the author's window, and still corresponds well. The author's whole-axis shifts of H +0.072584594
-and N +0.059775701 ppm align the reference using the frozen strong-peak anchors.
+selected as a separate candidate** (about H 8.544, N 129.748 ppm). Its local response is 7.84% of
+the automatic spectrum's maximum, below the 10% candidate threshold, while the shoulder/side-lobe
+structure remains visible. The difference reflects candidate splitting while the main signal agrees.
+The automatic H and N dimensions use no window, unlike the author's window, and still correspond well.
+The author's whole-axis shifts of H +0.072584594 and N +0.059775701 ppm align the reference using
+the frozen strong-peak anchors.
 
 | Projection | NMRForge / reference candidates | Matched / reference candidates | Median absolute position difference (ppm) |
 | --- | --- | --- | --- |
-| HN | 135 / 126 | 125/126 = 99.21% | H 0.00049; N 0.00759 |
+| HN | 147 / 126 | 125/126 = 99.21% | H 0.00100; N 0.00805 |
 
-Median local equivalent-linewidth ratio, NMRForge/reference, among matched candidates: HN H 0.94 / N
-0.92, estimated from local half-height widths of matched candidates.
+Median local equivalent-linewidth ratio, NMRForge/reference, among matched candidates: HN H 0.82 / N
+0.93, estimated from local half-height widths of matched candidates.
 
-Automatic end-to-end processing took 33.102 s and produced a 512×1028 final spectrum.
+Automatic end-to-end processing took 33.165 s and produced a 512×1028 final spectrum.
 
-[Comparison statistics and unmatched coordinates](2d-uniform-author-comparison_20261014.json);
-[local-response audit](local-response-audit_20261014.json).
+[Comparison statistics and unmatched coordinates](2d-uniform-author-comparison_20261015.json);
+[local-response audit](local-response-audit_20261015.json).
 
 ### Processing script and parameter comparison
 
@@ -105,8 +106,8 @@ commands below define what actually ran.
 
 | Nucleus / logical axis | Window explicitly selected for this run |
 | --- | --- |
-| 1H / F2 | `{"c": 0.5, "end": 0.98, "off": 0.45, "pow": 2, "type": "sine_bell"}` |
-| 15N / F1 | `{"c": 1.0, "g1": 4.0, "g2": 8.0, "g3": 0.0, "type": "gaussian"}` |
+| 1H / F2 | `{"type": "none"}` |
+| 15N / F1 | `{"type": "none"}` |
 
 The author reference is Bruker `pdata/1` in the same source directory; WDW=4, SSB=2, LB=GB=0,
 and H/N SI=2048/256. Author Bruker phases are listed using their original PHC convention; the 2D
@@ -142,14 +143,12 @@ bruk2pipe -verb -in ./ser \
 # experiment: d_001
 xyz2pipe -in d_001.fid -x \
 | nmrPipe -fn POLY -time \
-| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 2 -c 0.5 \
 | nmrPipe -fn ZF -size 4096 \
 | nmrPipe -fn FT \
 | nmrPipe -fn PS -p0 0 -p1 0 -di \
 | nmrPipe -fn POLY -ord 3 -auto \
 | nmrPipe -fn EXT -x1 10.5ppm -xn 6.5ppm -sw -round 2 \
 | nmrPipe -fn TP \
-| nmrPipe -fn GM -g1 4 -g2 8 \
 | nmrPipe -fn ZF -size 512 \
 | nmrPipe -fn FT \
 | nmrPipe -fn PS -p0 265 -p1 0 -di \
@@ -199,7 +198,7 @@ xyz2pipe -in d_001.fid -x \
 
 ## Controlled 2D NUS: 75% requested, 75.56% actual
 
-![Controlled 2D NUS at 75% requested sampling](evidence-nus75_20261014.png)
+![Controlled 2D NUS at 75% requested sampling](evidence-nus75_20261015.png)
 
 The input was regenerated with `vm_make_evidence_nus.py`: 68 of the 90 full orthogonal increments
 were retained, including the zero and terminal increments, for 75.56% sampling. The new input was
@@ -228,10 +227,10 @@ corresponding to the author's uniform spectrum as well as these local weak signa
 Median local equivalent-linewidth ratio, NMRForge/reference, among matched candidates: HN H 0.86 / N
 1.37. Estimated from local half-height widths of matched candidates.
 
-Automatic end-to-end processing took 17.066 s and produced a 256×1028 final spectrum.
+Automatic end-to-end processing took 17.102 s and produced a 256×1028 final spectrum.
 
-[Comparison statistics and unmatched coordinates](controlled-2d-nus75-comparison_20261014.json);
-[local-response audit](local-response-audit_20261014.json).
+[Comparison statistics and unmatched coordinates](controlled-2d-nus75-comparison_20261015.json);
+[local-response audit](local-response-audit_20261015.json).
 
 ### Processing script and parameter comparison
 
@@ -293,7 +292,7 @@ nmrPipe -in d_001.fid \
 | nmrPipe -fn SMILE -nDim 2 \
            -sample nuslist -nThread 2 \
            -sampleCount 68 -nSigma 5 -off 0 0 -report 1 \
-           -maxMem 11.8195 \
+           -maxMem 11.7058 \
            -scaling 1 \
            -maxIter 300 \
            -xT 90 \
@@ -355,15 +354,15 @@ nmrPipe -in nus2d/recon.ft1 \
 
 ## 3D uniform: BMRB 15750 and the author's complete 3D script-reconstructed spectrum
 
-![3D uniform BMRB 15750 comparison](evidence-uniform3d_20261014.png)
+![3D uniform BMRB 15750 comparison](evidence-uniform3d_20261015.png)
 
 The raw `ser` is 16,777,216 bytes, consistent with a complete 32×32 complex grid; the reference is a
 full 3D spectrum. H/N/C reference shifts of +0.018999577, +0.025001526 and +0.001007080 ppm come
-from same-nucleus spectrum-header CAR differences in this run. The three projections have 21
-unmatched reference candidates in total. **Each has a corresponding local positive signal:** 11 have
+from same-nucleus spectrum-header CAR differences in this run. The three projections have 20 unmatched reference candidates in total. **Each has a
+corresponding local positive signal:** 11 have
 responses below the shared 10% threshold, eight already have nearby candidates competing in the
-one-to-one match, and two appear as shoulders or overlapping features rather than separate
-candidates. The automatic spectrum has broader N and narrower H/C features; weak negative structure
+one-to-one match, and one appears as a shoulder or overlapping feature rather than a separate
+candidate. The automatic spectrum has broader N and narrower H/C features; weak negative structure
 and resolution differences are visible in the figure.
 
 **The author's LP settings directly account for the narrower N lines.** The author used `LP -fb`
@@ -377,15 +376,15 @@ still corresponds.
 
 | Projection | NMRForge / reference candidates | Matched / reference candidates | Median absolute position difference (ppm) |
 | --- | --- | --- | --- |
-| HN | 80 / 84 | 79/84 = 94.05% | H 0.00088; N 0.01671 |
-| HC | 79 / 81 | 72/81 = 88.89% | H 0.00082; C 0.03183 |
-| NC | 70 / 71 | 64/71 = 90.14% | N 0.01873; C 0.03074 |
+| HN | 83 / 84 | 80/84 = 95.24% | H 0.00086; N 0.01304 |
+| HC | 78 / 81 | 72/81 = 88.89% | H 0.00084; C 0.03177 |
+| NC | 70 / 71 | 64/71 = 90.14% | N 0.01658; C 0.03039 |
 
-Median local equivalent-linewidth ratios, NMRForge/reference, among matched candidates: HN H 0.67 / N
-1.57; HC H 0.68 / C 0.75; NC N 1.59 / C 0.72, estimated from local half-height widths of
+Median local equivalent-linewidth ratios, NMRForge/reference, among matched candidates: HN H
+0.68 / N 1.31; HC H 0.69 / C 0.74; NC N 1.33 / C 0.71, estimated from local half-height widths of
 matched candidates.
 
-Automatic end-to-end processing took 52.337 s and produced a 128×128×548 final spectrum.
+Automatic end-to-end processing took 53.395 s and produced a 128×128×548 final spectrum.
 
 [Author LP on/off comparison statistics](author-lp-comparison_20261014.json) record the linewidth
 changes using the same author commands.
@@ -400,8 +399,8 @@ script, with all other processing steps unchanged.
 
 </details>
 
-[Comparison statistics and unmatched coordinates](3d-uniform-bmrb15750-comparison_20261014.json);
-[local-response audit](local-response-audit_20261014.json).
+[Comparison statistics and unmatched coordinates](3d-uniform-bmrb15750-comparison_20261015.json);
+[local-response audit](local-response-audit_20261015.json).
 
 ### Processing script and parameter comparison
 
@@ -411,8 +410,8 @@ commands below define what actually ran.
 
 | Nucleus / logical axis | Window explicitly selected for this run |
 | --- | --- |
-| 1H / F3 | `{"c": 1.0, "g1": 4.0, "g2": 8.0, "g3": 0.0, "type": "gaussian"}` |
-| 15N / F2 | `Normal default; see the actual script` |
+| 1H / F3 | `{"type": "none"}` |
+| 15N / F2 | `{"type": "none"}` |
 | 13C / F1 | `{"type": "none"}` |
 
 The author used an H-dimension SP and two PS operations (3°/0° and −4°/43°), with indirect-dimension
@@ -451,13 +450,11 @@ bruk2pipe -verb -in ./ser \
 # experiment: d_001
 xyz2pipe -in fid/test%03d.fid -x \
 | nmrPipe -fn POLY -time \
-| nmrPipe -fn GM -g1 4 -g2 8 \
 | nmrPipe -fn ZF -size 2048 \
 | nmrPipe -fn FT \
 | nmrPipe -fn PS -p0 15 -p1 0 -di \
 | nmrPipe -fn EXT -x1 10ppm -xn 6ppm -sw -round 2 \
 | nmrPipe -fn TP \
-| nmrPipe -fn SP -off 0.45 -end 0.95 -pow 1 -c 0.5 \
 | nmrPipe -fn ZF -size 128 \
 | nmrPipe -fn FT \
 | nmrPipe -fn PS -p0 267.5 -p1 0 -di \
@@ -544,10 +541,11 @@ xyz2pipe -in ./data/test%03d.ft3  -y -verb  \
 
 ## Acquired 3D NUS: BMRB 52533 and the deposited complete final spectrum
 
-![Acquired 3D NUS BMRB 52533 comparison](evidence-acquired3d_20261014.png)
+![Acquired 3D NUS BMRB 52533 comparison](evidence-acquired3d_20261015.png)
 
 The acquired schedule contains 441 points on a 42×42 complex grid (25% sampling); the `ser` and
-`nuslist` hashes are unchanged. All reference candidates matched in the three projections, with no
+
+uslist` hashes are unchanged. All reference candidates matched in the three projections, with no
 additional shift. Automatic SMILE reconstruction preserves the main signal positions, phase and
 overall sign corresponding to the author's complete 3D final spectrum.
 
@@ -561,10 +559,10 @@ Median local equivalent-linewidth ratios, NMRForge/reference, among matched cand
 0.76; HC H 0.94 / C 0.78; NC N 0.75 / C 0.77, estimated from local half-height widths of
 matched candidates.
 
-Automatic end-to-end processing took 235.346 s and produced a 256×256×1176 final spectrum.
+Automatic end-to-end processing took 276.152 s and produced a 256×256×1176 final spectrum.
 
-[Comparison statistics and unmatched coordinates](acquired-3d-bmrb52533-comparison_20261014.json);
-[local-response audit](local-response-audit_20261014.json).
+[Comparison statistics and unmatched coordinates](acquired-3d-bmrb52533-comparison_20261015.json);
+[local-response audit](local-response-audit_20261015.json).
 
 ### Processing script and parameter comparison
 
@@ -629,7 +627,7 @@ xyz2pipe -in nus3d_1/test%04d.ft1 -x \
 | nmrPipe -fn SMILE -nDim 3 \
            -sample nuslist -nThread 2 \
            -sampleCount 441 -nSigma 5 -off 0 0 -report 1 \
-           -maxMem 10.0464 \
+           -maxMem 9.99663 \
            -scaling 1 \
            -maxIter 1500 \
            -xP0 182.5 -xP1 0 \
@@ -757,24 +755,24 @@ complex Fourier-transformed data: the rotation residual in the shared H window w
 and 3.61° near 8 ppm. For 52533, H/N/C residuals after joint H/N equivalence are 0.969°/2.50°/0°.
 The 15750 carbon `FT -alt`, 52533 nitrogen `-alt -neg`, carbon `-alt`, and Echo–AntiEcho conversion
 are verified against the actual scripts.
-[This run's phase check](phase-and-encoding-comparison_20261014.json) records original values,
+[This run's phase check](phase-and-encoding-comparison_20261015.json) records original values,
 equivalent transformations and phase-operator results.
 
 ## Methods, records and reproduction
 
 Matching uses same-sign candidates, H/N/C tolerances of 0.02/0.20/0.15 ppm, a normalized joint
 distance ≤1, and a nearest-first one-to-one greedy assignment. For 3D, the common complete volume is
-cropped first. The source was software 1.0.7 / API 1.1.3; each case was run once, with automatic
+cropped first. The source was software 1.0.8 / API 1.1.4; each case was run once, with automatic
 phase selection by axis followed by ordinary baseline/window scoring and a complete final run.
-The default window pool contains no window, five SP, two GM and two EM candidates. The internal 6σ
+The default window pool contains no window, five SP, two GM and two EM candidates. Window scoring multiplies detection, splitting, symmetry and sidelobe scores by the square of relative linewidth retention, continuously balancing those criteria against resolution. The internal 6σ
 fallback is used only when 12σ reference selection finds no eligible reference; it does not change
 the 10% display-detection threshold used on this page. NUS keeps the direct SP fixed by default.
 The gated lightweight P0 seed may be used at the first 2D NUS reconstruction; it is not used for 3D.
 Statistics did not change processing parameters, thresholds or individual peak coordinates.
 
-[Construction manifest](controlled-nus75-construction_20261014.json),
-[processing provenance](processing-provenance_20261014.json), and
-[the four actual scripts](script-comparisons_20261014.json) record versions, input/final-spectrum
+[Construction manifest](controlled-nus75-construction_20261015.json),
+[processing provenance](processing-provenance_20261015.json), and
+[the four actual scripts](script-comparisons_20261015.json) record versions, input/final-spectrum
 hashes, optimization outcomes and executed commands. Displayed script paths were made relative;
 the SHA-256 hashes of the original executed scripts remain in the records, and final-spectrum bytes
 were not changed. For ordinary reproduction, use each case's original Bruker directory:

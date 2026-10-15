@@ -44,6 +44,7 @@ def baseline_rows(result: Any) -> list[dict[str, Any]]:
             else f"order:{cfg.get('order', 0)}"
         )
         selected_key = result.selected_candidates.get(axis, inferred_key)
+        component_scores = getattr(result, "components", {}).get(axis, {})
         for key, score in values.items():
             mode, order = key.split(":", 1)
             non_finite = not math.isfinite(score)
@@ -53,21 +54,26 @@ def baseline_rows(result: Any) -> list[dict[str, Any]]:
             if selected and key == "off:0":
                 reason = ("best_explicit_candidate" if result.strict_candidates else
                           "baseline_good" if score >= 95 else "gain_not_above_0.5")
-            rows.append(
-                {
-                    "stage": "baseline",
-                    "axis": axis,
-                    "source": "joint_spectrum",
-                    "candidate": key,
-                    "parameters": {"enabled": mode != "off", "mode": mode, "order": int(order)},
-                    "score": None if vetoed else score,
-                    "score_metric": "baseline_quality",
-                    "selected": selected,
-                    "applied": selected,
-                    "status": "vetoed" if vetoed else "scored",
-                    "reason": reason,
-                }
-            )
+            row = {
+                "stage": "baseline",
+                "axis": axis,
+                "source": "joint_spectrum",
+                "candidate": key,
+                "parameters": {"enabled": mode != "off", "mode": mode, "order": int(order)},
+                "score": None if vetoed else score,
+                "score_metric": "baseline_quality",
+                "selected": selected,
+                "applied": selected,
+                "status": "vetoed" if vetoed else "scored",
+                "reason": reason,
+                # Baseline candidates have one joint quality score. Window-only
+                # metrics do not apply; keep the observed score explicit.
+                "raw_score": None if vetoed else score,
+            }
+            # Components are optional and may be absent for custom scorers or
+            # candidates that were not evaluated. Preserve measured zero values.
+            row.update(component_scores.get(key, {}))
+            rows.append(row)
     return rows
 
 
@@ -92,6 +98,21 @@ def window_rows(result: Any, axis: str, *, source: str, apply: bool = True) -> l
                 else value.get("reason", ""),
                 **{key: value.get(key) for key in ("fwhm", "snr", "shape", "merged", "n_ref")},
                 "sampling": dict(result.sampling),
+                **{
+                    key: value[key]
+                    for key in (
+                        "raw_score",
+                        "detection_score",
+                        "separation_score",
+                        "symmetry_score",
+                        "sidelobe_score",
+                        "resolution_score",
+                        "width_ratio",
+                        "resolution_reference_fwhm",
+                        "resolution_weight",
+                    )
+                    if key in value
+                },
             }
         )
     for cfg in result.skipped_candidates:

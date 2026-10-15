@@ -1,6 +1,6 @@
-# 03 · API reference (v1.1.3)
+# 03 · API reference (v1.1.4)
 
-Top-level exports are defined in `nmrforge_api/__init__.py`; `nmrforge_api.session.API_VERSION` defines API **1.1.3**. Software **1.0.7** and the API have separate version identifiers. The unified peak table retains 38 columns.
+Top-level exports are defined in `nmrforge_api/__init__.py`; `nmrforge_api.session.API_VERSION` defines API **1.1.4**. Software **1.0.8** and the API have separate version identifiers. The unified peak table retains 38 columns.
 
 ## 3.1 Sessions and Datasets
 

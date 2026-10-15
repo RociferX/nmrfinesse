@@ -1,6 +1,6 @@
 # 打包
 
-v1.0.7 源码与 AppImage 发布使用 NMRForge 软件 **1.0.7** 和脚本 API **1.1.3**，两者分别版本化。
+v1.0.8 源码与 AppImage 发布使用 NMRForge 软件 **1.0.8** 和脚本 API **1.1.4**，两者分别版本化。
 AppImage 是最便捷的桌面安装方式；NMRPipe 与 SMILE 需要另行获取和安装。
 NMRPipe 用于转换和处理，SMILE 用于 NUS 重构。
 

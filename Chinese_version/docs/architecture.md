@@ -1,7 +1,7 @@
 # 架构
 
-NMRForge 1.0.7 由 Qt 桌面应用、可复用的数据与处理核心、工作流编排、NMRPipe 后端以及
-独立的 Python/CLI API（API 1.1.3）组成。这些组件使用相同的数据和处理能力，但入口、记录
+NMRForge 1.0.8 由 Qt 桌面应用、可复用的数据与处理核心、工作流编排、NMRPipe 后端以及
+独立的 Python/CLI API（API 1.1.4）组成。这些组件使用相同的数据和处理能力，但入口、记录
 和产物各不相同。
 
 ```text
@@ -23,7 +23,7 @@ Python/CLI API：nmrforge_api/ ──> core/、workflow/ 与 backend/
 
 - `gui/` 包含主窗口、项目树、流水线与数据组面板、导入和脚本对话框、设置及日志。GUI
   通过 `core.project` 访问项目状态，并由 `gui.processing.ProcessingController` 调用处理操作。
-- `nmrforge_api/` 提供无 Qt 依赖的 Python 与 CLI 入口，当前 API 版本为 1.1.3。它建立参考
+- `nmrforge_api/` 提供无 Qt 依赖的 Python 与 CLI 入口，当前 API 版本为 1.1.4。它建立参考
   产物并运行显式参数组合；记录和输出属于 API 会话，不属于当前桌面项目。详见
   [API 契约](API_CONTRACT.md)。
 - `workflow/` 实现应用操作，包括 Bruker 导入、导入/FID/谱图分步处理、批处理、人工脚本、

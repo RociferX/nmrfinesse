@@ -7,6 +7,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from workflow.window_optimize import (
     DEFAULT_CANDIDATES,
@@ -61,8 +62,80 @@ def test_optimize_direct_window_changed_flag() -> None:
     again = optimize_direct_window(fid, current=res.choice)
     assert again.changed is False
     assert again.choice == res.choice
-    # A default current=None counts as differing from the optimum, unless the optimum is the first
+
     assert optimize_direct_window(fid, current={}).changed is True
+
+
+def test_resolution_factor_is_continuous_and_has_an_explicit_tradeoff() -> None:
+    from workflow.window_optimize import _resolution_score
+
+    ratios = np.linspace(1.0, 3.0, 101)
+    factors = [_resolution_score(float(r), 2.0) for r in ratios]
+    assert factors == pytest.approx(ratios ** -2)
+    assert all(0 < b < a <= 1 for a, b in zip(factors, factors[1:]))
+    # No discontinuity at either former width gate.
+    for boundary in (1.15, 1.25):
+        assert abs(_resolution_score(boundary - 1e-8, 2.0)
+                   - _resolution_score(boundary + 1e-8, 2.0)) < 1e-7
+    # 20% extra width requires 44% better non-resolution quality to break even.
+    assert 1.44 * _resolution_score(1.2, 2.0) == pytest.approx(1.0)
+    assert _resolution_score(1.5, 0.0) == 1.0
+
+
+def test_broader_window_keeps_scores_and_can_compensate_for_poor_narrow_quality(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import workflow.window_optimize as windows
+
+    # Control only measured quality to isolate the actual candidate selection.
+    # Equal signal, better narrow width wins; sufficiently better signal/shape
+    # allows the broader candidate to win, including beyond the former gate.
+    candidates = [{"type": "none"}, {"type": "exp", "lb": 10.0}]
+    for broad_raw, expected in ((10.0, 0), (25.0, 1)):
+        observations = iter((
+            {"fwhm": 4.0, "snr": 20.0, "shape": .5, "score": 10.0,
+             "det_mean": 20.0, "n_ref": 2.0, "resolved": 2.0,
+             "separation_score": 1.0, "symmetry_score": 1.0, "sidelobe_score": .5},
+            {"fwhm": 6.0, "snr": 25.0, "shape": broad_raw / 25, "score": broad_raw,
+             "det_mean": 25.0, "n_ref": 2.0, "resolved": 2.0,
+             "separation_score": 1.0, "symmetry_score": 1.0,
+             "sidelobe_score": broad_raw / 25},
+        ))
+        monkeypatch.setattr(windows, "_aggregate", lambda *a: next(observations))
+        result = windows.optimize_direct_window(_synth_fid(), candidates=candidates, sw=20000)
+        assert result.choice == candidates[expected]
+        broad = result.scores[1]
+        assert broad["width_ratio"] == 1.5
+        assert broad["resolution_reference_fwhm"] == 4.0
+        assert broad["resolution_weight"] == 2.0
+        assert broad["resolution_score"] == pytest.approx(4 / 9)
+        assert broad["score"] == pytest.approx(broad_raw * 4 / 9)
+        assert broad["score"] > 0 and broad["status"] == "scored"
+        assert broad["reason"] == ""
+
+
+def test_real_fid_exports_nonwinning_broad_candidate_components() -> None:
+    result = optimize_direct_window(
+        _synth_fid(), candidates=[{"type": "none"}, {"type": "exp", "lb": 80.0}],
+        sw=20000.0,
+    )
+    broad = result.scores[1]
+    assert broad["width_ratio"] > 1.25
+    assert broad["raw_score"] > 0 and broad["score"] > 0
+    assert broad["status"] == "scored" and not broad["selected"]
+    for row in result.scores:
+        assert row["score"] == pytest.approx(row["raw_score"] * row["resolution_score"])
+        assert 0 < row["detection_score"] <= 30
+        for field in ("separation_score", "symmetry_score", "sidelobe_score"):
+            assert 0 <= row[field] <= 1
+
+
+@pytest.mark.parametrize("weight", [-1, float("nan"), float("inf")])
+def test_invalid_resolution_weight_is_rejected(weight: float) -> None:
+    from workflow.window_optimize import optimize_axis_window
+
+    with pytest.raises(ValueError, match="resolution_penalty"):
+        optimize_axis_window(_synth_fid(), -1, resolution_penalty=weight)
 
 
 def test_optimize_direct_window_no_signal_skips_gracefully() -> None:
@@ -123,7 +196,7 @@ def test_window_line_explicit_none_and_render(
     none_script = generate_3d_nus_script(
         exp, window={"F3": {"type": "none"}}, **base
     )
-    # 0.2.199-patch11: the direct dimension keeps a fixed SP, type=none no longer makes step1
+
     assert "| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 2 -c 0.5" in none_script
     custom = generate_3d_nus_script(
         exp,
@@ -140,7 +213,7 @@ def test_window_candidates_include_none() -> None:
     """
     assert {"type": "none"} in DEFAULT_CANDIDATES
     assert {"type": "none"} in INDIRECT_CANDIDATES
-    # The direct candidates keep the user's preferred 0.5-0.98 combination (0.2.189)
+
     assert (
         {"type": "sine_bell", "off": 0.50, "end": 0.98, "pow": 2, "c": 0.5}
         in DEFAULT_CANDIDATES
@@ -215,7 +288,7 @@ def test_indirect_windows_missing_fid_skips(
 
 
 def test_gm_em_default_pools_require_sw() -> None:
-    """Two GM and two EM choices per axis, with real SW and resolution gates."""
+    """Two GM and two EM choices per axis, with real SW and width scoring."""
     gm = {"type": "gaussian", "g1": 8.0, "g2": 15.0, "g3": 0.0, "c": 1.0}
     assert gm in DEFAULT_CANDIDATES
     for pool in (DEFAULT_CANDIDATES, INDIRECT_CANDIDATES):

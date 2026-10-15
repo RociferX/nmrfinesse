@@ -1,6 +1,6 @@
 # Packaging
 
-The v1.0.7 source and AppImage release uses NMRForge software **1.0.7** and scripting API **1.1.3**,
+The v1.0.8 source and AppImage release uses NMRForge software **1.0.8** and scripting API **1.1.4**,
 which have separate version numbers. The AppImage is the simplest desktop installation path;
 NMRPipe and SMILE must be obtained and installed separately. NMRPipe handles conversion and
 processing, while SMILE performs NUS reconstruction.

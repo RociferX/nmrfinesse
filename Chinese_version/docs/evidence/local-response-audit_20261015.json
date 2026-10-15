@@ -1,7 +1,7 @@
 {
-  "date": "2026-10-14",
-  "software_version": "1.0.7",
-  "api_version": "1.1.3",
+  "date": "2026-10-15",
+  "software_version": "1.0.8",
+  "api_version": "1.1.4",
   "cases": {
     "uniform2d": {
       "dimensions": [
@@ -22,7 +22,7 @@
       "sampling_fraction_reader_summary": 1.0,
       "unmatched_count": 1,
       "observations": {
-        "local_response_without_independent_candidate": 1
+        "below_10_percent": 1
       },
       "candidates": [
         {
@@ -36,12 +36,13 @@
             "intensity": 29501.9521484375,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.10118649211908953,
+          "automatic_local_height_fraction": 0.07842809809304208,
           "automatic_candidates_within_tolerance": 0,
-          "observation": "local_response_without_independent_candidate",
-          "visual_interpretation": "A positive sidelobe/shoulder beside the strong peak is separately picked in the author spectrum; the automatic spectrum retains the same local structure without an independent candidate."
+          "observation": "below_10_percent",
+          "visual_interpretation": "Author strong-peak positive sidelobe/shoulder; corresponding local structure remains below the automatic 10% threshold."
         }
-      ]
+      ],
+      "visual_review": "All unmatched reference locations inspected in fresh signed-contour zooms; explanations describe the observed local structure."
     },
     "nus75": {
       "dimensions": [
@@ -80,7 +81,7 @@
           "automatic_local_height_fraction": 0.5256086694594704,
           "automatic_candidates_within_tolerance": 0,
           "observation": "local_response_without_independent_candidate",
-          "visual_interpretation": "overlapping peaks, represented as one broader automatic maximum"
+          "visual_interpretation": "Overlapping peaks represented as one broader automatic maximum."
         },
         {
           "projection": "HN",
@@ -96,7 +97,7 @@
           "automatic_local_height_fraction": 0.08147006025221458,
           "automatic_candidates_within_tolerance": 0,
           "observation": "below_10_percent",
-          "visual_interpretation": "weak shoulder below the 10% display-detection threshold"
+          "visual_interpretation": "Visible weak shoulder below the 10% threshold."
         },
         {
           "projection": "HN",
@@ -112,15 +113,10 @@
           "automatic_local_height_fraction": 0.09175599453623086,
           "automatic_candidates_within_tolerance": 0,
           "observation": "below_10_percent",
-          "visual_interpretation": "author strong-peak positive sidelobe/shoulder, below the automatic 10% threshold"
+          "visual_interpretation": "Author strong-peak positive sidelobe/shoulder, below the automatic 10% threshold."
         }
       ],
-      "reference_kind": "author_Bruker_pdata/1",
-      "reference_offset_ppm": {
-        "H": 0.07258459433886566,
-        "N": 0.05977570099166485
-      },
-      "visual_review": "All three reference locations retain local signal: #94 overlapping peaks; #125 weak shoulder below 10%; #126 the author strong-peak sidelobe below 10%."
+      "visual_review": "All unmatched reference locations inspected in fresh signed-contour zooms; explanations describe the observed local structure."
     },
     "uniform3d": {
       "dimensions": [
@@ -145,28 +141,13 @@
       ],
       "sampling": "uniform",
       "sampling_fraction_reader_summary": 1.0,
-      "unmatched_count": 21,
+      "unmatched_count": 20,
       "observations": {
-        "local_response_without_independent_candidate": 2,
         "below_10_percent": 11,
-        "candidate_competition": 8
+        "candidate_competition": 8,
+        "local_response_without_independent_candidate": 1
       },
       "candidates": [
-        {
-          "projection": "HN",
-          "reference_candidate": {
-            "candidate_index_1based": 44,
-            "ppm": {
-              "H": 8.043762574643422,
-              "N": 117.37564503197245
-            },
-            "intensity": 124313259.6875,
-            "sign": 1
-          },
-          "automatic_local_height_fraction": 0.3294745393533266,
-          "automatic_candidates_within_tolerance": 0,
-          "observation": "local_response_without_independent_candidate"
-        },
         {
           "projection": "HN",
           "reference_candidate": {
@@ -178,9 +159,10 @@
             "intensity": 46543019.6875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.09674269296927308,
+          "automatic_local_height_fraction": 0.0994631914738724,
           "automatic_candidates_within_tolerance": 0,
-          "observation": "below_10_percent"
+          "observation": "below_10_percent",
+          "visual_interpretation": "Corresponding positive peak remains visible in the local zoom, below the shared 10% detection fraction."
         },
         {
           "projection": "HN",
@@ -193,9 +175,10 @@
             "intensity": 45856971.6875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.09900171335047481,
+          "automatic_local_height_fraction": 0.09937069543290597,
           "automatic_candidates_within_tolerance": 0,
-          "observation": "below_10_percent"
+          "observation": "below_10_percent",
+          "visual_interpretation": "Corresponding positive peak remains visible in the local zoom, below the shared 10% detection fraction."
         },
         {
           "projection": "HN",
@@ -208,9 +191,10 @@
             "intensity": 39644007.6875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.08812613582510005,
+          "automatic_local_height_fraction": 0.08932568718777349,
           "automatic_candidates_within_tolerance": 0,
-          "observation": "below_10_percent"
+          "observation": "below_10_percent",
+          "visual_interpretation": "Corresponding positive peak remains visible in the local zoom, below the shared 10% detection fraction."
         },
         {
           "projection": "HN",
@@ -223,9 +207,10 @@
             "intensity": 38609103.6875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.08154612532096402,
+          "automatic_local_height_fraction": 0.08162210017199457,
           "automatic_candidates_within_tolerance": 0,
-          "observation": "below_10_percent"
+          "observation": "below_10_percent",
+          "visual_interpretation": "Corresponding positive peak remains visible in the local zoom, below the shared 10% detection fraction."
         },
         {
           "projection": "HC",
@@ -238,9 +223,10 @@
             "intensity": 211832807.90625,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.598810580467726,
+          "automatic_local_height_fraction": 0.6085754200479633,
           "automatic_candidates_within_tolerance": 1,
-          "observation": "candidate_competition"
+          "observation": "candidate_competition",
+          "visual_interpretation": "Corresponding positive structure remains visible; a nearby automatic candidate is already assigned under one-to-one matching."
         },
         {
           "projection": "HC",
@@ -253,9 +239,10 @@
             "intensity": 149275607.90625,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.42941988776491885,
+          "automatic_local_height_fraction": 0.4291517117027041,
           "automatic_candidates_within_tolerance": 1,
-          "observation": "candidate_competition"
+          "observation": "candidate_competition",
+          "visual_interpretation": "Corresponding positive structure remains visible; a nearby automatic candidate is already assigned under one-to-one matching."
         },
         {
           "projection": "HC",
@@ -268,9 +255,10 @@
             "intensity": 144203879.90625,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.35548739093999787,
+          "automatic_local_height_fraction": 0.3622143289824879,
           "automatic_candidates_within_tolerance": 1,
-          "observation": "candidate_competition"
+          "observation": "candidate_competition",
+          "visual_interpretation": "Corresponding positive structure remains visible; a nearby automatic candidate is already assigned under one-to-one matching."
         },
         {
           "projection": "HC",
@@ -283,9 +271,10 @@
             "intensity": 117384495.90625,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.3419200313781474,
+          "automatic_local_height_fraction": 0.33650645887537617,
           "automatic_candidates_within_tolerance": 1,
-          "observation": "candidate_competition"
+          "observation": "candidate_competition",
+          "visual_interpretation": "Corresponding positive structure remains visible; a nearby automatic candidate is already assigned under one-to-one matching."
         },
         {
           "projection": "HC",
@@ -298,9 +287,10 @@
             "intensity": 46353111.90625,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.09606799770989331,
+          "automatic_local_height_fraction": 0.09931019100641393,
           "automatic_candidates_within_tolerance": 0,
-          "observation": "below_10_percent"
+          "observation": "below_10_percent",
+          "visual_interpretation": "Corresponding positive peak remains visible in the local zoom, below the shared 10% detection fraction."
         },
         {
           "projection": "HC",
@@ -313,9 +303,10 @@
             "intensity": 45667063.90625,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.0983287054844105,
+          "automatic_local_height_fraction": 0.09921767925044576,
           "automatic_candidates_within_tolerance": 0,
-          "observation": "below_10_percent"
+          "observation": "below_10_percent",
+          "visual_interpretation": "Corresponding positive peak remains visible in the local zoom, below the shared 10% detection fraction."
         },
         {
           "projection": "HC",
@@ -328,9 +319,10 @@
             "intensity": 44271907.90625,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.08546524379249655,
+          "automatic_local_height_fraction": 0.08803677641988814,
           "automatic_candidates_within_tolerance": 0,
-          "observation": "below_10_percent"
+          "observation": "below_10_percent",
+          "visual_interpretation": "Corresponding positive peak remains visible in the local zoom, below the shared 10% detection fraction."
         },
         {
           "projection": "HC",
@@ -343,9 +335,10 @@
             "intensity": 39454099.90625,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.08744500435954503,
+          "automatic_local_height_fraction": 0.08917096436662558,
           "automatic_candidates_within_tolerance": 0,
-          "observation": "below_10_percent"
+          "observation": "below_10_percent",
+          "visual_interpretation": "Corresponding positive peak remains visible in the local zoom, below the shared 10% detection fraction."
         },
         {
           "projection": "HC",
@@ -358,9 +351,10 @@
             "intensity": 38419195.90625,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.08086007886401145,
+          "automatic_local_height_fraction": 0.0814660685177114,
           "automatic_candidates_within_tolerance": 0,
-          "observation": "below_10_percent"
+          "observation": "below_10_percent",
+          "visual_interpretation": "Corresponding positive peak remains visible in the local zoom, below the shared 10% detection fraction."
         },
         {
           "projection": "NC",
@@ -373,9 +367,10 @@
             "intensity": 211782384.875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.5981043638387339,
+          "automatic_local_height_fraction": 0.6064689305324847,
           "automatic_candidates_within_tolerance": 1,
-          "observation": "candidate_competition"
+          "observation": "candidate_competition",
+          "visual_interpretation": "Corresponding positive structure remains visible; a nearby automatic candidate is already assigned under one-to-one matching."
         },
         {
           "projection": "NC",
@@ -388,9 +383,10 @@
             "intensity": 149225184.875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.42841549147774266,
+          "automatic_local_height_fraction": 0.42607963601861076,
           "automatic_candidates_within_tolerance": 1,
-          "observation": "candidate_competition"
+          "observation": "candidate_competition",
+          "visual_interpretation": "Corresponding positive structure remains visible; a nearby automatic candidate is already assigned under one-to-one matching."
         },
         {
           "projection": "NC",
@@ -403,24 +399,26 @@
             "intensity": 144153456.875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.35435285074538375,
+          "automatic_local_height_fraction": 0.3587820232512397,
           "automatic_candidates_within_tolerance": 1,
-          "observation": "candidate_competition"
+          "observation": "candidate_competition",
+          "visual_interpretation": "Corresponding positive structure remains visible; a nearby automatic candidate is already assigned under one-to-one matching."
         },
         {
           "projection": "NC",
           "reference_candidate": {
-            "candidate_index_1based": 49,
+            "candidate_index_1based": 47,
             "ppm": {
-              "N": 121.67704629118617,
-              "C": 176.86744421762106
+              "N": 121.67897349871068,
+              "C": 176.70177135703483
             },
-            "intensity": 117334072.875,
+            "intensity": 121152952.875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.34076160846263487,
+          "automatic_local_height_fraction": 0.3329358037362994,
           "automatic_candidates_within_tolerance": 1,
-          "observation": "candidate_competition"
+          "observation": "candidate_competition",
+          "visual_interpretation": "Corresponding positive structure remains visible; a nearby automatic candidate is already assigned under one-to-one matching."
         },
         {
           "projection": "NC",
@@ -433,9 +431,10 @@
             "intensity": 55317892.875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.14254835577079278,
+          "automatic_local_height_fraction": 0.1419478741502767,
           "automatic_candidates_within_tolerance": 0,
-          "observation": "local_response_without_independent_candidate"
+          "observation": "local_response_without_independent_candidate",
+          "visual_interpretation": "Corresponding positive shoulder/overlapping structure remains visible without an independent maximum inside the matching tolerance."
         },
         {
           "projection": "NC",
@@ -448,9 +447,10 @@
             "intensity": 45616640.875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.0967414870008968,
+          "automatic_local_height_fraction": 0.09437003142357751,
           "automatic_candidates_within_tolerance": 0,
-          "observation": "below_10_percent"
+          "observation": "below_10_percent",
+          "visual_interpretation": "Corresponding positive peak remains visible in the local zoom, below the shared 10% detection fraction."
         },
         {
           "projection": "NC",
@@ -463,12 +463,13 @@
             "intensity": 39403676.875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.08583862721843681,
+          "automatic_local_height_fraction": 0.08426924916470806,
           "automatic_candidates_within_tolerance": 0,
-          "observation": "below_10_percent"
+          "observation": "below_10_percent",
+          "visual_interpretation": "Corresponding positive peak remains visible in the local zoom, below the shared 10% detection fraction."
         }
       ],
-      "visual_review": "Every unmatched projection location shows corresponding positive local signal in the zooms; narrower author LP line shapes, thresholding, overlapping/shoulder structures and one-to-one candidate competition explain the candidate-list differences."
+      "visual_review": "All unmatched reference locations inspected in fresh signed-contour zooms; explanations describe the observed local structure."
     },
     "acquired3d": {
       "dimensions": [
@@ -495,7 +496,8 @@
       "sampling_fraction_reader_summary": 0.25,
       "unmatched_count": 0,
       "observations": {},
-      "candidates": []
+      "candidates": [],
+      "visual_review": "All unmatched reference locations inspected in fresh signed-contour zooms; explanations describe the observed local structure."
     }
   }
 }

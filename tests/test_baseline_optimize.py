@@ -47,7 +47,7 @@ def test_optimize_baseline_direct_axis_slope(
     result = optimize_baseline(experiment, ft2)
     assert "F2" in result.baseline and "F1" in result.baseline
     assert "off:0" in result.scores["F2"]
-    # The direct dimension has a correction, and off is not the best
+
     assert result.baseline["F2"]["enabled"] is True
     assert result.scores["F2"]["off:0"] < max(result.scores["F2"].values())
     assert result.off_scores["F2"] == result.scores["F2"]["off:0"]
@@ -60,7 +60,7 @@ def test_optimize_baseline_grid_contains_off_and_orders(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
     experiment = read_dataset(bruker_dir / "hsqc_2d")
-    # Medium-quality spectrum (off score <95): the candidate grid must really run
+
     spec = np.full((32, 64), 100.0)
     spec += np.linspace(-1.0, 1.0, 64)[np.newaxis, :]
     ft2 = tmp_path / "mid.ft2"
@@ -203,3 +203,96 @@ def test_optimize_baseline_small_max_traces_works(
     result = optimize_baseline(experiment, ft2, max_traces=8)
     assert "F2" in result.baseline and "F1" in result.baseline
     assert "off:0" in result.scores["F2"]
+
+
+def test_default_baseline_components_reuse_each_candidate_evaluation(
+    tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify that component measurement reuses each default candidate evaluation."""
+    from core.qc import baseline_quality
+
+    experiment = read_dataset(bruker_dir / "hsqc_2d")
+    spectrum = tmp_path / "components.ft2"
+    spec = np.full((32, 64), 100.0)
+    spec += np.linspace(-1.0, 1.0, 64)[np.newaxis, :]
+    _write_ft2(spectrum, spec)
+    evaluate = baseline_quality.evaluate
+    calls = 0
+
+    def counted_evaluate(data: np.ndarray, *args: object, **kwargs: object):
+        nonlocal calls
+        calls += 1
+        return evaluate(data, *args, **kwargs)
+
+    monkeypatch.setattr(baseline_quality, "evaluate", counted_evaluate)
+    monkeypatch.setattr(
+        "workflow.baseline_optimize._has_stripe_artifact", lambda *a, **k: False
+    )
+    result = optimize_baseline(
+        experiment, spectrum, grid=[("off", 0), ("order", 1)]
+    )
+
+    expected_fields = {
+        "baseline_slope", "baseline_offset", "baseline_curvature", "baseline_stripe",
+        "baseline_slope_score", "baseline_offset_score",
+        "baseline_curvature_score", "baseline_stripe_score",
+    }
+    assert calls == sum(len(axis_scores) for axis_scores in result.scores.values())
+    for axis, axis_scores in result.scores.items():
+        assert set(result.components[axis]) == set(axis_scores)
+        for candidate, score in axis_scores.items():
+            measured = result.components[axis][candidate]
+            assert set(measured) == expected_fields
+            assert measured["baseline_slope_score"] == pytest.approx(
+                100.0 * (1.0 - min(1.0, 4.0 * abs(measured["baseline_slope"])))
+            )
+            assert measured["baseline_offset_score"] == pytest.approx(
+                100.0 * (1.0 - min(1.0, 2.0 * abs(measured["baseline_offset"])))
+            )
+            assert measured["baseline_curvature_score"] == pytest.approx(
+                100.0 * (1.0 - min(1.0, 6.0 * measured["baseline_curvature"]))
+            )
+            assert measured["baseline_stripe_score"] == pytest.approx(
+                100.0 * (1.0 - min(1.0, measured["baseline_stripe"]))
+            )
+            expected_score = 100.0 * (
+                1.0
+                - min(
+                    1.0,
+                    4.0 * abs(measured["baseline_slope"])
+                    + 2.0 * abs(measured["baseline_offset"])
+                    + 6.0 * measured["baseline_curvature"]
+                    + measured["baseline_stripe"],
+                )
+            )
+            assert score == pytest.approx(expected_score)
+
+
+def test_injected_scorer_and_stripe_veto_do_not_fabricate_components(
+    tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    experiment = read_dataset(bruker_dir / "hsqc_2d")
+    spectrum = tmp_path / "injected-components.ft2"
+    _write_ft2(spectrum, np.full((32, 64), 100.0))
+    monkeypatch.setattr(
+        "workflow.baseline_optimize._has_stripe_artifact", lambda *a, **k: False
+    )
+    calls: list[int] = []
+    injected = optimize_baseline(
+        experiment,
+        spectrum,
+        grid=[("off", 0), ("order", 1)],
+        score_fn=lambda array, axis: calls.append(axis) or float(len(calls)),
+    )
+    assert len(calls) == 2 * (1 + 2)  # off baseline measurement and both grid candidates
+    assert injected.components == {}
+
+    monkeypatch.setattr(
+        "workflow.baseline_optimize._has_stripe_artifact", lambda *a, **k: True
+    )
+    vetoed = optimize_baseline(
+        experiment, spectrum, grid=[("order", 1)],
+    )
+    for axis, axis_scores in vetoed.scores.items():
+        assert axis_scores["order:1"] == -1e9
+        assert set(vetoed.components[axis]) == {"off:0"}

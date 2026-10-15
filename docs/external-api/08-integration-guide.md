@@ -1,4 +1,4 @@
-# 08 · Handover to a downstream analysis program (v1.1.3)
+# 08 · Handover to a downstream analysis program (v1.1.4)
 
 This software ends at "spectrum + peak table + processing record". **Statistical inference and
 significance judgement belong to your own independent analysis program**, which should read the
@@ -60,7 +60,7 @@ print(len(values), values[:3])
 
 ## 8.4 Sharding and parallelism (optional)
 
-`max_runs` defaults to 256. For external parallel execution, split the parameter grid into separate
+`max_runs` defaults to 256. For parallel execution, use independent processes and split the parameter grid across separate
 study roots; do not concurrently write the same root. Build and validate each shard's reference
 explicitly. Combinations cannot repair or regenerate invalid FID inputs.
 

@@ -5,9 +5,8 @@ typical session from importing data all the way to a peak table. Menu and button
 text the program shows (the interface language can be changed under `Settings → Software settings`,
 and this document follows it).
 
-This guide follows software 1.0.7 and API v1.1.3. The API uses the documented parameters and
-retains the 38-column peak-table contract. For Linux desktop use, download the
-[1.0.7 AppImage](https://github.com/RociferX/nmrforge/releases/tag/v1.0.7).
+This guide follows software 1.0.8 and API v1.1.4. The API uses the documented parameters and
+38-column peak-table contract. Download the Linux AppImage or source from the [1.0.8 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.8).
 
 ## 1. What the program does
 
@@ -175,19 +174,19 @@ Run **Peak picking**: automatic detection with intensity and S/N estimates.
    friends) and rerun the step;
 2. **set a reference spectrum and pick again** - click **"Reference spectrum"** on the Peak picking
    step row and pick a data set that **already has a peak table**; peak picking will then **keep only
-  the peaks that match the reference peak table** when the reference is usable; if it is unreliable
-  or has no common nuclei, filtering is skipped and the detected peaks are kept. This suits picking
-  **the same set of peaks** across related samples; the **"Clear"** button next to it
+   the peaks that match the reference peak table** when the reference is usable; if it is unreliable
+   or has no common nuclei, filtering is skipped and the detected peaks are kept. This suits picking
+   **the same set of peaks** across related samples; the **"Clear"** button next to it
    removes the constraint.
 
 ### (10) Export the peak table and the spectra
 
 - **Export the POKY-style peak table**: click **`Export peaks`** in the spectrum panel. Either
   **export directly** (original coordinates) or **export after alignment** (overall translation onto
-  a selected reference peak table); the format is POKY / Sparky `.list`, which other software reads
-  directly. `Import peaks` reads a peak table back from a `.list`. Alignment changes only the
-  exported peak table, not the spectrum file. If too few peaks match, the interface warns and skips
-  aligned export, leaving the peak table and spectrum unchanged.
+  the selected reference peak table); the format is POKY / Sparky `.list`, which other software reads
+  directly. `Import peaks` reads a peak table back from a `.list`. Alignment affects only the
+  exported peak table, not the spectrum file; a low match rate warns you and skips aligned export,
+  leaving the current peak table and spectrum unchanged.
 - **Find the processed spectra**: in the **`spectra` folder inside that data set's working
   directory** - the NMRPipe final spectra (`.ft2` / `.ft3`) are there, and the **exported UCSF
   spectra** go into the same `spectra` folder, with the same name as the final spectrum and a
@@ -217,9 +216,9 @@ processes normally, but this scan is not offered in the interface.
 
 ### Peak picking
 
-Automatic detection with intensity and S/N estimates; localisation uses three-point parabolic
-refinement only, with no method chooser. A **reference spectrum** can constrain results when the
-reference is usable; if it is not, the filter is skipped safely. Peak tables export to the POKY style.
+Automatic detection with intensity and S/N estimates; sub-grid localisation uses the three-point
+parabola (the supported method; the interface lists this single option), and a **reference spectrum** can constrain it to
+matching peaks only. Peak tables export to the POKY style.
 
 ### Status and "expired"
 
@@ -294,9 +293,10 @@ Note that this is **not** the same thing as the "merge into one" import of secti
 
 ## 9. The Tools menu
 
-- **Data quality inspection**: checks the raw FID; the conclusion goes into the log before any
-  optimisation. It **does not need a project**, so it is a good way to separate "the data has a
-  problem" from "the parameters do not fit";
+- **Data quality inspection**: choose **FID file** for one converted FID, or **FID folder (slice
+  group)** to check all directly contained `*.fid` slices together (no subfolder recursion).
+  Results go into the global log. It **does not need a project** and does not modify FIDs or
+  processing records, helping separate data problems from unsuitable processing parameters;
 - **spectrum quality assessment**: scores an existing spectrum and lists the items behind the score.
 
 ## 10. Settings

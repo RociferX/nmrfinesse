@@ -14,9 +14,10 @@ Near pairs are within 1.5 times the smaller reference FWHM; a valley above 0.6 t
 smaller candidate height counts as merged, provided the reference valley was resolved.
 Aggregate the same traces for every candidate, including degraded responses.
 
-Filter candidate FWHM at 1.25 times the narrowest (direct) or 1.15 times (indirect), tightened
-by significant reference spacing. Indirect scores also receive an exponential broadening
-penalty. GM/EM require sweep width. The highest-scoring eligible candidate wins; ties keep
+Score candidate broadening continuously relative to the narrowest valid FWHM, with
+a squared inverse-width factor on every axis. Better signal and shape can compensate
+for modest broadening. Keep raw scores and all component observations. GM/EM require SW.
+The highest-scoring eligible candidate wins; ties keep
 input order. This proxy does not certify all weak peaks or final phased-spectrum quality.
 
 Default pools allow graceful fallback. Explicit pools use strict_candidates=True and fail
@@ -49,12 +50,21 @@ class WindowChoice:
     shape: float
     score: float
     selected: bool = False
-    #: number of expected peaks this window merged into a single detection
+
     merged: float = 0.0
-    #: number of expected peaks on the reference spectrum (denominator of the detection stats)
+
     n_ref: float = 0.0
     status: str = "scored"
     reason: str = ""
+    raw_score: float = 0.0
+    detection_score: float = 0.0
+    separation_score: float = 0.0
+    symmetry_score: float = 0.0
+    sidelobe_score: float = 0.0
+    resolution_score: float | None = None
+    width_ratio: float | None = None
+    resolution_reference_fwhm: float | None = None
+    resolution_weight: float | None = None
 
 
 @dataclass
@@ -87,7 +97,7 @@ class MultiWindowOptimizeResult:
 
 
 # GM/EM parameters are Hz, using the sweep width of the scored axis. Both axes
-# compare two mild configurations per family; resolution gates still apply.
+# compare two mild configurations per family; broadening reduces the score.
 _HZ_CANDIDATES: list[dict[str, Any]] = [
     {"type": "gaussian", "g1": 8.0, "g2": 15.0, "g3": 0.0, "c": 1.0},
     {"type": "gaussian", "g1": 4.0, "g2": 8.0, "g3": 0.0, "c": 1.0},
@@ -106,7 +116,7 @@ DEFAULT_CANDIDATES: list[dict[str, Any]] = [
     *[dict(cfg) for cfg in _HZ_CANDIDATES],
 ]
 
-# Indirect dimension candidate: No window is listed as the first choice (natural attenuation
+
 INDIRECT_CANDIDATES: list[dict[str, Any]] = [
     {"type": "none"},
     {"type": "sine_bell", "off": 0.30, "end": 0.98, "pow": 1, "c": 0.5},
@@ -117,34 +127,29 @@ INDIRECT_CANDIDATES: list[dict[str, Any]] = [
     *[dict(cfg) for cfg in _HZ_CANDIDATES],
 ]
 
-# Resolution priority line width tolerance (1.25x is optimal; 1.15x will exclude the user's
-# preferred 0.5-0.98/pow2 mild window in advance, 0.2.190 will relax it).
-_RES_TOL = 1.25
+# Broadening by r requires an r**2 gain in detection/separation/shape to win.
+# This is a selection policy, rather than a universal physical quality metric.
+_RESOLUTION_WEIGHT = 2.0
 
-# The indirect dimension resolution pool is tighter (1.15x): indirect dimension resolution is
-# limited, and apodisation should be correctly dropped without a window when it is only widened.
-# After the 0.2.191 window formula is consistent with NMRPipe point by point (SP first point
-_INDIRECT_RES_TOL = 1.15
 
-# Peak detection convention used for the detection statistics (same function as
-# workflow/truth_benchmark.detect_peaks): threshold = noise sigma x 12 (**not** the product's
-# default peak-picking threshold of 35 sigma, see below); minimum separation 2 points.
+
+
 #
-#
-# The cap on d only affects the ordering among very strong peaks; 30 is an empirical value (higher
-# values do not change the window choice, they only amplify numerical noise).
-#
+
+
+
+
 _PEAK_SIGMA_MULT = 12.0
 _FALLBACK_SIGMA_MULT = 6.0
 _MAX_PROBE_TRACES = 256
 _MAX_SCORE_TRACES = 12
 _PEAK_MIN_SEP = 2
 _DETECTION_CAP = 30.0
-#: A local maximum below this fraction of the strongest reference peak is not an expected peak
+
 _REFERENCE_MIN_FRACTION = 0.25
-#: Merging criterion: two reference peaks closer than this multiple of the smaller FWHM count as a
+
 _MERGE_PAIR_SPAN = 1.5
-#: Merging criterion: the valley between them must drop below this fraction of the smaller peak;
+
 _MERGE_VALLEY_FRACTION = 0.6
 
 
@@ -251,11 +256,11 @@ def _noise_sigma_without_peaks(amp: np.ndarray, peaks: list[tuple[int, float]]) 
     return robust_noise_sigma(selected)
 
 
-def _shape_factor(amp: np.ndarray, index: int, fwhm: float) -> float:
-    'Line-shape factor: symmetry (0-1) x side-lobe penalty (same convention as 0.2.139).'
+def _shape_components(amp: np.ndarray, index: int, fwhm: float) -> tuple[float, float]:
+    """Measure peak symmetry and sidelobe suppression factors."""
     peak = float(amp[index])
     if peak <= 0.0:
-        return 0.0
+        return 0.0, 0.0
     half = peak * 0.5
     n = amp.size
     left = index
@@ -273,7 +278,12 @@ def _shape_factor(amp: np.ndarray, index: int, fwhm: float) -> float:
     swell = 0.0
     if left_sw.size and right_sw.size:
         swell = float(max(np.max(left_sw), np.max(right_sw))) / peak
-    return sym / (1.0 + 5.0 * max(swell, 0.0))
+    return sym, 1.0 / (1.0 + 5.0 * max(swell, 0.0))
+
+
+def _shape_factor(amp: np.ndarray, index: int, fwhm: float) -> float:
+    symmetry, sidelobe = _shape_components(amp, index, fwhm)
+    return symmetry * sidelobe
 
 
 def _reference_peaks(
@@ -310,39 +320,6 @@ def _significant_reference(
         for item in reference
         if float(item[1]) >= _REFERENCE_MIN_FRACTION * strongest
     ]
-
-
-def _min_reference_spacing(reference: list[list[tuple[int, float, float]]]) -> float:
-    """Distance between the two closest significant reference peaks (points).
-
-    Median over traces; 0 (unknown) when no trace has such a pair.
-    """
-    spacings: list[float] = []
-    for peaks in reference:
-        significant = _significant_reference(peaks)
-        if len(significant) < 2:
-            continue
-        positions = [float(item[0]) for item in significant]
-        spacings.append(min(b - a for a, b in zip(positions, positions[1:])))
-    if not spacings:
-        return 0.0
-    return float(np.median(spacings))
-
-
-def _effective_res_tol(res_tol: float, spacing: float, min_fwhm: float) -> float:
-    """Data-driven resolution threshold: the closest **significant** pair sets how wide a window
-    may be.
-
-    ``spacing / narrowest candidate FWHM``: when the two peaks are separated (spacing >= 1.25 x
-    the
-    narrowest FWHM, i.e. the ratio is >= 1.25) this term does nothing and the ``res_tol``
-    ceiling
-    decides; when the peaks are very close, no candidate FWHM may exceed the peak spacing -- the
-    minimum requirement that the window does not blur the two peaks into one.
-    """
-    if spacing <= 0.0 or min_fwhm <= 0.0 or not np.isfinite(spacing):
-        return float(res_tol)
-    return float(min(max(spacing / float(min_fwhm), 1.0), float(res_tol)))
 
 
 def _resolved_pairs(
@@ -489,6 +466,7 @@ def _measure_trace(
     empty = {
         "fwhm": float(n), "snr": 0.0, "shape": 0.0, "score": 0.0,
         "det_mean": 0.0, "n_ref": 0.0, "resolved": 0.0, "ok": False,
+        "separation_score": 0.0, "symmetry_score": 0.0, "sidelobe_score": 0.0,
     }
     if n < 16:
         return empty
@@ -503,17 +481,20 @@ def _measure_trace(
     strongest_index, strongest_height = max(peaks, key=lambda item: item[1])
     fwhm = _peak_fwhm(amp, strongest_index)
     snr = float(strongest_height) / max(sigma, np.finfo(float).eps)
-    shape = _shape_factor(amp, strongest_index, fwhm)
+    symmetry, sidelobe = _shape_components(amp, strongest_index, fwhm)
+    shape = symmetry * sidelobe
     targets = _significant_reference(reference_peaks)
     if not targets:
-        return {**empty, "fwhm": fwhm, "snr": snr, "shape": shape, "score": snr * shape, "ok": True}
+        return {**empty, "fwhm": fwhm, "snr": snr, "shape": shape,
+                "score": snr * shape, "det_mean": snr, "separation_score": 1.0,
+                "symmetry_score": symmetry, "sidelobe_score": sidelobe, "ok": True}
     det_sum = 0.0
     for index, _height, _ref_fwhm in targets:
         det_sum += min(
             float(amp[int(index)]) / max(sigma, np.finfo(float).eps), _DETECTION_CAP
         )
     det_mean = det_sum / len(targets)
-    # Merging criterion: a pair that is resolved in the reference spectrum must stay separated here
+
     merged = 0
     pairs = 0
     for left_index, right_index in resolved_pairs or []:
@@ -536,6 +517,9 @@ def _measure_trace(
         "det_mean": det_mean,
         "n_ref": float(n_targets),
         "resolved": float(n_targets - merged),
+        "separation_score": merge_factor,
+        "symmetry_score": symmetry,
+        "sidelobe_score": sidelobe,
         "ok": True,
     }
 
@@ -551,7 +535,8 @@ def _aggregate(
     ok = per  # Every candidate is measured on exactly the same traces.
     if not ok:
         return {"fwhm": float(amp_traces.shape[-1]), "snr": 0.0, "shape": 0.0,
-                "score": 0.0, "det_mean": 0.0, "n_ref": 0.0, "resolved": 0.0}
+                "score": 0.0, "det_mean": 0.0, "n_ref": 0.0, "resolved": 0.0,
+                "separation_score": 0.0, "symmetry_score": 0.0, "sidelobe_score": 0.0}
     return {
         "fwhm": float(np.median([m["fwhm"] for m in ok])),
         "snr": float(np.median([m["snr"] for m in ok])),
@@ -560,7 +545,15 @@ def _aggregate(
         "det_mean": float(np.median([m["det_mean"] for m in ok])),
         "n_ref": float(np.median([m["n_ref"] for m in ok])),
         "resolved": float(np.median([m["resolved"] for m in ok])),
+        **{key: float(np.median([m[key] for m in ok])) for key in
+           ("separation_score", "symmetry_score", "sidelobe_score")},
     }
+
+
+def _resolution_score(width_ratio: float, weight: float) -> float:
+    """Continuous preference for narrower peaks, without rejecting broader candidates."""
+    ratio = max(width_ratio, 1.0)
+    return float(ratio ** -weight)
 
 
 def _score_axis(
@@ -569,9 +562,8 @@ def _score_axis(
     candidates: list[dict[str, Any]],
     *,
     zf_size: int | None = None,
-    resolution_penalty: float = 0.0,
+    resolution_penalty: float = _RESOLUTION_WEIGHT,
     sw: float = 0.0,
-    res_tol: float = _RES_TOL,
 ) -> tuple[list[WindowChoice], WindowChoice | None, str, dict[str, Any]]:
     """Score the candidate windows along the given time axis; returns (choices, best, log rows).
 
@@ -581,12 +573,14 @@ def _score_axis(
     window while a truncated axis still keeps a mild window (0.2.190).
     """
     n = arr.shape[axis]
+    if not np.isfinite(resolution_penalty) or resolution_penalty < 0:
+        raise ValueError("resolution_penalty must be finite and nonnegative")
     moved = np.moveaxis(arr, axis, -1)
     flat = moved.reshape(-1, n)
     n_zf = zf_size or n
     picked, reference, ref_amp, sampling = _sample_references(flat, n_zf)
-    # GM/EM depends on spectrum width SW; skip when SW is not provided to avoid sw=1.0 numerical
-    # garbage virtual high (0.2.192 is required after adding GM).
+
+
     sw_dependent = {"gaussian", "exp"}
     skipped_sw = 0
     scorable: list[dict[str, Any]] = []
@@ -595,14 +589,13 @@ def _score_axis(
             skipped_sw += 1
             continue
         scorable.append(cfg)
-    # The un-windowed reference spectrum ("none" is a first-class candidate) defines the expected
+
     resolved_pairs = [_resolved_pairs(refs, row) for refs, row in zip(reference, ref_amp)]
-    reference_spacing = _min_reference_spacing(reference)
     measured: list[WindowChoice] = []
     for cfg in scorable:
         win = _window_vector(cfg, n, sw=sw)
         amp = np.abs(np.fft.fft(picked * win, n_zf, axis=-1))
-        # Exclude low-frequency cutoff area and mirror end.
+
         _mask_edges(amp)
         agg = _aggregate(amp, reference, resolved_pairs)
         measured.append(
@@ -615,26 +608,29 @@ def _score_axis(
                 score=agg["score"],
                 merged=float(agg["n_ref"] - agg["resolved"]),
                 n_ref=float(agg["n_ref"]),
+                raw_score=agg["score"],
+                detection_score=agg["det_mean"],
+                separation_score=agg["separation_score"],
+                symmetry_score=agg["symmetry_score"],
+                sidelobe_score=agg["sidelobe_score"],
             )
         )
     valid = [m for m in measured if m.snr > 0.0]
     if not valid:
         return measured, None, tr("trace no valid signal"), sampling
     min_fwhm = min(m.fwhm for m in valid)
-    # The resolution threshold comes from the closest significant pair of reference peaks
-    tol_used = _effective_res_tol(res_tol, reference_spacing, min_fwhm)
-    pool = [m for m in valid if m.fwhm <= min_fwhm * tol_used] or valid
+    pool = valid
     pool_ids = {id(m) for m in pool}
     for m in measured:
         if id(m) not in pool_ids:
-            # Candidates outside the resolution pool are not compared (resolution first, 0.2.139)
-            m.score = 0.0
             m.status = "rejected"
-            m.reason = "resolution_gate" if m.snr > 0.0 else "no_valid_signal"
+            m.reason = "no_valid_signal"
             continue
-        if resolution_penalty > 0.0:
-            widen = max(m.fwhm / min_fwhm - 1.0, 0.0)
-            m.score *= float(np.exp(-resolution_penalty * widen))
+        m.width_ratio = m.fwhm / min_fwhm
+        m.resolution_reference_fwhm = min_fwhm
+        m.resolution_weight = resolution_penalty
+        m.resolution_score = _resolution_score(m.width_ratio, resolution_penalty)
+        m.score = m.raw_score * m.resolution_score
     positive = [m for m in pool if np.isfinite(m.score) and m.score > 0.0]
     if not positive:
         for m in pool:
@@ -646,8 +642,8 @@ def _score_axis(
     log = (
         tr(
             "optimal {p0} (FWHM {p1:.2f}point, SNR {p2:.1f}, shape {p3:.3f}, score {p4:.3f}); "
-            "qualifying pool {p5}/{p6} candidate(s) (resolution >= "
-            "{p7:.2f}point)",
+            "scored {p5}/{p6} candidate(s); resolution factor {p7:.3f} "
+            "(width {p8:.3f}x, exponent {p9:.3f})",
             p0=best.label,
             p1=best.fwhm,
             p2=best.snr,
@@ -655,7 +651,9 @@ def _score_axis(
             p4=best.score,
             p5=len(pool),
             p6=len(measured),
-            p7=min_fwhm * tol_used,
+            p7=best.resolution_score,
+            p8=best.width_ratio,
+            p9=best.resolution_weight,
         )
     )
     if best.merged > 0.0:
@@ -682,9 +680,8 @@ def optimize_axis_window(
     zf_size: int | None = None,
     current: dict[str, Any] | None = None,
     axis_label: str = "",
-    resolution_penalty: float = 0.0,
+    resolution_penalty: float = _RESOLUTION_WEIGHT,
     sw: float = 0.0,
-    res_tol: float = _RES_TOL,
     strict_candidates: bool = False,
 ) -> WindowOptimizeResult:
     """Score candidate windows along arr's axis timeline (shared engine, used by the direct and
@@ -711,7 +708,6 @@ def optimize_axis_window(
         data, axis, cands, zf_size=zf_size,
         resolution_penalty=resolution_penalty,
         sw=sw,
-        res_tol=res_tol,
     )
     scores = [
         {"cfg": dict(m.cfg), "label": m.label, "fwhm": m.fwhm, "snr": m.snr,
@@ -721,6 +717,12 @@ def optimize_axis_window(
          "reason": m.reason or ("" if best is not None else "no_valid_signal")}
         for m in measured
     ]
+    for row, measured_choice in zip(scores, measured):
+        row.update({key: getattr(measured_choice, key) for key in (
+            "raw_score", "detection_score", "separation_score", "symmetry_score",
+            "sidelobe_score", "resolution_score", "width_ratio", "resolution_reference_fwhm",
+            "resolution_weight",
+        )})
     skipped = [dict(cfg) for cfg in cands
                if cfg.get("type") in {"gaussian", "exp"} and sw <= 0.0]
     if best is None:
@@ -830,9 +832,8 @@ def optimize_indirect_windows(
             zf_size=zf_size,
             current=current.get(axis_name),
             axis_label=tr("{p0}(indirect dimension)", p0=axis_name),
-            resolution_penalty=1.0,
+            resolution_penalty=_RESOLUTION_WEIGHT,
             sw=(sw_map or {}).get(axis_name, 0.0),
-            res_tol=_INDIRECT_RES_TOL,
             strict_candidates=strict_candidates,
         )
         per_axis[axis_name] = res
@@ -980,7 +981,7 @@ def _axis_sw(
             (d for d in experiment.dimensions if d.logical_axis == axis), None
         )
         nucleus = (dim.nucleus or "").strip() if dim is not None else ""
-        # Header LABEL is "15N", Bruker NUC1 is "<15N>", leaving only alphanumeric comparisons.
+
         norm = lambda v: "".join(ch for ch in v if ch.isalnum())  # noqa: E731
         if nucleus:
             for i in (1, 2, 3):

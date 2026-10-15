@@ -26,7 +26,7 @@ license = { text = "Apache-2.0" }
 #       (see docs/evidence/real-data-comparison.md);
 #   (2) a compatibility promise carried by the compat process (the behaviour digests and the
 #       four levels plus a golden vector, see nmrforge_api/compat_declaration.py).
-# - `nmrforge_api` is v1.1.3 (2026-10-14), with bounded reference-window scoring; the 38-column table is retained.
+# - `nmrforge_api` is v1.1.4 (2026-10-15), with bounded reference-window scoring; the 38-column table is retained.
 #   Software and API versions are maintained separately; the source tree carries both current contracts.
 #   the historical 1.0.2 AppImage does not include the current API contract.
 # - Linux is the validation and release target. Windows is an editing environment only;

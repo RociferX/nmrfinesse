@@ -30,6 +30,60 @@ def test_baseline_scores_record_actual_off_and_veto() -> None:
     assert rows["order:2"]["score"] is None
 
 
+def test_baseline_component_scores_keep_zero_and_raw_score_separate() -> None:
+    result = BaselineOptimizeResult(
+        baseline={"F1": {"enabled": False}},
+        scores={"F1": {"off:0": 91.0, "auto:1": 90.0}},
+        spectrum_path="",
+        selected_candidates={"F1": "off:0"},
+        components={
+            "F1": {
+                "off:0": {"baseline_slope": 0.0, "baseline_slope_score": 0.0},
+                "auto:1": {"baseline_offset": 0.4},
+            }
+        },
+    )
+    rows = {row["candidate"]: row for row in baseline_rows(result)}
+    assert rows["off:0"]["raw_score"] == rows["off:0"]["score"] == 91.0
+    assert rows["off:0"]["selected"] and rows["off:0"]["applied"]
+    assert rows["off:0"]["baseline_slope"] == 0.0
+    assert rows["off:0"]["baseline_slope_score"] == 0.0
+    assert "baseline_offset" not in rows["off:0"]
+    assert rows["auto:1"]["baseline_offset"] == 0.4
+    assert "baseline_slope" not in rows["auto:1"]
+
+
+def test_window_score_components_are_transmitted_without_rescoring() -> None:
+    result = WindowOptimizeResult(
+        choice={"type": "none"},
+        changed=False,
+        scores=[
+            {
+                "cfg": {"type": "none"},
+                "label": "none",
+                "score": 0.73,
+                "selected": True,
+                "raw_score": 0.81,
+                "detection_score": 0.7,
+                "separation_score": 0.6,
+                "symmetry_score": 0.5,
+                "sidelobe_score": 0.4,
+                "resolution_score": 0.3,
+                "width_ratio": 1.25,
+                "resolution_reference_fwhm": 2.5,
+                "resolution_weight": 0.2,
+            }
+        ],
+    )
+    row = window_rows(result, "F2", source="fid")[0]
+    assert row["score"] == 0.73 and row["raw_score"] == 0.81
+    assert row["resolution_score"] == 0.3
+    assert row["width_ratio"] == 1.25
+    assert row["resolution_reference_fwhm"] == 2.5
+    assert row["resolution_weight"] == 0.2
+    assert row["selected"] and row["applied"]
+
+
 @pytest.mark.parametrize("sampling", ["uniform", "nus"])
 def test_processing_score_rows_distinguish_selected_and_applied(
     tmp_path: Path,

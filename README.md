@@ -11,17 +11,17 @@ strategy, and drives NMRPipe and SMILE to produce spectra. It brings data inspec
 manual processing, optimisation, quality control, peak picking and viewing into one workflow, with
 the resolved parameters, scripts, warnings and outputs saved alongside the result.
 
-**Software: 1.0.7 · Python/CLI API: 1.1.3 · Target platform: Linux**
+**Software: 1.0.8 · Python/CLI API: 1.1.4 · Target platform: Linux**
 
 **For desktop use on Linux, the simplest option is the AppImage.**
-Download the [1.0.7 AppImage](https://github.com/RociferX/nmrforge/releases/download/v1.0.7/NMRForge-1.0.7-x86_64.AppImage)
-and its [checksum file](https://github.com/RociferX/nmrforge/releases/download/v1.0.7/SHA256SUMS-v1.0.7.txt)
+Download the [1.0.8 AppImage](https://github.com/RociferX/nmrforge/releases/download/v1.0.8/NMRForge-1.0.8-x86_64.AppImage)
+and its [checksum file](https://github.com/RociferX/nmrforge/releases/download/v1.0.8/SHA256SUMS-v1.0.8.txt)
 from the release; no separate Python or Qt setup is needed. Follow
 [Installation](#installation) for startup and source/API setup. Real spectral processing still
 requires a separate NMRPipe installation; NUS reconstruction also needs SMILE.
 
 Desktop users can use the AppImage or a source installation; the Python/CLI API uses a source
-or package installation. API **v1.1.3** retains the **38-column** peak-table contract and records
+or package installation. API **v1.1.4** retains the **38-column** peak-table contract and records
 bounded reference-window scoring, including shared representative traces and reference peaks.
 The packaged binary's `BUILD_INFO.txt` identifies its version, source revision and dependencies.
 
@@ -138,14 +138,14 @@ licence inventory.
 
 ### Linux AppImage — simplest desktop setup
 
-Use the [1.0.7 release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.7).
-Download `NMRForge-1.0.7-x86_64.AppImage` and
-`SHA256SUMS-v1.0.7.txt`, then run:
+Use the [1.0.8 release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.8).
+Download `NMRForge-1.0.8-x86_64.AppImage` and
+`SHA256SUMS-v1.0.8.txt`, then run:
 
 ```bash
-sha256sum -c SHA256SUMS-v1.0.7.txt
-chmod +x NMRForge-1.0.7-x86_64.AppImage
-./NMRForge-1.0.7-x86_64.AppImage
+sha256sum -c SHA256SUMS-v1.0.8.txt
+chmod +x NMRForge-1.0.8-x86_64.AppImage
+./NMRForge-1.0.8-x86_64.AppImage
 ```
 
 The AppImage bundles Python, Qt and the desktop application, so desktop users can start without
@@ -265,7 +265,7 @@ statistics. Reference construction converts the raw inputs; combinations reuse t
 read-only. Explicit multi-segment import is opt-in with `segmented=True`; missing or incompatible
 reference evidence requires rebuilding with `force=True`.
 
-The separately versioned API is currently **v1.1.3**. Use `compat_manifest()` to inspect processing fingerprints and the retained 38-column table contract. Reference construction records bounded window-scoring diagnostics in per-condition `optimization_scores.csv` files. Explicit candidate pools replace the corresponding defaults, and a selected valid candidate is applied to the reference. The [API guide](docs/external-api/README.md) documents the scoring defaults, CSV fields and boundaries.
+The separately versioned API is currently **v1.1.4**. Use `compat_manifest()` to inspect processing fingerprints and the retained 38-column table contract. Reference construction records bounded window-scoring diagnostics in per-condition `optimization_scores.csv` files. Explicit candidate pools replace the corresponding defaults, and a selected valid candidate is applied to the reference. The [API guide](docs/external-api/README.md) documents the scoring defaults, CSV fields and boundaries.
 See the [API guide](docs/external-api/README.md), [Python reference](docs/python-api.md),
 and [outputs and records](docs/external-api/06-outputs-and-records.md).
 
@@ -361,7 +361,7 @@ candidate statistics and explanations of the differences:
 | --- | --- | --- |
 | 2D uniform | BMRB 27493 HSQC; author-supplied Bruker spectrum | 125/126 (99.21%) |
 | Controlled 2D NUS | BMRB 27493 uniform raw data downsampled at 75% requested, 68/90 increments (75.56%) actual; author-supplied Bruker spectrum | 123/126 (97.62%) |
-| 3D uniform | BMRB 15750 HNCO; full 3D reference rebuilt with the author's scripts | HN 79/84; HC 72/81; NC 64/71 |
+| 3D uniform | BMRB 15750 HNCO; full 3D reference rebuilt with the author's scripts | HN 80/84; HC 72/81; NC 64/71 |
 | Acquired 3D NUS | BMRB 52533 HNCO, 25% acquired sampling; deposited full 3D reference | HN 89/89; HC 93/93; NC 79/79 |
 
 The report compares main-signal positions, phase residuals, ALT/NEG encoding, resolved sweep

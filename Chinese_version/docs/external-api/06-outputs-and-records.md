@@ -1,4 +1,4 @@
-# 06 · 输出与记录(v1.1.3)
+# 06 · 输出与记录(v1.1.4)
 
 ## 6.1 目录布局
 
@@ -58,13 +58,19 @@ print(reference.optimization_scores["path"])
 | `selected`, `applied` | 优化器选中、最终保留或采用该配置；两者不总相同 |
 | `status`, `reason` | 评分、否决、跳过、关闭或失败状态及原因 |
 | `fwhm_points`, `snr`, `shape`, `merged`, `n_ref` | 窗评分的线宽点数、SNR、线形和逐迹统计量；后两者可为中位数小数，不是完整三维峰计数 |
+| `raw_score`, `detection_score`, `separation_score`, `symmetry_score`, `sidelobe_score`, `resolution_score` | 窗评分各项；检测分项范围0–30，其余三个质量因子范围0–1；`raw_score`是逐迹检测强度×分峰×对称×旁瓣乘积的中位数，四个子分项分别取同一批迹的中位数，故子分项相乘不保证等于`raw_score` |
+| `width_ratio`, `resolution_reference_fwhm`, `resolution_weight` | 连续分辨率调整的审计值；`width_ratio = candidate_fwhm / min_valid_fwhm`且不小于1，`resolution_reference_fwhm`为本轮有效候选的最小有效FWHM（点），`resolution_weight`缺省为2 |
+| `baseline_slope`, `baseline_offset`, `baseline_curvature`, `baseline_stripe` | 基线候选在同一次`baseline_quality.evaluate`中的原始指标；仅基线行有值 |
+| `baseline_slope_score`, `baseline_offset_score`, `baseline_curvature_score`, `baseline_stripe_score` | 各基线指标对应的0–100分项；依次为`100*(1-min(1,4*abs(slope)))`、`100*(1-min(1,2*abs(offset)))`、`100*(1-min(1,6*curvature))`、`100*(1-min(1,stripe))`；仅基线行有值。`raw_score`等于基线总分`score` |
 | `reference_sigma` | 本轴参考检测实际使用12或6；仅在12σ无合格参考时尝试带跨迹支持的6σ回退；不是最终峰表的检测阈值 |
 | `scanned_traces`, `used_traces`, `total_traces` | 探测数、正式评分迹数及本轴总迹数；正式评分最多12条，探测最多256条，并受缓存大小上限约束 |
 | `sampling_json` | 各候选共用的迹索引、参考峰、补样原因、探测预算及阈值诊断；非窗评分行可为空对象 |
 
 分数越高越优，但只在**同阶段、同轴、本轮候选**内比较，不能比较窗分和基线分，也不代表终谱质量总分。
 各窗候选在相同代表迹和共享参考峰上评分；无有效参考峰的迹线记零分，不从候选谱另建参考目标。
-窗分保留优化器的分辨率门限与惩罚之后的数值；未通过门限的候选分为0，并注明`resolution_gate`。
+窗`raw_score`为所有共享采样迹的检测强度×分峰因子×对称因子×旁瓣因子乘积的中位数，包括零分迹；四个可读分项各自对同一批迹取中位数，因此四个分项的乘积可能与`raw_score`不同。最终窗`score = raw_score * resolution_score`。
+`width_ratio = candidate_fwhm / min_valid_fwhm`（`r≥1`），`resolution_score = r^(-resolution_weight)`，缺省`resolution_weight=2`；该连续调整对直接维和间接维使用同一规则。有效但较宽的候选仍有非零分辨率因子，不因固定比值门槛直接归零。其它质量项可使`raw_score`为0；没有有效参考信号或全部候选最终分不为正时不产生赢家。
+基线总分沿用`baseline_quality.evaluate`：`clip(100*(1-min(1,4*abs(slope)+2*abs(offset)+6*curvature+stripe)),0,100)`；各分项分别截断后便于解释，不能用分项的乘积或平均值还原总分。
 基线条纹否决发生在质量评分之前，CSV分数留空、状态为`vetoed`，不把内部否决哨兵当质量分。
 默认基线优化在增益不超过0.5时保留off，即使某个校正候选的原始分数略高；基线已良好时仅记录已算出的off分。
 显式候选网格不使用这两项提前保留规则。
@@ -77,6 +83,10 @@ print(reference.optimization_scores["path"])
 `phase_route="none"`时写`not_run`，不补算分数。旧参考没有逐候选记录时标`not_recorded`；
 若需要完整分数，使用`force=True`重新构建参考。缓存复用保持原始评分；CSV丢失或损坏时
 从冻结的结构化行恢复，不重跑优化。评分附件不进入组合基底，不增加峰表列。
+本次增加的评分列追加在既有CSV列之后，CSV旧列顺序不变；JSON结构化行沿用相同字段集合，schema仍为`v1`。
+有效旧CSV按原文件复用，可能仍是旧列；旧JSON行未保存的新字段保持缺键。
+CSV丢失或损坏后按当前表头从冻结行恢复，缺失项写空列，不从旧参考谱追算或回填。
+需要完整新子项时用`force=True`重建参考。统一峰表仍为38列，API仍为v1.1.4。
 
 ## 6.2 统一峰表字段(当前 **38 列**)
 

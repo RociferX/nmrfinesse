@@ -1240,7 +1240,6 @@
   "only 1 subdirectory holds data files ({p0}); a segmented import needs at least 2; these subdirectories look independent: {p1}": "仅找到 1 个含数据文件的子目录({p0}),分段导入至少需要 2 个;非数据子目录已忽略: {p1}",
   "only 2D NUS combinations are supported; found {p0}D NUS (3D NUS needs more work on the slice stream and candidate output; see docs/external-api/09-limitations-and-roadmap.md)": "当前只支持 2D NUS 参数组合,检测到 {p0}D NUS(3D NUS 需要切片流与候选输出进一步改造,见 docs/external-api/09-limitations-and-roadmap.md)",
   "only {p0} index line(s)": "只有 {p0} 行索引",
-  "optimal {p0} (FWHM {p1:.2f}point, SNR {p2:.1f}, shape {p3:.3f}, score {p4:.3f}); qualifying pool {p5}/{p6} candidate(s) (resolution >= {p7:.2f}point)": "最优 {p0} (FWHM {p1:.2f}点, SNR {p2:.1f}, 线形 {p3:.3f}, score {p4:.3f}); 达标池 {p5}/{p6} 候选(分辨率 >= {p7:.2f}点)",
   "optimisation ": "已优化 ",
   "optimisation None": "已优化 无",
   "optimise the data within the group in turn": "依次优化组内数据",
@@ -1765,5 +1764,6 @@
   "condition {p0!r} is bound to different dataset sources or segment order; use another condition label or a separate study root": "条件 {p0!r} 已绑定不同的数据来源或段顺序；请使用新条件名称或新研究根目录",
   "dataset segment parameters disagree: {p0} vs {p1} (dimensionality / nuclei / TD / sweep width / sampling mode / acquisition layout / frequency / carrier must all match)": "分段数据参数不一致：{p0} 与 {p1}（维数、核、有效 TD、谱宽、采样模式、采集布局、频率和载频须一致）",
   "Reuse frozen reference FID (conversion disabled)": "复用建立参考时的 FID（禁止重新转换）",
-  "Reference FID is unavailable or no longer matches the reference ({p0}). Rebuild this condition's reference with force=True (CLI: reference --force) before running combinations; automatic reconversion is disabled.": "参考 FID 不可用或与建立参考时不一致（{p0}）。请先用 force=True（命令行：reference --force）重新建立该条件的参考，再运行组合；不会自动重新转换。"
+  "Reference FID is unavailable or no longer matches the reference ({p0}). Rebuild this condition's reference with force=True (CLI: reference --force) before running combinations; automatic reconversion is disabled.": "参考 FID 不可用或与建立参考时不一致（{p0}）。请先用 force=True（命令行：reference --force）重新建立该条件的参考，再运行组合；不会自动重新转换。",
+  "optimal {p0} (FWHM {p1:.2f}point, SNR {p2:.1f}, shape {p3:.3f}, score {p4:.3f}); scored {p5}/{p6} candidate(s); resolution factor {p7:.3f} (width {p8:.3f}x, exponent {p9:.3f})": "最优 {p0} (FWHM {p1:.2f}点, SNR {p2:.1f}, 线形 {p3:.3f}, 得分 {p4:.3f}); 已评分 {p5}/{p6} 候选; 分辨率因子 {p7:.3f} (线宽 {p8:.3f}倍, 指数 {p9:.3f})"
 }

@@ -1,6 +1,6 @@
 # nmrForge documentation
 
-Software **1.0.7** · Python/CLI API **1.1.3**.
+Software **1.0.8** · Python/CLI API **1.1.4**.
 Start with the [project README](../README.md) for features, workflow, examples and evidence.
 For Linux desktop use, the AppImage is the simplest route; see [installation](installation.md)
 for the current release-artifact status. NMRPipe and SMILE are installed separately.
@@ -38,7 +38,7 @@ for the current release-artifact status. NMRPipe and SMILE are installed separat
 [Four-route comparisons](evidence/real-data-comparison.md) present spectra obtained with the current
 processing workflow, scripts, parameters and candidate statistics. The cases include 2D uniform,
 controlled artificial 2D NUS, 3D uniform and acquired 3D NUS.
-[BMRB15750 script comparison](evidence/script-comparisons_20261014.json) gives the author and
+[BMRB15750 script comparison](evidence/script-comparisons_20261015.json) gives the author and
 automatic processing commands.
 
 ## Development and distribution

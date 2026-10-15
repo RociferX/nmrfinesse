@@ -1,6 +1,6 @@
 # 四条处理路径：二维谱与三维投影对照
 
-本页展示软件1.0.7 / API v1.1.3按照最新数据处理流程得到的终谱，四组均于2026-10-14从原始数据重新处理、统计与出图。
+本页展示软件1.0.8 / API v1.1.4按照最新数据处理流程得到的终谱，四组均于2026-10-15从原始数据重新处理、统计与出图。
 四组均与作者提供的处理谱或原样作者脚本重建谱对照，采用自动流程生成最终相位与处理参数。
 
 ## 如何读图
@@ -48,22 +48,22 @@
 
 ## 2D uniform：与作者Bruker谱比较
 
-![2D uniform：与作者Bruker谱比较](evidence-uniform2d_20261014.png)
+![2D uniform：与作者Bruker谱比较](evidence-uniform2d_20261015.png)
 
-本谱135个、作者126个候选，匹配125对（99.21%）。**唯一未匹配项是作者强峰旁的一处较强正旁瓣被单独选成候选**
-（H约8.544、N约129.748 ppm）；自动谱中保留了这段肩部/旁瓣结构，未将它再单列为独立峰。
-因此这一项反映候选拆分方式的差异，主体信号保持一致。自动N维采用GM4/8 Hz，与作者不同的窗仍得到良好对应。
+本谱147个、作者126个候选，匹配125对（99.21%）。**唯一未匹配项是作者强峰旁的一处较强正旁瓣被单独选成候选**
+（H约8.544、N约129.748 ppm）；自动谱中保留了这段肩部/旁瓣结构，局部响应约为本谱最大峰的7.84%，未单独进入10%候选表。
+因此这一项反映候选拆分方式的差异，主体信号保持一致。本轮H/N两维自动选用无窗，与作者不同的处理方案仍得到良好对应。
 作者整轴平移H +0.072584594、N +0.059775701 ppm，使用已冻结强峰锚点统一参照。
 
 | 投影 | 本谱 / 参考候选 | 匹配 / 参考候选 | 中位绝对位置差(ppm) |
 | --- | --- | --- | --- |
-| HN | 135 / 126 | 125/126＝99.21% | H 0.00049；N 0.00759 |
+| HN | 147 / 126 | 125/126＝99.21% | H 0.00100；N 0.00805 |
 
-匹配候选的局部等效线宽本谱/参考中位比：HN H 0.94 / N 0.92。按匹配候选的局部半高宽估计。
+匹配候选的局部等效线宽本谱/参考中位比：HN H 0.82 / N 0.93。按匹配候选的局部半高宽估计。
 
-自动完整构建用时33.102 s，终谱512×1028。
+自动完整构建用时33.165 s，终谱512×1028。
 
-[比较统计与未匹配坐标](2d-uniform-author-comparison_20261014.json)；[局部响应核验](local-response-audit_20261014.json)。
+[比较统计与未匹配坐标](2d-uniform-author-comparison_20261015.json)；[局部响应核验](local-response-audit_20261015.json)。
 
 ### 本组处理脚本 / 参数对比
 
@@ -71,8 +71,8 @@
 
 | 核 / 逻辑轴 | 本次明确采用的窗配置 |
 | --- | --- |
-| 1H / F2 | `{"c": 0.5, "end": 0.98, "off": 0.45, "pow": 2, "type": "sine_bell"}` |
-| 15N / F1 | `{"c": 1.0, "g1": 4.0, "g2": 8.0, "g3": 0.0, "type": "gaussian"}` |
+| 1H / F2 | `{"type": "none"}` |
+| 15N / F1 | `{"type": "none"}` |
 
 作者参考为同目录Bruker `pdata/1`；WDW=4、SSB=2、LB=GB=0，H/N的SI为2048/256。
 作者Bruker相位按原始PHC约定列出，二维相位效果通过最终峰形及整体符号对照。
@@ -107,14 +107,12 @@ bruk2pipe -verb -in ./ser \
 # experiment: d_001
 xyz2pipe -in d_001.fid -x \
 | nmrPipe -fn POLY -time \
-| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 2 -c 0.5 \
 | nmrPipe -fn ZF -size 4096 \
 | nmrPipe -fn FT \
 | nmrPipe -fn PS -p0 0 -p1 0 -di \
 | nmrPipe -fn POLY -ord 3 -auto \
 | nmrPipe -fn EXT -x1 10.5ppm -xn 6.5ppm -sw -round 2 \
 | nmrPipe -fn TP \
-| nmrPipe -fn GM -g1 4 -g2 8 \
 | nmrPipe -fn ZF -size 512 \
 | nmrPipe -fn FT \
 | nmrPipe -fn PS -p0 265 -p1 0 -di \
@@ -164,7 +162,7 @@ xyz2pipe -in d_001.fid -x \
 
 ## 受控人工2D NUS：请求75%，实际75.56%
 
-![受控人工2D NUS：请求75%，实际75.56%](evidence-nus75_20261014.png)
+![受控人工2D NUS：请求75%，实际75.56%](evidence-nus75_20261015.png)
 
 调用vm_make_evidence_nus.py重新生成输入：保留完整正交增量，90点取68点，含零及末端增量，实际75.56%。
 新输入经重新导入、转换与完整SMILE终跑，直接对照作者Bruker `pdata/1`；H窗口10.5～6.5 ppm。
@@ -184,9 +182,9 @@ xyz2pipe -in d_001.fid -x \
 
 匹配候选的局部等效线宽本谱/参考中位比：HN H 0.86 / N 1.37。按匹配候选的局部半高宽估计。
 
-自动完整构建用时17.066 s，终谱256×1028。
+自动完整构建用时17.102 s，终谱256×1028。
 
-[比较统计与未匹配坐标](controlled-2d-nus75-comparison_20261014.json)；[局部响应核验](local-response-audit_20261014.json)。
+[比较统计与未匹配坐标](controlled-2d-nus75-comparison_20261015.json)；[局部响应核验](local-response-audit_20261015.json)。
 
 ### 本组处理脚本 / 参数对比
 
@@ -245,7 +243,7 @@ nmrPipe -in d_001.fid \
 | nmrPipe -fn SMILE -nDim 2 \
            -sample nuslist -nThread 2 \
            -sampleCount 68 -nSigma 5 -off 0 0 -report 1 \
-           -maxMem 11.8195 \
+           -maxMem 11.7058 \
            -scaling 1 \
            -maxIter 300 \
            -xT 90 \
@@ -307,12 +305,12 @@ nmrPipe -in nus2d/recon.ft1 \
 
 ## 3D uniform：BMRB15750与作者完整3D脚本重建谱
 
-![3D uniform：BMRB15750与作者完整3D脚本重建谱](evidence-uniform3d_20261014.png)
+![3D uniform：BMRB15750与作者完整3D脚本重建谱](evidence-uniform3d_20261015.png)
 
 原始ser为16,777,216字节，与32×32完整复网格及正交分量相符；不是二维切片充当三维参考。
 H/N/C参照平移分别+0.018999577、+0.025001526、+0.001007080 ppm，来自本轮同核谱头CAR差。
-**未匹配位置仍有可对应信号。** 三个投影累计21处未匹配候选中，11处弱响应低于统一10%阈值，
-8处已有近邻候选参加一对一匹配，另2处表现为肩峰或重叠结构而未单列。局部放大图均能看到对应正信号。
+**未匹配位置仍有可对应信号。** 三个投影累计20处未匹配候选中，11处弱响应低于统一10%阈值，
+8处已有近邻候选参加一对一匹配，另1处表现为肩峰或重叠结构而未单列。局部放大图均能看到对应正信号。
 图中红色负瓣与正峰周围旁瓣也体现窗及截断处理的差异；主符号匹配聚焦正信号。
 
 **N维峰宽差异来自作者额外的LP优化。** 作者在N、C间接维使用`LP -fb`及专用窗，N维尤其更窄、部分弱结构更容易独立检出。
@@ -323,13 +321,13 @@ H/N/C参照平移分别+0.018999577、+0.025001526、+0.001007080 ppm，来自�
 
 | 投影 | 本谱 / 参考候选 | 匹配 / 参考候选 | 中位绝对位置差(ppm) |
 | --- | --- | --- | --- |
-| HN | 80 / 84 | 79/84＝94.05% | H 0.00088；N 0.01671 |
-| HC | 79 / 81 | 72/81＝88.89% | H 0.00082；C 0.03183 |
-| NC | 70 / 71 | 64/71＝90.14% | N 0.01873；C 0.03074 |
+| HN | 83 / 84 | 80/84＝95.24% | H 0.00086；N 0.01304 |
+| HC | 78 / 81 | 72/81＝88.89% | H 0.00084；C 0.03177 |
+| NC | 70 / 71 | 64/71＝90.14% | N 0.01658；C 0.03039 |
 
-匹配候选的局部等效线宽本谱/参考中位比：HN H 0.67 / N 1.57；HC H 0.68 / C 0.75；NC N 1.59 / C 0.72。按匹配候选的局部半高宽估计。
+匹配候选的局部等效线宽本谱/参考中位比：HN H 0.68 / N 1.31；HC H 0.69 / C 0.74；NC N 1.33 / C 0.71。按匹配候选的局部半高宽估计。
 
-自动完整构建用时52.337 s，终谱128×128×548。
+自动完整构建用时53.395 s，终谱128×128×548。
 
 [作者LP开关对照统计](author-lp-comparison_20261014.json)保留相同作者命令下的峰宽变化。
 
@@ -342,7 +340,7 @@ H/N/C参照平移分别+0.018999577、+0.025001526、+0.001007080 ppm，来自�
 
 </details>
 
-[比较统计与未匹配坐标](3d-uniform-bmrb15750-comparison_20261014.json)；[局部响应核验](local-response-audit_20261014.json)。
+[比较统计与未匹配坐标](3d-uniform-bmrb15750-comparison_20261015.json)；[局部响应核验](local-response-audit_20261015.json)。
 
 ### 本组处理脚本 / 参数对比
 
@@ -350,8 +348,8 @@ H/N/C参照平移分别+0.018999577、+0.025001526、+0.001007080 ppm，来自�
 
 | 核 / 逻辑轴 | 本次明确采用的窗配置 |
 | --- | --- |
-| 1H / F3 | `{"c": 1.0, "g1": 4.0, "g2": 8.0, "g3": 0.0, "type": "gaussian"}` |
-| 15N / F2 | `沿用正常默认；见实际脚本` |
+| 1H / F3 | `{"type": "none"}` |
+| 15N / F2 | `{"type": "none"}` |
 | 13C / F1 | `{"type": "none"}` |
 
 作者使用H维SP及两次PS（3°/0°、−4°/43°），含间接维LP与实验专用窗处理；
@@ -388,13 +386,11 @@ bruk2pipe -verb -in ./ser \
 # experiment: d_001
 xyz2pipe -in fid/test%03d.fid -x \
 | nmrPipe -fn POLY -time \
-| nmrPipe -fn GM -g1 4 -g2 8 \
 | nmrPipe -fn ZF -size 2048 \
 | nmrPipe -fn FT \
 | nmrPipe -fn PS -p0 15 -p1 0 -di \
 | nmrPipe -fn EXT -x1 10ppm -xn 6ppm -sw -round 2 \
 | nmrPipe -fn TP \
-| nmrPipe -fn SP -off 0.45 -end 0.95 -pow 1 -c 0.5 \
 | nmrPipe -fn ZF -size 128 \
 | nmrPipe -fn FT \
 | nmrPipe -fn PS -p0 267.5 -p1 0 -di \
@@ -486,7 +482,7 @@ xyz2pipe -in ./data/test%03d.ft3  -y -verb  \
 
 ## 实采3D NUS：BMRB52533与沉积完整终谱比较
 
-![实采3D NUS：BMRB52533与沉积完整终谱比较](evidence-acquired3d_20261014.png)
+![实采3D NUS：BMRB52533与沉积完整终谱比较](evidence-acquired3d_20261015.png)
 
 实采441点、42×42复网格、25%采样；输入ser/nuslist哈希保持。三个投影参考候选均匹配，未额外平移。
 **本组没有未匹配的参考候选：HN、HC、NC三个投影分别达到89/89、93/93、79/79。**
@@ -500,9 +496,9 @@ xyz2pipe -in ./data/test%03d.ft3  -y -verb  \
 
 匹配候选的局部等效线宽本谱/参考中位比：HN H 0.95 / N 0.76；HC H 0.94 / C 0.78；NC N 0.75 / C 0.77。按匹配候选的局部半高宽估计。
 
-自动完整构建用时235.346 s，终谱256×256×1176。
+自动完整构建用时276.152 s，终谱256×256×1176。
 
-[比较统计与未匹配坐标](acquired-3d-bmrb52533-comparison_20261014.json)；[局部响应核验](local-response-audit_20261014.json)。
+[比较统计与未匹配坐标](acquired-3d-bmrb52533-comparison_20261015.json)；[局部响应核验](local-response-audit_20261015.json)。
 
 ### 本组处理脚本 / 参数对比
 
@@ -563,7 +559,7 @@ xyz2pipe -in nus3d_1/test%04d.ft1 -x \
 | nmrPipe -fn SMILE -nDim 3 \
            -sample nuslist -nThread 2 \
            -sampleCount 441 -nSigma 5 -off 0 0 -report 1 \
-           -maxMem 10.0464 \
+           -maxMem 9.99663 \
            -scaling 1 \
            -maxIter 1500 \
            -xP0 182.5 -xP1 0 \
@@ -694,17 +690,18 @@ xyz2pipe -verb -in ft/DomainIV_HNCO_%03d.ft3 -x  \
 共同H窗口内旋转残差-2.06°～9.28°，近8 ppm为3.61°，显示自动相位在主要信号区域接近作者设置。
 52533联合H/N等价后H/N/C残差0.969°/2.50°/0°。二维作者Bruker PHC参数另按其原始约定列出，并通过最终峰形对照相位效果。
 15750碳维FT -alt、52533 N维-alt -neg与C维-alt、Echo–AntiEcho转换不机械套ALT/NEG，均可在实际脚本核查。
-[本轮相位核验](phase-and-encoding-comparison_20261014.json)保留原值、等价变换与相位算子结果。
+[本轮相位核验](phase-and-encoding-comparison_20261015.json)保留原值、等价变换与相位算子结果。
 
 ## 方法、记录与复现
 
 匹配使用同号、H/N/C容差0.02/0.20/0.15 ppm、联合归一距离≤1、从近到远一对一贪心；3D先裁共同完整窗口。
-源码版本1.0.7/API1.1.3；单次运行，各轴自动相位后正常基线/窗评分并完整终跑。
+源码版本1.0.8/API1.1.4；单次运行，各轴自动相位后正常基线/窗评分并完整终跑。
 默认窗池含无窗、5 SP、2 GM、2 EM；12σ无参考时6σ回退是内部评分规则，不改变本页10%展示检测。
+窗评分将检测、分峰、对称与旁瓣的原分乘以相对线宽保留率的平方，连续权衡分辨率；参考记录保留各分项。
 NUS默认直接SP固定；2D首轮轻量P0初始化仍按门控，3D不套用。不因统计改变处理参数、阈值或逐峰坐标。
 
-[构造清单](controlled-nus75-construction_20261014.json)、[完整处理来源](processing-provenance_20261014.json)、
-[四组实际脚本](script-comparisons_20261014.json)记录版本、输入/终谱哈希、优化结果及实际命令。
+[构造清单](controlled-nus75-construction_20261015.json)、[完整处理来源](processing-provenance_20261015.json)、
+[四组实际脚本](script-comparisons_20261015.json)记录版本、输入/终谱哈希、优化结果及实际命令。
 脚本展示路径改为相对路径；记录的原始执行脚本SHA-256仍保留，未改终谱字节。
 常规复现使用每组原始Bruker目录：
 

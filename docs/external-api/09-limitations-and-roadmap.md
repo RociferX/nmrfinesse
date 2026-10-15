@@ -1,4 +1,4 @@
-# 09 · Support and execution boundaries (v1.1.3)
+# 09 · Support and execution boundaries (v1.1.4)
 
 ## 9.1 Support matrix
 
@@ -11,7 +11,7 @@
 | Peak localisation | Three-point parabolic | Optional target subset; independent IDs per spectrum |
 | Full schedule labelled NUS | Depends on order | Standard full grid may use uniform; reordered coverage needs placement |
 | Overlap/deconvolution and Lorentzian/Voigt/multi-peak fitting | Not provided | Detection/localisation acts on extrema |
-| Parallel/cluster scheduling | Not provided | Serial execution with resume; callers can shard separate study roots |
+| Parallel/cluster scheduling | Not provided | No same-session concurrency; callers can run independent processes on separate study roots |
 | Parameter-key validation | Partial | Locked keys raise; deterministic/unknown keys produce warnings/notes |
 | Cross-spectrum matching, assignment and statistical inference | Not provided | Implemented by downstream analysis |
 

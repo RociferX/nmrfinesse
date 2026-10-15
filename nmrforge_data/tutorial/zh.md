@@ -3,7 +3,7 @@
 这份教程给第一次用图形界面的人:先看「能做什么」,再照一次典型会话从导入数据走到峰表。
 菜单与按钮名称以程序里显示的文字为准(界面语言可在「设置 → 软件设置」切换,正文随之切换)。
 
-本教程对应软件 1.0.7 与 API v1.1.3。API 使用文档所述参数和 38 列峰表契约。Linux AppImage 与源码可从 [1.0.7 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.7) 获取。
+本教程对应软件 1.0.8 与 API v1.1.4。API 使用文档所述参数和 38 列峰表契约。Linux AppImage 与源码可从 [1.0.8 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.8) 获取。
 
 ## 1. 这个程序能做什么
 

@@ -1,6 +1,6 @@
 # Shared interfaces and API contract
 
-Software **1.0.7** · Python/CLI API **1.1.3** · Project schema **1.4**.
+Software **1.0.8** · Python/CLI API **1.1.4** · Project schema **1.4**.
 
 ## 1. Acquisition data model
 
@@ -171,7 +171,7 @@ they do not establish independent 3D peak identities or resolve every overlap.
 
 ### 11.1 Workflow semantics
 
-API **v1.1.3** is defined once by `nmrforge_api.session.API_VERSION`. A study has labelled conditions,
+API **v1.1.4** is defined once by `nmrforge_api.session.API_VERSION`. A study has labelled conditions,
 each with an independent reference spectrum/table. Reference construction imports/converts/merges
 the specified sources and freezes the FID, schedule and conversion evidence.
 
@@ -246,6 +246,23 @@ and is not dropped because a candidate scores poorly. If no qualifying trace exi
 optimization retains the current/default setting and explicit candidate requests fail. The score CSV
 includes `reference_sigma`, `scanned_traces`, `used_traces`, `total_traces` and optional `sampling_json`.
 The API signatures and 38-column peak table are unchanged.
+
+Window candidates use `score = raw_score * (candidate_fwhm / min_valid_fwhm)^(-2)`
+on every logical axis. `raw_score` is the median of per-trace detection, separation, symmetry and
+sidelobe products. Component medians use the same shared traces; multiplying those medians need not
+reproduce `raw_score`. Broader candidates retain a continuous resolution factor; other zero quality
+factors can still yield zero total score. There is no winner when no valid signal or positive final
+score exists. Window rows expose raw and component scores, `resolution_score`, `width_ratio`,
+`resolution_reference_fwhm` and `resolution_weight`. Baseline rows expose four raw metrics and four
+0–100 component scores from the same evaluation; their `raw_score` equals the total score.
+
+The score attachment retains schema `v1`, appending fields after the existing columns for 53 CSV
+columns. Valid legacy CSV files are reused unchanged; legacy JSON rows retain missing fields.
+Restored CSV files use the current header with missing values blank. Scores are not recalculated
+from cached reference spectra; use `force=True` to obtain all current components.
+`ReferenceSpectrum.optimization_scores` retains the path, hash and frozen rows. See the
+[score-table fields](external-api/06-outputs-and-records.md#611-reference-optimization-score-table).
+
 
 ### 11.6 Compatibility metadata
 

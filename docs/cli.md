@@ -7,10 +7,10 @@ implementation as the desktop application. It does not require Qt:
 python -m nmrforge_api --help
 ```
 
-The current CLI uses API v1.1.3 / software 1.0.7. API parameters and the retained 38-column peak-table
+The current CLI uses API v1.1.4 / software 1.0.8. API parameters and the retained 38-column peak-table
 contract are documented in the [Python API](python-api.md). Desktop users can download the
-[1.0.7 AppImage](https://github.com/RociferX/nmrforge/releases/tag/v1.0.7).
-Install from a source checkout containing API v1.1.3. See
+[1.0.8 AppImage](https://github.com/RociferX/nmrforge/releases/tag/v1.0.8).
+Install from a source checkout containing API v1.1.4. See
 [Installation](installation.md). Processing requires separately installed NMRPipe; NUS
 reconstruction also requires SMILE.
 

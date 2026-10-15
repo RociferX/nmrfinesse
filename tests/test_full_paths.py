@@ -177,7 +177,7 @@ class FakeBackend:
         else:
             # NMRPipe stream data is (FDF3SIZE, FDSPECNUM, FDSIZE).
             data = np.zeros((n3, n2, n1), dtype="<f4")
-        # Add several peaks.
+
         if ndim == 1:
             data[60] = 1000.0
             data[70] = 600.0
@@ -238,7 +238,7 @@ class FakeBackend:
         data = np.zeros((n_traces, n_direct), dtype=np.complex64)
         data[3, 20] = 100 + 50j
         data[5, 40] = 80 + 20j
-        # Complex -> real/imaginary interleaved reals (first axis doubled),
+
         inter = np.empty((2 * n_traces, n_direct), dtype="<f4")
         inter[0::2] = data.real.astype("<f4")
         inter[1::2] = data.imag.astype("<f4")
@@ -269,7 +269,7 @@ class FakeBackend:
 
     def reconstruct_nus(self, experiment, params, progress=None) -> dict:
         self.reconstruct_params.append(dict(params or {}))
-        # Write the reconstruction planes (2D nus2d/recon.ft1; 3D
+
         if experiment.ndim >= 3:
             plane_dir = self.work / "nus3d_rc"
             plane_dir.mkdir(parents=True, exist_ok=True)
@@ -358,22 +358,22 @@ def _install_spectrum_mocks(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "core.data.pipe_io.read_pipe_complex", fake_read_pipe_complex
     )
-    # Baseline/zero-fill scoring: the spectrum file bytes are unreadable ->
+
     import core.data.pipe_io
 
     monkeypatch.setattr(core.data.pipe_io, "read_pipe_complex", fake_read_pipe_complex)
 
 
 # ----------------------------------------------------------------------
-# ----------------------------------------------------------------------
+
 # ----------------------------------------------------------------------
 @pytest.mark.parametrize(
     ("dataset", "exp_title"),
     [
         ("hsqc_2d", "HSQC"),  # 2D uniform
         ("nus_2d", "NUS 2D"),  # 2D NUS
-        ("hnca_3d", "HNCA"),  # 3D uniform (slices)
-        ("nus_3d", "NUS 3D"),  # 3D NUS (slices)
+        ("hnca_3d", "HNCA"),
+        ("nus_3d", "NUS 3D"),
     ],
 )
 def test_auto_full_path(
@@ -397,7 +397,7 @@ def test_auto_full_path(
     assert fid_path
     data = manager.data(exp_id, data_id)
     assert data.status == "fid_ready"
-    # Slice fid existence: a single file or a slice directory
+
     fid = Path(data.fid_path)
     assert fid.is_file() or (fid.is_dir() and list(fid.glob("test*.fid")))
 
@@ -584,7 +584,7 @@ def test_auto_uniform_runs_processing_optimization(
 
 
 # ----------------------------------------------------------------------
-# ----------------------------------------------------------------------
+
 # ----------------------------------------------------------------------
 @pytest.mark.parametrize("dataset", ["hsqc_2d", "nus_2d", "hnca_3d", "nus_3d"])
 def test_explicit_reference_candidates_drive_final_processing(
@@ -626,6 +626,15 @@ def test_explicit_reference_candidates_drive_final_processing(
     assert len([row for row in rows if row["stage"] == "baseline"]) == ndim
     for row in rows:
         assert row["selected"] and row["applied"]
+        if row["stage"] == "window":
+            assert row["raw_score"] > 0
+            assert row["score"] == pytest.approx(row["raw_score"] * row["resolution_score"])
+            assert row["resolution_score"] == 1.0  # one explicit candidate per axis
+            assert row["resolution_weight"] == 2.0
+            assert row["resolution_reference_fwhm"] == row["fwhm"]
+            assert 0 < row["detection_score"] <= 30
+            for field in ("separation_score", "symmetry_score", "sidelobe_score"):
+                assert 0 <= row[field] <= 1
         if row["stage"] == "baseline":
             assert row["candidate"] == "off:0"
         elif row["axis"] == f"F{ndim}":
@@ -668,6 +677,10 @@ def test_weak_reference_window_scores_drive_final_processing(
               if r["stage"] == "window" and r["axis"] == "F2"]
     assert len(direct) == 1 and direct[0]["selected"] and direct[0]["applied"]
     assert direct[0]["sampling"]["reference_sigma"] == 6
+    assert direct[0]["raw_score"] > 0
+    assert direct[0]["score"] == pytest.approx(
+        direct[0]["raw_score"] * direct[0]["resolution_score"]
+    )
 
 
 def test_manual_full_path_uniform(
@@ -691,7 +704,7 @@ def test_manual_full_path_uniform(
             if name == "fid.com":
                 (work / "test.fid").write_bytes(b"fid")
             elif name in ("process.com", "nus.com"):
-                # The real script outputs {raw directory name}.ft2 (manual uses
+
                 (work / "d_001.ft2").write_bytes(b"ft2")
             return SimpleNamespace(returncode=0, stderr="", stdout="")
 
@@ -700,7 +713,7 @@ def test_manual_full_path_uniform(
         tmp_path, bruker_dir, "hsqc_2d"
     )
     backend = FakeBackend(manager.data_dir(exp_id, data_id, "process"))
-    # 0.2.199-patch29dm: the manual path must auto-generate the FID first
+
     generate_fid(manager, exp_id, data_id, backend)
     content = manual_fid_com(manager, exp_id, data_id, backend)
     assert "fid.com" in content
@@ -745,7 +758,7 @@ def test_manual_reads_segmented_container(
     """
     from workflow.manual import manual_scripts
 
-    # Segmented container: the root directory has no acqus, the two
+
     container = tmp_path / "seg_container"
     container.mkdir()
     for seg in ("s1", "s2"):
@@ -761,7 +774,7 @@ def test_manual_reads_segmented_container(
     (work / f"{data.id}_process.com").write_text(
         "# existing script\n", encoding="utf-8"
     )
-    # manual_scripts prefers the existing script; if it can be read, no
+
     scripts = manual_scripts(manager, entry.id, data.id)
     assert f"{data.id}_process.com" in scripts
 
@@ -868,7 +881,7 @@ def test_manual_spectrum_accepts_slice_fid(
 
 
 # ----------------------------------------------------------------------
-# ----------------------------------------------------------------------
+
 # ----------------------------------------------------------------------
 def test_batch_full_path_group(
     tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch,
@@ -886,7 +899,7 @@ def test_batch_full_path_group(
         str(bruker_dir / "hsqc_2d"),
         str(bruker_dir / "nus_2d"),
     ]
-    # 0.2.199-patch29gl: batch import validates the raw data files; back-fill
+
     (bruker_dir / "hsqc_2d" / "ser").write_bytes(b"")
     (bruker_dir / "nus_2d" / "ser").write_bytes(b"")
     controller = ProcessingController(manager)

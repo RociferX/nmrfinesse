@@ -1,8 +1,8 @@
 # nmrForge 文档导航
 
-软件 **1.0.7** · Python/CLI API **1.1.3**。
+软件 **1.0.8** · Python/CLI API **1.1.4**。
 [项目README](../README.md)介绍功能、工作流、示例和证据。
-Linux桌面使用可直接下载[AppImage](https://github.com/RociferX/nmrforge/releases/tag/v1.0.7)，按[安装说明](installation.md)启动；NMRPipe和SMILE另行安装。
+Linux桌面使用可直接下载[1.0.8 AppImage](https://github.com/RociferX/nmrforge/releases/tag/v1.0.8)，按[安装说明](installation.md)启动；NMRPipe和SMILE另行安装。
 
 ## 安装与使用
 
@@ -31,7 +31,7 @@ Linux桌面使用可直接下载[AppImage](https://github.com/RociferX/nmrforge/
 
 [四路径对照](evidence/real-data-comparison.md)展示按当前处理流程得到的谱图、脚本、参数与候选统计，
 包括2D uniform、受控人工2D NUS、3D uniform及实采3D NUS。
-[BMRB15750脚本对照](evidence/script-comparisons_20261014.json)列出作者/自动处理命令。
+[BMRB15750脚本对照](evidence/script-comparisons_20261015.json)列出作者/自动处理命令。
 
 ## 开发与分发
 

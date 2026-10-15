@@ -1,6 +1,6 @@
-# 03 · API 参考(v1.1.3)
+# 03 · API 参考(v1.1.4)
 
-顶层导出见`nmrforge_api/__init__.py`，API **1.1.3**仅在`nmrforge_api.session.API_VERSION`定义。软件**1.0.7**与API分别版本化，统一峰表为38列。
+顶层导出见`nmrforge_api/__init__.py`，API **1.1.4**仅在`nmrforge_api.session.API_VERSION`定义。软件**1.0.8**与API分别版本化，统一峰表为38列。
 
 ## 3.1 会话与数据集
 

@@ -50,6 +50,23 @@ SCORE_COLUMNS = (
     "used_traces",
     "total_traces",
     "sampling_json",
+    "raw_score",
+    "detection_score",
+    "separation_score",
+    "symmetry_score",
+    "sidelobe_score",
+    "resolution_score",
+    "width_ratio",
+    "resolution_reference_fwhm",
+    "resolution_weight",
+    "baseline_slope",
+    "baseline_offset",
+    "baseline_curvature",
+    "baseline_stripe",
+    "baseline_slope_score",
+    "baseline_offset_score",
+    "baseline_curvature_score",
+    "baseline_stripe_score",
 )
 
 
