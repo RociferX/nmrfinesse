@@ -17,7 +17,7 @@ from backend.runtime import CompletedProcess
 from backend.script_generator import generate_convert_script
 from core.data.bruker_reader import read_dataset
 from core.data.carrier import merge_carrier_params, normalize_carrier_ppm
-from nmrforge_api import (
+from nmrfinesse_api import (
     DatasetError,
     ReferenceError,
     SweepError,
@@ -26,8 +26,8 @@ from nmrforge_api import (
     open_study,
     run_reference_study,
 )
-from nmrforge_api.reference import _reference_request
-from nmrforge_api.sweep import _condition_base_params, plan_sweep, validate_axes
+from nmrfinesse_api.reference import _reference_request
+from nmrfinesse_api.sweep import _condition_base_params, plan_sweep, validate_axes
 
 
 @pytest.mark.parametrize("value", [{}, None, [], {"N": 120}, {"F1": True},
@@ -127,7 +127,7 @@ def test_conversion_auto_and_fallback_use_explicit_carrier(
 
 
 def test_build_reference_passes_carrier_and_binds_cache(tmp_path: Path, bruker_dir: Path) -> None:
-    from test_nmrforge_api import _FakeSweepBackend
+    from test_nmrfinesse_api import _FakeSweepBackend
 
     class Backend(_FakeSweepBackend):
         def convert_to_fid(self, experiment, data_dir, **kwargs):
@@ -220,7 +220,7 @@ def test_conversion_entry_forwards_carrier_params(
 
 
 def test_conditions_override_public_keyword_per_axis(tmp_path: Path, bruker_dir: Path) -> None:
-    from test_nmrforge_api import _FakeSweepBackend
+    from test_nmrfinesse_api import _FakeSweepBackend
 
     result = run_reference_study(
         tmp_path / "study", datasets={"A": bruker_dir / "hsqc_2d", "B": bruker_dir / "hsqc_2d"},
@@ -233,7 +233,7 @@ def test_conditions_override_public_keyword_per_axis(tmp_path: Path, bruker_dir:
 
 
 def test_unknown_axis_preflight_before_any_backend_work(tmp_path: Path, bruker_dir: Path) -> None:
-    from test_nmrforge_api import _FakeSweepBackend
+    from test_nmrfinesse_api import _FakeSweepBackend
 
     backend = _FakeSweepBackend()
     with pytest.raises(DatasetError, match="F3"):
@@ -248,7 +248,7 @@ def test_unknown_axis_preflight_before_any_backend_work(tmp_path: Path, bruker_d
 def test_empty_condition_override_is_rejected_even_with_common_carrier(
     tmp_path: Path, bruker_dir: Path,
 ) -> None:
-    from test_nmrforge_api import _FakeSweepBackend
+    from test_nmrfinesse_api import _FakeSweepBackend
 
     backend = _FakeSweepBackend()
     with pytest.raises(DatasetError, match="nonempty"):
@@ -265,7 +265,7 @@ def test_sweep_cannot_change_conversion_carrier(key) -> None:
 
 
 def test_base_overrides_carrier_are_locked(tmp_path: Path, bruker_dir: Path) -> None:
-    from test_nmrforge_api import _FakeSweepBackend
+    from test_nmrfinesse_api import _FakeSweepBackend
 
     session = open_study(tmp_path / "study", backend=_FakeSweepBackend())
     add_dataset(session, bruker_dir / "hsqc_2d")

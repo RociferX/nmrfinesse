@@ -7,15 +7,15 @@ from pathlib import Path
 
 import pytest
 
-from nmrforge_api import (
+from nmrfinesse_api import (
     ReferenceError,
     add_dataset,
     build_reference,
     open_study,
     run_reference_study,
 )
-from nmrforge_api.direct_range import parse_direct_range
-from nmrforge_api.reference import ReferenceSpectrum, _reference_request, validate_reference_input
+from nmrfinesse_api.direct_range import parse_direct_range
+from nmrfinesse_api.reference import ReferenceSpectrum, _reference_request, validate_reference_input
 
 
 def test_normalization_binds_all_inputs_and_equivalent_public_spellings() -> None:
@@ -47,7 +47,7 @@ def test_legacy_and_tampered_fingerprints_fail_closed() -> None:
 
 
 def test_window_change_is_not_silently_ignored(tmp_path: Path, bruker_dir: Path) -> None:
-    from test_nmrforge_api import _FakeSweepBackend
+    from test_nmrfinesse_api import _FakeSweepBackend
 
     backend = _FakeSweepBackend()
     session = open_study(tmp_path / "study", backend=backend)
@@ -70,7 +70,7 @@ def test_window_change_is_not_silently_ignored(tmp_path: Path, bruker_dir: Path)
 
 
 def test_study_preflights_all_conditions_before_rebuild(tmp_path: Path, bruker_dir: Path) -> None:
-    from test_nmrforge_api import _FakeSweepBackend
+    from test_nmrfinesse_api import _FakeSweepBackend
 
     backend = _FakeSweepBackend()
     result = run_reference_study(tmp_path / "study", datasets={"A": bruker_dir / "hsqc_2d",

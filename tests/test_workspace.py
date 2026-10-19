@@ -14,8 +14,9 @@ from core.workspace import (
 )
 
 
-def test_default_workspace_path() -> None:
-    assert default_workspace_path() == Path.home() / "NMRForgeWorkspace"
+def test_default_workspace_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    assert default_workspace_path() == tmp_path / "NMRFinesseWorkspace"
 
 
 def test_ensure_is_idempotent(tmp_path: Path) -> None:

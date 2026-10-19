@@ -1,19 +1,19 @@
 # Installation
 
 Linux is the target runtime; Windows may be used to edit source but is not a supported runtime
-environment. Linux desktop users can use the AppImage; download the [1.0.8 AppImage](https://github.com/RociferX/nmrforge/releases/tag/v1.0.8) from the release.
+environment. Linux desktop users can use the AppImage; download the [1.0.9 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.9) from the release.
 Install the Python API and command-line tools separately by following the source steps below.
 
 ## AppImage (Linux)
 
-Download `NMRForge-1.0.8-x86_64.AppImage` and
-`SHA256SUMS-v1.0.8.txt` from its release, then verify and start the AppImage in the same directory:
+Download `NMRFinesse-1.0.9-x86_64.AppImage` and
+`SHA256SUMS-v1.0.9.txt` from its release, then verify and start the AppImage in the same directory:
 
 ```bash
-sha256sum -c SHA256SUMS-v1.0.8.txt
-chmod +x NMRForge-1.0.8-x86_64.AppImage
-./NMRForge-1.0.8-x86_64.AppImage --licenses
-./NMRForge-1.0.8-x86_64.AppImage
+sha256sum -c SHA256SUMS-v1.0.9.txt
+chmod +x NMRFinesse-1.0.9-x86_64.AppImage
+./NMRFinesse-1.0.9-x86_64.AppImage --licenses
+./NMRFinesse-1.0.9-x86_64.AppImage
 ```
 
 The AppImage includes third-party licence notices, including those for PySide6/Qt. See the
@@ -22,24 +22,24 @@ release assets and [THIRD_PARTY.md](../THIRD_PARTY.md) for distribution informat
 ## Source installation
 
 ```bash
-git clone https://github.com/RociferX/nmrforge.git
-cd nmrforge
+git clone https://github.com/RociferX/nmrfinesse.git
+cd nmrfinesse
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[test]"
 python main.py
 ```
 
-Packaged installs and wheels include runtime resources (`nmrforge_data/config`,
-`nmrforge_data/presets`, `gui/assets`, `ui_support/locales`). Real processing requires a separately
+Packaged installs and wheels include runtime resources (`nmrfinesse_data/config`,
+`nmrfinesse_data/presets`, `gui/assets`, `ui_support/locales`). Real processing requires a separately
 installed NMRPipe; NUS reconstruction also requires SMILE. Neither tool is downloaded or bundled
-by nmrForge.
+by NMRFinesse.
 
 ## Developers: editable source install
 
 ```bash
 git clone <this repository>
-cd nmrForge
+cd nmrfinesse
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
@@ -59,14 +59,14 @@ The editable install exposes one console script:
 
 | Command | What it does |
 | --- | --- |
-| `nmrforge-viewer` | Standalone spectrum viewer (`python -m viewer` works too) |
+| `nmrfinesse-viewer` | Standalone spectrum viewer (`python -m viewer` works too) |
 
 Use `python main.py` to start the main GUI from an editable checkout.
 
-The processing command line lives in the `nmrforge_api` package:
+The processing command line lives in the `nmrfinesse_api` package:
 
 ```bash
-python -m nmrforge_api --help
+python -m nmrfinesse_api --help
 ```
 
 ## Verifying an installation
@@ -74,7 +74,7 @@ python -m nmrforge_api --help
 ```bash
 python -m pytest -q                                       # full test suite
 python -m ruff check .                                    # static checks
-python -c "import core, nmrforge_api, gui, viewer; print('imports ok')"
+python -c "import core, nmrfinesse_api, gui, viewer; print('imports ok')"
 python examples/make_synthetic_dataset.py --out example_data/hsqc_2d
 python examples/quickstart.py example_data/hsqc_2d
 ```
@@ -89,7 +89,7 @@ QT_QPA_PLATFORM=offscreen python -m pytest -q
 
 ```bash
 pip install -e .            # re-run after editing pyproject.toml or entry points
-pip uninstall nmrforge      # removes the package and its console scripts
+pip uninstall NMRFinesse      # removes the package and its console scripts
 ```
 
 Uninstalling never deletes your projects or studies: those live in the directories you chose.

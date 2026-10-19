@@ -17,7 +17,7 @@ import numpy as np
 from ui_support.i18n import tr
 from viewer.axis_labels import axis_labels_from_nuclei, infer_nucleus
 
-logger = logging.getLogger("nmrforge.viewer.spectrum")
+logger = logging.getLogger("nmrfinesse.viewer.spectrum")
 
 
 _NUCLEUS_PPM_RANGES: dict[str, tuple[float, float]] = {

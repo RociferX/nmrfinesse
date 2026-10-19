@@ -22,9 +22,9 @@ from pathlib import Path
 
 import pytest
 
-from nmrforge_api import PEAK_TABLE_COLUMNS
-from nmrforge_api.cli import main as cli_main
-from nmrforge_api.compat import (
+from nmrfinesse_api import PEAK_TABLE_COLUMNS
+from nmrfinesse_api.cli import main as cli_main
+from nmrfinesse_api.compat import (
     AFFECTED_STEPS,
     BEHAVIOR_ROOTS,
     COMPAT_LEVELS,
@@ -38,7 +38,7 @@ from nmrforge_api.compat import (
     record_stamp,
     token_digest,
 )
-from nmrforge_api.conformance import GOLDEN_NAME, check_conformance
+from nmrfinesse_api.conformance import GOLDEN_NAME, check_conformance
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -48,7 +48,7 @@ def test_behavior_digest_matches_the_declaration() -> None:
     ``compat_level`` downstream sees is untrustworthy."""
     status = compat_status()
     assert status["verified"], (
-        "行为指纹与声明不一致 —— 按 nmrforge_api/compat_declaration.py 的说明更新:\n"
+        "行为指纹与声明不一致 —— 按 nmrfinesse_api/compat_declaration.py 的说明更新:\n"
         f"  实测 behavior_digest = {status['behavior_digest']}\n"
         f"  声明里的 digest      = {status['declared_digest']}\n"
         "提示:python scripts/update_compat_declaration.py --level <分级>"
@@ -105,10 +105,10 @@ def test_golden_vector_matches_the_declaration(tmp_path: Path) -> None:
 def test_manifest_contracts_match_the_code() -> None:
     """The manifest's contract snapshot must match the code (column order / record schema /
     error codes / warning codes)."""
-    from nmrforge_api import errors as errors_module
+    from nmrfinesse_api import errors as errors_module
 
     manifest = compat_manifest()
-    assert manifest["schema"] == "nmrforge_api.compat.v1"
+    assert manifest["schema"] == "nmrfinesse_api.compat.v1"
     contracts = manifest["contracts"]
     assert contracts["peak_table_columns"] == list(PEAK_TABLE_COLUMNS)
     assert contracts["records"] == dict(RECORD_SCHEMAS)
@@ -127,7 +127,7 @@ def test_manifest_contracts_match_the_code() -> None:
 
 def test_resume_fingerprint_schema_matches_the_code() -> None:
     """The manifest's fingerprint schema id must match the literal in sweep."""
-    text = (ROOT / "nmrforge_api" / "sweep.py").read_text(encoding="utf-8")
+    text = (ROOT / "nmrfinesse_api" / "sweep.py").read_text(encoding="utf-8")
     assert f'"{RECORD_SCHEMAS["resume_fingerprint"]}"' in text
 
 
@@ -150,7 +150,7 @@ def test_cli_compat_prints_the_manifest(tmp_path: Path, capsys) -> None:
     """CLI ``compat [--out FILE]``: print the manifest and optionally write it to disk."""
     assert cli_main(["compat"]) == 0
     payload = json.loads(capsys.readouterr().out)
-    assert payload["schema"] == "nmrforge_api.compat.v1"
+    assert payload["schema"] == "nmrfinesse_api.compat.v1"
     assert payload["behavior_digest"] == behavior_digest()
 
     out = tmp_path / "compat.json"
@@ -158,7 +158,7 @@ def test_cli_compat_prints_the_manifest(tmp_path: Path, capsys) -> None:
     printed = json.loads(capsys.readouterr().out)
     assert printed["manifest_path"] == str(out)
     written = json.loads(out.read_text(encoding="utf-8"))
-    assert written["schema"] == "nmrforge_api.compat.v1"
+    assert written["schema"] == "nmrfinesse_api.compat.v1"
     assert written["behavior_digest"] == behavior_digest()
     assert "manifest_path" not in written
 

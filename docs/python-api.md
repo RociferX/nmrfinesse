@@ -1,22 +1,22 @@
 # Python API
 
-The public scripting API version is `API_VERSION = "1.1.4"`; the software version is 1.0.8. API
+The public scripting API version is `API_VERSION = "1.1.5"`; the software version is 1.0.9. API
 parameters and the retained 38-column peak-table contract are defined by this API. Desktop users
-can use the [1.0.8 AppImage](https://github.com/RociferX/nmrforge/releases/tag/v1.0.8).
+can use the [1.0.9 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.9).
 For scripting, follow [source installation](installation.md). Install source containing
-API v1.1.4 and check `compat_manifest()` before reusing results.
+API v1.1.5 and check `compat_manifest()` before reusing results.
 
 | Surface | Import | Stability |
 | --- | --- | --- |
 | Processing layer | `core`, `backend`, `workflow` | Internal; also used by the GUI. |
-| Scripting API | `nmrforge_api` | Public, versioned and Qt-free. |
+| Scripting API | `nmrfinesse_api` | Public, versioned and Qt-free. |
 
 ## Two-stage workflow
 
 ```python
 import csv
 from pathlib import Path
-from nmrforge_api import run_combination_study, run_reference_study
+from nmrfinesse_api import run_combination_study, run_reference_study
 
 root = "~/studies/hsqc_params"
 
@@ -110,8 +110,8 @@ passed Linux engineering regression, but has not been verified against a real NM
 ## Qt-free import and errors
 
 ```python
-import nmrforge_api  # Does not import a Qt binding.
-from nmrforge_api import SweepError, run_parameter_study
+import nmrfinesse_api  # Does not import a Qt binding.
+from nmrfinesse_api import SweepError, run_parameter_study
 
 try:
     run_parameter_study(root, "~/data/bmr12345/1", axes={"window.F1.off": [0.35]})

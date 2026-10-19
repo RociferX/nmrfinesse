@@ -1,23 +1,23 @@
 # Python API
 
-当前公开脚本契约为 `API_VERSION = "1.1.4"`；软件版本为 1.0.8。API 参数和 38 列峰表契约按 v1.1.4 定义。
-Linux AppImage 与源码可从 [1.0.8 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.8) 获取。源码安装请使用包含 API v1.1.4 的版本。
+当前公开脚本契约为 `API_VERSION = "1.1.5"`；软件版本为 1.0.9。API 参数和 38 列峰表契约按 v1.1.5 定义。
+Linux AppImage 与源码可从 [1.0.9 Release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.9) 获取。源码安装请使用包含 API v1.1.5 的版本。
 
 项目里有两套 Python 接口,稳定性承诺不同。
 
 | 接口 | 导入 | 稳定性 |
 | --- | --- | --- |
 | 项目/处理层 | `core`、`backend`、`workflow` | 内部接口。GUI 使用它;可能随版本变化。 |
-| 脚本化 API | `nmrforge_api` | 公开接口。有文档、按 API 契约定版本、且不依赖 Qt。 |
+| 脚本化 API | `nmrfinesse_api` | 公开接口。有文档、按 API 契约定版本、且不依赖 Qt。 |
 
-如果你要围绕 nmrForge 写分析代码,请用 `nmrforge_api`。
+如果你要围绕 NMRFinesse 写分析代码,请用 `nmrfinesse_api`。
 
 ## 一个例子看懂脚本化 API
 
 ```python
 import csv
 from pathlib import Path
-from nmrforge_api import run_combination_study, run_reference_study
+from nmrfinesse_api import run_combination_study, run_reference_study
 
 root = "~/studies/hsqc_params"
 
@@ -78,13 +78,13 @@ API 不建立不同谱或峰表之间的峰对应关系；组合峰表中的 `pe
 ## 不依赖 Qt 就能导入
 
 ```python
-import nmrforge_api          # 不会导入 Qt
+import nmrfinesse_api          # 不会导入 Qt
 ```
 
 脚本化 API 从不导入 Qt 绑定(GUI 层通过 `qtcompat` 使用 PySide6)。已核实的行为:
 
 ```bash
-python -c "import sys, core, nmrforge_api; print([m for m in sys.modules if m.startswith('PyQt')])"
+python -c "import sys, core, nmrfinesse_api; print([m for m in sys.modules if m.startswith('PyQt')])"
 # -> []
 ```
 
@@ -110,11 +110,11 @@ from workflow.direct_diagnostics import run_fid_diagnostics_paths
 
 ## 错误处理
 
-脚本化 API 抛出 `nmrforge_api.errors` 里的类型,而不是把处理路径深处的
+脚本化 API 抛出 `nmrfinesse_api.errors` 里的类型,而不是把处理路径深处的
 `KeyError`/`TypeError` 漏出来,因此调用方能区分「你的网格写错了」和「引擎失败了」:
 
 ```python
-from nmrforge_api import SweepError, run_parameter_study
+from nmrfinesse_api import SweepError, run_parameter_study
 
 try:
     run_parameter_study(study, dataset, axes={"window.F1.off": [0.35]})

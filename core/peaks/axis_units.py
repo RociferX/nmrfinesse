@@ -23,7 +23,7 @@ Note the two kinds of "point counts":
 
 The default physical width is "a multiple of the linewidth of that nucleus" (linewidth
 in Hz, see ``DEFAULT_LINEWIDTH_HZ``, aligned with ``processing.linewidth_hz`` in
-``config/nmrforge.yaml``; the caller may pass the configured value to override it).
+``config/nmrfinesse.yaml``; the caller may pass the configured value to override it).
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ from typing import Any
 
 import numpy as np
 
-# default linewidth per nucleus (Hz), aligned with processing.linewidth_hz in config/nmrforge.yaml
+# default linewidth per nucleus (Hz), aligned with processing.linewidth_hz in config/nmrfinesse.yaml
 DEFAULT_LINEWIDTH_HZ: dict[str, float] = {
     "1H": 8.0,
     "15N": 15.0,

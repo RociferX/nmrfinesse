@@ -6,7 +6,7 @@ evidence a reader can look at.
 
 Usage (on the machine; data paths appear on the command line only)::
 
-    nmrforge/bin/python scripts/vm_spectrum_figure.py \
+    nmrfinesse/bin/python scripts/vm_spectrum_figure.py \
         --software-2d <automatic 2D .ft2> --manual-2d <manual 2D .ft2> \
         --software-3d <automatic 3D .ft3> --manual-3d <manual 3D .ft3> \
         --tag-2d <2D data set tag> --tag-3d <3D data set tag> --out figure.png

@@ -1,13 +1,13 @@
-# 01 · Positioning and terminology (API v1.1.4)
+# 01 · Positioning and terminology (API v1.1.5)
 
 ## What it is
 
-`nmrforge_api` is NMRForge's Qt-free Python and command-line interface for processing user-defined
+`nmrfinesse_api` is NMRFinesse's Qt-free Python and command-line interface for processing user-defined
 parameter combinations. It accepts Bruker NMR data and explicit parameter combinations, then writes
 candidate spectra, peak tables, processing scripts, logs, and provenance records. It can run without
 a graphical display.
 
-The API uses NMRForge's processing and measurement conventions:
+The API uses NMRFinesse's processing and measurement conventions:
 
 - Processing scripts are generated and run through the NMRPipe backend; NUS processing uses SMILE.
 - Peak coordinates use the NMRPipe ppm-axis mapping. `ORIG` is preferred, `CAR` is the fallback,
@@ -59,7 +59,7 @@ are rejected. Duplicate paths are rejected, and segment order is part of the sou
 
 | Term | Meaning |
 | --- | --- |
-| Study root | A directory containing the NMRForge project (`project.json`) and `study/` products |
+| Study root | A directory containing the NMRFinesse project (`project.json`) and `study/` products |
 | Condition | One dataset or one ordered list of acquisition segments, labelled A/B/... |
 | Dataset (`DatasetRef`) | A Bruker dataset registered to a condition and project entry (`exp_id/data_id`) |
 | Reference spectrum | The condition's reference spectrum at `study/reference/<key>/reference.ft2` |

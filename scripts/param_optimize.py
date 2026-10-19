@@ -1,10 +1,12 @@
-"""NMRForge post-processing parameter optimisation CLI (phase p0/p1 + baseline; only reconstruction
+"""NMRFinesse post-processing parameter optimisation CLI.
+
+Optimises phase p0/p1 and baseline after reconstruction
 once). NUS is logically consistent with non-NUS: run reconstruction/processing first to get the
 final spectrum, and then optimise phase/baseline parameter in memory (does not trigger re-
 reconstruction). Usage (VM): # Automatically run reconstruction/processing once, and then
-optimisation PYTHONPATH=$HOME/NMRForge python scripts/param_optimize.py <dataset directory >
+optimisation PYTHONPATH=$HOME/NMRFinesse python scripts/param_optimize.py <dataset directory >
 [More segments...] # Existing final spectrum file, skip reconstruction, direct optimisation
-PYTHONPATH=$HOME/NMRForge python scripts/param_optimize.py <dataset directory > --spectrum
+PYTHONPATH=$HOME/NMRFinesse python scripts/param_optimize.py <dataset directory > --spectrum
 out.ft3."""
 
 from __future__ import annotations

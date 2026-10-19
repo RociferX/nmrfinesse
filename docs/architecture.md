@@ -1,7 +1,7 @@
 # Architecture
 
-NMRForge 1.0.8 combines a Qt desktop application, a reusable data and processing core, workflow
-orchestration, an NMRPipe backend, and a separate Python/CLI API (API 1.1.4). The components share
+NMRFinesse 1.0.9 combines a Qt desktop application, a reusable data and processing core, workflow
+orchestration, an NMRPipe backend, and a separate Python/CLI API (API 1.1.5). The components share
 the same project and processing capabilities, but have different entry points and output records.
 
 ```text
@@ -11,7 +11,7 @@ Desktop: gui/ ──> ProcessingController ──> workflow/ ──> core/ data,
                                                    │
                                                    └── NMRPipe / SMILE
 
-Python/CLI API: nmrforge_api/ ──> core/, workflow/ and backend/
+Python/CLI API: nmrfinesse_api/ ──> core/, workflow/ and backend/
 Viewer: viewer/ ──> NMRPipe spectrum files (.ft1/.ft2/.ft3)
 ```
 
@@ -25,7 +25,7 @@ boundary and in its script generator.
 - `gui/` contains the main window, project tree, pipeline and group panels, import and script
   dialogs, settings, and logs. It accesses project state through `core.project` and invokes
   processing through `gui.processing.ProcessingController`.
-- `nmrforge_api/` provides the Qt-free Python and CLI entry points for version 1.1.4. It builds
+- `nmrfinesse_api/` provides the Qt-free Python and CLI entry points for version 1.1.5. It builds
   reference products and runs explicit parameter combinations; its records and outputs belong to
   API sessions rather than the active desktop project. See the [API contract](API_CONTRACT.md).
 - `workflow/` implements application operations: Bruker import, the import/FID/spectrum steps,
@@ -40,7 +40,7 @@ boundary and in its script generator.
   effective parameters, metrics, and logs.
 - `viewer/` reads processed NMRPipe files and renders 1D, 2D, or 3D spectra. It can run embedded in
   the desktop application or from its standalone viewer entry point.
-- `nmrforge_data/` supplies packaged defaults, presets, and other runtime resources. User-local
+- `nmrfinesse_data/` supplies packaged defaults, presets, and other runtime resources. User-local
   paths and settings are resolved by the configuration layer.
 
 In the desktop path, import stores or references Bruker input under a project data entry and writes

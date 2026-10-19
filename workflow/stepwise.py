@@ -708,7 +708,7 @@ def read_experiment(manager: ProjectManager, exp_id: str, data_id: str) -> Any:
     """Public experiment-reading entry point: read the Experiment from the data entry (same rule as
     the processing chain).
 
-    2026-09-12: the parameter-sensitivity API (nmrforge_api) needs exactly the same experiment
+    2026-09-12: the parameter-sensitivity API (nmrfinesse_api) needs exactly the same experiment
     object as processing (including the experiment type / peak sign overrides from the data
     note), so the internal implementation is exposed explicitly to keep the public API from
     growing a second reading path.

@@ -23,7 +23,7 @@ import numpy as np
 
 from ui_support.i18n import tr
 
-logger = logging.getLogger("nmrforge.optimization.phase_search")
+logger = logging.getLogger("nmrfinesse.optimization.phase_search")
 
 
 def direct_ft_traces(

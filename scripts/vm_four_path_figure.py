@@ -15,7 +15,7 @@ criteria: spectra are the primary evidence, and scores are copied from QC report
 
 Usage (real data; paths appear only on the command line):
 
-    nmrforge/bin/python scripts/vm_four_path_figure.py \
+    nmrfinesse/bin/python scripts/vm_four_path_figure.py \
         --case "3D,<automatic.ft3>,<comparison.ft3>,<auto-qc.json>,<comparison-qc.json>" \
         --h-slice 8.25 --out docs/evidence/four-path-compare.png
 

@@ -1,5 +1,5 @@
 name: Bug report
-description: Something in nmrForge does not work as documented.
+description: Something in NMRFinesse does not work as documented.
 title: "[Bug] "
 labels: ["bug"]
 body:
@@ -27,15 +27,15 @@ body:
       placeholder: |
         1. Open project ...
         2. Import dataset ...
-        3. Click "generate spectrum" / run `python -m nmrforge_api ...`
+        3. Click "generate spectrum" / run `python -m nmrfinesse_api ...`
         4. See error
     validations:
       required: true
 
   - type: input
-    id: nmrforge-version
+    id: nmrfinesse-version
     attributes:
-      label: nmrForge version
+      label: NMRFinesse version
       description: "`core.__version__`, or the AppImage file name."
     validations:
       required: true
@@ -43,7 +43,7 @@ body:
   - type: dropdown
     id: install
     attributes:
-      label: How did you install nmrForge?
+      label: How did you install NMRFinesse?
       options:
         - Linux AppImage
         - editable source install (pip install -e .)

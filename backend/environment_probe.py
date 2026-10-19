@@ -283,7 +283,7 @@ def apply_to_settings(report: EnvironmentReport) -> dict[str, str]:
 
     Side effects
     ------------
-    Reads and may write ``nmrforge.local.yaml`` when an empty field needs to be filled.
+    Reads and may write ``nmrfinesse.local.yaml`` when an empty field needs to be filled.
     """
     from gui.settings import load_settings, save_settings
 

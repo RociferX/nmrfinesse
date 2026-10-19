@@ -1,15 +1,15 @@
-# 01 · 定位与术语（API v1.1.4）
+# 01 · 定位与术语（API v1.1.5）
 
 ## 它是什么
 
-`nmrforge_api` 是 NMRForge 对外提供的**参数组合处理执行器**:无 GUI、不依赖
+`nmrfinesse_api` 是 NMRFinesse 对外提供的**参数组合处理执行器**:无 GUI、不依赖
 Qt、可在无显示环境或集群上运行。输入原始 NMR 数据与**用户定义的参数组合表**,
 输出**可追溯的峰表与处理记录**。
 
-它复用的是 NMRForge 自身的处理与判读口径:
+它复用的是 NMRFinesse 自身的处理与判读口径:
 
 - 处理:同一套 NMRPipe 脚本生成与执行(统一相位优化、SMILE 重构等);
-- 峰位:与 NMRForge 选峰**同一套** ppm 轴映射(ORIG 优先、回退 CAR,按
+- 峰位:与 NMRFinesse 选峰**同一套** ppm 轴映射(ORIG 优先、回退 CAR,按
   FDDIMORDER 把逻辑维映射到数据轴);
 - 记录:每个 workflow 都带完整脚本、峰表(三点抛物线)、完整日志、
   参数三层与版本表。
@@ -40,7 +40,7 @@ Complete provenance + QC
 
 - **不做统计分析与显著性判断**、
   **不给科学结论**——这些不进处理契约与 records 产物。σ/Δδ 汇总代码
-  (`nmrforge_api.uncertainty`)保留为**测试/检测辅助**(处理链不调用它),
+  (`nmrfinesse_api.uncertainty`)保留为**测试/检测辅助**(处理链不调用它),
   其余由后续独立分析代码基于统一峰表完成;
 - 不做峰归属/指认(可用外部峰表作为参考峰,但软件不推断归属);
 - 不做峰重叠解耦与去卷积；峰位亚像素精修采用三点抛物线方法；
@@ -52,10 +52,10 @@ Complete provenance + QC
 
 | 术语 | 含义 |
 | --- | --- |
-| 研究根(root) | 一个目录 = 一个研究项目 = 一个 NMRForge 项目(`project.json`),内含 `study/` |
+| 研究根(root) | 一个目录 = 一个研究项目 = 一个 NMRFinesse 项目(`project.json`),内含 `study/` |
 | 条件(condition) | 一组原始数据(A/B…);两条件研究即同一实验的两个样品状态 |
 | 数据集(DatasetRef) | 导入研究项目的一个 Bruker 原始数据集(`exp_id/data_id` + 条件标签) |
-| 参考谱 | NMRForge 自动优化跑出的谱,冻结在 `study/reference/<key>/reference.ft2` |
+| 参考谱 | NMRFinesse 自动优化跑出的谱,冻结在 `study/reference/<key>/reference.ft2` |
 | 参考脚本 | 参考运行**实际执行**的 NMRPipe 脚本,冻结为 `process.com`(带 SHA-256) |
 | 参考峰表 | 每个条件各自登记 `reference.list`(条件内身份 R0001…)+ `reference_peak_table_parabolic.csv`;给外部峰表时只应用于主条件。条件内编号不构成跨条件或跨谱对应 |
 | `reference_peak_id` | **参考峰表**里的峰身份 `R0001`…;组合峰表留空(组合独立选峰)，API 不做跨谱匹配，由使用者分析完成 |

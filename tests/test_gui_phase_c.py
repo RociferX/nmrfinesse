@@ -177,7 +177,7 @@ def test_drag_drop_import(
 def test_settings_defaults_and_roundtrip(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from gui import settings as settings_module
 
-    cfg = tmp_path / "nmrforge.local.yaml"
+    cfg = tmp_path / "nmrfinesse.local.yaml"
     monkeypatch.setattr(settings_module, "_settings_path", lambda: cfg)
     loaded = settings_module.load_settings()
     assert "points_per_line" not in loaded
@@ -248,16 +248,18 @@ def test_batch_summary_dialog(qapp: QApplication) -> None:
 
 
 def test_settings_path_appimage_uses_user_config(
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """0.2.199-patch29gb: under AppImage the settings are saved to ~/.config/NMRForge/."""
+    """0.2.199-patch29gb: under AppImage the settings are saved to ~/.config/NMRFinesse/."""
     from pathlib import Path
 
     from gui import settings as settings_module
 
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
     monkeypatch.setattr(settings_module, "is_appimage", lambda: True)
     path = settings_module._settings_path()
-    assert path == (Path.home() / ".config" / "NMRForge" / settings_module.SETTINGS_FILENAME)
+    assert path == (Path.home() / ".config" / "NMRFinesse" / settings_module.SETTINGS_FILENAME)
 
 
 def test_settings_dialog_hides_simple_mode_in_appimage(

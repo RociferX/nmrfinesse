@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-r"""Create a small synthetic Bruker dataset for trying nmrForge without real data. The generator
+r"""Create a small synthetic Bruker dataset for trying NMRFinesse without real data. The generator
 writes a Bruker-style directory layout (``acqus``, ``acqu2s``, ``acqu3s``, ``ser``, optional
 ``nuslist`` and ``pdata/1/title``) containing **synthetic** time-domain data: a few
 exponentially decaying sinusoids plus a little noise. Nothing here is real spectroscopic data,
@@ -79,7 +79,7 @@ def _acqus(direct_nucleus: str, td: int, pulprog: str, title: str, parmode: int)
     sw_h, o1p = NUCLEUS_DEFAULTS.get(direct_nucleus, (10000.0, 4.7))
     sf = SFO1_DEFAULTS.get(direct_nucleus, 500.0)
     header = [
-        "##OWNER= nmrforge",
+        "##OWNER= nmrfinesse",
         f"##TITLE= {title}",
         "##JCAMPDX= 5.0",
         "##DATE= 2026/09/16",

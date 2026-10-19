@@ -212,7 +212,7 @@ def test_packaging_collects_licences_without_machine_metadata(tmp_path: Path) ->
     assert str(tmp_path) not in index
     assert "direct_url" not in index
     assert json.loads(index)[0]["version"] == "1.2"
-    spec = (ROOT / "packaging/linux/NMRForge.spec").read_text(encoding="utf-8")
+    spec = (ROOT / "packaging/linux/NMRFinesse.spec").read_text(encoding="utf-8")
     assert "a.datas.extend(collect_licenses(" in spec
 
 

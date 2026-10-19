@@ -14,7 +14,7 @@ from pathlib import Path
 from core.app_paths import local_config_path
 from ui_support.i18n import USER_CHOICES, USER_CONFIG_KEY, normalize_language
 
-SETTINGS_FILENAME = "nmrforge.local.yaml"
+SETTINGS_FILENAME = "nmrfinesse.local.yaml"
 
 
 def is_appimage() -> bool:

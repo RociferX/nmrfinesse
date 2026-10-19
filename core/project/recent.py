@@ -14,27 +14,32 @@ MAX_RECENT_ENTRIES = 8
 
 def default_config_dir() -> Path:
     """Platform-specific application config directory
-    (Windows: LOCALAPPDATA/NMRForge, Linux: ~/.config/NMRForge).
+    (Windows: LOCALAPPDATA/NMRFinesse, Linux: ~/.config/NMRFinesse).
     """
     if os.name == "nt":
         base = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
         if base:
-            return Path(base) / "NMRForge"
-    return Path.home() / ".config" / "NMRForge"
+            return Path(base) / "NMRFinesse"
+    return Path.home() / ".config" / "NMRFinesse"
 
 
 class JsonRecentProjectsStore:
     """JSON-file recent-project store (atomic write, most-recent first, 8 by default)."""
 
     def __init__(self, path: Path | None = None, max_entries: int = MAX_RECENT_ENTRIES) -> None:
-        self.path = path or (default_config_dir() / "recent_projects.json")
+        self.path = (
+            Path(path)
+            if path is not None
+            else default_config_dir() / "recent_projects.json"
+        )
         self.max_entries = max_entries
 
     def _read(self) -> list[str]:
-        if not self.path.is_file():
+        read_path = self.path
+        if not read_path.is_file():
             return []
         try:
-            data = json.loads(self.path.read_text(encoding="utf-8"))
+            data = json.loads(read_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             return []
         entries = data.get("projects", []) if isinstance(data, dict) else data

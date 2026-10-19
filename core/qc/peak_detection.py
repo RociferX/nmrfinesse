@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import fsum
 from typing import Any
 
 import numpy as np
@@ -165,25 +166,44 @@ def _candidates(
     return peaks
 
 
-def keep_dominant(candidates: list[Peak]) -> list[Peak]:
-    """dominant mode: keep only the sign with more candidate peaks (ties by the sum of the
-    absolute intensities, then positive).
-    Picking may detect with both and let the spectrum share decide whether to call this
-    function (0.2.199-patch29fc).
+def sign_evidence(candidates: list[Peak]) -> dict[str, Any]:
+    """Compare candidate signs using squared SNR, with a positive tie preference.
+
+    A common maximum rescales weights before squaring to avoid overflow. Legacy
+    callers without valid SNR for every candidate use squared heights throughout;
+    their common noise scale cancels in this comparison. Counts are diagnostic.
     """
-    counts: dict[int, int] = {1: 0, -1: 0}
-    totals: dict[int, float] = {1: 0.0, -1: 0.0}
-    for peak in candidates:
-        s = 1 if peak.height >= 0 else -1
-        counts[s] += 1
-        totals[s] += abs(peak.height)
-    dominant = 1
-    for s in (-1, 1):
-        if counts[s] > counts[dominant]:
-            dominant = s
-        elif counts[s] == counts[dominant] and totals[s] > totals[dominant]:
-            dominant = s
-    return [peak for peak in candidates if (1 if peak.height >= 0 else -1) == dominant]
+    heights = np.asarray([float(peak.height) for peak in candidates], dtype=float)
+    if not np.all(np.isfinite(heights)):
+        raise ValueError("Peak sign evidence requires finite candidate heights")
+    snrs = np.asarray([float(getattr(peak, "snr", 0.0)) for peak in candidates])
+    use_snr = bool(np.all(np.isfinite(snrs) & (snrs > 0)))
+    values = snrs if use_snr else np.abs(heights)
+    scale = float(np.max(values)) if values.size else 0.0
+    weights = np.square(values / scale) if scale > 0 else np.zeros_like(values)
+    positive = fsum(float(w) for w, h in zip(weights, heights) if h > 0)
+    negative = fsum(float(w) for w, h in zip(weights, heights) if h < 0)
+    total = positive + negative
+    return {
+        "weighting": "squared_snr" if use_snr else "squared_height_common_noise",
+        "positive_count": int(np.count_nonzero(heights > 0)),
+        "negative_count": int(np.count_nonzero(heights < 0)),
+        "positive_weight": positive,
+        "negative_weight": negative,
+        "positive_share": positive / total if total else 0.0,
+        "negative_share": negative / total if total else 0.0,
+        "dominant_sign": -1 if negative > positive else 1,
+    }
+
+
+def keep_dominant(candidates: list[Peak]) -> list[Peak]:
+    """Keep the sign with the larger squared-SNR sum; prefer positive on ties."""
+    dominant = sign_evidence(candidates)["dominant_sign"]
+    return [
+        peak
+        for peak in candidates
+        if (1 if peak.height >= 0 else -1) == dominant
+    ]
 
 
 def snap_to_peak_top(data: Any, row: int, col: int, radius: int = 6) -> tuple[int, int]:

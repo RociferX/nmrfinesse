@@ -867,7 +867,7 @@ def probe_auto_sampling(
 
     temp_dir: str | None = None
     try:
-        temp_dir = tempfile.mkdtemp(prefix="nmrforge_auto_")
+        temp_dir = tempfile.mkdtemp(prefix="nmrfinesse_auto_")
         linked = 0
         for name in _AUTO_PROBE_FILES:
             source = directory / name

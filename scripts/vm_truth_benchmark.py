@@ -44,7 +44,7 @@ together):
 
 Usage (real machine; data paths only ever appear on the command line):::
 
-    nmrforge/bin/python scripts/vm_truth_benchmark.py \
+    nmrfinesse/bin/python scripts/vm_truth_benchmark.py \
         --dataset <Bruker dataset directory> --expected <expected peak CSV> --tag <anonymous label>
         \
         --root <scratch study root> --thresholds 12 [--json <output path>] \
@@ -304,11 +304,11 @@ def evaluate(
 
 
 def main(argv: list[str] | None = None) -> int:
-    from nmrforge_api import detect_and_localize
+    from nmrfinesse_api import detect_and_localize
     from workflow.pick_peaks import read_spectrum_axes
     from workflow.truth_benchmark import load_expected_csv, write_matches_csv
 
-    parser = argparse.ArgumentParser(description="nmrForge 真值基准证据(真机)")
+    parser = argparse.ArgumentParser(description="NMRFinesse 真值基准证据(真机)")
     parser.add_argument("--dataset", required=True, help="Bruker 数据集目录")
     parser.add_argument("--expected", required=True, help="期望峰表 CSV(peak_id,H_ppm,N_ppm)")
     parser.add_argument("--tag", required=True, help="匿名标签(进输出的唯一标识)")

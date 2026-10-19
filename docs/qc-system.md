@@ -1,6 +1,6 @@
 # QC system
 
-Quality control in nmrForge has two jobs: measure the result and record what was done to the
+Quality control in NMRFinesse has two jobs: measure the result and record what was done to the
 data. It covers FID diagnostics, sampling checks and spectrum quality. Findings, recommendations
 and applied corrections are distinct; the stand-alone menu check is read-only. QC scores do not
 establish scientific correctness.

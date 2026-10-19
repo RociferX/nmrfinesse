@@ -1,4 +1,4 @@
-# 参数网格示例(python -m nmrforge_api sweep --grid grid.yaml)
+# 参数网格示例(python -m nmrfinesse_api sweep --grid grid.yaml)
 # 键是处理参数的点号路径,值是该参数的候选列表;组合数 = 各轴长度之积。
 axes:
   zero_fill: [1, 2, 4]                 # 间接维填零倍数(数字分辨率)

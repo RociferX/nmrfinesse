@@ -84,7 +84,7 @@ def test_tutorial_strings_are_translated() -> None:
     catalogue = load_catalogue("zh")
     for key in (
         "Usage tutorial...",
-        "NMRForge usage tutorial",
+        "NMRFinesse usage tutorial",
         "The tutorial document is missing from this installation.",
     ):
         assert catalogue.get(key), key
@@ -97,7 +97,7 @@ def test_tutorial_dialog_renders_the_document(qapp: QApplication) -> None:
         browser = dialog.findChild(QTextBrowser)
         assert browser is not None
         rendered = browser.toPlainText()
-        assert "NMRForge usage tutorial" in rendered
+        assert "NMRFinesse usage tutorial" in rendered
         assert "Generate FID" in rendered
     finally:
         dialog.close()

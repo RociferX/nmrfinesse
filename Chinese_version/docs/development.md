@@ -3,8 +3,8 @@
 Linux 是目标运行平台，开发环境需要 Python 3.12 或更高版本。创建可编辑源码安装并启动桌面应用：
 
 ```bash
-git clone https://github.com/RociferX/nmrforge.git
-cd nmrforge
+git clone https://github.com/RociferX/nmrfinesse.git
+cd nmrfinesse
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
@@ -36,14 +36,14 @@ fake 或 mock，不需要安装 NMRPipe、SMILE；真实引擎检查应单独报
 操作，并说明其适用范围；用 `tests/test_full_paths.py` 检查路径覆盖。运行记录应写入实际应用的值，
 请求值、解析值和应用值需要区分。
 
-`nmrforge_api` 兼容清单记录内容指纹 `behavior_digest`、规范化代码指纹 `token_digest`，以及
+`nmrfinesse_api` 兼容清单记录内容指纹 `behavior_digest`、规范化代码指纹 `token_digest`，以及
 `same`、`additive`、`behavior_changed`、`contract_changed` 之一和受影响的处理步骤。内容指纹覆盖
-`core/`、`backend/`、`workflow/`、`nmrforge_api/` 下的全部文件，以及随包默认配置和预设。修改这些内容后，
+`core/`、`backend/`、`workflow/`、`nmrfinesse_api/` 下的全部文件，以及随包默认配置和预设。修改这些内容后，
 先用以下命令查看兼容清单与黄金向量结果：
 
 ```bash
-python -m nmrforge_api compat --out compat.json
-python -m nmrforge_api compat --golden
+python -m nmrfinesse_api compat --out compat.json
+python -m nmrfinesse_api compat --golden
 ```
 
 使用 `scripts/update_compat_declaration.py` 更新声明，例如：
@@ -53,7 +53,7 @@ python scripts/update_compat_declaration.py --level behavior_changed \
   --affected localization,sweep_detection --note "说明数值变化"
 ```
 
-可用步骤见 `nmrforge_api.compat.AFFECTED_STEPS`；脚本校验分级，
+可用步骤见 `nmrfinesse_api.compat.AFFECTED_STEPS`；脚本校验分级，
 默认重算黄金向量哈希，`--no-golden` 可保留已有哈希。仅文档变化且可执行 token 不变时，
 使用 `--level same --affected "" --no-golden`。
 
@@ -63,9 +63,9 @@ python scripts/update_compat_declaration.py --level behavior_changed \
 
 ## 运行资源与界面文本
 
-默认配置、预设和教程位于 `nmrforge_data/`；`gui/assets/` 与 `ui_support/locales/` 也是运行资源。
+默认配置、预设和教程位于 `nmrfinesse_data/`；`gui/assets/` 与 `ui_support/locales/` 也是运行资源。
 `core/app_paths.py` 会从源码检出、安装包或冻结的 AppImage 布局解析资源。请保持这些资源使用一致的
-相对布局，并确保发布文件不包含机器本地的 `nmrforge.local.yaml`。
+相对布局，并确保发布文件不包含机器本地的 `nmrfinesse.local.yaml`。
 
 界面文本以传入 `tr()` 的英文原文为键，中文译文位于 `ui_support/locales/zh.json`。修改界面文本时，
 同步译文和抽取元数据，然后运行：
@@ -81,7 +81,7 @@ CI 元数据，不是运行时语言包。运行时目录使用 `default.json`�
 
 ## 公开接口与文档
 
-软件版本 **1.0.8** 与脚本 API 版本 **1.1.4** 分别版本化。修改 API 时，同步更新实现、测试、兼容性声明、
+软件版本 **1.0.9** 与脚本 API 版本 **1.1.5** 分别版本化。修改 API 时，同步更新实现、测试、兼容性声明、
 API 契约及相关外部 API 页面。示例应使用受支持的参数和输出。参见[贡献指南](../../CONTRIBUTING.md)、
 [API 契约](API_CONTRACT.md)、[外部 API 指南](external-api/README.md)和[总体架构](architecture.md)。
 

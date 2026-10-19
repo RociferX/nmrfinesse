@@ -1,14 +1,14 @@
 # 四条处理路径：二维谱与三维投影对照
 
-本页展示软件1.0.8 / API v1.1.4按照最新数据处理流程得到的终谱，四组均于2026-10-15从原始数据重新处理、统计与出图。
+本页展示软件1.0.9 / API v1.1.5按照最新数据处理流程得到的终谱，四组均于2026-10-20从原始数据重新处理、统计与出图。
 四组均与作者提供的处理谱或原样作者脚本重建谱对照，采用自动流程生成最终相位与处理参数。
 
 ## 如何读图
 
-左为NMRForge，右为参考。蓝实线为正信号，红虚线为负信号；两侧等高线从各自最大绝对强度7.5%开始。
+左为NMRFinesse，右为参考。蓝实线为正信号，红虚线为负信号；两侧等高线从各自最大绝对强度7.5%开始。
 7.5%和10%两条线0.25 pt，其余0.4 pt；普通候选为红色小点（marker='.'、s=4、无描边），仅参考未匹配候选为紫色x。
 3D先裁共同完整三维窗口，再分别生成HN、HC、NC有符号最大绝对值投影，逐投影独立检测与匹配。
-同号HSQC/HNCO使用dominant；检测为各谱中位基线中心化后最大绝对峰高的10%，不与内部窗评分12/6σ混用。
+同号HSQC/HNCO使用dominant，按候选SNR平方和判断主符号，权重平局取正；检测为各谱中位基线中心化后最大绝对峰高的10%，不与内部窗评分12/6σ混用。
 
 **匹配率＝匹配对数/参考候选数**。两侧按相同10%阈值独立选峰，再进行同号一对一匹配。
 重叠峰、强峰旁瓣和阈值附近的弱结构会影响候选个数；每组图下说明具体原因及对应局部信号。
@@ -48,7 +48,7 @@
 
 ## 2D uniform：与作者Bruker谱比较
 
-![2D uniform：与作者Bruker谱比较](evidence-uniform2d_20261015.png)
+![2D uniform：与作者Bruker谱比较](evidence-uniform2d_20261020.png)
 
 本谱147个、作者126个候选，匹配125对（99.21%）。**唯一未匹配项是作者强峰旁的一处较强正旁瓣被单独选成候选**
 （H约8.544、N约129.748 ppm）；自动谱中保留了这段肩部/旁瓣结构，局部响应约为本谱最大峰的7.84%，未单独进入10%候选表。
@@ -61,9 +61,9 @@
 
 匹配候选的局部等效线宽本谱/参考中位比：HN H 0.82 / N 0.93。按匹配候选的局部半高宽估计。
 
-自动完整构建用时33.165 s，终谱512×1028。
+自动完整构建用时28.555 s，终谱512×1028。
 
-[比较统计与未匹配坐标](2d-uniform-author-comparison_20261015.json)；[局部响应核验](local-response-audit_20261015.json)。
+[比较统计与未匹配坐标](2d-uniform-author-comparison_20261020.json)；[局部响应核验](local-response-audit_20261020.json)。
 
 ### 本组处理脚本 / 参数对比
 
@@ -103,7 +103,7 @@ bruk2pipe -verb -in ./ser \
 
 ```csh
 #!/bin/csh
-# NMRForge processing script
+# NMRFinesse processing script
 # experiment: d_001
 xyz2pipe -in d_001.fid -x \
 | nmrPipe -fn POLY -time \
@@ -162,7 +162,7 @@ xyz2pipe -in d_001.fid -x \
 
 ## 受控人工2D NUS：请求75%，实际75.56%
 
-![受控人工2D NUS：请求75%，实际75.56%](evidence-nus75_20261015.png)
+![受控人工2D NUS：请求75%，实际75.56%](evidence-nus75_20261020.png)
 
 调用vm_make_evidence_nus.py重新生成输入：保留完整正交增量，90点取68点，含零及末端增量，实际75.56%。
 新输入经重新导入、转换与完整SMILE终跑，直接对照作者Bruker `pdata/1`；H窗口10.5～6.5 ppm。
@@ -182,9 +182,9 @@ xyz2pipe -in d_001.fid -x \
 
 匹配候选的局部等效线宽本谱/参考中位比：HN H 0.86 / N 1.37。按匹配候选的局部半高宽估计。
 
-自动完整构建用时17.102 s，终谱256×1028。
+自动完整构建用时16.908 s，终谱256×1028。
 
-[比较统计与未匹配坐标](controlled-2d-nus75-comparison_20261015.json)；[局部响应核验](local-response-audit_20261015.json)。
+[比较统计与未匹配坐标](controlled-2d-nus75-comparison_20261020.json)；[局部响应核验](local-response-audit_20261020.json)。
 
 ### 本组处理脚本 / 参数对比
 
@@ -227,7 +227,7 @@ bruk2pipe -verb -in ./ser_full \
 
 ```csh
 #!/bin/csh
-# NMRForge 2D NUS SMILE reconstruction (two-stage)
+# NMRFinesse 2D NUS SMILE reconstruction (two-stage)
 # experiment: d_001
 mkdir -p nus2d
 # stage 1: direct dim (F2) FT + EXT + POLY, SMILE reconstruct F1
@@ -305,7 +305,7 @@ nmrPipe -in nus2d/recon.ft1 \
 
 ## 3D uniform：BMRB15750与作者完整3D脚本重建谱
 
-![3D uniform：BMRB15750与作者完整3D脚本重建谱](evidence-uniform3d_20261015.png)
+![3D uniform：BMRB15750与作者完整3D脚本重建谱](evidence-uniform3d_20261020.png)
 
 原始ser为16,777,216字节，与32×32完整复网格及正交分量相符；不是二维切片充当三维参考。
 H/N/C参照平移分别+0.018999577、+0.025001526、+0.001007080 ppm，来自本轮同核谱头CAR差。
@@ -327,7 +327,7 @@ H/N/C参照平移分别+0.018999577、+0.025001526、+0.001007080 ppm，来自�
 
 匹配候选的局部等效线宽本谱/参考中位比：HN H 0.68 / N 1.31；HC H 0.69 / C 0.74；NC N 1.33 / C 0.71。按匹配候选的局部半高宽估计。
 
-自动完整构建用时53.395 s，终谱128×128×548。
+自动完整构建用时57.817 s，终谱128×128×548。
 
 [作者LP开关对照统计](author-lp-comparison_20261014.json)保留相同作者命令下的峰宽变化。
 
@@ -340,7 +340,7 @@ H/N/C参照平移分别+0.018999577、+0.025001526、+0.001007080 ppm，来自�
 
 </details>
 
-[比较统计与未匹配坐标](3d-uniform-bmrb15750-comparison_20261015.json)；[局部响应核验](local-response-audit_20261015.json)。
+[比较统计与未匹配坐标](3d-uniform-bmrb15750-comparison_20261020.json)；[局部响应核验](local-response-audit_20261020.json)。
 
 ### 本组处理脚本 / 参数对比
 
@@ -382,7 +382,7 @@ bruk2pipe -verb -in ./ser \
 
 ```csh
 #!/bin/csh
-# NMRForge processing script
+# NMRFinesse processing script
 # experiment: d_001
 xyz2pipe -in fid/test%03d.fid -x \
 | nmrPipe -fn POLY -time \
@@ -482,7 +482,7 @@ xyz2pipe -in ./data/test%03d.ft3  -y -verb  \
 
 ## 实采3D NUS：BMRB52533与沉积完整终谱比较
 
-![实采3D NUS：BMRB52533与沉积完整终谱比较](evidence-acquired3d_20261015.png)
+![实采3D NUS：BMRB52533与沉积完整终谱比较](evidence-acquired3d_20261020.png)
 
 实采441点、42×42复网格、25%采样；输入ser/nuslist哈希保持。三个投影参考候选均匹配，未额外平移。
 **本组没有未匹配的参考候选：HN、HC、NC三个投影分别达到89/89、93/93、79/79。**
@@ -496,9 +496,9 @@ xyz2pipe -in ./data/test%03d.ft3  -y -verb  \
 
 匹配候选的局部等效线宽本谱/参考中位比：HN H 0.95 / N 0.76；HC H 0.94 / C 0.78；NC N 0.75 / C 0.77。按匹配候选的局部半高宽估计。
 
-自动完整构建用时276.152 s，终谱256×256×1176。
+自动完整构建用时218.897 s，终谱256×256×1176。
 
-[比较统计与未匹配坐标](acquired-3d-bmrb52533-comparison_20261015.json)；[局部响应核验](local-response-audit_20261015.json)。
+[比较统计与未匹配坐标](acquired-3d-bmrb52533-comparison_20261020.json)；[局部响应核验](local-response-audit_20261020.json)。
 
 ### 本组处理脚本 / 参数对比
 
@@ -542,7 +542,7 @@ bruk2pipe -verb -in ./ser_full \
 
 ```csh
 #!/bin/csh
-# NMRForge 3D NUS SMILE reconstruction
+# NMRFinesse 3D NUS SMILE reconstruction
 # experiment: d_001
 mkdir -p nus3d_1 nus3d_rc
 # step 1: direct dim (F3) FT + EXT + PS
@@ -690,23 +690,23 @@ xyz2pipe -verb -in ft/DomainIV_HNCO_%03d.ft3 -x  \
 共同H窗口内旋转残差-2.06°～9.28°，近8 ppm为3.61°，显示自动相位在主要信号区域接近作者设置。
 52533联合H/N等价后H/N/C残差0.969°/2.50°/0°。二维作者Bruker PHC参数另按其原始约定列出，并通过最终峰形对照相位效果。
 15750碳维FT -alt、52533 N维-alt -neg与C维-alt、Echo–AntiEcho转换不机械套ALT/NEG，均可在实际脚本核查。
-[本轮相位核验](phase-and-encoding-comparison_20261015.json)保留原值、等价变换与相位算子结果。
+[本轮相位核验](phase-and-encoding-comparison_20261020.json)保留原值、等价变换与相位算子结果。
 
 ## 方法、记录与复现
 
 匹配使用同号、H/N/C容差0.02/0.20/0.15 ppm、联合归一距离≤1、从近到远一对一贪心；3D先裁共同完整窗口。
-源码版本1.0.8/API1.1.4；单次运行，各轴自动相位后正常基线/窗评分并完整终跑。
+源码版本1.0.9/API1.1.5；单次运行，各轴自动相位后正常基线/窗评分并完整终跑。
 默认窗池含无窗、5 SP、2 GM、2 EM；12σ无参考时6σ回退是内部评分规则，不改变本页10%展示检测。
 窗评分将检测、分峰、对称与旁瓣的原分乘以相对线宽保留率的平方，连续权衡分辨率；参考记录保留各分项。
 NUS默认直接SP固定；2D首轮轻量P0初始化仍按门控，3D不套用。不因统计改变处理参数、阈值或逐峰坐标。
 
-[构造清单](controlled-nus75-construction_20261015.json)、[完整处理来源](processing-provenance_20261015.json)、
-[四组实际脚本](script-comparisons_20261015.json)记录版本、输入/终谱哈希、优化结果及实际命令。
+[构造清单](controlled-nus75-construction_20261020.json)、[完整处理来源](processing-provenance_20261020.json)、
+[四组实际脚本](script-comparisons_20261020.json)记录版本、输入/终谱哈希、优化结果及实际命令。
 脚本展示路径改为相对路径；记录的原始执行脚本SHA-256仍保留，未改终谱字节。
 常规复现使用每组原始Bruker目录：
 
 ```python
-from nmrforge_api import open_study, add_dataset, build_reference
+from nmrfinesse_api import open_study, add_dataset, build_reference
 study = open_study("new-evidence-project")
 dataset = add_dataset(study, "raw/experiment", condition="A")
 reference = build_reference(study, dataset, params={

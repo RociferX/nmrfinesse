@@ -36,7 +36,7 @@ import numpy as np
 import pytest
 from scipy.ndimage import gaussian_filter
 
-from nmrforge_api import uncertainty_summary
+from nmrfinesse_api import uncertainty_summary
 
 ROOT = Path(__file__).resolve().parent.parent
 QUICKSTART = ROOT / "docs" / "external-api" / "02-quickstart.md"
@@ -185,8 +185,8 @@ def _documented_summary_keys() -> list[tuple[str, str, bool]]:
 def _run_documented_python_example(code: str, root: Path, dataset: Path) -> tuple[Any, set[str]]:
     """Execute a documentation code block (stand-in backend and temporary paths injected);
     returns (result, the summary fields the code block reads)."""
-    import nmrforge_api
-    import nmrforge_api.study as study_module
+    import nmrfinesse_api
+    import nmrfinesse_api.study as study_module
 
     backend = _DocBackend()
     real_parameter = study_module.run_parameter_study
@@ -217,9 +217,9 @@ def _run_documented_python_example(code: str, root: Path, dataset: Path) -> tupl
 
     namespace: dict[str, Any] = {}
     with pytest.MonkeyPatch.context() as monkeypatch:
-        monkeypatch.setattr(nmrforge_api, "run_parameter_study", parameter_wrapper)
-        monkeypatch.setattr(nmrforge_api, "run_reference_study", reference_wrapper)
-        monkeypatch.setattr(nmrforge_api, "run_combination_study", combination_wrapper)
+        monkeypatch.setattr(nmrfinesse_api, "run_parameter_study", parameter_wrapper)
+        monkeypatch.setattr(nmrfinesse_api, "run_reference_study", reference_wrapper)
+        monkeypatch.setattr(nmrfinesse_api, "run_combination_study", combination_wrapper)
         exec(compile(code, str(QUICKSTART), "exec"), namespace)  # noqa: S102 - documentation example
     return namespace.get("result"), used
 

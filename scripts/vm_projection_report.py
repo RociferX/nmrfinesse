@@ -36,7 +36,7 @@ from scripts.vm_four_path_figure import (  # noqa: E402
 
 def _detect_plane(path, plane, x_ppm, y_ppm, pair, sigma, fraction, sign_mode="dominant"):
     from core.qc.noise import estimate
-    from nmrforge_api.peaks import detect_and_localize
+    from nmrfinesse_api.peaks import detect_and_localize
     from workflow.pick_peaks import SpectrumAxes
 
     names = {"H": "1H", "N": "15N", "C": "13C"}
@@ -57,6 +57,7 @@ def _detect_plane(path, plane, x_ppm, y_ppm, pair, sigma, fraction, sign_mode="d
     return rows, points.reshape(-1, 2), signs, {
         "requested_sigma_floor": sigma, "resolved_sigma_multiplier": resolved_sigma,
         "requested_sign_mode": sign_mode, "sign_mode": meta.get("sign_mode", sign_mode),
+        "sign_evidence": meta.get("sign_evidence"),
         "positive_candidates": int((signs > 0).sum()),
         "negative_candidates": int((signs < 0).sum()),
         "detected_before_height_filter": meta["n_peaks"],

@@ -1,6 +1,6 @@
-# nmrforge_api 使用指南（API 1.1.4）
+# nmrfinesse_api 使用指南（API 1.1.5）
 
-`nmrforge_api`是软件**1.0.8**中不依赖Qt的Python/CLI接口，导入Bruker数据，逐条件建立并冻结独立参考谱/峰表，
+`nmrfinesse_api`是软件**1.0.9**中不依赖Qt的Python/CLI接口，导入Bruker数据，逐条件建立并冻结独立参考谱/峰表，
 运行显式参数组合，逐谱独立检测并写入三点抛物线峰表、来源及QC记录。
 
 条件默认使用单个原始目录，`segmented=True`允许至少两个目录的有序列表。
@@ -39,17 +39,17 @@
 
 ## 安装与运行
 
-无需额外依赖:用 NMRForge 自身环境即可(`numpy`/`scipy`/`nmrglue`;
+无需额外依赖:用 NMRFinesse 自身环境即可(`numpy`/`scipy`/`nmrglue`;
 真机处理需要 NMRPipe)。命令行入口:
 
 ```bash
-python -m nmrforge_api --help
+python -m nmrfinesse_api --help
 ```
 
 ## 一分钟示例
 
 ```python
-from nmrforge_api import run_reference_study, run_combination_study
+from nmrfinesse_api import run_reference_study, run_combination_study
 
 # 参考模式:参考谱 + 脚本 + 一张抛物线参考峰表(选峰阈值在这里定,之后锁定)
 run_reference_study(

@@ -69,15 +69,15 @@ def test_configure_logging_is_idempotent_and_writes_to_the_stream() -> None:
     count = len(logger.handlers)
     configure_logging(level="DEBUG", stream=stream)
     assert len(logging.getLogger(LOGGER_NAME).handlers) == count
-    logging.getLogger("nmrforge.demo").info("你好")
+    logging.getLogger("nmrfinesse.demo").info("你好")
     assert "你好" in stream.getvalue()
 
 
 def test_configure_logging_respects_the_level() -> None:
     stream = io.StringIO()
     configure_logging(level="ERROR", stream=stream)
-    logging.getLogger("nmrforge.demo").warning("warning 不该出现")
-    logging.getLogger("nmrforge.demo").error("error 应该出现")
+    logging.getLogger("nmrfinesse.demo").warning("warning 不该出现")
+    logging.getLogger("nmrfinesse.demo").error("error 应该出现")
     out = stream.getvalue()
     assert "error 应该出现" in out
     assert "warning 不该出现" not in out
@@ -88,7 +88,7 @@ def test_attach_run_log_defers_file_creation_until_a_record(tmp_path: Path) -> N
     handler = attach_run_log(tmp_path)
     try:
         assert not (tmp_path / "run.log").exists()
-        logging.getLogger("nmrforge.demo").error("失败了")
+        logging.getLogger("nmrfinesse.demo").error("失败了")
         for item in logging.getLogger(LOGGER_NAME).handlers:
             item.flush()
         text = (tmp_path / "run.log").read_text(encoding="utf-8")
@@ -107,7 +107,7 @@ def test_append_run_log_line_writes_and_sanitizes(tmp_path: Path) -> None:
     append_run_log_line(target, "第二行")
     lines = target.read_text(encoding="utf-8").splitlines()
     assert len(lines) == 2
-    assert lines[0].startswith("20") and "INFO nmrforge.run:" in lines[0]
+    assert lines[0].startswith("20") and "INFO nmrfinesse.run:" in lines[0]
     assert str(Path.home()) not in lines[0], "绝对路径必须脱敏成 ~"
     assert "~" in lines[0] and "第二行" in lines[1]
 

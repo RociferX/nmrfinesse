@@ -11,7 +11,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from nmrforge_api import (
+from nmrfinesse_api import (
     add_dataset,
     build_reference,
     ensure_reference_peaks,
@@ -24,7 +24,7 @@ from nmrforge_api import (
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="nmrforge_api 分步示例")
+    parser = argparse.ArgumentParser(description="nmrfinesse_api 分步示例")
     parser.add_argument("--study", required=True, help="研究根目录")
     parser.add_argument("--dataset", required=True, help="Bruker 目录")
     parser.add_argument("--condition", default="A", help="条件标签(缺省 A)")

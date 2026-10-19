@@ -1,4 +1,4 @@
-# 07 · Methods and QC criteria (v1.1.4)
+# 07 · Methods and QC criteria (v1.1.5)
 
 > This page describes what the software **executed** and what QC records were left. Any
 > cross-combination or cross-condition statistic
@@ -143,6 +143,15 @@ The same parameter may be completely different under different conditions (diffe
 (workflow, condition) Compare the candidate spectrum with SHA-256 of **the reference spectrum** of the condition: bit by bit identical and emitted.
 `no_spectrum_change` Warning -- Formal plans should not treat this axis as a real perturbation under this condition.
 
+`dominant` compares the squared signal-to-noise sums `Σ(SNR²)` for the two signs, rather
+than counting candidates. Numerous weak opposite-sign candidates therefore have less influence
+than strong main signals. Exact weight ties favour positive peaks; truly negative-dominated
+spectra remain detectable. Normally processed single-sign spectra are expected to be positive.
+For unknown types, automatic mixed-sign inference requires at least three candidates per sign,
+a weaker-to-stronger weight ratio of at least 20%, and support beyond one isolated extreme
+candidate on each side. Detection metadata `sign_evidence` records counts, normalised weights,
+weight shares and the dominant sign.
+
 ## 7.5 Peak by Peak QC(drop table field)
 
 | Field | Meaning |
@@ -168,7 +177,7 @@ peak-table columns and meanings are listed in [outputs and records](06-outputs-a
 
 ## 7.6 test/Detection aid (not included in the processing contract)
 
-`nmrforge_api.uncertainty` (`position_uncertainty`, `uncertainty_summary`,
+`nmrfinesse_api.uncertainty` (`position_uncertainty`, `uncertainty_summary`,
 `PeakUncertainty`) is retained only as a test/detection aid. The processing pipeline does not call it
 or write it to `records/`. It does not match peaks and its output is not a CSP detection floor or
 significance threshold. Do not pass independent runs or unmatched peak tables to it. The utility is for:

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=NMRFinesse
+GenericName=NMR Processing and Optimization
+Comment=Automated processing, optimization and QC for Bruker 2D/3D NMR data
+Exec=NMRFinesse
+Icon=nmrfinesse
+Terminal=false
+Categories=Science;Chemistry;Education;
+Keywords=NMR;Spectroscopy;Bruker;NUS;Processing;QC;
+StartupNotify=true

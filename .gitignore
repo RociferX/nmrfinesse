@@ -6,8 +6,9 @@ __pycache__/
 .ruff_cache/
 .mypy_cache/
 
-# Virtual environment (created at the project root by the dev bootstrap: nmrforge/)
+# Local virtual environments (excluded from source control)
 nmrforge/
+nmrfinesse/
 .venv/
 
 # Build artefacts
@@ -18,7 +19,7 @@ dist/
 *.nmrpipe/
 
 # Local config overrides (may hold sensitive data; do not commit)
-nmrforge_data/config/nmrforge.local.yaml
+nmrfinesse_data/config/*.local.yaml
 
 # User reference documents (kept for cross-checking rewrites): stay on disk, never enter the repository
 SOFTWARE_SUMMARY.md

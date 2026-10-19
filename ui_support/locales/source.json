@@ -63,10 +63,10 @@
       "workflow/script_audit.py:157"
     ],
     " (condition {p0})": [
-      "nmrforge_api/localization_targets.py:1296"
+      "nmrfinesse_api/localization_targets.py:1296"
     ],
     " (line ": [
-      "nmrforge_api/localization_targets.py:471"
+      "nmrfinesse_api/localization_targets.py:471"
     ],
     " (no parameter record)": [
       "gui/pipeline_panel.py:553"
@@ -78,8 +78,8 @@
       "gui/main_window.py:959"
     ],
     " ... ({p0} in total)": [
-      "nmrforge_api/localization_targets.py:1293",
-      "nmrforge_api/peaks.py:1035"
+      "nmrfinesse_api/localization_targets.py:1293",
+      "nmrfinesse_api/peaks.py:1036"
     ],
     " Autofill comments: {p0}": [
       "gui/main_window.py:690"
@@ -145,7 +145,7 @@
       "gui/main_window.py:248"
     ],
     "(Check the diagram {p0};SVG {p1})": [
-      "workflow/pick_peaks.py:1129"
+      "workflow/pick_peaks.py:1123"
     ],
     "(Independent entrance) ==": [
       "gui/main_window.py:1377"
@@ -178,14 +178,14 @@
       "workflow/direct_diagnostics.py:1860"
     ],
     "(combination table / call-argument mapping)": [
-      "nmrforge_api/localization_targets.py:841",
-      "nmrforge_api/localization_targets.py:435"
+      "nmrfinesse_api/localization_targets.py:841",
+      "nmrfinesse_api/localization_targets.py:435"
     ],
     "(common {p0})": [
       "gui/main_window.py:955"
     ],
     "(mapping form)": [
-      "nmrforge_api/localization_targets.py:756"
+      "nmrfinesse_api/localization_targets.py:756"
     ],
     "(no data quality report record for this data)": [
       "gui/pipeline_panel.py:527"
@@ -207,19 +207,19 @@
       "gui/main_window.py:879"
     ],
     "(peak_id given by the caller)": [
-      "nmrforge_api/localization_targets.py:176"
+      "nmrfinesse_api/localization_targets.py:176"
     ],
     "(separate files)": [
-      "nmrforge_api/localization_targets.py:479"
+      "nmrfinesse_api/localization_targets.py:479"
     ],
     "(whole spectrum)": [
-      "nmrforge_api/localization_targets.py:449"
+      "nmrfinesse_api/localization_targets.py:449"
     ],
     "(worst axis {p0})": [
       "workflow/optimization_report.py:255"
     ],
     ")": [
-      "nmrforge_api/localization_targets.py:476"
+      "nmrfinesse_api/localization_targets.py:476"
     ],
     "), maintain existing baseline/zero filling/window configuration": [
       "workflow/phase_routes.py:1233",
@@ -235,22 +235,22 @@
       "backend/nmrpipe_backend.py:4104"
     ],
     ", condition {p0}": [
-      "nmrforge_api/localization_targets.py:178"
+      "nmrfinesse_api/localization_targets.py:178"
     ],
     ", please check whether the reference spectrum is similar to this spectrum": [
-      "workflow/pick_peaks.py:1104"
+      "workflow/pick_peaks.py:1098"
     ],
     ", reference data {p0}": [
       "gui/main_window.py:880"
     ],
     "--carrier-ppm cannot be combined with --rebuild-peak-tables": [
-      "nmrforge_api/cli.py:230"
+      "nmrfinesse_api/cli.py:230"
     ],
     "--rebuild-peak-tables cannot be combined with --force / --direct-range": [
-      "nmrforge_api/cli.py:234"
+      "nmrfinesse_api/cli.py:234"
     ],
     "--study root must match --reference root; cross-study sweeps are not supported ({p0} != {p1})": [
-      "nmrforge_api/cli.py:434"
+      "nmrfinesse_api/cli.py:434"
     ],
     "-{p0} is missing from fid.com (this dimension's acquisition mode comes from the conversion script only)": [
       "backend/bruker_workflow.py:604"
@@ -356,7 +356,7 @@
       "workflow/import_workflow.py:351"
     ],
     "== peak-picking report ==": [
-      "workflow/pick_peaks.py:664"
+      "workflow/pick_peaks.py:657"
     ],
     "== spectrum quality and data quality report ==": [
       "workflow/optimization_report.py:106"
@@ -385,7 +385,7 @@
     "AQSEQ={p0} makes the NMRPipe y axis logical {p1} (the conversion layer assumes {p2}); -yMODE/-zMODE and -yN/-zN must follow this order": [
       "core/experiment/acquisition_encoding.py:265"
     ],
-    "About NMRForge": [
+    "About NMRFinesse": [
       "gui/main_window.py:1263"
     ],
     "Add FT -neg to the indirect dimension (F1) and re-run the final script; unchecking removes it again. Only the indirect-dimension FT line is changed.": [
@@ -489,13 +489,13 @@
       "gui/dialogs.py:890"
     ],
     "Axial-peak screening: acquisition or original boundaries unconfirmed; no peaks removed": [
-      "workflow/pick_peaks.py:124"
-    ],
-    "Axial-peak screening: insufficient edge-artifact evidence; no peaks removed": [
       "workflow/pick_peaks.py:123"
     ],
+    "Axial-peak screening: insufficient edge-artifact evidence; no peaks removed": [
+      "workflow/pick_peaks.py:122"
+    ],
     "Axial-peak screening: {p0} aligned edge candidates rejected; interior peaks retained": [
-      "workflow/pick_peaks.py:118"
+      "workflow/pick_peaks.py:117"
     ],
     "Axis order rearrangement (lazy loading): Storage (%s) -> Logic (%s): %s": [
       "viewer/spectrum.py:675"
@@ -567,7 +567,7 @@
       "gui/dialogs.py:207"
     ],
     "Bruker directory downloaded and unpacked from the public archive (repeatable)": [
-      "nmrforge_api/cli.py:593"
+      "nmrfinesse_api/cli.py:593"
     ],
     "Buffer component": [
       "gui/notes.py:34"
@@ -591,7 +591,7 @@
       "gui/main_window.py:910"
     ],
     "Cancelled (interrupted); unfinished workflows are not recorded as successful.": [
-      "nmrforge_api/cli.py:794"
+      "nmrfinesse_api/cli.py:794"
     ],
     "Candidate evaluation criteria: threshold {p0:g}σ (independent of the peak-picking step), sign mode {p1}, acquisition-gated edge screening; ": [
       "workflow/smile_optimize.py:382"
@@ -600,8 +600,8 @@
       "workflow/baseline_optimize.py:382"
     ],
     "Cannot read file: {p0} ({p1})": [
-      "nmrforge_api/cli.py:110",
-      "nmrforge_api/cli.py:122"
+      "nmrfinesse_api/cli.py:110",
+      "nmrfinesse_api/cli.py:122"
     ],
     "Check all direct-child *.fid slices without modifying them.": [
       "gui/main_window.py:276"
@@ -635,7 +635,7 @@
       "gui/spectrum_panel.py:2228"
     ],
     "Combination mode does not track reference peaks: each combination picks peaks on its own candidate spectrum using the reference-locked detection threshold; automatic axial screening requires acquisition parameters and aligned narrow peaks at original edges. Uncertain cases keep peaks; an explicit physical edge width is a manual override.": [
-      "nmrforge_api/records.py:44"
+      "nmrfinesse_api/records.py:44"
     ],
     "Command timeout (>{p0:.0f}s), terminated process tree": [
       "backend/runtime.py:446"
@@ -672,7 +672,7 @@
       "gui/notes.py:21"
     ],
     "Condition parameters must map condition labels to parameter objects: {p0}": [
-      "nmrforge_api/cli.py:132"
+      "nmrfinesse_api/cli.py:132"
     ],
     "Configured target CAR": [
       "backend/bruker_workflow.py:272"
@@ -737,7 +737,7 @@
     ],
     "Data has been moved to trash: {p0}/{p1}": [
       "core/project/manager.py:439",
-      "core/project/manager.py:608"
+      "core/project/manager.py:610"
     ],
     "Data model is missing {p0} Dimensions": [
       "core/data/bruker_reader.py:112"
@@ -858,8 +858,8 @@
       "gui/project_tree.py:1209"
     ],
     "Error: {p0}": [
-      "nmrforge_api/cli.py:91",
-      "nmrforge_api/cli.py:787"
+      "nmrfinesse_api/cli.py:91",
+      "nmrfinesse_api/cli.py:787"
     ],
     "Evaluate by first paragraph ({p0})": [
       "gui/raw_quality.py:110"
@@ -960,10 +960,10 @@
       "workflow/direct_diagnostics.py:1131"
     ],
     "File is not a key/value table (YAML/JSON): {p0}": [
-      "nmrforge_api/cli.py:113"
+      "nmrfinesse_api/cli.py:113"
     ],
     "File is not valid JSON: {p0} ({p1})": [
-      "nmrforge_api/cli.py:125"
+      "nmrfinesse_api/cli.py:125"
     ],
     "File or directory not found: {p0}": [
       "core/user_errors.py:31"
@@ -1018,8 +1018,8 @@
       "gui/dashboards.py:195"
     ],
     "Full traceback (debug):": [
-      "nmrforge_api/cli.py:93",
-      "nmrforge_api/cli.py:789"
+      "nmrfinesse_api/cli.py:93",
+      "nmrfinesse_api/cli.py:789"
     ],
     "General information (can be left blank):": [
       "gui/dialogs.py:359"
@@ -1042,7 +1042,7 @@
       "gui/project_tree.py:780"
     ],
     "Give exactly one of: --grid (candidate values per axis, full factorial) or --combos (an external combination table: orthogonal / fractional factorial / LHS ...)": [
-      "nmrforge_api/cli.py:421"
+      "nmrfinesse_api/cli.py:421"
     ],
     "Global SNR is low ({p0:.1f})": [
       "core/qc/spectrum_quality.py:324"
@@ -1064,7 +1064,7 @@
       "gui/pipeline_panel.py:2060"
     ],
     "Hint: pass --debug or set {p0}=1 to print the full traceback.": [
-      "nmrforge_api/cli.py:97"
+      "nmrfinesse_api/cli.py:97"
     ],
     "Hold-out residual: no plane was found under {p0}; the hold-out metric is skipped": [
       "backend/nmrpipe_backend.py:2411"
@@ -1204,7 +1204,7 @@
       "core/user_errors.py:51"
     ],
     "Invalid peak-detection threshold or neighborhood": [
-      "core/qc/peak_detection.py:240"
+      "core/qc/peak_detection.py:260"
     ],
     "Invalid points, SI=1": [
       "backend/script_generator.py:237"
@@ -1213,7 +1213,7 @@
       "backend/script_generator.py:1733"
     ],
     "JSON mapping condition labels to per-condition processing parameter objects": [
-      "nmrforge_api/cli.py:616"
+      "nmrfinesse_api/cli.py:616"
     ],
     "Join group": [
       "gui/dialogs.py:144"
@@ -1415,26 +1415,26 @@
     "Multiple slice merging failed": [
       "backend/nmrpipe_backend.py:4439"
     ],
-    "NMRForge - welcome": [
+    "NMRFinesse - welcome": [
       "gui/main_window.py:2375"
     ],
-    "NMRForge parameter-combination runner (command line, no GUI)": [
-      "nmrforge_api/cli.py:565"
+    "NMRFinesse parameter-combination runner (command line, no GUI)": [
+      "nmrfinesse_api/cli.py:565"
     ],
-    "NMRForge processing parameter": [
+    "NMRFinesse processing parameter": [
       "backend/script_generator.py:1604"
     ],
-    "NMRForge spectrum viewer": [
+    "NMRFinesse spectrum viewer": [
       "viewer/app.py:59",
       "viewer/app.py:215"
     ],
-    "NMRForge spectrum viewer - {p0}": [
+    "NMRFinesse spectrum viewer - {p0}": [
       "viewer/app.py:188"
     ],
-    "NMRForge usage tutorial": [
+    "NMRFinesse usage tutorial": [
       "gui/tutorial.py:70"
     ],
-    "NMRForge: an automated processing, parameter-optimisation and quality-control platform for Bruker 2D/3D NMR.\nFour columns: project tree / processing pipeline / task log / spectrum viewer.\n\nAxis-order convention (internally everything is organised in the logical order F1/F2/F3):\n- 2D: F1 = indirect dimension, F2 = direct dimension; 3D: F1 = first indirect, F2 = second indirect, F3 = direct dimension.\n- NMRPipe stores 3D files in the standard order (F2,F1,F3); loading transposes them into the logical order\n  (the \"axis reorder\" log line reports exactly this and is normal behaviour).\n- Dimensions of the same nucleus (e.g. 2D 1H-1H, HNN with two 15N) are told apart by an x/y/z subscript\n  following the priority \"direct > acqu2 > acqu3\" (e.g. Nx = the N of the HSQC, Ny = the sequential N).": [
+    "NMRFinesse: an automated processing, parameter-optimisation and quality-control platform for Bruker 2D/3D NMR.\nFour columns: project tree / processing pipeline / task log / spectrum viewer.\n\nAxis-order convention (internally everything is organised in the logical order F1/F2/F3):\n- 2D: F1 = indirect dimension, F2 = direct dimension; 3D: F1 = first indirect, F2 = second indirect, F3 = direct dimension.\n- NMRPipe stores 3D files in the standard order (F2,F1,F3); loading transposes them into the logical order\n  (the \"axis reorder\" log line reports exactly this and is normal behaviour).\n- Dimensions of the same nucleus (e.g. 2D 1H-1H, HNN with two 15N) are told apart by an x/y/z subscript\n  following the priority \"direct > acqu2 > acqu3\" (e.g. Nx = the N of the HSQC, Ny = the sequential N).": [
       "gui/main_window.py:1264"
     ],
     "NMRPipe (*.ft2 *.ft3 *.fdf);; All files (*)": [
@@ -1653,7 +1653,7 @@
       "viewer/phase_panel.py:146"
     ],
     "Only negative peaks": [
-      "workflow/pick_peaks.py:1198"
+      "workflow/pick_peaks.py:1192"
     ],
     "Only supports 2D spectrum (FDDIMCOUNT<2): {p0}": [
       "viewer/spectrum.py:444"
@@ -1669,10 +1669,10 @@
       "viewer/spectrum.py:570"
     ],
     "Only the main peak": [
-      "workflow/pick_peaks.py:1197"
+      "workflow/pick_peaks.py:1191"
     ],
     "Only the main symbol peak (uniform)": [
-      "workflow/pick_peaks.py:1196"
+      "workflow/pick_peaks.py:1190"
     ],
     "Open NMRPipe spectrum": [
       "gui/spectrum_panel.py:2144",
@@ -1787,7 +1787,7 @@
       "workflow/peak_align.py:329"
     ],
     "Peak detection requires a non-empty spectral array": [
-      "core/qc/peak_detection.py:231"
+      "core/qc/peak_detection.py:251"
     ],
     "Peak picking": [
       "gui/group_panel.py:41",
@@ -1797,19 +1797,19 @@
       "gui/processing.py:449"
     ],
     "Peak picking failed: {p0}": [
-      "workflow/pick_peaks.py:1192"
+      "workflow/pick_peaks.py:1186"
     ],
     "Peak picking threshold setting": [
       "gui/group_panel.py:178"
     ],
     "Peak selection completed ({p0} peak)": [
-      "workflow/pick_peaks.py:1231"
+      "workflow/pick_peaks.py:1225"
     ],
     "Peak symbol": [
       "gui/notes.py:41"
     ],
     "Peak thresholds and heights are relative to the global median background ({p0:.3g}); the spectrum itself was not changed": [
-      "workflow/pick_peaks.py:1217"
+      "workflow/pick_peaks.py:1211"
     ],
     "Peak {p0} coordinate {p1} {p2:.2f} ppm is outside the current spectrum axis range ({p3:.1f}-{p4:.1f}); it may be a stale peak pick, pick again": [
       "gui/spectrum_panel.py:2594"
@@ -1826,7 +1826,7 @@
     "Pick a data set of this experiment that already has a spectrum; its processing parameters are applied to every data set in the group. You may also stop at a chosen step (for example, generate the FID only).": [
       "gui/group_panel.py:108"
     ],
-    "Pins the interface language; when following the system, NMRFORGE_LANG can still override it for a single run. Takes effect after restarting the program.": [
+    "Pins the interface language; when following the system, NMRFINESSE_LANG can still override it for a single run. Takes effect after restarting the program.": [
       "gui/dialogs.py:790"
     ],
     "Please create or open a project first": [
@@ -1980,7 +1980,7 @@
       "gui/main_window.py:1161"
     ],
     "R0001... (reference-table row order; only in the reference table)": [
-      "nmrforge_api/records.py:346"
+      "nmrfinesse_api/records.py:346"
     ],
     "Rank {p0}: nSigma {p1:g}, threshold {p2:g}, stable peaks {p3}": [
       "gui/pipeline_panel.py:499"
@@ -2047,34 +2047,34 @@
       "backend/reference_fid.py:19"
     ],
     "Reference alignment is unreliable ({p0:.0%}); all peaks were retained. Check the reference spectrum before using its peak table as a constraint": [
-      "workflow/pick_peaks.py:1061"
+      "workflow/pick_peaks.py:1055"
     ],
     "Reference coordinates are missing or ambiguous; all peaks were retained": [
-      "workflow/pick_peaks.py:1045"
+      "workflow/pick_peaks.py:1039"
     ],
     "Reference data:": [
       "gui/group_panel.py:120"
     ],
     "Reference input differs or its fingerprint is missing/invalid [{p0}]; use force=True to rebuild. All processing parameters, phase route and direct range must match the original request.": [
-      "nmrforge_api/reference.py:690"
+      "nmrfinesse_api/reference.py:690"
     ],
     "Reference parameter keys must be strings": [
-      "nmrforge_api/reference.py:657"
+      "nmrfinesse_api/reference.py:657"
     ],
     "Reference parameters must be finite JSON-compatible values": [
-      "nmrforge_api/reference.py:668"
+      "nmrfinesse_api/reference.py:668"
     ],
     "Reference peak file is empty or cannot be parsed": [
       "gui/spectrum_panel.py:1970"
     ],
     "Reference peak table constraint: The current spectrum and the reference peak have no common core coordinates and are not filtered": [
-      "workflow/pick_peaks.py:1068"
+      "workflow/pick_peaks.py:1062"
     ],
     "Reference peak table constraints (after alignment): {p0} → {p1} Peak (overall offset {p2}, alignment rate {p3:.0%}": [
-      "workflow/pick_peaks.py:1094"
+      "workflow/pick_peaks.py:1088"
     ],
     "Reference peak table constraints (straight matching): {p0} → {p1} Peaks (there are few reference peaks and no overall translation is performed)": [
-      "workflow/pick_peaks.py:1157"
+      "workflow/pick_peaks.py:1151"
     ],
     "Reference spectrum": [
       "gui/pipeline_panel.py:1042",
@@ -2106,7 +2106,7 @@
       "workflow/import_workflow.py:359"
     ],
     "Repeated nuclei require explicit F-axis coordinates: {p0}": [
-      "nmrforge_api/peaks.py:277"
+      "nmrfinesse_api/peaks.py:277"
     ],
     "Replica preview": [
       "workflow/stepwise.py:516"
@@ -2267,7 +2267,7 @@
       "gui/dialogs.py:628"
     ],
     "Select both positive and negative peaks (mixed)": [
-      "workflow/pick_peaks.py:1195"
+      "workflow/pick_peaks.py:1189"
     ],
     "Select export reference peak file (.list)": [
       "gui/spectrum_panel.py:1945"
@@ -2554,7 +2554,7 @@
       "workflow/ucsf_export.py:31"
     ],
     "The spectrum is missing and cannot pick the peak: {p0}/{p1}": [
-      "workflow/pick_peaks.py:857"
+      "workflow/pick_peaks.py:850"
     ],
     "The spectrum panel on the right displays the final spectrum of the current data spectrum folder": [
       "gui/pipeline_panel.py:1156"
@@ -2617,7 +2617,7 @@
       "gui/main_window.py:1495"
     ],
     "This software only executes processing and writes spectra, peak tables and processing records (provenance + QC). CSP, robustness, statistical analysis, significance testing and scientific conclusions are out of scope; downstream analysis does that from the unified peak table.": [
-      "nmrforge_api/records.py:53"
+      "nmrfinesse_api/records.py:53"
     ],
     "Title (can be left blank):": [
       "gui/dialogs.py:210"
@@ -2680,8 +2680,8 @@
       "core/peaks/localize.py:120"
     ],
     "Unknown peak sign mode: {p0}": [
-      "core/qc/peak_detection.py:242",
-      "nmrforge_api/peaks.py:991"
+      "core/qc/peak_detection.py:262",
+      "nmrfinesse_api/peaks.py:992"
     ],
     "Unknown phase_route: {p0}": [
       "workflow/stepwise.py:491"
@@ -2749,7 +2749,7 @@
       "workflow/batch.py:391"
     ],
     "[{p0}/{p1}] exists, skipping (resume)": [
-      "nmrforge_api/sweep.py:1945"
+      "nmrfinesse_api/sweep.py:1945"
     ],
     "_find_bad_points (single row amplitude distribution): peak determination compared with adjacent points": [
       "workflow/direct_diagnostics.py:485"
@@ -2758,7 +2758,7 @@
       "backend/nmrpipe_backend.py:429"
     ],
     "a condition mapping may only hold by_condition / default / on_missing,found {p0} as well (pass path or peak_ids for one shared list)": [
-      "nmrforge_api/localization_targets.py:936"
+      "nmrfinesse_api/localization_targets.py:936"
     ],
     "a kinetics experiment was detected (variable delay / time series); the current product does not support importing it": [
       "workflow/import_workflow.py:221",
@@ -2784,7 +2784,7 @@
       "backend/bruker_workflow.py:298"
     ],
     "accepted {p0} peaks ({p1} duplicate grid cells)": [
-      "workflow/pick_peaks.py:757"
+      "workflow/pick_peaks.py:750"
     ],
     "acquNs FnMODE is undefined (0)": [
       "core/experiment/pulse_pathways.py:1000"
@@ -2808,10 +2808,10 @@
       "backend/script_generator.py:1709"
     ],
     "allow this batch's --direct-range to disagree with the reference's frozen range (leaving the run-level warning code direct_range_override); by default a disagreement is an error rather than a silent window change": [
-      "nmrforge_api/cli.py:701"
+      "nmrfinesse_api/cli.py:701"
     ],
     "also run the golden vector (a tiny synthetic spectrum) and compare it with the declared hashes": [
-      "nmrforge_api/cli.py:758"
+      "nmrfinesse_api/cli.py:758"
     ],
     "artifact": [
       "workflow/optimization_report.py:241"
@@ -2823,10 +2823,10 @@
       "workflow/script_audit.py:166"
     ],
     "axis 0": [
-      "workflow/pick_peaks.py:676"
+      "workflow/pick_peaks.py:669"
     ],
     "axis grid YAML/JSON (candidate values per axis, full factorial)": [
-      "nmrforge_api/cli.py:674"
+      "nmrfinesse_api/cli.py:674"
     ],
     "axis order/reference self-check: %s axis (%s) ppm range [%.1f, %.1f] exceeds the usual range %s: %s": [
       "viewer/spectrum.py:292"
@@ -2869,7 +2869,7 @@
       "workflow/memory_phase_search.py:616"
     ],
     "bad combination table (expected a list or combos:): {p0}": [
-      "nmrforge_api/sweep.py:1038"
+      "nmrfinesse_api/sweep.py:1038"
     ],
     "bad point in the NUS sampling table (out of range / duplicate coordinate)": [
       "backend/nmrpipe_backend.py:425"
@@ -2888,7 +2888,7 @@
       "workflow/batch.py:113"
     ],
     "behaviour compatibility manifest: fingerprint + change level (needs no study root)": [
-      "nmrforge_api/cli.py:749"
+      "nmrfinesse_api/cli.py:749"
     ],
     "broad envelope peak detected (FWHM over 8% of the spectral width); likely solvent / chemical-exchange residue, which processing cannot remove completely; check the solvent-suppression conditions": [
       "workflow/direct_diagnostics.py:689"
@@ -2909,10 +2909,10 @@
       "gui/dialogs.py:762"
     ],
     "build and freeze the reference spectrum and script": [
-      "nmrforge_api/cli.py:605"
+      "nmrfinesse_api/cli.py:605"
     ],
     "by_condition must map condition -> file/list: {p0!r}": [
-      "nmrforge_api/localization_targets.py:946"
+      "nmrfinesse_api/localization_targets.py:946"
     ],
     "cancelled by the user: dimension-by-dimension consensus phase search": [
       "core/optimization/phase_consensus.py:164",
@@ -2929,22 +2929,22 @@
       "backend/nmrpipe_backend.py:1837"
     ],
     "cannot normalise {p0}: {p1}": [
-      "nmrforge_api/compat.py:208"
+      "nmrfinesse_api/compat.py:208"
     ],
     "cannot read project.json: {p0}": [
       "core/project/manager.py:179"
     ],
     "cannot read the reference file: {p0} ({p1})": [
-      "nmrforge_api/reference.py:397"
+      "nmrfinesse_api/reference.py:397"
     ],
     "cannot write the migration result (the original file is unchanged): {p0}": [
       "core/project/manager.py:208"
     ],
     "carrier axis was specified more than once: {p0}": [
-      "nmrforge_api/cli.py:164"
+      "nmrfinesse_api/cli.py:164"
     ],
     "carrier override must use AXIS=PPM: {p0}": [
-      "nmrforge_api/cli.py:160"
+      "nmrfinesse_api/cli.py:160"
     ],
     "classified as {p0} (confidence {p1:.2f}), but pdata/title says {p2}; the nucleus combination is compatible, so the user title wins (please check)": [
       "core/experiment/experiment_classifier.py:392"
@@ -2961,19 +2961,19 @@
       "core/data/nus_reader.py:138"
     ],
     "combination mode needs a built reference: {p0} (condition {p1}) has no reference spectrum yet; run reference mode first": [
-      "nmrforge_api/reference.py:432"
+      "nmrfinesse_api/reference.py:432"
     ],
     "combination mode needs an explicit reference: a study root or <root>#<condition>, or a reference.json path; reference mode produces it(run_reference_study / CLI reference + peaks)": [
-      "nmrforge_api/reference.py:349"
+      "nmrfinesse_api/reference.py:349"
     ],
     "combination mode requires an explicit reference: <study root> or <root>#<condition>,or a reference.json path (produced by reference mode: reference + peaks)": [
-      "nmrforge_api/cli.py:679"
+      "nmrfinesse_api/cli.py:679"
     ],
     "combination table does not exist: {p0}": [
-      "nmrforge_api/sweep.py:1020"
+      "nmrfinesse_api/sweep.py:1020"
     ],
     "combination {p0}, {p1}: this axis has no window (window.{p2}.type={p3}), so off/end/pow/lb/g1/g2 cannot take effect; write window.{p4}.type=... together with the parameter (keep none for no window)": [
-      "nmrforge_api/sweep.py:1389"
+      "nmrfinesse_api/sweep.py:1389"
     ],
     "combined segmented NUS coverage is unknown because at least one segment has no valid sampling schedule": [
       "core/data/bruker_reader.py:583"
@@ -2982,31 +2982,31 @@
       "core/data/bruker_reader.py:567"
     ],
     "condition directory token collision: {p0!r} and {p1!r} both map to {p2!r}": [
-      "nmrforge_api/session.py:314"
+      "nmrfinesse_api/session.py:314"
     ],
     "condition label (A/B/...); omit for all conditions": [
-      "nmrforge_api/cli.py:588"
+      "nmrfinesse_api/cli.py:588"
     ],
     "condition label {p0!r} is taken by {p1}; give each condition its own label (A / B)": [
-      "nmrforge_api/session.py:493"
+      "nmrfinesse_api/session.py:493"
     ],
     "condition name in the target peak list does not belong to the study: {p0}(from {p1}); the study has {p2}. A misspelled condition is never ignored.": [
-      "nmrforge_api/localization_targets.py:324"
+      "nmrfinesse_api/localization_targets.py:324"
     ],
     "condition parameters name unknown condition(s): {p0}": [
-      "nmrforge_api/cli.py:221"
+      "nmrfinesse_api/cli.py:221"
     ],
     "condition {p0!r} has no reference spectrum yet": [
-      "nmrforge_api/cli.py:353"
+      "nmrfinesse_api/cli.py:353"
     ],
     "condition {p0!r} is bound to different dataset sources or segment order; use another condition label or a separate study root": [
-      "nmrforge_api/study.py:194"
+      "nmrfinesse_api/study.py:194"
     ],
     "condition {p0} has no reference spectrum yet: call build_reference()/ensure_reference_peaks()": [
-      "nmrforge_api/sweep.py:1616"
+      "nmrfinesse_api/sweep.py:1616"
     ],
     "condition {p0} has no usable reference: run reference mode (run_reference_study) for every condition first": [
-      "nmrforge_api/study.py:588"
+      "nmrfinesse_api/study.py:588"
     ],
     "constant/all-zero spectrum: there is no signal (not something a quality score can judge)": [
       "core/qc/spectrum_quality.py:186"
@@ -3022,14 +3022,14 @@
       "backend/nmrpipe_backend.py:262"
     ],
     "core.peaks(three-point parabola)": [
-      "nmrforge_api/peaks.py:372",
-      "nmrforge_api/peaks.py:751"
+      "nmrfinesse_api/peaks.py:372",
+      "nmrfinesse_api/peaks.py:751"
     ],
     "could not read the data quality report: {p0}": [
       "gui/pipeline_panel.py:531"
     ],
     "create a study and import a Bruker dataset": [
-      "nmrforge_api/cli.py:591"
+      "nmrfinesse_api/cli.py:591"
     ],
     "csh execution failed: {p0}": [
       "backend/runtime.py:400"
@@ -3049,8 +3049,8 @@
     ],
     "data does not exist: {p0}/{p1}": [
       "core/project/manager.py:437",
-      "core/project/manager.py:606",
-      "core/project/manager.py:685"
+      "core/project/manager.py:608",
+      "core/project/manager.py:687"
     ],
     "data group batch processing": [
       "gui/group_panel.py:73"
@@ -3059,11 +3059,11 @@
       "gui/main_window.py:760"
     ],
     "data group does not exist: {p0}/{p1}": [
-      "core/project/manager.py:703",
-      "core/project/manager.py:724",
-      "core/project/manager.py:745",
-      "core/project/manager.py:771",
-      "core/project/manager.py:784"
+      "core/project/manager.py:705",
+      "core/project/manager.py:726",
+      "core/project/manager.py:747",
+      "core/project/manager.py:773",
+      "core/project/manager.py:786"
     ],
     "data group {p0} Without member data, batch processing cannot be performed": [
       "gui/main_window.py:873"
@@ -3101,13 +3101,13 @@
       "gui/main_window.py:787"
     ],
     "dataset already registered: {p0}": [
-      "nmrforge_api/session.py:191"
+      "nmrfinesse_api/session.py:191"
     ],
     "dataset import preflight failed: {p0} ({p1}: {p2})": [
-      "nmrforge_api/session.py:506"
+      "nmrfinesse_api/session.py:506"
     ],
     "dataset path does not exist: {p0}": [
-      "nmrforge_api/session.py:488"
+      "nmrfinesse_api/session.py:488"
     ],
     "dataset segment parameters disagree": [
       "core/data/bruker_reader.py:676"
@@ -3116,14 +3116,14 @@
       "core/data/bruker_reader.py:547"
     ],
     "datasets must be a condition mapping or a sequence": [
-      "nmrforge_api/study.py:147"
+      "nmrfinesse_api/study.py:147"
     ],
     "default": [
       "workflow/optimization_report.py:76",
       "workflow/optimization_report.py:298",
       "workflow/optimization_report.py:299",
       "workflow/optimization_report.py:71",
-      "workflow/pick_peaks.py:670",
+      "workflow/pick_peaks.py:663",
       "gui/pipeline_panel.py:2135",
       "gui/pipeline_panel.py:2136"
     ],
@@ -3190,7 +3190,7 @@
       "core/qc/spectrum_quality.py:334"
     ],
     "diagnostic record: {p0}": [
-      "workflow/pick_peaks.py:790"
+      "workflow/pick_peaks.py:783"
     ],
     "different dimensions": [
       "workflow/batch.py:264"
@@ -3353,19 +3353,19 @@
       "backend/nmrpipe_backend.py:991"
     ],
     "direct-dimension range (ext_lo high, ext_hi low, ppm): overrides the batch base": [
-      "nmrforge_api/cli.py:696"
+      "nmrfinesse_api/cli.py:696"
     ],
     "direct-dimension range (ext_lo high, ext_hi low, ppm); changes require --force": [
-      "nmrforge_api/cli.py:632"
+      "nmrfinesse_api/cli.py:632"
     ],
     "direct-dimension range ends are identical ({p0:g} ppm)": [
-      "nmrforge_api/direct_range.py:178"
+      "nmrfinesse_api/direct_range.py:178"
     ],
     "direct-dimension range {p0} is not a number: {p1!r}": [
-      "nmrforge_api/direct_range.py:36"
+      "nmrfinesse_api/direct_range.py:36"
     ],
     "direct-dimension range {p0} is outside a sensible ppm range: {p1!r}": [
-      "nmrforge_api/direct_range.py:44"
+      "nmrfinesse_api/direct_range.py:44"
     ],
     "direct-dimension real-data final spectrum preview failed: {p0}": [
       "workflow/phase_routes.py:1891"
@@ -3377,10 +3377,10 @@
       "gui/pipeline_panel.py:2156"
     ],
     "direct_range is malformed: use (high_ppm, low_ppm) or {'lo': …, 'hi': …}": [
-      "nmrforge_api/direct_range.py:160"
+      "nmrfinesse_api/direct_range.py:160"
     ],
     "direct_range needs two ppm values (high, low); got {p0!r}": [
-      "nmrforge_api/direct_range.py:155"
+      "nmrfinesse_api/direct_range.py:155"
     ],
     "directory does not exist: {p0}": [
       "core/data/bruker_reader.py:611",
@@ -3388,10 +3388,10 @@
       "gui/processing.py:63"
     ],
     "directory for the golden vector artefacts (default: a temporary directory, discarded afterwards)": [
-      "nmrforge_api/cli.py:767"
+      "nmrfinesse_api/cli.py:767"
     ],
     "discard the existing peak table and pick again": [
-      "nmrforge_api/cli.py:654"
+      "nmrfinesse_api/cli.py:654"
     ],
     "display aspect ratio": [
       "viewer/app.py:95"
@@ -3400,29 +3400,29 @@
       "gui/pipeline_panel.py:1154"
     ],
     "do not skip completed workflows": [
-      "nmrforge_api/cli.py:731"
+      "nmrfinesse_api/cli.py:731"
     ],
     "document": [
       "gui/spectrum_panel.py:456"
     ],
     "done with warnings: {p0}": [
-      "nmrforge_api/sweep.py:2583"
+      "nmrfinesse_api/sweep.py:2583"
     ],
     "done: independent picking at sigma={p0:g}({p1}, locked), peaks ": [
-      "nmrforge_api/sweep.py:2588"
+      "nmrfinesse_api/sweep.py:2588"
     ],
     "duplicate condition label: {p0}": [
-      "nmrforge_api/session.py:189",
-      "nmrforge_api/study.py:181"
+      "nmrfinesse_api/session.py:189",
+      "nmrfinesse_api/study.py:181"
     ],
     "each dataset source must be a non-empty directory path": [
-      "nmrforge_api/session.py:420"
+      "nmrfinesse_api/session.py:420"
     ],
     "edge margin {p0} point(s)": [
-      "workflow/pick_peaks.py:725"
+      "workflow/pick_peaks.py:718"
     ],
     "edge margin {p0} point(s) ({p1:.3f} ppm of {p2})": [
-      "workflow/pick_peaks.py:718"
+      "workflow/pick_peaks.py:711"
     ],
     "edit{p0}": [
       "gui/main_window.py:2090"
@@ -3445,18 +3445,18 @@
       "gui/dialogs.py:613"
     ],
     "experiment does not exist: {p0}": [
-      "core/project/manager.py:1106",
+      "core/project/manager.py:1108",
       "workflow/batch.py:88",
-      "nmrforge_api/session.py:518"
+      "nmrfinesse_api/session.py:518"
     ],
     "experiment has been moved to trash: {p0}": [
-      "core/project/manager.py:839"
+      "core/project/manager.py:841"
     ],
     "experiment notes": [
       "gui/main_window.py:2080"
     ],
     "experiment title": [
-      "nmrforge_api/cli.py:602"
+      "nmrfinesse_api/cli.py:602"
     ],
     "experiment title (can be left blank)": [
       "gui/dashboards.py:102"
@@ -3487,10 +3487,10 @@
       "gui/group_panel.py:292"
     ],
     "explicit carrier position in ppm (repeatable for F1/F2/F3)": [
-      "nmrforge_api/cli.py:623"
+      "nmrfinesse_api/cli.py:623"
     ],
     "explicit combination table CSV/TSV/YAML/JSON (external design)": [
-      "nmrforge_api/cli.py:688"
+      "nmrfinesse_api/cli.py:688"
     ],
     "export Poky peak table": [
       "gui/spectrum_panel.py:1914"
@@ -3512,7 +3512,7 @@
       "gui/spectrum_panel.py:320"
     ],
     "external: combination tables leave reference_peak_id/assignment empty and downstream analysis matches them back (this software neither matches nor computes CSP)": [
-      "nmrforge_api/records.py:350"
+      "nmrfinesse_api/records.py:350"
     ],
     "fail ": [
       "workflow/batch.py:504"
@@ -3524,7 +3524,7 @@
       "gui/dialogs.py:708"
     ],
     "failed: {p0}": [
-      "nmrforge_api/sweep.py:2182"
+      "nmrfinesse_api/sweep.py:2182"
     ],
     "fallback: use the built-in bruk2pipe parameter conversion": [
       "backend/nmrpipe_backend.py:3417"
@@ -3605,16 +3605,16 @@
       "workflow/stepwise.py:485"
     ],
     "give exactly one of axes (full factorial) or combos (explicit table)": [
-      "nmrforge_api/sweep.py:1122"
+      "nmrfinesse_api/sweep.py:1122"
     ],
     "give the whole range: direct_range=(high_ppm, low_ppm), or both ext_lo= and ext_hi=": [
-      "nmrforge_api/direct_range.py:170"
+      "nmrfinesse_api/direct_range.py:170"
     ],
     "grid file has no axes: {p0}": [
-      "nmrforge_api/cli.py:460"
+      "nmrfinesse_api/cli.py:460"
     ],
     "grid {p0} points ({p1}D); threshold {p2}σ ({p3})": [
-      "workflow/pick_peaks.py:690"
+      "workflow/pick_peaks.py:683"
     ],
     "help": [
       "gui/spectrum_panel.py:460"
@@ -3683,10 +3683,10 @@
       "gui/main_window.py:1101"
     ],
     "import failed: {p0}: {p1}": [
-      "nmrforge_api/session.py:528"
+      "nmrfinesse_api/session.py:528"
     ],
     "import finished but produced no usable data entry": [
-      "nmrforge_api/session.py:535"
+      "nmrfinesse_api/session.py:535"
     ],
     "import rejected: {p0}": [
       "gui/main_window.py:1098"
@@ -3703,14 +3703,14 @@
       "gui/project_tree.py:1097"
     ],
     "import the ordered dataset directories as one segmented acquisition": [
-      "nmrforge_api/cli.py:600"
+      "nmrfinesse_api/cli.py:600"
     ],
     "including optimisation": [
       "gui/pipeline_panel.py:2114",
       "gui/pipeline_panel.py:2137"
     ],
     "independent picking failed: {p0}: {p1}": [
-      "nmrforge_api/sweep.py:2335"
+      "nmrfinesse_api/sweep.py:2335"
     ],
     "index: {p0}": [
       "workflow/manual.py:218"
@@ -3747,7 +3747,7 @@
       "workflow/phase_routes.py:1746"
     ],
     "input parameters for automatic processing (YAML/JSON)": [
-      "nmrforge_api/cli.py:610"
+      "nmrfinesse_api/cli.py:610"
     ],
     "insufficient digital resolution (shape={p0}, below the minimum {p1}; penalty {p2:.1f} points)": [
       "core/qc/spectrum_quality.py:310"
@@ -3822,13 +3822,13 @@
       "workflow/direct_diagnostics.py:1422"
     ],
     "invalid carrier override: {p0}": [
-      "nmrforge_api/cli.py:166"
+      "nmrfinesse_api/cli.py:166"
     ],
     "invalid carrier ppm value: {p0}": [
-      "nmrforge_api/cli.py:170"
+      "nmrfinesse_api/cli.py:170"
     ],
     "keep only the N most intense peaks (0 = all)": [
-      "nmrforge_api/cli.py:652"
+      "nmrfinesse_api/cli.py:652"
     ],
     "kinetics / variable-delay series detected (pseudo-2D, VDLIST or related PULPROG)": [
       "core/experiment/experiment_classifier.py:428"
@@ -3852,37 +3852,37 @@
       "core/experiment/experiment_classifier.py:417"
     ],
     "localisation {p0!r}: the Gaussian peak-fitting method was removed; peak localisation is parabolic only": [
-      "nmrforge_api/sweep.py:333"
+      "nmrfinesse_api/sweep.py:333"
     ],
     "localisation: {p0} (three-point parabolic vertex)": [
-      "workflow/pick_peaks.py:766"
+      "workflow/pick_peaks.py:759"
     ],
     "localization scope [{p0}]: this condition is unlimited (whole-spectrum refinement)": [
-      "nmrforge_api/sweep.py:2365"
+      "nmrfinesse_api/sweep.py:2365"
     ],
     "localization scope [{p0}]: {p1}": [
-      "nmrforge_api/sweep.py:2361"
+      "nmrfinesse_api/sweep.py:2361"
     ],
     "localization scope [{p0}]: {p1} target peaks / {p2} detected ({p3})": [
-      "nmrforge_api/sweep.py:2373"
+      "nmrfinesse_api/sweep.py:2373"
     ],
     "localization target key {p0!r}: the Gaussian peak-fitting method was removed and peak localisation is parabolic only (write a plain target list instead of a per-method mapping)": [
-      "nmrforge_api/localization_targets.py:1103"
+      "nmrfinesse_api/localization_targets.py:1103"
     ],
     "macro parameter": [
       "backend/script_generator.py:1772"
     ],
     "malformed phase axis: {p0} (axis F1/F2/F3, component p0/p1)": [
-      "nmrforge_api/sweep.py:210"
+      "nmrfinesse_api/sweep.py:210"
     ],
     "malformed phase axis: {p0} (expected phase.<axis>.p0 or phase_delta.<axis>.p1)": [
-      "nmrforge_api/sweep.py:203"
+      "nmrfinesse_api/sweep.py:203"
     ],
     "malformed reference spec in combination mode: {p0!r}": [
-      "nmrforge_api/reference.py:368"
+      "nmrfinesse_api/reference.py:368"
     ],
     "manual edge exclusion width (ppm); default uses acquisition and edge-peak evidence": [
-      "nmrforge_api/cli.py:727"
+      "nmrfinesse_api/cli.py:727"
     ],
     "memory phase search({p0}) No trace available": [
       "workflow/phase_routes.py:789",
@@ -3898,7 +3898,7 @@
       "core/data/bruker_reader.py:589"
     ],
     "multiple dataset directories require --segmented": [
-      "nmrforge_api/cli.py:181"
+      "nmrfinesse_api/cli.py:181"
     ],
     "name": [
       "gui/dashboards.py:473"
@@ -3928,7 +3928,7 @@
       "workflow/direct_diagnostics.py:1895"
     ],
     "no condition {p0!r} in this study": [
-      "nmrforge_api/cli.py:150"
+      "nmrfinesse_api/cli.py:150"
     ],
     "no flip": [
       "gui/pipeline_panel.py:1131"
@@ -3956,7 +3956,7 @@
       "core/data/nus_reader.py:248"
     ],
     "no workflow plan found (records/sweep_plan.json)": [
-      "nmrforge_api/cli.py:505"
+      "nmrfinesse_api/cli.py:505"
     ],
     "node {p0} Depends on non-existent node {p1}": [
       "core/planning/dependency_graph.py:61"
@@ -3965,10 +3965,10 @@
       "core/qc/spectrum_quality.py:193"
     ],
     "noise level (robust MAD): σ = {p0:.3g}": [
-      "workflow/pick_peaks.py:710"
+      "workflow/pick_peaks.py:703"
     ],
     "none (no peaks detected)": [
-      "nmrforge_api/localization_targets.py:1294"
+      "nmrfinesse_api/localization_targets.py:1294"
     ],
     "not set": [
       "workflow/script_audit.py:144"
@@ -3977,22 +3977,22 @@
       "workflow/field_drift.py:1470"
     ],
     "note: combination {p0} gives {p1} but baseline.{p2}.mode={p3} is not order, so the order does nothing": [
-      "nmrforge_api/sweep.py:1424"
+      "nmrfinesse_api/sweep.py:1424"
     ],
     "note: combination {p0} gives {p1} without window.{p2}.type; sine_bell is assumed (write type=none explicitly to avoid a window)": [
-      "nmrforge_api/sweep.py:1403"
+      "nmrfinesse_api/sweep.py:1403"
     ],
     "note: {p0} is a deterministic/policy parameter; it need not be gridded(changing it moves the peak set or only the convention)": [
-      "nmrforge_api/sweep.py:748"
+      "nmrfinesse_api/sweep.py:748"
     ],
     "note: {p0} is the **direct range** (ppm): overriding it moves the extraction window and with it the peak set; set it in reference mode (`direct_range=` / CLI `reference --direct-range`)": [
-      "nmrforge_api/sweep.py:736"
+      "nmrfinesse_api/sweep.py:736"
     ],
     "note: {p0} is this row's **target-peak list** (a CSV with a peak_id column): only the listed peaks take the parabolic refinement; detection, row count and peak_id numbering are unchanged and unlisted peaks are kept": [
-      "nmrforge_api/sweep.py:288"
+      "nmrfinesse_api/sweep.py:288"
     ],
     "note: {p0} overrides the **refinement** per combination (parabolic is the only method left); the threshold stays locked to the reference": [
-      "nmrforge_api/sweep.py:295"
+      "nmrfinesse_api/sweep.py:295"
     ],
     "nuclear": [
       "gui/raw_quality.py:134"
@@ -4016,7 +4016,7 @@
       "core/data/bruker_reader.py:665"
     ],
     "only 2D NUS combinations are supported; found {p0}D NUS (3D NUS needs more work on the slice stream and candidate output; see docs/external-api/09-limitations-and-roadmap.md)": [
-      "nmrforge_api/sweep.py:1861"
+      "nmrfinesse_api/sweep.py:1861"
     ],
     "only {p0} index line(s)": [
       "core/data/nus_reader.py:151"
@@ -4035,7 +4035,7 @@
       "gui/group_panel.py:189"
     ],
     "optional external peak table (.list or peak_id,H_ppm,N_ppm CSV)": [
-      "nmrforge_api/cli.py:661"
+      "nmrfinesse_api/cli.py:661"
     ],
     "out of bounds(grid {p0})": [
       "backend/nmrpipe_backend.py:271"
@@ -4050,7 +4050,7 @@
       "core/peaks/localize.py:54"
     ],
     "parameter axis {p0} has no candidate values": [
-      "nmrforge_api/sweep.py:652"
+      "nmrfinesse_api/sweep.py:652"
     ],
     "parameter correction: {p0}": [
       "backend/nmrpipe_backend.py:3391"
@@ -4145,7 +4145,7 @@
       "gui/pipeline_panel.py:2333"
     ],
     "pass either dataset or datasets, not both": [
-      "nmrforge_api/study.py:139"
+      "nmrfinesse_api/study.py:139"
     ],
     "pdata/title agrees with the classification": [
       "core/experiment/experiment_classifier.py:384"
@@ -4157,7 +4157,7 @@
       "core/experiment/experiment_classifier.py:375"
     ],
     "peak table does not exist: {p0}": [
-      "nmrforge_api/reference.py:1016"
+      "nmrfinesse_api/reference.py:1016"
     ],
     "peak table edit": [
       "gui/main_window.py:1509"
@@ -4172,16 +4172,16 @@
       "gui/main_window.py:1833"
     ],
     "peak table: {p0} ({p1} peaks)": [
-      "workflow/pick_peaks.py:783"
+      "workflow/pick_peaks.py:776"
     ],
     "peak {p0}: the fixed-axis coordinate is missing or 0, so the plane cannot be located": [
       "gui/spectrum_panel.py:2582"
     ],
     "peak-picking threshold (multiples of sigma)": [
-      "nmrforge_api/cli.py:647"
+      "nmrfinesse_api/cli.py:647"
     ],
     "per condition ": [
-      "nmrforge_api/localization_targets.py:479"
+      "nmrfinesse_api/localization_targets.py:479"
     ],
     "perform the \"Generate FID\" step first": [
       "gui/main_window.py:1581"
@@ -4202,7 +4202,7 @@
       "workflow/phase_routes.py:1911"
     ],
     "picking produced no peak table: {p0}": [
-      "nmrforge_api/peaks.py:842"
+      "nmrfinesse_api/peaks.py:842"
     ],
     "pipe2ucsf conversion failed ({p0}), skip UCSF conversion": [
       "workflow/ucsf_export.py:58"
@@ -4211,47 +4211,47 @@
       "workflow/ucsf_export.py:48"
     ],
     "points_explicit": [
-      "workflow/pick_peaks.py:890",
-      "nmrforge_api/peaks.py:955",
-      "nmrforge_api/peaks.py:402"
+      "workflow/pick_peaks.py:883",
+      "nmrfinesse_api/peaks.py:955",
+      "nmrfinesse_api/peaks.py:402"
     ],
     "points_fallback": [
-      "workflow/pick_peaks.py:898",
-      "nmrforge_api/peaks.py:414",
-      "nmrforge_api/peaks.py:963"
+      "workflow/pick_peaks.py:891",
+      "nmrfinesse_api/peaks.py:414",
+      "nmrfinesse_api/peaks.py:963"
     ],
     "policyintermediate_memory=off": [
       "backend/memory_disk.py:189"
     ],
     "ppm_auto_linewidth": [
-      "nmrforge_api/peaks.py:409"
+      "nmrfinesse_api/peaks.py:409"
     ],
     "ppm_explicit": [
-      "nmrforge_api/peaks.py:958",
-      "nmrforge_api/peaks.py:409"
+      "nmrfinesse_api/peaks.py:958",
+      "nmrfinesse_api/peaks.py:409"
     ],
     "ppm_physical_width": [
-      "workflow/pick_peaks.py:894"
+      "workflow/pick_peaks.py:887"
     ],
     "print the current study status": [
-      "nmrforge_api/cli.py:744"
+      "nmrfinesse_api/cli.py:744"
     ],
-    "print the full traceback on error (same as NMRFORGE_DEBUG=1)": [
-      "nmrforge_api/cli.py:570",
-      "nmrforge_api/cli.py:579"
+    "print the full traceback on error (same as NMRFINESSE_DEBUG=1)": [
+      "nmrfinesse_api/cli.py:570",
+      "nmrfinesse_api/cli.py:579"
     ],
     "process": [
       "gui/dashboards.py:93",
       "gui/dialogs.py:613"
     ],
     "processing and records only; CSP/robustness/statistics are downstream": [
-      "nmrforge_api/study.py:889"
+      "nmrfinesse_api/study.py:889"
     ],
     "processing failed": [
-      "nmrforge_api/sweep.py:2165"
+      "nmrfinesse_api/sweep.py:2165"
     ],
     "processing script -> {p0} (from {p1})": [
-      "nmrforge_api/sweep.py:2201"
+      "nmrfinesse_api/sweep.py:2201"
     ],
     "proj3D output parsing exception (expected 3 *.dat, actual {p0}): {p1}": [
       "backend/nmrpipe_backend.py:2813"
@@ -4269,8 +4269,8 @@
       "gui/main_window.py:2079"
     ],
     "project does not exist: {p0}": [
-      "core/workspace.py:94",
-      "core/workspace.py:110"
+      "core/workspace.py:102",
+      "core/workspace.py:118"
     ],
     "project has been renamed to {p0}": [
       "gui/main_window.py:1871"
@@ -4280,7 +4280,7 @@
       "workflow/import_workflow.py:652"
     ],
     "project name when creating a study": [
-      "nmrforge_api/cli.py:584"
+      "nmrfinesse_api/cli.py:584"
     ],
     "project not loaded": [
       "core/project/manager.py:275",
@@ -4288,10 +4288,10 @@
       "core/project/manager.py:384",
       "core/project/manager.py:405",
       "core/project/manager.py:450",
-      "core/project/manager.py:918",
-      "core/project/manager.py:992",
-      "core/project/manager.py:1103",
-      "core/project/manager.py:1111",
+      "core/project/manager.py:920",
+      "core/project/manager.py:994",
+      "core/project/manager.py:1105",
+      "core/project/manager.py:1113",
       "gui/main_window.py:1033",
       "gui/per_data_records.py:29"
     ],
@@ -4339,10 +4339,10 @@
       "core/experiment/pulse_pathways.py:952"
     ],
     "rebuild only the reference peak table (existing spectrum + reference.list)": [
-      "nmrforge_api/cli.py:641"
+      "nmrfinesse_api/cli.py:641"
     ],
     "rebuild the reference spectrum": [
-      "nmrforge_api/cli.py:634"
+      "nmrfinesse_api/cli.py:634"
     ],
     "recent files": [
       "viewer/app.py:81"
@@ -4355,41 +4355,41 @@
       "gui/dashboards.py:88"
     ],
     "recompute the summary from existing records (no reprocessing)": [
-      "nmrforge_api/cli.py:737"
+      "nmrfinesse_api/cli.py:737"
     ],
     "recomputing the tables changed the reference peak identity table ({p0}), aborted": [
-      "nmrforge_api/reference.py:1193"
+      "nmrfinesse_api/reference.py:1193"
     ],
     "refer to: {p0} ({p1} peak)": [
       "gui/pipeline_panel.py:2817",
       "gui/pipeline_panel.py:1646"
     ],
     "reference [{p0}]: generating the FID": [
-      "nmrforge_api/reference.py:817"
+      "nmrfinesse_api/reference.py:817"
     ],
     "reference [{p0}]: generating the spectrum (optimisation)": [
-      "nmrforge_api/reference.py:823"
+      "nmrfinesse_api/reference.py:823"
     ],
     "reference artefacts are missing; rebuild with force=True: {p0}": [
-      "nmrforge_api/reference.py:979"
+      "nmrfinesse_api/reference.py:979"
     ],
     "reference peak table does not exist: {p0}": [
-      "nmrforge_api/peaks.py:198"
+      "nmrfinesse_api/peaks.py:198"
     ],
     "reference peak table has no measurable positions: {p0}": [
-      "nmrforge_api/peaks.py:228"
+      "nmrfinesse_api/peaks.py:228"
     ],
     "reference peak table missing: {p0} (condition {p1}); pick peaks in reference mode first (ensure_reference_peaks / CLI peaks)": [
-      "nmrforge_api/reference.py:442"
+      "nmrfinesse_api/reference.py:442"
     ],
     "reference peak table: pick or register": [
-      "nmrforge_api/cli.py:645"
+      "nmrfinesse_api/cli.py:645"
     ],
     "reference peak-table constraint: {p0} rejected (not matched)": [
-      "workflow/pick_peaks.py:750"
+      "workflow/pick_peaks.py:743"
     ],
     "reference state file is corrupt: {p0} ({p1})": [
-      "nmrforge_api/reference.py:968"
+      "nmrfinesse_api/reference.py:968"
     ],
     "removed_from_source_ser_and_nuslist": [
       "core/audit/qc_audit.py:71"
@@ -4437,10 +4437,10 @@
       "gui/main_window.py:264"
     ],
     "row {p0} of the combination table is empty": [
-      "nmrforge_api/sweep.py:898"
+      "nmrfinesse_api/sweep.py:898"
     ],
     "row {p0} of the combination table is not a mapping: {p1!r}": [
-      "nmrforge_api/sweep.py:884"
+      "nmrfinesse_api/sweep.py:884"
     ],
     "run": [
       "gui/dashboards.py:93",
@@ -4455,19 +4455,19 @@
       "gui/pipeline_panel.py:1319"
     ],
     "run end: status={p0}": [
-      "nmrforge_api/sweep.py:2007"
+      "nmrfinesse_api/sweep.py:2007"
     ],
     "run history - {p0}": [
       "gui/dialogs.py:605"
     ],
     "run record does not exist: {p0}": [
-      "core/project/manager.py:1114"
+      "core/project/manager.py:1116"
     ],
     "run start: workflow={p0} condition={p1}": [
-      "nmrforge_api/sweep.py:1997"
+      "nmrfinesse_api/sweep.py:1997"
     ],
     "run workflows from a parameter-combination table": [
-      "nmrforge_api/cli.py:668"
+      "nmrfinesse_api/cli.py:668"
     ],
     "run {p0} Start: workflow={p1} inputs={p2}": [
       "core/project/manager.py:302"
@@ -4496,10 +4496,10 @@
     ],
     "sample does not exist: {p0}": [
       "core/project/manager.py:407",
-      "core/project/manager.py:937"
+      "core/project/manager.py:939"
     ],
     "sample {p0} is referenced by an experiment; refusing to delete: {p1}": [
-      "core/project/manager.py:941"
+      "core/project/manager.py:943"
     ],
     "sampleCount: fid.com={p0} → nuslist={p1} (corrected)": [
       "backend/bruker_workflow.py:1047"
@@ -4546,7 +4546,7 @@
       "gui/main_window.py:1675"
     ],
     "script diff (reference -> this workflow): {p0} lines; ": [
-      "nmrforge_api/sweep.py:2205"
+      "nmrfinesse_api/sweep.py:2205"
     ],
     "script editor - {p0} ({p1})": [
       "gui/dialogs.py:523"
@@ -4571,17 +4571,17 @@
     ],
     "segmented import contains duplicate dataset directories": [
       "workflow/import_workflow.py:300",
-      "nmrforge_api/session.py:423"
+      "nmrfinesse_api/session.py:423"
     ],
     "segmented import requires at least 2 Bruker dataset directories": [
       "workflow/import_workflow.py:297"
     ],
     "segmented import requires at least two dataset directories": [
-      "nmrforge_api/cli.py:178"
+      "nmrfinesse_api/cli.py:178"
     ],
     "segmented must be a boolean (true or false)": [
-      "nmrforge_api/session.py:404",
-      "nmrforge_api/study.py:137"
+      "nmrfinesse_api/session.py:404",
+      "nmrfinesse_api/study.py:137"
     ],
     "segmented/duplicate experiment container directory (containing multiple acqus subdirectories)": [
       "gui/dashboards.py:210"
@@ -4591,8 +4591,8 @@
       "gui/main_window.py:594"
     ],
     "segmented=True requires a list of at least 2 dataset directories": [
-      "nmrforge_api/session.py:408",
-      "nmrforge_api/session.py:413"
+      "nmrfinesse_api/session.py:408",
+      "nmrfinesse_api/session.py:413"
     ],
     "ser layout could not be derived (size {p0} bytes, direct TD {p1}, {p2} bytes per sampled value); the row padding or the element type is unexpected": [
       "core/data/bruker_reader.py:214"
@@ -4604,10 +4604,10 @@
       "core/data/nus_reader.py:623"
     ],
     "set for this run": [
-      "workflow/pick_peaks.py:668"
+      "workflow/pick_peaks.py:661"
     ],
     "sigma is the peak-position standard deviation across parameter combinations; delta_std = sqrt(sum_n (w_n*sigma_n)^2), w(1H)=1, w(15N)=csp_n_weight, others 1; delta_max is the largest such value relative to the mean position.": [
-      "nmrforge_api/uncertainty.py:48"
+      "nmrfinesse_api/uncertainty.py:48"
     ],
     "sign judgement: both signs coexist (positive mass {p0:.4g} / negative mass {p1:.4g})": [
       "core/qc/spectrum_quality.py:224"
@@ -4622,7 +4622,7 @@
       "core/qc/spectrum_quality.py:232"
     ],
     "sign mode {p0}: {p1} rejected": [
-      "workflow/pick_peaks.py:741"
+      "workflow/pick_peaks.py:734"
     ],
     "signal-to-noise ratio": [
       "workflow/optimization_report.py:238"
@@ -4649,7 +4649,7 @@
       "gui/pipeline_panel.py:1012"
     ],
     "source not recorded": [
-      "workflow/pick_peaks.py:672"
+      "workflow/pick_peaks.py:665"
     ],
     "source sampling bad point(s) {p0}: cannot be removed at the source (the raw ser layout is unusable); the generated fid was zeroed instead": [
       "workflow/direct_diagnostics.py:1753"
@@ -4674,14 +4674,14 @@
       "viewer/app.py:216"
     ],
     "spectrum does not exist: {p0}": [
-      "nmrforge_api/peaks.py:499",
-      "nmrforge_api/peaks.py:934"
+      "nmrfinesse_api/peaks.py:499",
+      "nmrfinesse_api/peaks.py:934"
     ],
     "spectrum evidence: the type is low-confidence / unknown, but both peak signs are common (positive {p0} / negative {p1}), so mixed mode keeps both positive and negative peaks": [
-      "workflow/pick_peaks.py:980"
+      "workflow/pick_peaks.py:974"
     ],
     "spectrum is missing: {p0}/{p1}": [
-      "workflow/pick_peaks.py:850"
+      "workflow/pick_peaks.py:843"
     ],
     "spectrum quality assessment": [
       "gui/main_window.py:1364"
@@ -4699,7 +4699,7 @@
       "gui/dialogs.py:613"
     ],
     "start {p0}: {p1}": [
-      "nmrforge_api/sweep.py:2114",
+      "nmrfinesse_api/sweep.py:2114",
       "gui/pipeline_panel.py:3071"
     ],
     "state": [
@@ -4721,23 +4721,23 @@
       "backend/nmrpipe_backend.py:2361"
     ],
     "study root directory": [
-      "nmrforge_api/cli.py:577"
+      "nmrfinesse_api/cli.py:577"
     ],
-    "study root does not exist or is not an NMRForge project: {p0}": [
-      "nmrforge_api/session.py:382"
+    "study root does not exist or is not an NMRFinesse project: {p0}": [
+      "nmrfinesse_api/session.py:382"
     ],
     "study {p0} has no condition {p1!r}: available conditions are {p2}": [
-      "nmrforge_api/reference.py:419"
+      "nmrfinesse_api/reference.py:419"
     ],
     "study {p0} has no data yet: run reference mode first": [
-      "nmrforge_api/reference.py:389"
+      "nmrfinesse_api/reference.py:389"
     ],
     "success": [
       "workflow/batch.py:502",
       "gui/dialogs.py:708"
     ],
     "summary: accepted {p0} of {p1} candidate peaks": [
-      "workflow/pick_peaks.py:679"
+      "workflow/pick_peaks.py:672"
     ],
     "summary: compared {p0} parameter combinations": [
       "gui/pipeline_panel.py:490"
@@ -4755,26 +4755,26 @@
       "core/data/bruker_reader.py:353"
     ],
     "target peak list ({p0})": [
-      "nmrforge_api/localization_targets.py:1017"
+      "nmrfinesse_api/localization_targets.py:1017"
     ],
     "target peak list does not exist: {p0}(targeted localization needs a CSV with at least a peak_id column)": [
-      "nmrforge_api/localization_targets.py:254"
+      "nmrfinesse_api/localization_targets.py:254"
     ],
     "target peak list has no {p0} column: {p1}(header is {p2}; one column of this spectrum's peak numbers is required)": [
-      "nmrforge_api/localization_targets.py:223"
+      "nmrfinesse_api/localization_targets.py:223"
     ],
     "target peak list is empty: {p0} (give at least one peak_id)": [
-      "nmrforge_api/localization_targets.py:266",
-      "nmrforge_api/localization_targets.py:302"
+      "nmrfinesse_api/localization_targets.py:266",
+      "nmrfinesse_api/localization_targets.py:302"
     ],
     "target peak list {p0} has no rows for condition {p1!r}: every condition needsits own target rows (a missing row is never read as the whole spectrum). To letthrough, declare on_missing=\"all\" (that condition is unlimited = whole-spectrumrefinement) or on_missing=\"none\" (refines nothing); the strategy goes into the record.": [
-      "nmrforge_api/localization_targets.py:367"
+      "nmrfinesse_api/localization_targets.py:367"
     ],
     "target peak list {p0} has no rows for condition {p1!r}:every condition needs its own rows (a missing row is never read as the whole spectrum)": [
-      "nmrforge_api/localization_targets.py:657"
+      "nmrfinesse_api/localization_targets.py:657"
     ],
     "targeted localisation: refine only the peaks listed in CSV (it needs a peak_id column). Detection, row count and peak_id numbering are unchanged and unlisted peaks are kept (position from the detection-stage parabola); default = the whole spectrum. The CSV may carry a condition column (multi-condition studies: each condition reads only its own rows, a missing row is an error), so one file can serve A and B; for one file per condition use the combination table key localization.targets": [
-      "nmrforge_api/cli.py:713"
+      "nmrfinesse_api/cli.py:713"
     ],
     "tcsh/csh not found on this machine (NMRPipe script requires C-shell)": [
       "backend/runtime.py:380"
@@ -4801,13 +4801,13 @@
       "core/data/nus_reader.py:235"
     ],
     "the backend has no process(); workflows cannot run": [
-      "nmrforge_api/sweep.py:1855"
+      "nmrfinesse_api/sweep.py:1855"
     ],
     "the backend has no reconstruct_nus(); NUS data cannot be processed": [
-      "nmrforge_api/sweep.py:1186"
+      "nmrfinesse_api/sweep.py:1186"
     ],
     "the backend reconstruct_nus() lacks {p0}, so candidates cannot be isolated (upgrade or use a backend that has it)": [
-      "nmrforge_api/sweep.py:1195"
+      "nmrfinesse_api/sweep.py:1195"
     ],
     "the bad-point fraction is high; also check ADC / gain stability on the acquisition side": [
       "workflow/direct_diagnostics.py:669"
@@ -4816,7 +4816,7 @@
       "core/experiment/pulse_pathways.py:1016"
     ],
     "the combination table is empty": [
-      "nmrforge_api/sweep.py:922"
+      "nmrfinesse_api/sweep.py:922"
     ],
     "the converted fid has {p0} points per row but {p1} were expected": [
       "core/data/nus_reader.py:646"
@@ -4834,16 +4834,16 @@
       "core/data/nus_reader.py:587"
     ],
     "the direct-dimension range is **explicitly overridden** by the combination mode and disagrees with the reference: ext_lo={p0:g} ext_hi={p1:g} ppm(the reference is not rebuilt; run-level warning direct_range_override)": [
-      "nmrforge_api/study.py:632"
+      "nmrfinesse_api/study.py:632"
     ],
     "the direct-dimension range is given by the combination mode and agrees with the reference: ext_lo={p0:g} ext_hi={p1:g} ppm(the reference is not rebuilt)": [
-      "nmrforge_api/study.py:664"
+      "nmrfinesse_api/study.py:664"
     ],
     "the direct-dimension range is given by the combination mode: ext_lo={p0:g} ext_hi={p1:g} ppm(the reference is not rebuilt; the reference recorded no range, so consistency cannot be checked)": [
-      "nmrforge_api/study.py:605"
+      "nmrfinesse_api/study.py:605"
     ],
     "the direct-dimension range was overridden by the combination mode to ext_lo={p0:g} ext_hi={p1:g} ppm, which disagrees with the reference's frozen range ext_lo={p2:g} ext_hi={p3:g} ppm (the reference spectrum was not rebuilt; peak positions and the peak set move with the window)": [
-      "nmrforge_api/study.py:645"
+      "nmrfinesse_api/study.py:645"
     ],
     "the environment did not provide {p0} automatically; the program cannot work properly - please install it or set the path manually": [
       "backend/environment_probe.py:216"
@@ -4861,16 +4861,16 @@
       "gui/pipeline_panel.py:2145"
     ],
     "the frozen reference spectrum is missing: {p0}": [
-      "nmrforge_api/reference.py:1177"
+      "nmrfinesse_api/reference.py:1177"
     ],
     "the full processing script for this workflow was not found ({p0}_{p1}.com): tried the backend return value, the reference work dir, study/work and {p2}.nmrpipe; the script is not on record (the results and the peak table are still valid)": [
-      "nmrforge_api/sweep.py:2218"
+      "nmrfinesse_api/sweep.py:2218"
     ],
     "the indirect grid / hypercomplex components / direct points are inconsistent; the dense model cannot be judged": [
       "core/data/nus_reader.py:417"
     ],
     "the legacy SweepPlan(base_params) form is gone; re-plan with this version": [
-      "nmrforge_api/sweep.py:467"
+      "nmrfinesse_api/sweep.py:467"
     ],
     "the nucleus combination matches exactly one template: {p0}": [
       "core/experiment/experiment_classifier.py:445"
@@ -4885,7 +4885,7 @@
       "core/project/manager.py:371"
     ],
     "the picking threshold is locked to the reference ({p0:g} sigma; every later perturbation must use the same threshold as the reference): got {p1:g} sigma. Changing it means rebuilding: pass force=True, or delete that condition's study/reference/<key>/ and rebuild.": [
-      "nmrforge_api/reference.py:1346"
+      "nmrfinesse_api/reference.py:1346"
     ],
     "the pulse program loop and acquNs FnMODE={p0} disagree": [
       "core/experiment/pulse_pathways.py:1004"
@@ -4906,31 +4906,31 @@
       "core/experiment/pulse_pathways.py:1042"
     ],
     "the recorded reference spectrum sha256 no longer matches": [
-      "nmrforge_api/reference.py:1191"
+      "nmrfinesse_api/reference.py:1191"
     ],
     "the reference file {p0} points at dataset {p1!r}, which is not part of study {p2}": [
-      "nmrforge_api/reference.py:407"
+      "nmrfinesse_api/reference.py:407"
     ],
-    "the reference given in combination mode is unusable: {p0} is not an NMRForge study root (no project.json)": [
-      "nmrforge_api/reference.py:380"
+    "the reference given in combination mode is unusable: {p0} is not an NMRFinesse study root (no project.json)": [
+      "nmrfinesse_api/reference.py:380"
     ],
     "the reference mode was not given an explicit direct-dimension range (direct_range= / ext_lo= / ext_hi=): the backend/config default is in use, and the frozen record cannot tell an explicitly written default from an omission - write the default out explicitly if that is what you want": [
-      "nmrforge_api/direct_range.py:230"
+      "nmrfinesse_api/direct_range.py:230"
     ],
     "the reference peak identity table is missing: {p0}": [
-      "nmrforge_api/reference.py:1179"
+      "nmrfinesse_api/reference.py:1179"
     ],
     "the reference run left no usable processing script: {p0}": [
-      "nmrforge_api/reference.py:603"
+      "nmrfinesse_api/reference.py:603"
     ],
     "the reference run produced no successful WorkflowRun": [
-      "nmrforge_api/reference.py:837"
+      "nmrfinesse_api/reference.py:837"
     ],
     "the reference run recorded no direct_phase; workflows disable automatic phase search (sampling.auto_phase=False) and use the preset phases": [
-      "nmrforge_api/sweep.py:1173"
+      "nmrfinesse_api/sweep.py:1173"
     ],
     "the reference spectrum file changed while rebuilding": [
-      "nmrforge_api/reference.py:1189"
+      "nmrfinesse_api/reference.py:1189"
     ],
     "the row byte length is illegal; the zero pattern cannot be scanned": [
       "core/data/nus_reader.py:602"
@@ -4960,7 +4960,7 @@
       "core/qc/spectrum_quality.py:178"
     ],
     "the spectrum the backend returned does not exist: {p0}": [
-      "nmrforge_api/sweep.py:2236"
+      "nmrfinesse_api/sweep.py:2236"
     ],
     "the stepped phase program is not used by any pulse": [
       "core/experiment/pulse_pathways.py:1033"
@@ -4972,58 +4972,58 @@
       "core/experiment/pulse_pathways.py:1035"
     ],
     "the target list names peak_id values that were not detected: [{p0}]{p1} -- this spectrum detected {p2} peaks ({p3}){p4}{p5}The target list must match this spectrum's numbering; unknown ids are not ignored.": [
-      "nmrforge_api/localization_targets.py:1298"
+      "nmrfinesse_api/localization_targets.py:1298"
     ],
     "the target list names peak_id values that were not detected: [{p0}]{p1} -- this spectrum detected {p2} peaks, peak_id ranges over 1..{p3}. The target list must match this spectrum's peak numbering; unknown ids are never silently ignored.": [
-      "nmrforge_api/peaks.py:1037"
+      "nmrfinesse_api/peaks.py:1038"
     ],
     "the target peak list has a {p0} column: {p1} -- readingwould mix peak numbers across conditions. To take it per condition pass condition=...,or use resolve_conditional_targets() / sweep's localize_peaks(which resolves per condition automatically).": [
-      "nmrforge_api/localization_targets.py:641"
+      "nmrfinesse_api/localization_targets.py:641"
     ],
     "the target peak list is empty: give at least one peak_id (an empty list raises instead of silently falling back to whole-spectrum localization; pass allow_empty_targets for \"this condition refines nothing\")": [
-      "nmrforge_api/peaks.py:1023"
+      "nmrfinesse_api/peaks.py:1024"
     ],
     "the target peak list is empty: give at least one peak_id(an empty list raises instead of degrading to whole-spectrum localization)": [
-      "nmrforge_api/localization_targets.py:1022"
+      "nmrfinesse_api/localization_targets.py:1022"
     ],
     "the workspace already has a project: {p0}": [
-      "core/workspace.py:69",
-      "core/workspace.py:113"
+      "core/workspace.py:77",
+      "core/workspace.py:121"
     ],
     "there is no pulse program for this dataset": [
       "core/experiment/pulse_pathways.py:993"
     ],
     "there is no reference spectrum yet; call build_reference() first": [
-      "nmrforge_api/reference.py:1013",
-      "nmrforge_api/reference.py:1308"
+      "nmrfinesse_api/reference.py:1013",
+      "nmrfinesse_api/reference.py:1308"
     ],
     "this direct-dimension range ext_lo={p0:g} ext_hi={p1:g} ppm disagrees with the reference's frozen range ext_lo={p2:g} ext_hi={p3:g} ppm: the reference spectrum is not rebuilt, but peak positions and the peak set move with the window. Either rebuild the reference with the reference mode (`reference --direct-range`) or pass `allow_ext_override=True` (CLI `--allow-ext-override`), which leaves the run-level warning code `direct_range_override`": [
-      "nmrforge_api/study.py:617"
+      "nmrfinesse_api/study.py:617"
     ],
     "this left condition {p0} unchanged (bit-identical to the reference, sha256={p1}...): these parameters may have been ignored (a window or gating mismatch) or have no effect": [
-      "nmrforge_api/sweep.py:2391"
+      "nmrfinesse_api/sweep.py:2391"
     ],
     "this study has no dataset yet": [
-      "nmrforge_api/peaks.py:829"
+      "nmrfinesse_api/peaks.py:829"
     ],
     "this study has no dataset yet: pass datasets=<{condition: directory}> or dataset=<Bruker directory> on the first run": [
-      "nmrforge_api/study.py:356"
+      "nmrfinesse_api/study.py:356"
     ],
     "this study has no dataset yet; call add_dataset() first": [
-      "nmrforge_api/reference.py:770",
-      "nmrforge_api/session.py:560",
-      "nmrforge_api/session.py:247",
-      "nmrforge_api/session.py:283",
-      "nmrforge_api/sweep.py:1839"
+      "nmrfinesse_api/reference.py:770",
+      "nmrfinesse_api/session.py:560",
+      "nmrfinesse_api/session.py:247",
+      "nmrfinesse_api/session.py:283",
+      "nmrfinesse_api/sweep.py:1839"
     ],
     "this study has no reference yet; build one first": [
-      "nmrforge_api/reference.py:1173"
+      "nmrfinesse_api/reference.py:1173"
     ],
     "threshold (σ)": [
       "gui/pipeline_panel.py:942"
     ],
     "threshold {p0}σ ({p1})": [
-      "workflow/pick_peaks.py:701"
+      "workflow/pick_peaks.py:694"
     ],
     "time": [
       "gui/dashboards.py:93"
@@ -5052,49 +5052,49 @@
       "workflow/field_drift.py:1395"
     ],
     "unknown detection key: {p0!r} (a combination table allows localization = parabolic, plus localization.targets = a target-peak CSV)": [
-      "nmrforge_api/sweep.py:388"
+      "nmrfinesse_api/sweep.py:388"
     ],
     "unknown detection key: {p0!r} (only localization = parabolic, plus localization.targets = a target-peak CSV)": [
-      "nmrforge_api/sweep.py:727"
+      "nmrfinesse_api/sweep.py:727"
     ],
     "unknown localisation: {p0!r} (only parabolic remains)": [
-      "nmrforge_api/sweep.py:341"
+      "nmrfinesse_api/sweep.py:341"
     ],
     "unknown on_missing policy: {p0!r}; allowed {p1}": [
-      "nmrforge_api/localization_targets.py:97"
+      "nmrfinesse_api/localization_targets.py:97"
     ],
     "unknown refine: {p0!r} (parabolic / none; the Gaussian fit was removed)": [
-      "nmrforge_api/peaks.py:509"
+      "nmrfinesse_api/peaks.py:509"
     ],
     "unknown sign: {p0}": [
-      "nmrforge_api/peaks.py:503"
+      "nmrfinesse_api/peaks.py:503"
     ],
     "unrecognised target list: {p0!r}": [
-      "nmrforge_api/localization_targets.py:1189"
+      "nmrfinesse_api/localization_targets.py:1189"
     ],
     "unrecognised target peak list: {p0!r} (give a CSV path or peak numbers)": [
-      "nmrforge_api/localization_targets.py:819",
-      "nmrforge_api/localization_targets.py:1076",
-      "nmrforge_api/localization_targets.py:1010"
+      "nmrfinesse_api/localization_targets.py:819",
+      "nmrfinesse_api/localization_targets.py:1076",
+      "nmrfinesse_api/localization_targets.py:1010"
     ],
     "unrecognised target peak list: {p0!r}(give a CSV path, a sequence of peak numbers, or a condition mapping)": [
-      "nmrforge_api/localization_targets.py:990"
+      "nmrfinesse_api/localization_targets.py:990"
     ],
     "unrecognised target peak list: {p0!r}(needs either path or peak_ids)": [
-      "nmrforge_api/localization_targets.py:810"
+      "nmrfinesse_api/localization_targets.py:810"
     ],
     "unrecognised target peak list: {p0!r}(needs either path or peak_ids; for the per-condition mapping use resolve_conditional_targets())": [
-      "nmrforge_api/localization_targets.py:1066"
+      "nmrfinesse_api/localization_targets.py:1066"
     ],
     "user has stopped batch processing": [
       "workflow/batch.py:381",
       "workflow/batch.py:484"
     ],
     "warning: {p0} is not in the list the backend reads; check the spelling": [
-      "nmrforge_api/sweep.py:757"
+      "nmrfinesse_api/sweep.py:757"
     ],
     "when the base gives no window.<axis>.type, sine_bell is rendered": [
-      "nmrforge_api/compat.py:292"
+      "nmrfinesse_api/compat.py:292"
     ],
     "which cannot be handled at the current memory level": [
       "gui/pipeline_panel.py:1447"
@@ -5104,16 +5104,16 @@
       "workflow/phase_routes.py:1522"
     ],
     "window_pts cannot be negative": [
-      "nmrforge_api/peaks.py:501"
+      "nmrfinesse_api/peaks.py:501"
     ],
     "workflow %s/%s failed": [
-      "nmrforge_api/sweep.py:2151"
+      "nmrfinesse_api/sweep.py:2151"
     ],
     "workspace: {p0}": [
       "gui/welcome_page.py:97"
     ],
     "write the manifest to a JSON file": [
-      "nmrforge_api/cli.py:754"
+      "nmrfinesse_api/cli.py:754"
     ],
     "xN: {p0} is smaller than the direct TD {p1} - the row length must be at least TD; check this script": [
       "backend/bruker_workflow.py:904"
@@ -5143,19 +5143,19 @@
       "backend/script_generator.py:415"
     ],
     "{p0!r} in a combination table is a **picking threshold**: it is chosen when the reference is built (CLI `peaks --sigma N`, or ensure_reference_peaks(...)). Once frozen, every workflow must match it, so it cannot be perturbed. To change it, rebuild the reference (force=True, or delete that condition's study/reference/<key>/ and run again).": [
-      "nmrforge_api/sweep.py:273"
+      "nmrfinesse_api/sweep.py:273"
     ],
     "{p0!r} in row {p1} was not declared in axes": [
-      "nmrforge_api/sweep.py:903"
+      "nmrfinesse_api/sweep.py:903"
     ],
     "{p0!r} in the grid would break phase locking: use phase_delta.<axis>.p0|p1 (a deviation, e.g. ±5 degrees) or phase.<axis>.p0|p1 (an absolute value)": [
-      "nmrforge_api/sweep.py:700"
+      "nmrfinesse_api/sweep.py:700"
     ],
     "{p0!r} is not supported: the reference run or the API decides it, it is not free": [
-      "nmrforge_api/sweep.py:709"
+      "nmrfinesse_api/sweep.py:709"
     ],
     "{p0!r}: per-method target keys were removed with the Gaussian peak-fitting method; write localization.targets = <CSV> instead": [
-      "nmrforge_api/sweep.py:378"
+      "nmrfinesse_api/sweep.py:378"
     ],
     "{p0}\nright click: add other data to this group / rename the group / remove the group tag (data kept) / delete the group (with its data)": [
       "gui/project_tree.py:420",
@@ -5206,10 +5206,10 @@
       "gui/pipeline_panel.py:1385"
     ],
     "{p0} candidate peaks above the threshold": [
-      "workflow/pick_peaks.py:733"
+      "workflow/pick_peaks.py:726"
     ],
     "{p0} combinations exceed max_runs={p1}; shrink the grid or raise the limit explicitly (long runs belong in batches)": [
-      "nmrforge_api/sweep.py:1139"
+      "nmrfinesse_api/sweep.py:1139"
     ],
     "{p0} data": [
       "gui/project_tree.py:417",
@@ -5228,13 +5228,13 @@
       "workflow/direct_diagnostics.py:1893"
     ],
     "{p0} line {p1}": [
-      "nmrforge_api/localization_targets.py:293"
+      "nmrfinesse_api/localization_targets.py:293"
     ],
     "{p0} line {p1} has an empty {p2} (missing condition:fill in the condition name, or drop the column to share one list)": [
-      "nmrforge_api/localization_targets.py:705"
+      "nmrfinesse_api/localization_targets.py:705"
     ],
     "{p0} peaks have the vertex on the ±0.5-point limit (linewidth may be underestimated; the true top may fall outside the three-point template)": [
-      "workflow/pick_peaks.py:774"
+      "workflow/pick_peaks.py:767"
     ],
     "{p0} point {p1}": [
       "viewer/spectrum_viewer.py:1809"
@@ -5372,32 +5372,32 @@
       "workflow/phase_routes.py:1825"
     ],
     "{p0}: peak_id is empty (delete the blank row)": [
-      "nmrforge_api/localization_targets.py:74"
+      "nmrfinesse_api/localization_targets.py:74"
     ],
     "{p0}: peak_id is not a positive integer: {p1!r}": [
-      "nmrforge_api/localization_targets.py:71",
-      "nmrforge_api/localization_targets.py:88"
+      "nmrfinesse_api/localization_targets.py:71",
+      "nmrfinesse_api/localization_targets.py:88"
     ],
     "{p0}: peak_id is not a positive integer: {p1!r}(this spectrum's peak numbers, e.g. 12; a reference id such as R0012 is not a peak_id)": [
-      "nmrforge_api/localization_targets.py:79"
+      "nmrfinesse_api/localization_targets.py:79"
     ],
     "{p0}: rc={p1} ({p2}) indicator={p3}": [
       "backend/nmrpipe_backend.py:2561"
     ],
     "{p0}: refines nothing ({p1})": [
-      "nmrforge_api/localization_targets.py:461"
+      "nmrfinesse_api/localization_targets.py:461"
     ],
     "{p0}: start {p1}": [
       "workflow/batch.py:457"
     ],
     "{p0}: this combination found no peak at sigma={p1:g} (check the threshold and the data)": [
-      "nmrforge_api/sweep.py:2414"
+      "nmrfinesse_api/sweep.py:2414"
     ],
     "{p0}: this experiment type has no sample data yet, please import sample data first": [
       "gui/pipeline_panel.py:2877"
     ],
     "{p0}: unlimited ({p1})": [
-      "nmrforge_api/localization_targets.py:458"
+      "nmrfinesse_api/localization_targets.py:458"
     ],
     "{p0}: window optimisation skip: insufficient points in this axis": [
       "workflow/window_optimize.py:700"
@@ -5415,10 +5415,10 @@
       "core/experiment/sampling_detector.py:369"
     ],
     "{p0}: {p1} peaks have the parabolic vertex on the ±0.5-point limit (linewidth may be underestimated)": [
-      "nmrforge_api/sweep.py:2431"
+      "nmrfinesse_api/sweep.py:2431"
     ],
     "{p0}: {p1} peaks{p2}": [
-      "nmrforge_api/localization_targets.py:478"
+      "nmrfinesse_api/localization_targets.py:478"
     ],
     "{p0}: {p1} row(s), {p2} whole-trace zero row(s), {p3} sampled row(s) in {p4} contiguous block(s)": [
       "core/experiment/sampling_detector.py:379"
@@ -5427,13 +5427,13 @@
       "backend/nmrpipe_backend.py:661"
     ],
     "{p0}: {p1} rows share a coordinate with another row (duplicate localization); the table flags them with duplicate_localization=true": [
-      "nmrforge_api/sweep.py:2448"
+      "nmrfinesse_api/sweep.py:2448"
     ],
     "{p0}: {p1}, keep off (score={p2:.1f})": [
       "workflow/baseline_optimize.py:384"
     ],
     "{p0}={p1!r} in row {p2} is outside the declared levels {p3!r}": [
-      "nmrforge_api/sweep.py:912"
+      "nmrfinesse_api/sweep.py:912"
     ],
     "{p0}Currently only project is closed and directory is retained": [
       "gui/main_window.py:1899"
@@ -5442,7 +5442,7 @@
       "gui/main_window.py:1855"
     ],
     "{p0}D/{p1} combinations are not supported": [
-      "nmrforge_api/sweep.py:1869"
+      "nmrfinesse_api/sweep.py:1869"
     ],
     "{p0}Finish: {p1}": [
       "gui/main_window.py:1391"
@@ -5461,13 +5461,13 @@
       "gui/project_tree.py:631"
     ],
     "{p0}{p1}{p2}, {p3} peaks": [
-      "nmrforge_api/localization_targets.py:179"
+      "nmrfinesse_api/localization_targets.py:179"
     ],
     "{p0}–{p1} axial-like candidates rejected per spectrum (no blanket edge mask)": [
       "workflow/smile_optimize.py:388"
     ],
     "|intensity| extremum in the window plus a three-point parabolic sub-pixel refine": [
-      "nmrforge_api/records.py:168"
+      "nmrfinesse_api/records.py:168"
     ],
     "× {p0} failed: {p1}": [
       "gui/pipeline_panel.py:2975"
@@ -5500,7 +5500,7 @@
       "workflow/import_workflow.py:379"
     ],
     "◆ filtering": [
-      "workflow/pick_peaks.py:728"
+      "workflow/pick_peaks.py:721"
     ],
     "◆ final spectrum quality": [
       "workflow/optimization_report.py:229"
@@ -5515,7 +5515,7 @@
       "workflow/import_workflow.py:551"
     ],
     "◆ output": [
-      "workflow/pick_peaks.py:763"
+      "workflow/pick_peaks.py:756"
     ],
     "◆ parameters: {p0}": [
       "workflow/import_workflow.py:365"
@@ -5535,7 +5535,7 @@
       "workflow/import_workflow.py:374"
     ],
     "◆ settings": [
-      "workflow/pick_peaks.py:685"
+      "workflow/pick_peaks.py:678"
     ],
     "◆ top candidates": [
       "gui/pipeline_panel.py:493"
@@ -5660,17 +5660,17 @@
     "gui/spectrum_panel.py",
     "gui/tutorial.py",
     "gui/welcome_page.py",
-    "nmrforge_api/cli.py",
-    "nmrforge_api/compat.py",
-    "nmrforge_api/direct_range.py",
-    "nmrforge_api/localization_targets.py",
-    "nmrforge_api/peaks.py",
-    "nmrforge_api/records.py",
-    "nmrforge_api/reference.py",
-    "nmrforge_api/session.py",
-    "nmrforge_api/study.py",
-    "nmrforge_api/sweep.py",
-    "nmrforge_api/uncertainty.py",
+    "nmrfinesse_api/cli.py",
+    "nmrfinesse_api/compat.py",
+    "nmrfinesse_api/direct_range.py",
+    "nmrfinesse_api/localization_targets.py",
+    "nmrfinesse_api/peaks.py",
+    "nmrfinesse_api/records.py",
+    "nmrfinesse_api/reference.py",
+    "nmrfinesse_api/session.py",
+    "nmrfinesse_api/study.py",
+    "nmrfinesse_api/sweep.py",
+    "nmrfinesse_api/uncertainty.py",
     "ui_support/numeric_inputs.py",
     "viewer/app.py",
     "viewer/contour_layer.py",
@@ -5697,5 +5697,5 @@
     "workflow/ucsf_export.py",
     "workflow/window_optimize.py"
   ],
-  "coverage_floor_zh": 1767
+  "coverage_floor_zh": 1755
 }

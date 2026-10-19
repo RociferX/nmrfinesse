@@ -19,19 +19,19 @@ REQUIRED_SECTIONS = ("Parameters", "Returns", "Raises", "Side effects", "Example
 
 PUBLIC_API: list[tuple[str, str]] = [
     # processing API (external processing / research entry points)
-    ("nmrforge_api.session", "open_study"),
-    ("nmrforge_api.session", "add_dataset"),
-    ("nmrforge_api.reference", "build_reference"),
-    ("nmrforge_api.reference", "ensure_reference_peaks"),
-    ("nmrforge_api.peaks", "pick_reference_peaks"),
-    ("nmrforge_api.peaks", "measure_peak_positions"),
-    ("nmrforge_api.peaks", "detect_and_localize"),
-    ("nmrforge_api.direct_range", "parse_direct_range"),
-    ("nmrforge_api.study", "run_reference_study"),
-    ("nmrforge_api.study", "run_combination_study"),
-    ("nmrforge_api.study", "run_parameter_study"),
-    ("nmrforge_api.sweep", "plan_sweep"),
-    ("nmrforge_api.sweep", "run_sweep"),
+    ("nmrfinesse_api.session", "open_study"),
+    ("nmrfinesse_api.session", "add_dataset"),
+    ("nmrfinesse_api.reference", "build_reference"),
+    ("nmrfinesse_api.reference", "ensure_reference_peaks"),
+    ("nmrfinesse_api.peaks", "pick_reference_peaks"),
+    ("nmrfinesse_api.peaks", "measure_peak_positions"),
+    ("nmrfinesse_api.peaks", "detect_and_localize"),
+    ("nmrfinesse_api.direct_range", "parse_direct_range"),
+    ("nmrfinesse_api.study", "run_reference_study"),
+    ("nmrfinesse_api.study", "run_combination_study"),
+    ("nmrfinesse_api.study", "run_parameter_study"),
+    ("nmrfinesse_api.sweep", "plan_sweep"),
+    ("nmrfinesse_api.sweep", "run_sweep"),
     # batch API
     ("workflow.batch", "run_batch"),
     # peak localization
@@ -95,7 +95,7 @@ def _column_block(text: str, *markers: str) -> list[str]:
 def test_peak_table_columns_match_the_docs() -> None:
     """The code is the single source for the column count and column order of the unified peak
     table; the docs must align column by column (to prevent "19/20 columns" drift)."""
-    from nmrforge_api.peak_tables import PEAK_TABLE_COLUMNS
+    from nmrfinesse_api.peak_tables import PEAK_TABLE_COLUMNS
 
     expected = list(PEAK_TABLE_COLUMNS)
     guide = (ROOT / "docs" / "external-api" / "06-outputs-and-records.md").read_text(

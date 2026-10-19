@@ -8,9 +8,9 @@ Distribution packaging assets.
 
 | Path | Role |
 | --- | --- |
-| `linux/NMRForge.spec` | the PyInstaller spec, including the PySide6 hidden imports |
+| `linux/NMRFinesse.spec` | the PyInstaller spec, including the PySide6 hidden imports |
 | `linux/build_appimage.sh` | the end-to-end AppImage build |
-| `linux/NMRForge.desktop`, `linux/icons/` | desktop entry and icon |
+| `linux/NMRFinesse.desktop`, `linux/icons/` | desktop entry and icon |
 | `linux/THIRD_PARTY_LICENSES/` | the licence texts, NOTICE and provenance notes bundled into the binary |
 
 Bundling Qt/PySide6 into a binary creates LGPL-3.0 obligations for the distributed artifact, which

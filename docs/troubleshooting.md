@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Errors in nmrForge are meant to say what is missing and what to do about it. If you see a raw
+Errors in NMRFinesse are meant to say what is missing and what to do about it. If you see a raw
 `KeyError`/`TypeError`/`NoneType` traceback in the GUI or the API instead, that is a bug - please
 report it (see [CONTRIBUTING.md](../CONTRIBUTING.md)).
 
@@ -10,8 +10,8 @@ Cause: the backend could not locate the NMRPipe executable. Linux is the target 
 probes external tools at startup, and processing steps check their capabilities when needed.
 
 1. Check that NMRPipe is installed and that its `bin` directory contains `nmrPipe`.
-2. Point nmrForge at it explicitly in `nmrforge_data/config/nmrforge.yaml` (or
-   `nmrforge_data/config/nmrforge.local.yaml`):
+2. Point NMRFinesse at it explicitly in `nmrfinesse_data/config/nmrfinesse.yaml` (or
+   `nmrfinesse_data/config/nmrfinesse.local.yaml`):
 
    ```yaml
    backend:
@@ -34,7 +34,7 @@ reconstruction also requires SMILE.
 
 ## "tcsh/csh not found on this machine (NMRPipe scripts need a C-shell)"
 
-NMRPipe scripts are C-shell scripts, so nmrForge runs them through `csh`/`tcsh`. Install a
+NMRPipe scripts are C-shell scripts, so NMRFinesse runs them through `csh`/`tcsh`. Install a
 C-shell (`tcsh`) on the machine. This is the message text raised as a `ToolError` by
 `backend/runtime.py`.
 
@@ -44,7 +44,7 @@ incomplete or its `com/` directory is not where the locator expects it.
 ## Reconstruction fails or the machine becomes unresponsive / runs out of memory
 
 SMILE reconstruction memory is dominated by the direct-dimension size multiplied by the
-iterative indirect FT grid, so zero filling inflates it fast. nmrForge estimates the peak before
+iterative indirect FT grid, so zero filling inflates it fast. NMRFinesse estimates the peak before
 starting and passes an explicit `-maxMem`; if the estimate exceeds the available memory it
 refuses to start and says so.
 
@@ -83,12 +83,12 @@ requests are rejected rather than silently substituted; use the supported `parab
 
 | Symptom | Fix |
 | --- | --- |
-| Double-clicking does nothing | Check the execute bit first: `ls -l NMRForge-*.AppImage` should show `-rwxr-xr-x`; if it does not, run `chmod +x NMRForge-*.AppImage`. In a file manager you can also right-click the file and use Properties -> "Allow executing file as program". Copying the file from a Windows shared folder or a USB stick often loses this bit |
-| "AppRun: No such file or directory" after extracting | Use `./NMRForge-<version>-x86_64.AppImage --appimage-extract-and-run`, or set `APPIMAGE_EXTRACT_AND_RUN=1` |
+| Double-clicking does nothing | Check the execute bit first: `ls -l NMRFinesse-*.AppImage` should show `-rwxr-xr-x`; if it does not, run `chmod +x NMRFinesse-*.AppImage`. In a file manager you can also right-click the file and use Properties -> "Allow executing file as program". Copying the file from a Windows shared folder or a USB stick often loses this bit |
+| "AppRun: No such file or directory" after extracting | Use `./NMRFinesse-<version>-x86_64.AppImage --appimage-extract-and-run`, or set `APPIMAGE_EXTRACT_AND_RUN=1` |
 | FUSE-related mount errors | Same as above; FUSE is not available on every system, and this is generic AppImage behaviour |
 | "could not load the Qt platform plugin" | Make sure you are not overriding `QT_QPA_PLATFORM` in your shell; unset it for normal desktop use |
 | No icon in the application menu | Launch it once so it installs its desktop entry, or remove and re-run; deleting the AppImage makes the entry hide itself |
-| You want no desktop integration at all | `NMRFORGE_NO_DESKTOP=1 ./NMRForge-<version>-x86_64.AppImage` |
+| You want no desktop integration at all | `NMRFinesse_NO_DESKTOP=1 ./NMRFinesse-<version>-x86_64.AppImage` |
 
 ## Wrong experiment type
 

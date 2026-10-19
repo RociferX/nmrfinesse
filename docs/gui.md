@@ -4,11 +4,11 @@ The desktop application is the intended interface for processing spectra. This p
 what the interface does; the underlying engine behaviour is in
 [processing-model.md](processing-model.md) and [qc-system.md](qc-system.md).
 
-![NMRForge main window](../gui/assets/nmrforge.png)
+![NMRFinesse main window](../gui/assets/nmrfinesse.png)
 
 > **Language note.** English is the interface's source language, and the public-repo build shows
 > English by default; the same build also speaks Chinese: follow the system language, pick it in
-> `Settings -> Software settings -> Interface language`, or pin it with `NMRFORGE_LANG=zh`. The
+> `Settings -> Software settings -> Interface language`, or pin it with `NMRFinesse_LANG=zh`. The
 > Chinese wording lives in `ui_support/locales/zh.json` and is the **same code** as the English
 > version. A Chinese edition of this guide is in
 > [`Chinese_version/docs/gui.md`](../Chinese_version/docs/gui.md).
@@ -20,7 +20,7 @@ python main.py
 ```
 
 Linux is the target runtime. A released AppImage corresponds to the exact source tag named by its
-release; see the [releases page](https://github.com/RociferX/nmrforge/releases) for available
+release; see the [releases page](https://github.com/RociferX/nmrfinesse/releases) for available
 artifacts. The first normal run installs the desktop entry (`--remove-desktop` removes it). Build
 and acceptance records are in [packaging.md](packaging.md).
 
@@ -45,13 +45,13 @@ Single, segmented and batch import forms stay inline on the experiment page. Scr
 Menus: `File` (new/open/save project, recent projects), `experiment` (new/rename/delete
 experiment), `View` (hide/show the project tree, the pipeline or the spectra), `Tools` (data-quality inspection, spectrum
 quality assessment), `Settings` (software settings), `Help` (usage tutorial, about).
-**`Help -> Usage tutorial`** opens the tutorial that ships with the program (what it does and how to use it, in the current interface language); the text lives in `nmrforge_data/tutorial/{zh,en}.md`.
+**`Help -> Usage tutorial`** opens the tutorial that ships with the program (what it does and how to use it, in the current interface language); the text lives in `nmrfinesse_data/tutorial/{zh,en}.md`.
 
 `Settings -> Software settings` covers: the interface language (follow the system / Chinese /
 English), the NMRPipe path, the data directory, the per-nucleus default line
 widths and alignment tolerances, and the SMILE thread count (plus "simple mode" in a source
 checkout). All of it goes into the local override config
-(`nmrforge_data/config/nmrforge.local.yaml`; `~/.config/NMRForge/nmrforge.local.yaml` inside
+(`nmrfinesse_data/config/nmrfinesse.local.yaml`; `~/.config/NMRFinesse/nmrfinesse.local.yaml` inside
 the AppImage) and takes effect after a restart.
 
 ## The processing pipeline
@@ -73,7 +73,7 @@ rather than silently reused - the step fingerprints its inputs, its script and i
 ## Typical session
 
 The interface carries its own step-by-step walkthrough: `Help -> Usage tutorial` (the text is
-`nmrforge_data/tutorial/{zh,en}.md`). What follows is a short version of the same flow; the button
+`nmrfinesse_data/tutorial/{zh,en}.md`). What follows is a short version of the same flow; the button
 positions and the branches of every step are in the tutorial.
 
 1. **Create or open a project** (`File -> New project...` / `Recent projects`), then **import** a
@@ -168,7 +168,7 @@ dataset, so one bad dataset does not abort the whole group.
 ## Standalone viewer
 
 ```bash
-nmrforge-viewer          # after an editable install
+nmrfinesse-viewer          # after an editable install
 python -m viewer
 ```
 

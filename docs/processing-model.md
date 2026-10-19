@@ -12,7 +12,7 @@ separates reference construction from parameter-combination execution.
 | Logical axes and nuclei | `NUC1`, `TD`, `SFO1`, offsets, acquisition order and quadrature metadata |
 | Sweep width | `resolve_sweep_width`: compare `SW_h` with `SW × SFO1`, retain adopted value/source and raw metadata |
 | FT mode, ALT and NEG | `core/experiment/acquisition_mode_detector.py` with per-axis FnMODE/mode evidence |
-| Experiment type | Pulse program, nucleus combination, dimension order and acquisition parameters; templates in `nmrforge_data/presets/` |
+| Experiment type | Pulse program, nucleus combination, dimension order and acquisition parameters; templates in `nmrfinesse_data/presets/` |
 | Sampling | `core/experiment/sampling_detector.py` and `core/data/nus_reader.py`: schedule, grid, data layout and acquisition evidence |
 
 NUS schedules come from standard `nuslist` or `acqus.NUSLIST`; arbitrary integer files are not

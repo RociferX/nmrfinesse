@@ -1,4 +1,4 @@
-# 10 - Troubleshooting (v1.1.4)
+# 10 - Troubleshooting (v1.1.5)
 
 ## 10.1 Common errors and what to do
 
@@ -50,11 +50,11 @@ table, `Wxxxx` directories outside the active plan are excluded from the current
 ## 10.4 Finding things
 
 ```bash
-python -m nmrforge_api status --study <root>     # conditions / reference / workflow overview
+python -m nmrfinesse_api status --study <root>     # conditions / reference / workflow overview
 cat <root>/study/workflows/W0001/workflow.json   # combination-level record
 cat <root>/study/workflows/W0001/A/log.txt       # full log for that condition
 cat <root>/study/records/manifest.json           # global manifest and boundary statement
 ```
 
 When reporting a problem, include the study root path, `records/manifest.json`, the relevant
-`run.json` and `log.txt`, and the output of `python -m nmrforge_api status`.
+`run.json` and `log.txt`, and the output of `python -m nmrfinesse_api status`.

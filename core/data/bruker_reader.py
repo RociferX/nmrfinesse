@@ -48,7 +48,7 @@ from ui_support.i18n import tr
 # used at import time to ignore non-data subfolders, 2026-08-19 Task F)
 DATA_KEY_FILES = ("acqus", "acqu2s", "acqu3s", "ser", "fid", "nuslist")
 
-logger = logging.getLogger("nmrforge.core.data.bruker_reader")
+logger = logging.getLogger("nmrfinesse.core.data.bruker_reader")
 
 
 def is_data_directory(path: Path | str) -> bool:

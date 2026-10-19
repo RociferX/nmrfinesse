@@ -9,15 +9,15 @@ from pathlib import Path
 import pytest
 
 from core.data.bruker_reader import read_segments
-from nmrforge_api import (
+from nmrfinesse_api import (
     DatasetError,
     add_dataset,
     open_study,
     run_parameter_study,
     run_reference_study,
 )
-from nmrforge_api.cli import main as cli_main
-from nmrforge_api.study import _register_conditions, _resolve_conditions
+from nmrfinesse_api.cli import main as cli_main
+from nmrfinesse_api.study import _register_conditions, _resolve_conditions
 from workflow.stepwise import read_experiment
 
 
@@ -233,7 +233,7 @@ def test_top_level_directory_list_is_one_condition_only_when_enabled(
 def test_reference_and_combinations_route_all_segments_to_backend(
     dataset: str, tmp_path: Path, bruker_dir: Path,
 ) -> None:
-    from test_nmrforge_api import _FakeSweepBackend
+    from test_nmrfinesse_api import _FakeSweepBackend
 
     class CaptureBackend(_FakeSweepBackend):
         seen = []
@@ -290,7 +290,7 @@ def test_cli_real_import_produces_one_segmented_condition(
 def test_multi_condition_mapping_routes_each_own_segments(
     tmp_path: Path, bruker_dir: Path,
 ) -> None:
-    from test_nmrforge_api import _FakeSweepBackend
+    from test_nmrfinesse_api import _FakeSweepBackend
 
     paths = _segments(tmp_path, bruker_dir, "hsqc_2d")
     result = run_reference_study(
@@ -305,7 +305,7 @@ def test_multi_condition_mapping_routes_each_own_segments(
 def test_single_dataset_reference_reuse_does_not_add_another_condition(
     tmp_path: Path, bruker_dir: Path,
 ) -> None:
-    from test_nmrforge_api import _FakeSweepBackend
+    from test_nmrfinesse_api import _FakeSweepBackend
 
     args = dict(dataset=bruker_dir / "hsqc_2d", backend=_FakeSweepBackend(), phase_route="none")
     first = run_reference_study(tmp_path / "study", **args)

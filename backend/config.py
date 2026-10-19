@@ -1,5 +1,5 @@
 """Backend configuration loading: the processing/SMILE/nmrpipe defaults from
-nmrforge_data/config/nmrforge.yaml.
+nmrfinesse_data/config/nmrfinesse.yaml.
 
 - ``load_processing_defaults()`` feeds the editable defaults of the GUI settings dialog;
 - the backend falls back to the configuration when no argument is passed explicitly (explicit
@@ -45,13 +45,13 @@ def load_config(config: dict[str, Any] | None = None) -> dict[str, Any]:
     try:
         import yaml
 
-        raw = yaml.safe_load(resource_path("config/nmrforge.yaml").read_text(encoding="utf-8"))
+        raw = yaml.safe_load(resource_path("config/nmrfinesse.yaml").read_text(encoding="utf-8"))
     except Exception:  # noqa: BLE001 - missing/corrupt config counts as empty (built-in defaults apply)
         raw = {}
     if not isinstance(raw, dict):
         raw = {}
     try:
-        local_path = local_config_path("nmrforge.local.yaml")
+        local_path = local_config_path("nmrfinesse.local.yaml")
         if local_path.is_file():
             local = yaml.safe_load(local_path.read_text(encoding="utf-8")) or {}
             if isinstance(local, dict):

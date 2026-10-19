@@ -195,12 +195,12 @@ def main(argv: list[str] | None = None) -> int:
             )
         print()
 
-    own = [row for row in rows if str(row["package"]).lower() == "nmrforge"]
+    own = [row for row in rows if str(row["package"]).lower() == "nmrfinesse"]
     blocked = [
         row
         for row in rows
         if row["best_option"] in {"strong-copyleft", "unknown", "unclassified"}
-        and str(row["package"]).lower() != "nmrforge"
+        and str(row["package"]).lower() != "nmrfinesse"
     ]
     weak = [row for row in rows if row["best_option"] == "weak-copyleft"]
     no_files = [row for row in rows if row["license_files"] == 0]

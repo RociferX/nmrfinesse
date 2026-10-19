@@ -10,9 +10,9 @@ name: CI
 #
 # The "external engine" job re-runs this same stubbed suite on a self-hosted runner that
 # has NMRPipe and uploads the log; it does not call the engine. It is enabled only when
-# such a runner exists (repository variable NMRFORGE_SELF_HOSTED_CI=true), so with the
+# such a runner exists (repository variable NMRFINESSE_SELF_HOSTED_CI=true), so with the
 # variable unset no trigger - not even a release tag - runs it. Engine-level work is
-# done by hand with scripts/vm_test.sh on the NMRPipe host (docs/GIT_WORKFLOW.md).
+# done by hand with scripts/vm_test.sh on the NMRPipe host (docs/development.md).
 
 on:
   push:
@@ -73,7 +73,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[test]"
       - name: Import check
-        run: python -c "import core, nmrforge_api, gui, viewer, backend, workflow; print('imports ok')"
+        run: python -c "import core, nmrfinesse_api, gui, viewer, backend, workflow; print('imports ok')"
       - name: Tests
         run: python -m pytest -q --basetemp="$RUNNER_TEMP/pytest"
 
@@ -97,7 +97,7 @@ jobs:
 
   wheel:
     # Since 2026-09-21 (option A) the runtime resources live in the data package
-    # nmrforge_data, which makes `pip install .` / a wheel a supported install path. This job
+    # nmrfinesse_data, which makes `pip install .` / a wheel a supported install path. This job
     # only does "install into a clean venv, then smoke it headlessly": the data really ships
     # with the wheel and works outside the checkout (the old failure mode was that
     # resource_path() could not find the repository-root directories).
@@ -126,9 +126,9 @@ jobs:
           python -m zipfile -l dist/*.whl > "$RUNNER_TEMP/wheel-files.txt"
           # the last group is the four behaviour-tree READMEs: behavior_digest covers them, so
           # dropping them would make an installed copy report an unverified compat stamp
-          for entry in nmrforge_data/config/nmrforge.yaml ui_support/locales/zh.json \
-                       gui/assets/nmrforge.png nmrforge_data/presets/hsqc.yaml \
-                       core/README.md backend/README.md workflow/README.md nmrforge_api/README.md; do
+          for entry in nmrfinesse_data/config/nmrfinesse.yaml ui_support/locales/zh.json \
+                       gui/assets/nmrfinesse.png nmrfinesse_data/presets/hsqc.yaml \
+                       core/README.md backend/README.md workflow/README.md nmrfinesse_api/README.md; do
             grep -q "$entry" "$RUNNER_TEMP/wheel-files.txt" || { echo "missing in wheel: $entry"; exit 1; }
           done
           if grep -q "\.local\.yaml" "$RUNNER_TEMP/wheel-files.txt"; then
@@ -154,7 +154,7 @@ jobs:
 
           # it must be the installed copy, not the checkout
           assert "site-packages" in core.__file__, core.__file__
-          config = resource_path("config/nmrforge.yaml")
+          config = resource_path("config/nmrfinesse.yaml")
           assert config.is_file(), config
           presets = sorted(resource_path("presets").glob("*.yaml"))
           assert len(presets) >= 50, len(presets)
@@ -174,7 +174,7 @@ jobs:
 
           load_processing_defaults()
 
-          from nmrforge_api import compat_manifest
+          from nmrfinesse_api import compat_manifest
 
           level = compat_manifest()["compat_level"]
           assert level != "unverified", f"the wheel disagrees with the compat declaration: {level}"
@@ -192,19 +192,19 @@ jobs:
     name: full suite on a runner with NMRPipe
     runs-on: [self-hosted, linux]
     # Enabled only where a self-hosted runner exists (repository variable
-    # NMRFORGE_SELF_HOSTED_CI=true); unset means the job is skipped on every trigger.
+    # NMRFINESSE_SELF_HOSTED_CI=true); unset means the job is skipped on every trigger.
     # What runs here is the same suite as the hosted jobs - the engine boundary is
     # stubbed, so this is a drift check on the machine and a release-time gate, not an
     # engine test. The log and its sha256 are published as an artifact so the result can
     # be checked from outside the machine.
-    if: ${{ vars.NMRFORGE_SELF_HOSTED_CI == 'true' }}
+    if: ${{ vars.NMRFINESSE_SELF_HOSTED_CI == 'true' }}
     env:
       QT_QPA_PLATFORM: offscreen
       # Make scripts/vm_test.sh test *this checkout* rather than the copy in the
-      # runner's home directory; NMRFORGE_SELF_HOSTED_PYTHON points at the interpreter
+      # runner's home directory; NMRFINESSE_SELF_HOSTED_PYTHON points at the interpreter
       # that has the dependencies and NMRPipe.
-      NMRFORGE_TEST_ROOT: ${{ github.workspace }}
-      NMRFORGE_TEST_PYTHON: ${{ vars.NMRFORGE_SELF_HOSTED_PYTHON }}
+      NMRFINESSE_TEST_ROOT: ${{ github.workspace }}
+      NMRFINESSE_TEST_PYTHON: ${{ vars.NMRFINESSE_SELF_HOSTED_PYTHON }}
     steps:
       - uses: actions/checkout@v4
       - name: Full suite on a machine that has NMRPipe (engine boundary still stubbed)
@@ -213,14 +213,14 @@ jobs:
           mkdir -p artifacts
           bash scripts/vm_test.sh 2>&1 | tee artifacts/full-suite.log
       - name: Desensitised real-data aggregate report
-        if: ${{ vars.NMRFORGE_REAL_DATA_TARGETS != '' }}
+        if: ${{ vars.NMRFINESSE_REAL_DATA_TARGETS != '' }}
         run: |
           mkdir -p artifacts
-          IFS="," read -ra targets <<< "${{ vars.NMRFORGE_REAL_DATA_TARGETS }}"
+          IFS="," read -ra targets <<< "${{ vars.NMRFINESSE_REAL_DATA_TARGETS }}"
           for target in "${targets[@]}"; do
             tag="${target%%=*}"
             dir="${target#*=}"
-            "${NMRFORGE_TEST_PYTHON:-python3}" scripts/vm_realdata_report.py \
+            "${NMRFINESSE_TEST_PYTHON:-python3}" scripts/vm_realdata_report.py \
               --dataset "$dir" --tag "$tag" \
               --root "${RUNNER_TEMP:-/tmp}/realdata-$tag" --repeats 3 \
               --json "artifacts/realdata-$tag.json"

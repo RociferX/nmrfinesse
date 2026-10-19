@@ -1,6 +1,6 @@
-# nmrforge_api guide (API 1.1.4)
+# nmrfinesse_api guide (API 1.1.5)
 
-`nmrforge_api` is the Qt-free Python/CLI interface for software **1.0.8**. It imports Bruker data,
+`nmrfinesse_api` is the Qt-free Python/CLI interface for software **1.0.9**. It imports Bruker data,
 builds and freezes an independent reference spectrum/table per condition, runs explicit parameter
 combinations and writes independently detected parabolic peak tables with provenance and QC records.
 
@@ -39,17 +39,17 @@ peak identities. See [support and execution boundaries](09-limitations-and-roadm
 
 ## Install and run
 
-No additional dependencies are required: just use NMRForge’s own environment (`numpy`/`scipy`/`nmrglue`;
+No additional dependencies are required: just use NMRFinesse’s own environment (`numpy`/`scipy`/`nmrglue`;
 Real machine processing requires NMRPipe). Command line entry:
 
 ```bash
-python -m nmrforge_api --help
+python -m nmrfinesse_api --help
 ```
 
 ## One minute example
 
 ```python
-from nmrforge_api import run_reference_study, run_combination_study
+from nmrfinesse_api import run_reference_study, run_combination_study
 
 # reference mode: each condition gets its own spectrum, script, and peak table (threshold locked afterwards)
 run_reference_study(

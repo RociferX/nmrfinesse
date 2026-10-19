@@ -41,7 +41,7 @@ class WelcomePage(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(32, 32, 32, 32)
 
-        title = QLabel("NMRForge")
+        title = QLabel("NMRFinesse")
         title.setStyleSheet(f"font-size: 28px; font-weight: bold; color: {TEXT_PRIMARY};")
         layout.addWidget(title)
 

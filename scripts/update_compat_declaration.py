@@ -1,6 +1,6 @@
-"""Refresh the fingerprints and the golden vector in ``nmrforge_api/compat_declaration.py``.
+"""Refresh the fingerprints and the golden vector in ``nmrfinesse_api/compat_declaration.py``.
 
-After changing ``core/`` / ``backend/`` / ``workflow/`` / ``nmrforge_api/`` or the shipped
+After changing ``core/`` / ``backend/`` / ``workflow/`` / ``nmrfinesse_api/`` or the shipped
 data, ``tests/test_compat.py`` demands an updated declaration; this script recomputes both
 from the **current working tree** and writes them back, and lets you set the level
 explicitly:
@@ -11,7 +11,7 @@ python scripts/update_compat_declaration.py --level additive      # declare a ne
 python scripts/update_compat_declaration.py --no-golden           # skip the golden vector
 
 ``--level`` / ``--affected`` / ``--note`` keep the current values when omitted; allowed
-``--affected`` values are in ``nmrforge_api.compat.AFFECTED_STEPS``. The file is validated
+``--affected`` values are in ``nmrfinesse_api.compat.AFFECTED_STEPS``. The file is validated
 with ``ast.parse`` before writing, and combining ``level=same`` with "the code tokens
 changed" is rejected here up front (the guard would catch it too).
 """
@@ -28,9 +28,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from nmrforge_api import compat as compat_module  # noqa: E402
+from nmrfinesse_api import compat as compat_module  # noqa: E402
 
-TARGET = ROOT / "nmrforge_api" / "compat_declaration.py"
+TARGET = ROOT / "nmrfinesse_api" / "compat_declaration.py"
 MARKER = "DECLARATION: dict[str, Any] = "
 TAIL_MARKER = "\n\n__all__"
 
@@ -120,7 +120,7 @@ def main(argv: list[str] | None = None) -> int:
     declaration["digest"] = digest
     declaration["token_digest"] = tokens
     if not args.no_golden:
-        from nmrforge_api.conformance import GOLDEN_NAME, golden_hashes
+        from nmrfinesse_api.conformance import GOLDEN_NAME, golden_hashes
 
         golden = golden_hashes()
         assert golden["name"] == GOLDEN_NAME

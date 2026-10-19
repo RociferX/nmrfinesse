@@ -8,8 +8,8 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from backend.conversion_provenance import conversion_audit, read_conversion_provenance
-from nmrforge_api.records import _reference_record
-from nmrforge_api.reference import ReferenceSpectrum
+from nmrfinesse_api.records import _reference_record
+from nmrfinesse_api.reference import ReferenceSpectrum
 
 
 def test_conversion_audit_collects_acquisition_values_and_actual_script(

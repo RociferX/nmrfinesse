@@ -1,6 +1,6 @@
-# 03 · API reference (v1.1.4)
+# 03 · API reference (v1.1.5)
 
-Top-level exports are defined in `nmrforge_api/__init__.py`; `nmrforge_api.session.API_VERSION` defines API **1.1.4**. Software **1.0.8** and the API have separate version identifiers. The unified peak table retains 38 columns.
+Top-level exports are defined in `nmrfinesse_api/__init__.py`; `nmrfinesse_api.session.API_VERSION` defines API **1.1.5**. Software **1.0.9** and the API have separate version identifiers. The unified peak table retains 38 columns.
 
 ## 3.1 Sessions and Datasets
 
@@ -11,7 +11,7 @@ add_dataset(session, source, *, condition="", exp_id="", title="",
 dataset_info(session, dataset=None) -> dict
 ```
 
-- Open if `root/project.json` exists, otherwise create a new NMRForge project; research status
+- Open if `root/project.json` exists, otherwise create a new NMRFinesse project; research status
   (`study/study.json`)Restore condition dataset list;
 - `condition` automatically assigns the next unused letter (A/B/C...) by default; the label must be unique;
 - Import links raw data, writes metadata, and registers an import run; it does not convert or process raw data.
@@ -56,7 +56,7 @@ build_reference_peak_tables(session, reference, *, window_pts=None,
   reference.list and reference peak table; conditions do not share peak identities.
 - Reference reuse requires an exact normalized request match, including parameters (and
   `optimization_candidates` values and list order), phase route,
-  and direct range. The reference record stores the nmrforge_api.reference_input.v1 fingerprint.
+  and direct range. The reference record stores the nmrfinesse_api.reference_input.v1 fingerprint.
   Any mismatch or missing/invalid legacy fingerprint raises ReferenceError and requires explicit
   force=True (CLI --force); no automatic rebuild occurs. All conditions are preflighted before
   engine processing starts.
@@ -324,9 +324,9 @@ numbers). Downstream has to be able to answer "which behaviour produced these nu
 they have to be re-run?" from a machine-readable value.
 
 ```python
-from nmrforge_api import compat_manifest, compat_status, check_conformance
+from nmrfinesse_api import compat_manifest, compat_status, check_conformance
 
-manifest = compat_manifest()      # nmrforge_api.compat.v1 (JSON serialisable)
+manifest = compat_manifest()      # nmrfinesse_api.compat.v1 (JSON serialisable)
 manifest["behavior_digest"]       # content fingerprint (the four code trees + shipped data)
 manifest["token_digest"]          # code fingerprint, comments/docstrings stripped
 manifest["compat_level"]          # same / additive / behavior_changed / contract_changed / unverified
@@ -337,9 +337,9 @@ check_conformance()               # run the golden recipe and compare item by it
 ```
 
 ```bash
-python -m nmrforge_api compat                     # print the manifest (pure JSON)
-python -m nmrforge_api compat --out compat.json   # write it out
-python -m nmrforge_api compat --golden            # also run the golden vector
+python -m nmrfinesse_api compat                     # print the manifest (pure JSON)
+python -m nmrfinesse_api compat --out compat.json   # write it out
+python -m nmrfinesse_api compat --golden            # also run the golden vector
 ```
 
 - **Two fingerprints**: `behavior_digest` hashes the **file content** (any changed line of code
@@ -354,7 +354,7 @@ python -m nmrforge_api compat --golden            # also run the golden vector
 - **Artefacts carry the stamp**: `run.json` / `records/reference.json` / `records/manifest.json`
   write `behavior_digest` / `token_digest` / `compat_level` / `compat_affected` /
   `compat_verified` next to `versions`, so any artefact can be traced back;
-- **Maintaining the declaration**: it lives in `nmrforge_api/compat_declaration.py` (a pure data
+- **Maintaining the declaration**: it lives in `nmrfinesse_api/compat_declaration.py` (a pure data
   module, deliberately outside the fingerprint); the guard `tests/test_compat.py` requires the
   fingerprint to match the declaration, the level to be consistent with `affected`, `same` to
   keep the tokens unchanged and the golden vector to reproduce. Update it with

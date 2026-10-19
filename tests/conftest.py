@@ -30,7 +30,7 @@ def _load_test_categories() -> types.ModuleType:
     """Load the category table (``tests/categories.py``) via importlib rather than import, so the
     test directory never enters ``sys.path``."""
     spec = importlib.util.spec_from_file_location(
-        "nmrforge_test_categories", Path(__file__).with_name("categories.py")
+        "nmrfinesse_test_categories", Path(__file__).with_name("categories.py")
     )
     if spec is None or spec.loader is None:  # pragma: no cover - the file always exists
         raise RuntimeError("找不到 tests/categories.py")
@@ -50,7 +50,7 @@ def _load_test_categories() -> types.ModuleType:
 # The runtime default of this tree (``en``) still comes from ``ui_support/locales/default.json``;
 # only the test language is pinned separately below.
 TREE_DEFAULT_LANGUAGE = default_language()
-os.environ["NMRFORGE_LANG"] = "zh"
+os.environ["NMRFINESSE_LANG"] = "zh"
 
 
 TEST_CATEGORIES = _load_test_categories()
@@ -165,7 +165,7 @@ def _isolate_machine_settings(tmp_path: Path, monkeypatch) -> None:
 
     original = app_paths.local_config_path
 
-    def isolated(filename: str = "nmrforge.local.yaml", *, packaged=None) -> Path:
+    def isolated(filename: str = "nmrfinesse.local.yaml", *, packaged=None) -> Path:
         frozen = app_paths.is_frozen() if packaged is None else bool(packaged)
         if frozen:
             return original(filename, packaged=packaged)
@@ -173,6 +173,21 @@ def _isolate_machine_settings(tmp_path: Path, monkeypatch) -> None:
 
     monkeypatch.setattr(settings, "local_config_path", isolated)
     monkeypatch.setattr(config, "local_config_path", isolated)
+
+
+@pytest.fixture(autouse=True)
+def _isolate_gui_workspace(tmp_path: Path, monkeypatch, request) -> None:
+    """Keep GUI construction from creating or loading a real home workspace."""
+    if "qapp" not in request.fixturenames:
+        return
+    from core.workspace import WorkspaceManager
+
+    original = WorkspaceManager.__init__
+
+    def isolated(self, root=None):
+        original(self, root if root is not None else tmp_path / "NMRFinesseWorkspace")
+
+    monkeypatch.setattr(WorkspaceManager, "__init__", isolated)
 
 
 @pytest.fixture(autouse=True)

@@ -6,8 +6,8 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from nmrforge_api.errors import MeasurementError
-from nmrforge_api.peaks import detect_and_localize, measure_peak_positions, peak_coordinates
+from nmrfinesse_api.errors import MeasurementError
+from nmrfinesse_api.peaks import detect_and_localize, measure_peak_positions, peak_coordinates
 from workflow.peak_align import filter_by_reference, row_coords
 from workflow.pick_peaks import SpectrumAxes, _peak_nucleus_ppm
 

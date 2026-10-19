@@ -4,8 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 
-import nmrforge_api.cli as cli
-from nmrforge_api.session import DatasetRef
+import nmrfinesse_api.cli as cli
+from nmrfinesse_api.session import DatasetRef
 
 
 def _session(*, two_conditions: bool = False):
@@ -26,7 +26,7 @@ def _patch_reference_cli(monkeypatch, *, session, built, available=None):
     monkeypatch.setattr(cli, "open_study", lambda *args, **kwargs: session)
     monkeypatch.setattr(cli, "load_reference", lambda *args, **kwargs: None)
     monkeypatch.setattr(
-        "nmrforge_api.reference._reference_request",
+        "nmrfinesse_api.reference._reference_request",
         lambda *args, **kwargs: (None, None),
     )
 

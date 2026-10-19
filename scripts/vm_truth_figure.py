@@ -7,7 +7,7 @@ and match CSV), so every point in the figure maps back to the aggregate numbers.
 
 Usage (real machine):::
 
-    nmrforge/bin/python scripts/vm_truth_figure.py \
+    nmrfinesse/bin/python scripts/vm_truth_figure.py \
         --case "<label1>,<spectrum.ft2>,<expected.csv>,<matches.csv>,<report.json>" \
         --case "<label2>,<spectrum.ft2>,<expected.csv>,<matches.csv>,<report.json>" \
         --out docs/evidence/truth_recovery_2026-09-22.png

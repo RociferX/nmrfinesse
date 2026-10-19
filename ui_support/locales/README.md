@@ -12,12 +12,12 @@ base, so the public tree carries no Chinese; Chinese is provided entry by entry 
   to the English original; nothing goes blank.
 - `converted.json` - the files already converted (a ratchet: it only grows). Those files must
   not contain Chinese literals outside `tr()` any more.
-- Language selection: explicit setting -> `NMRFORGE_LANG` / `NMRFORGE_LANGUAGE` -> **the
-  preference stored in the user config** (`language:` in `nmrforge.local.yaml`, written by
+- Language selection: explicit setting -> `NMRFinesse_LANG` / `NMRFinesse_LANGUAGE` -> **the
+  preference stored in the user config** (`language:` in `NMRFinesse.local.yaml`, written by
   `Settings -> Software settings -> Interface language`) -> the system language (QLocale) ->
   `LANG` / `LC_ALL` -> `default.json` (the language this tree declares: private repository /
-  Chinese edition = zh, public English tree = en). An AppImage pins it with `NMRFORGE_LANG`.
-- `NMRFORGE_LANG` and `LANG` are not the same rank: the former is an explicit pin (above the
+  Chinese edition = zh, public English tree = en). An AppImage pins it with `NMRFinesse_LANG`.
+- `NMRFinesse_LANG` and `LANG` are not the same rank: the former is an explicit pin (above the
   setting), the latter is just the system locale (below it) - otherwise the `en_US.UTF-8` that
   Linux machines almost always have would defeat the setting forever.
 

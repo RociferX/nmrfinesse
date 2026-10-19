@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install the NMRForge desktop entry and icon (development-mode runs).
+# Install the NMRFinesse desktop entry and icon (development-mode runs).
 #
 # GNOME does not show a window icon in the title bar by default; the taskbar/launcher icon comes from the .desktop
 # file's Icon= entry plus the hicolor icon theme. For development runs (venv + python main.py)
@@ -10,21 +10,18 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-APP=NMRForge
+APP=NMRFinesse
 
-VENV_PY="$ROOT/nmrforge/bin/python"
+VENV_PY="$ROOT/nmrfinesse/bin/python"
 if [ ! -x "$VENV_PY" ]; then
-  VENV_PY="$ROOT/nmrforge/Scripts/python.exe"
-fi
-if [ ! -x "$VENV_PY" ]; then
-  echo "error: venv python not found ($ROOT/nmrforge/bin/python)" >&2
+  echo "error: application environment missing; run bash scripts/setup_env.sh" >&2
   exit 1
 fi
 
 # 1) icon -> hicolor theme (GNOME and other DEs look it up by theme name)
 ICON_DST="$HOME/.local/share/icons/hicolor/256x256/apps"
 mkdir -p "$ICON_DST"
-install -m 0644 "$ROOT/gui/assets/nmrforge.png" "$ICON_DST/nmrforge.png"
+install -m 0644 "$ROOT/gui/assets/nmrfinesse.png" "$ICON_DST/nmrfinesse.png"
 
 # 2) desktop entry (Exec points at the current development launch command)
 APPS_DIR="$HOME/.local/share/applications"
@@ -32,11 +29,11 @@ mkdir -p "$APPS_DIR"
 cat > "$APPS_DIR/$APP.desktop" <<EOF
 [Desktop Entry]
 Type=Application
-Name=NMRForge
+Name=NMRFinesse
 GenericName=NMR Processing and Optimization
 Comment=Automated processing, optimization and QC for Bruker 2D/3D NMR data
 Exec=$VENV_PY $ROOT/main.py --inside-venv
-Icon=nmrforge
+Icon=nmrfinesse
 Terminal=false
 Categories=Science;Chemistry;Education;
 Keywords=NMR;Spectroscopy;Bruker;NUS;Processing;QC;
@@ -52,6 +49,6 @@ if command -v update-desktop-database >/dev/null 2>&1; then
 fi
 
 echo "installed: $APPS_DIR/$APP.desktop"
-echo "icon: $ICON_DST/nmrforge.png"
+echo "icon: $ICON_DST/nmrfinesse.png"
 echo "note: restart the running app and GNOME will pick the icon up in the launcher / task bar;"
 echo "if it still does not show up, log out and back in once."

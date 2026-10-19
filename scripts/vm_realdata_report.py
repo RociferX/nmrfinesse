@@ -3,7 +3,7 @@ desensitised aggregate metrics only.
 
 Usage (on the machine; the dataset path appears on the command line only)::
 
-    nmrforge/bin/python scripts/vm_realdata_report.py \
+    nmrfinesse/bin/python scripts/vm_realdata_report.py \
         --dataset <Bruker dataset directory> --tag <anonymous tag> \
         --root <new scratch root> --repeats 3 [--json <output path>] [--classify-only] \
         [--ext-lo <ppm> --ext-hi <ppm>] \
@@ -314,7 +314,7 @@ def compare_with_manual(software: Path, manual: Path) -> dict:
     automatic spectrum's median line width per nucleus. Detection and refinement are
     untouched and no candidate peaks are swapped in to inflate the match rate.
     """
-    from nmrforge_api.peaks import detect_and_localize
+    from nmrfinesse_api.peaks import detect_and_localize
     from workflow.pick_peaks import read_spectrum_axes
 
     auto_axes = read_spectrum_axes(software)

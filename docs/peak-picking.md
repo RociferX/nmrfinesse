@@ -41,6 +41,16 @@ for unknown or low-confidence experiment types. Explicit API requests (`positive
 `both` or `dominant`) take precedence and their source is recorded. Here same-sign/mixed describes
 peak polarity, not uniform/NUS sampling.
 
+`dominant` compares the squared signal-to-noise sums `Σ(SNR²)` for the two signs, rather
+than counting candidates. Numerous weak opposite-sign candidates therefore have less influence
+than strong main signals. Exact weight ties favour positive peaks; truly negative-dominated
+spectra remain detectable. Normally processed single-sign spectra are expected to be positive.
+For unknown types, automatic mixed-sign inference requires at least three candidates per sign,
+a weaker-to-stronger weight ratio of at least 20%, and support beyond one isolated extreme
+candidate on each side. Detection metadata `sign_evidence` records counts, normalised weights,
+weight shares and the dominant sign.
+
+
 ### Reference-constrained picking
 
 Reference alignment estimates a global chemical-shift offset for tolerance-based matching. It

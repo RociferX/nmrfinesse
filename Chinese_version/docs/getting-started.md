@@ -1,19 +1,19 @@
 # 快速开始
 
-本页介绍 1.0.8 的安装与首次处理。Linux 桌面用户可从 [1.0.8 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.8) 下载 AppImage；源码安装见下方步骤。公开 API 版本为 v1.1.4。
+本页介绍 1.0.9 的安装与首次处理。Linux 桌面用户可从 [1.0.9 Release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.9) 下载 AppImage；源码安装见下方步骤。公开 API 版本为 v1.1.5。
 
 ## 路线 A —— 源码安装与 GUI
 
 ```bash
-git clone https://github.com/RociferX/nmrforge.git
-cd nmrforge
+git clone https://github.com/RociferX/nmrfinesse.git
+cd nmrfinesse
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 python -m pip install -e ".[test]"
 python main.py
 ```
 
-真实处理需要在同一台机器上安装 NMRPipe;SMILE 随它提供。nmrForge 不捆绑、也不下载这两个
+真实处理需要在同一台机器上安装 NMRPipe;SMILE 随它提供。NMRFinesse 不捆绑、也不下载这两个
 引擎。如果它们不在,数据检查仍然可用,程序会明确报出处理能力不可用。
 
 第一次打开程序,先看 **`帮助 → 使用教程`**:一份从导入数据走到峰表的完整走查,界面语言换了正文也跟着换。
@@ -25,7 +25,7 @@ python main.py
 
 ```bash
 git clone <this repository>
-cd nmrForge
+cd nmrfinesse
 pip install -e ".[test]"
 ```
 
@@ -47,7 +47,7 @@ python examples/quickstart.py example_data/hsqc_2d
 6. 是否找到 NMRPipe 与 SMILE,以及接下来该跑的确切命令。
 
 如果第 6 步报「NMRPipe NOT FOUND」,那么处理暂时不可用 —— 但数据理解与 QC 仍然可用。
-这条边界是有意为之:nmrForge 拒绝假装自己能在没有引擎的情况下处理。
+这条边界是有意为之:NMRFinesse 拒绝假装自己能在没有引擎的情况下处理。
 想看维度处理与 NUS 判定,可以试 3D 例子:
 
 ```bash
@@ -65,8 +65,8 @@ python examples/quickstart.py example_data/hnca_3d
 4. `csh` 环境,也就是终端 source 过 NMRPipe 环境之后的样子;
 5. 常见安装位置。
 
-`nmrforge_data/config/nmrforge.yaml` 保存默认值;要做机器本地覆盖,就把它复制成
-`nmrforge_data/config/nmrforge.local.yaml`(该文件被 git 忽略,因此机器路径永远不会进仓库):
+`nmrfinesse_data/config/nmrfinesse.yaml` 保存默认值;要做机器本地覆盖,就把它复制成
+`nmrfinesse_data/config/nmrfinesse.local.yaml`(该文件被 git 忽略,因此机器路径永远不会进仓库):
 
 ```yaml
 backend:
@@ -80,10 +80,10 @@ backend:
 [external-api/04-cli-reference.md](external-api/04-cli-reference.md):
 
 ```bash
-python -m nmrforge_api init      --study ./study --dataset /path/to/bruker/dataset
-python -m nmrforge_api reference --study ./study
-python -m nmrforge_api peaks     --study ./study
-python -m nmrforge_api sweep     --study ./study --grid grid.yaml --reference study/reference.json
+python -m nmrfinesse_api init      --study ./study --dataset /path/to/bruker/dataset
+python -m nmrfinesse_api reference --study ./study
+python -m nmrfinesse_api peaks     --study ./study
+python -m nmrfinesse_api sweep     --study ./study --grid grid.yaml --reference study/reference.json
 ```
 
 一个「study」是一个自包含的根目录。参考谱、它的脚本与峰表只冻结一次;

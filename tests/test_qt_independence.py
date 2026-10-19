@@ -2,7 +2,7 @@
 
 Target architecture (see ``docs/pyside6-migration/migration-plan.md``):
 
-    core/ backend/ workflow/ nmrforge_api/   Qt-free, importable headless
+    core/ backend/ workflow/ nmrfinesse_api/   Qt-free, importable headless
     gui/  viewer/ ui_support/                Qt users, but never import a binding directly
     qtcompat/                                the single place a binding is named (PySide6)
 
@@ -25,7 +25,7 @@ QT_BINDINGS = ("PyQt6", "PySide6", "PyQt5", "PySide2")
 
 #: Layers that must stay Qt-free, including the compat boundary itself: importing ``qtcompat`` from
 #: the core would drag a binding in transitively.
-CORE_LAYERS = ("core", "backend", "workflow", "nmrforge_api")
+CORE_LAYERS = ("core", "backend", "workflow", "nmrfinesse_api")
 
 #: Layers allowed to use Qt, but only through ``qtcompat``.
 UI_LAYERS = ("gui", "viewer", "ui_support")
@@ -35,10 +35,10 @@ COMPAT_LAYER = "qtcompat"
 
 #: Directories that are not project source: the virtual environment, caches and build output.
 IGNORED_DIR_NAMES = {
-    "nmrforge",
+    "nmrfinesse",
     "build",
     "dist",
-    "nmrforge.egg-info",
+    "nmrfinesse.egg-info",
     "Chinese_version",  # full Chinese-edition mirror of the same code; not scanned twice
 }
 
@@ -119,7 +119,7 @@ def test_core_layers_have_no_qt_imports() -> None:
 def test_core_imports_load_no_qt_module() -> None:
     """Runtime complement to the static scan: importing the core must not pull Qt in."""
     program = (
-        "import sys; import core, backend, workflow, nmrforge_api; "
+        "import sys; import core, backend, workflow, nmrfinesse_api; "
         "loaded = sorted(m for m in sys.modules if m.startswith(('PyQt', 'PySide', 'shiboken'))); "
         "print(loaded)"
     )
@@ -200,7 +200,7 @@ def test_appimage_spec_collects_the_binding_plugins() -> None:
     """The PyInstaller spec must collect the plugin of the binding that is actually declared."""
     import qtcompat
 
-    spec = (ROOT / "packaging" / "linux" / "NMRForge.spec").read_text(encoding="utf-8")
+    spec = (ROOT / "packaging" / "linux" / "NMRFinesse.spec").read_text(encoding="utf-8")
     assert f"{qtcompat.BINDING_MODULE}.QtSvg" in spec, (
         "the spec's hiddenimports must name the declared binding's QtSvg module"
     )

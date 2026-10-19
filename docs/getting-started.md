@@ -1,7 +1,7 @@
 # Getting started
 
 This guide covers first data inspection and the processing boundary. For Linux desktop use,
-download the [1.0.8 AppImage](https://github.com/RociferX/nmrforge/releases/tag/v1.0.8).
+download the [1.0.9 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.9).
 For source installation, follow the steps below.
 
 ## Install from source
@@ -9,8 +9,8 @@ For source installation, follow the steps below.
 Linux is the target runtime. Create an editable installation:
 
 ```bash
-git clone https://github.com/RociferX/nmrforge.git
-cd nmrforge
+git clone https://github.com/RociferX/nmrfinesse.git
+cd nmrfinesse
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[test]"
@@ -19,7 +19,7 @@ python main.py
 
 For the complete dependency and packaged-resource notes, see
 [Installation](installation.md). NMRPipe is required for spectral conversion and processing;
-SMILE is required for NUS reconstruction. nmrForge does not install or bundle these external tools.
+SMILE is required for NUS reconstruction. NMRFinesse does not install or bundle these external tools.
 
 ## Inspect a Bruker dataset
 
@@ -48,8 +48,8 @@ through `csh`, and supported common locations. SMILE is located with the NMRPipe
 Missing engines are reported when an operation needs them; the application does not silently
 substitute a different processing engine.
 
-Use the tracked defaults in `nmrforge_data/config/nmrforge.yaml`. For a machine-local path, copy
-the file to the ignored `nmrforge_data/config/nmrforge.local.yaml` and edit the local copy:
+Use the tracked defaults in `nmrfinesse_data/config/nmrfinesse.yaml`. For a machine-local path, copy
+the file to the ignored `nmrfinesse_data/config/nmrfinesse.local.yaml` and edit the local copy:
 
 ```yaml
 backend:
@@ -66,11 +66,11 @@ The Python API and command line use the same backend. A study consists of regist
 conditions, a frozen reference, and user-supplied parameter combinations:
 
 ```bash
-python -m nmrforge_api init --study ./study --dataset /path/to/bruker/dataset --condition A
-python -m nmrforge_api reference --study ./study
-python -m nmrforge_api peaks --study ./study
-python -m nmrforge_api sweep --study ./study --reference ./study --combos design.csv
-python -m nmrforge_api report --study ./study
+python -m nmrfinesse_api init --study ./study --dataset /path/to/bruker/dataset --condition A
+python -m nmrfinesse_api reference --study ./study
+python -m nmrfinesse_api peaks --study ./study
+python -m nmrfinesse_api sweep --study ./study --reference ./study --combos design.csv
+python -m nmrfinesse_api report --study ./study
 ```
 
 For a complete option list, see [CLI reference](cli.md). The API runs peak selection independently

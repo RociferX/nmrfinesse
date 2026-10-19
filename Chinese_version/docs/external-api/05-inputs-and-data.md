@@ -1,4 +1,4 @@
-# 05 · 输入:数据、条件与参数组合表(v1.1.4)
+# 05 · 输入:数据、条件与参数组合表(v1.1.5)
 
 ## 5.1 原始数据
 
@@ -132,7 +132,7 @@ run_parameter_study(..., peaks="library.list")   # 或 peak_id,H_ppm,N_ppm CSV
 - 给了外部峰表:只作为主条件的峰身份表冻结(`peak_source="external"`);其他条件
   仍从各自参考谱独立自动选峰。条件内身份不证明跨条件或跨谱峰对应。组合峰表独立
   选峰，`reference_peak_id` 留空，不自动对应回参考峰;
-- 接受格式:Poky/Sparky `.list`、NMRForge 旧 CSV、研究项目
+- 接受格式:Poky/Sparky `.list`、NMRFinesse 旧 CSV、研究项目
   `peak_id,H_ppm,N_ppm,height,linewidth,volume`。
 
 ## 5.6 参数原则(软件不越界)
@@ -157,7 +157,7 @@ run_parameter_study(root, datasets=..., combos=..., sigma_multiplier=20)
 ```
 
 ```bash
-python -m nmrforge_api peaks --study ~/studies/s1 --sigma 20
+python -m nmrfinesse_api peaks --study ~/studies/s1 --sigma 20
 ```
 
 - **阈值是参考定义的一部分**:参考峰表一旦冻结,后续所有 workflow/参数扰动
@@ -193,8 +193,8 @@ run_reference_study(root, dataset, ext_lo="10.5", ext_hi="6.5")    # 显式
 ```
 
 ```bash
-python -m nmrforge_api reference --study ~/studies/s1 --direct-range 10.5 6.5
-python -m nmrforge_api sweep --study ~/studies/s1 --reference ~/studies/s1 \
+python -m nmrfinesse_api reference --study ~/studies/s1 --direct-range 10.5 6.5
+python -m nmrfinesse_api sweep --study ~/studies/s1 --reference ~/studies/s1 \
     --combos design.csv --direct-range 9 7
 ```
 
@@ -235,9 +235,9 @@ reference = build_reference(session_3d, carrier_ppm={"F3": 4.7})
 CLI 同样可重复给轴值；相同轴重复指定会报错：
 
 ```bash
-python -m nmrforge_api reference --study ~/studies/s1 \
+python -m nmrfinesse_api reference --study ~/studies/s1 \
   --carrier-ppm F1=120.0 --carrier-ppm F2=4.7 --force
-python -m nmrforge_api reference --study ~/studies/s3 \
+python -m nmrfinesse_api reference --study ~/studies/s3 \
   --carrier-ppm F3=4.7 --force
 ```
 
@@ -372,7 +372,7 @@ detect_and_localize(spectrum, targets=(1, 5, 9))
 ```
 
 ```bash
-python -m nmrforge_api sweep --study ~/studies/s1 --reference ~/studies/s1 \
+python -m nmrfinesse_api sweep --study ~/studies/s1 --reference ~/studies/s1 \
     --combos design.csv --localize-peaks truth_peaks.csv
 ```
 

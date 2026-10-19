@@ -75,7 +75,7 @@ def _pick_script_key(scripts: dict[str, str], data_id: str) -> str:
 
 
 class MainWindow(QMainWindow):
-    """NMRForge main window; displays the welcome page when the project is not open."""
+    """NMRFinesse main window; displays the welcome page when the project is not open."""
 
     import_failed = Signal(str)
     import_finished = Signal(object)
@@ -135,7 +135,7 @@ class MainWindow(QMainWindow):
         self._log_exp_id = ""
         self._log_data_id = ""
         self._log_group_id = ""
-        self.setWindowTitle("NMRForge")
+        self.setWindowTitle("NMRFinesse")
 
         try:
             from ui_support.theme import app_icon
@@ -462,7 +462,7 @@ class MainWindow(QMainWindow):
                 except Exception:  # noqa: BLE001
                     continue
 
-        self._prewarm_thread = threading.Thread(target=work, daemon=True, name="nmrforge-prewarm")
+        self._prewarm_thread = threading.Thread(target=work, daemon=True, name="nmrfinesse-prewarm")
         self._prewarm_thread.start()
 
     # ------------------------------------------------------------------
@@ -1260,9 +1260,9 @@ class MainWindow(QMainWindow):
     def about(self) -> None:
         InfoDialog.show_info(
             self,
-            tr("About NMRForge"),
+            tr("About NMRFinesse"),
             tr(
-                "NMRForge: an automated processing, parameter-optimisation and quality-control "
+                "NMRFinesse: an automated processing, parameter-optimisation and quality-control "
                 "platform for Bruker 2D/3D NMR.\nFour columns: project tree / processing "
                 "pipeline / task log / spectrum viewer.\n\nAxis-order convention (internally "
                 "everything is organised in "
@@ -1345,7 +1345,7 @@ class MainWindow(QMainWindow):
     def _run_standalone_check(self, paths, kind: str) -> None:
         """Run check in worker thread, emit report to top-level global log. 0.2.199-patch29em:
         First jump to the top level (workspace root node), switch the log panel to
-        NMRForgeWorkspace global scope, then execute in the background and output line by line.
+        NMRFinesseWorkspace global scope, then execute in the background and output line by line.
         """
         top = self.project_tree.tree.topLevelItem(0)
         if top is not None:
@@ -2372,7 +2372,7 @@ class MainWindow(QMainWindow):
         self.project_tree.refresh()
         project = self.manager.project
         if project is None:
-            self.setWindowTitle(self._title_with_environment(tr("NMRForge - welcome")))
+            self.setWindowTitle(self._title_with_environment(tr("NMRFinesse - welcome")))
             self.statusBar().showMessage(
                 tr(
                     "Create a new project or open a project to start working",
@@ -2385,7 +2385,7 @@ class MainWindow(QMainWindow):
             self.main_splitter.setVisible(True)
             self._update_context_bar()
             return
-        self.setWindowTitle(self._title_with_environment(f"NMRForge - {project.name}"))
+        self.setWindowTitle(self._title_with_environment(f"NMRFinesse - {project.name}"))
         self.statusBar().showMessage(tr("project: {p0}", p0=self.manager.root))
 
         active_exps = [e for e in project.experiments if not getattr(e, "trashed", False)]
@@ -2405,9 +2405,9 @@ class MainWindow(QMainWindow):
         install_dialog_centering(app)
         apply_dark_theme(app)
 
-        app.setApplicationName("NMRForge")
+        app.setApplicationName("NMRFinesse")
         try:
-            app.setDesktopFileName("NMRForge")
+            app.setDesktopFileName("NMRFinesse")
         except AttributeError:
             pass
         _icon = app_icon()

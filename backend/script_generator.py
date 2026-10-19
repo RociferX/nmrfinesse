@@ -320,7 +320,7 @@ def zero_fill_plan(
     ``points_per_line`` may be a scalar or a per-axis mapping
     (``{"F1": 2.0, "F2": 4.0}``).
     Auto mode returns the chosen SI; with mode=none, size=None.
-    linewidth_hz/points_per_line read nmrforge_data/config/nmrforge.yaml when not passed
+    linewidth_hz/points_per_line read nmrfinesse_data/config/nmrfinesse.yaml when not passed
     explicitly (processing.linewidth_hz/points_per_line; explicit params win).
     """
     from backend.config import load_processing_defaults
@@ -656,7 +656,7 @@ def generate_convert_script(
         tokens[tokens.index("-xN") + 1] = str(int(direct_points))
     lines = [
         "#!/bin/csh",
-        "# NMRForge conversion script (bruk2pipe)",
+        "# NMRFinesse conversion script (bruk2pipe)",
         f"# experiment: {experiment.dataset_id}",
     ]
     groups = _group_tokens(tokens[1:])
@@ -848,7 +848,7 @@ def generate_process_script(
     )
     lines = [
         "#!/bin/csh",
-        "# NMRForge processing script",
+        "# NMRFinesse processing script",
         f"# experiment: {experiment.dataset_id}",
         f"xyz2pipe -in {in_file} -x \\",
     ]
@@ -1145,7 +1145,7 @@ def generate_2d_nus_seed_script(
     td = effective_td(experiment)
     zf = zero_fill_plan(experiment, zero_fill, linewidth_hz=linewidth_hz,
                         points_per_line=points_per_line).get("F2", {})
-    lines = ["#!/bin/csh", "# NMRForge 2D NUS phase seed (not a final spectrum)",
+    lines = ["#!/bin/csh", "# NMRFinesse 2D NUS phase seed (not a final spectrum)",
              f"# experiment: {experiment.dataset_id}",
              (f"xyz2pipe -in {in_file} -x \\" if "%" in in_file
               else f"nmrPipe -in {in_file} \\"),
@@ -1255,7 +1255,7 @@ def generate_2d_nus_script(
     if multi:
         lines = [
             "#!/bin/csh",
-            "# NMRForge 2D NUS SMILE reconstruction (two-stage, multi-file)",
+            "# NMRFinesse 2D NUS SMILE reconstruction (two-stage, multi-file)",
             f"# experiment: {experiment.dataset_id}",
             "mkdir -p nus2d",
             "# stage 1: direct dim (F2) FT + EXT + POLY",
@@ -1276,7 +1276,7 @@ def generate_2d_nus_script(
     else:
         lines = [
             "#!/bin/csh",
-            "# NMRForge 2D NUS SMILE reconstruction (two-stage)",
+            "# NMRFinesse 2D NUS SMILE reconstruction (two-stage)",
             f"# experiment: {experiment.dataset_id}",
             "mkdir -p nus2d",
             "# stage 1: direct dim (F2) FT + EXT + POLY, SMILE reconstruct F1",
@@ -1522,7 +1522,7 @@ def generate_3d_nus_script(
     xct_arg = smile_cross_term_args(experiment)
     lines = [
         "#!/bin/csh",
-        "# NMRForge 3D NUS SMILE reconstruction",
+        "# NMRFinesse 3D NUS SMILE reconstruction",
         f"# experiment: {experiment.dataset_id}",
         "mkdir -p nus3d_1 nus3d_rc",
         "# step 1: direct dim (F3) FT + EXT + PS",
@@ -1601,7 +1601,7 @@ def param_schema() -> dict[str, Any]:
     """
     return {
         "type": "object",
-        "title": tr("NMRForge processing parameter"),
+        "title": tr("NMRFinesse processing parameter"),
         "description": tr(
             "Processing plan parameter (table editor/script rendering shared data source)",
         ),
@@ -1948,7 +1948,7 @@ def generate_nus_finalize_script(
         f1_window = _window_line((window or {}).get("F1"))
         lines = [
             "#!/bin/csh",
-            "# NMRForge NUS finalize script (indirect FT from reconstructed planes)",
+            "# NMRFinesse NUS finalize script (indirect FT from reconstructed planes)",
             f"# experiment: {experiment.dataset_id}",
             f"xyz2pipe -in {planes} -x \\",
             *([f2_window] if f2_window else []),
@@ -1990,7 +1990,7 @@ def generate_nus_finalize_script(
         expanded = expand_baseline(experiment, baseline)
         lines = [
             "#!/bin/csh",
-            "# NMRForge NUS finalize script (indirect FT from reconstructed planes)",
+            "# NMRFinesse NUS finalize script (indirect FT from reconstructed planes)",
             f"# experiment: {experiment.dataset_id}",
             f"nmrPipe -in {planes} \\",
             *([f1_window] if f1_window else []),

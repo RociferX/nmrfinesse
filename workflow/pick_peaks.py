@@ -37,7 +37,7 @@ from core.project import ProjectManager
 from core.qc import noise, peak_detection
 from ui_support.i18n import tr
 
-logger = logging.getLogger("nmrforge.workflow.pick_peaks")
+logger = logging.getLogger("nmrfinesse.workflow.pick_peaks")
 
 _NUCLEUS_SET = {"1H", "2H", "13C", "15N", "19F", "31P", "23Na", "29Si"}
 
@@ -57,9 +57,8 @@ _PICK_THRESHOLD_SIGMA = 35.0
 PICK_EDGE_MARGIN = 5
 _PICK_EDGE_MARGIN = PICK_EDGE_MARGIN
 _MIXED_MIN_MINOR = 3
-_MIXED_COUNT_SHARE = 0.20  # Number of minority symbols >= Number of major symbols x 0.2.
+_MIXED_WEIGHT_SHARE = 0.20  # Weaker / stronger squared-SNR sum.
 # The sum of the absolute strengths of the minority symbols >= the main symbol x 0.15.
-_MIXED_INTEN_SHARE = 0.15
 _MIXED_MIN_TOTAL = 6
 # Anti-pollution: A few symbols cannot be dominated by a single extremely strong peak -- the
 # intensity of the second strongest peak >= the strongest x 0.25.
@@ -472,33 +471,27 @@ def _type_uncertain(manager: ProjectManager, exp_id: str, data_id: str) -> bool:
 
 
 def _strong_two_sign(peaks: list[Any]) -> bool:
-    """Spectrum Whether positive and negative coexist obviously (0.2.199-patch29fc/patch29fc-
-    modified). Combination of quantity and intensity: the proportion of the number of minority
-    symbols >= _MIXED_COUNT_SHARE and the proportion of the absolute sum of the intensity of the
-    minority symbols >= _MIXED_INTEN_SHARE; anti-pollution -- the minority symbols cannot be
-    dominated by an extremely strong peak (the second strongest peak >= the strongest peak x
-    _MIXED_OUTLIER_RATIO), sporadic/Unimodal pollution will not be misjudged.
+    """Require substantial SNR-weighted evidence on both signs for unknown types.
+
+    Each sign needs three candidates and at least 20% of the other sign's weight.
+    Neither sign may obtain that support from a single isolated extreme candidate.
     """
     pos = [abs(p.height) for p in peaks if p.height > 0]
     neg = [abs(p.height) for p in peaks if p.height < 0]
     total = len(pos) + len(neg)
     if total < _MIXED_MIN_TOTAL:
         return False
-    minor_abs, major_abs = (pos, neg) if len(pos) <= len(neg) else (neg, pos)
-    minor = len(minor_abs)
-    major = len(major_abs)
-    if minor < _MIXED_MIN_MINOR or major <= 0:
+    if min(len(pos), len(neg)) < _MIXED_MIN_MINOR:
         return False
-    if minor / major < _MIXED_COUNT_SHARE:
+    evidence = peak_detection.sign_evidence(peaks)
+    weaker = min(evidence["positive_weight"], evidence["negative_weight"])
+    stronger = max(evidence["positive_weight"], evidence["negative_weight"])
+    if stronger <= 0 or weaker / stronger < _MIXED_WEIGHT_SHARE:
         return False
-    sum_minor = float(sum(minor_abs))
-    sum_major = float(sum(major_abs))
-    if sum_major <= 0 or sum_minor / sum_major < _MIXED_INTEN_SHARE:
-        return False
-    ordered = sorted(minor_abs, reverse=True)
-    if len(ordered) >= 2 and ordered[1] < ordered[0] * _MIXED_OUTLIER_RATIO:
-        # A few symbols are dominated by a single extremely strong peak (suspected contamination).
-        return False
+    for values in (pos, neg):
+        ordered = sorted(values, reverse=True)
+        if ordered[1] < ordered[0] * _MIXED_OUTLIER_RATIO:
+            return False
     return True
 
 
@@ -970,6 +963,7 @@ def pick_peaks(
             detection["edge_margin_ppm"] = 0.0
             detection["edge_margin_source"] = "acquisition_and_spectral_evidence"
         n_sign_rejected = 0
+        detection["sign_evidence"] = peak_detection.sign_evidence(peaks)
         if sign_mode == "both":
             pass  # Template is mixed.
         else:
@@ -1254,7 +1248,7 @@ def pick_peaks(
 # ---------------------------------------------------------------------------
 # Public spectrum reading entrance (2026-09-12, parameter sensitivity interface reuse) The caliber
 # of "data axis ↔ logical dimension ↔ core name ↔ ppm" has already been converged here within the
-# peak selection; the external interface (nmrforge_api) must locate the peak position according to
+# peak selection; the external interface (nmrfinesse_api) must locate the peak position according to
 # the same caliber, so this layer is explicitly exposed to avoid the second set. Implemented in
 # FDDIMORDER / ORIG-CAR It bifurcates again.
 

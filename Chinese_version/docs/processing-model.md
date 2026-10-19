@@ -11,7 +11,7 @@
 | 逻辑轴与核 | `NUC1`、`TD`、`SFO1`、偏移、采集顺序与正交模式 |
 | 谱宽 | `resolve_sweep_width`比较`SW_h`与`SW×SFO1`，保留采用值/来源与原始元数据 |
 | FT模式、ALT与NEG | `core/experiment/acquisition_mode_detector.py`根据逐轴FnMODE/模式证据解析 |
-| 实验类型 | 脉冲程序、核组合、维序与采集参数；模板位于`nmrforge_data/presets/` |
+| 实验类型 | 脉冲程序、核组合、维序与采集参数；模板位于`nmrfinesse_data/presets/` |
 | 采样 | `core/experiment/sampling_detector.py`及`core/data/nus_reader.py`联合采样表、网格、布局与采集证据 |
 
 NUS表来自标准`nuslist`或`acqus.NUSLIST`，不扫描任意整数文件猜采样表。

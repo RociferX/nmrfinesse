@@ -1,6 +1,6 @@
 # 故障排查
 
-nmrForge 的错误信息应该说明「缺什么、该怎么办」。如果在 GUI 或 API 里看到裸的
+NMRFinesse 的错误信息应该说明「缺什么、该怎么办」。如果在 GUI 或 API 里看到裸的
 `KeyError`/`TypeError`/`NoneType` 栈回溯,那是 bug,请报告(见
 [CONTRIBUTING.md](../../CONTRIBUTING.md))。
 
@@ -10,7 +10,7 @@ nmrForge 的错误信息应该说明「缺什么、该怎么办」。如果在 G
 处理步骤也会在需要时检查其能力。
 
 1. 确认 NMRPipe 已安装,且它的 `bin` 目录里有 `nmrPipe`;
-2. 在 `nmrforge_data/config/nmrforge.yaml`(或 `nmrforge_data/config/nmrforge.local.yaml`)里
+2. 在 `nmrfinesse_data/config/nmrfinesse.yaml`(或 `nmrfinesse_data/config/nmrfinesse.local.yaml`)里
    显式指定:
 
    ```yaml
@@ -31,7 +31,7 @@ nmrForge 的错误信息应该说明「缺什么、该怎么办」。如果在 G
 
 ## 提示「本机未找到 tcsh/csh (NMRPipe scripts need a C-shell)」
 
-NMRPipe 脚本是 C-shell 脚本,nmrForge 通过 `csh`/`tcsh` 执行它们。请在机器上装一个 C-shell
+NMRPipe 脚本是 C-shell 脚本,NMRFinesse 通过 `csh`/`tcsh` 执行它们。请在机器上装一个 C-shell
 (`tcsh`)。这条消息由 `backend/runtime.py` 以 `ToolError` 抛出。
 
 相关的一条是 `未找到 proj3D.tcl (NMRPipe projection tool)` —— 说明 NMRPipe 安装不完整,
@@ -40,7 +40,7 @@ NMRPipe 脚本是 C-shell 脚本,nmrForge 通过 `csh`/`tcsh` 执行它们。请
 ## 重建失败,或机器失去响应 / 内存耗尽
 
 SMILE 重建的内存主要由「直接维填零点数 × 迭代间接维 FT 网格」决定,所以填零会让它涨得很快。
-nmrForge 在开始前先估算峰值,并把显式的 `-maxMem` 传下去;估算超过可用内存时它拒绝启动并说明原因。
+NMRFinesse 在开始前先估算峰值,并把显式的 `-maxMem` 传下去;估算超过可用内存时它拒绝启动并说明原因。
 
 怎么办:
 
@@ -81,12 +81,12 @@ nmrForge 在开始前先估算峰值,并把显式的 `-maxMem` 传下去;估算�
 
 | 现象 | 处理 |
 | --- | --- |
-| 双击没有任何反应 | 先确认执行位:`ls -l NMRForge-*.AppImage` 是否为 `-rwxr-xr-x`;不是就 `chmod +x NMRForge-*.AppImage`。图形界面里也可以右键 → 属性 → 勾选「允许作为程序执行」。从 Windows 共享目录 / U 盘拷进虚拟机时经常丢这一位 |
-| 解包后报 "AppRun: No such file or directory" | 用 `./NMRForge-<版本>-x86_64.AppImage --appimage-extract-and-run`,或设 `APPIMAGE_EXTRACT_AND_RUN=1` |
+| 双击没有任何反应 | 先确认执行位:`ls -l NMRFinesse-*.AppImage` 是否为 `-rwxr-xr-x`;不是就 `chmod +x NMRFinesse-*.AppImage`。图形界面里也可以右键 → 属性 → 勾选「允许作为程序执行」。从 Windows 共享目录 / U 盘拷进虚拟机时经常丢这一位 |
+| 解包后报 "AppRun: No such file or directory" | 用 `./NMRFinesse-<版本>-x86_64.AppImage --appimage-extract-and-run`,或设 `APPIMAGE_EXTRACT_AND_RUN=1` |
 | FUSE 相关的挂载错误 | 同上;不是每台机器都有 FUSE,这是 AppImage 的通用行为 |
 | "could not load the Qt platform plugin" | 确认没有在 shell 里覆盖 `QT_QPA_PLATFORM`;日常桌面使用请 unset |
 | 应用菜单里没有图标 | 先启动一次让它装好桌面入口;删掉 AppImage 文件入口会自动隐藏 |
-| 完全不想要桌面集成 | `NMRFORGE_NO_DESKTOP=1 ./NMRForge-<版本>-x86_64.AppImage` |
+| 完全不想要桌面集成 | `NMRFINESSE_NO_DESKTOP=1 ./NMRFinesse-<版本>-x86_64.AppImage` |
 
 ## 实验类型判错
 

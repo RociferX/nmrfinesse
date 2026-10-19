@@ -1,6 +1,6 @@
 """Workspace container (contract v1.3 §9.1 / G2B-003).
 
-On first start the software creates a default workspace `~/NMRForgeWorkspace` inside the
+On first start the software creates a default workspace `~/NMRFinesseWorkspace` inside the
 user folder; the level below the workspace holds the projects (each with project.json),
 and below that come the experiment/data directory levels.
 """
@@ -15,7 +15,7 @@ from core.project import ProjectManager
 from core.trash import send_to_trash
 from ui_support.i18n import tr
 
-DEFAULT_WORKSPACE_NAME = "NMRForgeWorkspace"
+DEFAULT_WORKSPACE_NAME = "NMRFinesseWorkspace"
 
 _SAFE_NAME = re.compile(r"^[A-Za-z0-9_\-\u4e00-\u9fff ]+$")
 
@@ -33,8 +33,12 @@ def _validate_name(name: str) -> str:
 
 
 def default_workspace_path() -> Path:
-    """Default workspace path (identical on Windows and Linux: home directory/NMRForgeWorkspace)."""
+    """Return the default workspace path."""
     return Path.home() / DEFAULT_WORKSPACE_NAME
+
+
+def _trash_path(root: Path) -> Path:
+    return root / ".nmrfinesse_trash"
 
 
 class WorkspaceManager:
@@ -96,9 +100,9 @@ class WorkspaceManager:
             shutil.rmtree(path)
             return path
         # 0.2.199-patch29ex: deletion goes to the system trash (send2trash, falling back to
-        # .nmrforge_trash inside the workspace; both are recoverable); nothing is destroyed
+        # .nmrfinesse_trash inside the workspace; both are recoverable); nothing is destroyed
         # outright.
-        return send_to_trash(path, self.root / ".nmrforge_trash", Path(name))
+        return send_to_trash(path, _trash_path(self.root), Path(name))
 
     def rename_project(self, old_name: str, new_name: str) -> Path:
         """Rename a project: validate the new name and check for clashes, move the directory

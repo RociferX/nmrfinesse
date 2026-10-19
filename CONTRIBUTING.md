@@ -33,12 +33,12 @@ For public API changes, update the implementation, tests, [API references](docs/
 and compatibility declaration together. Software version 1.0.5 and API version 1.1.1 are tracked
 separately. The compatibility declaration records code/data fingerprints, a change level, affected
 steps, and golden-vector hashes. The content fingerprint covers all files in `core/`, `backend/`,
-`workflow/`, and `nmrforge_api/`, as well as the shipped default configuration and presets. After
+`workflow/`, and `nmrfinesse_api/`, as well as the shipped default configuration and presets. After
 changing any of these, refresh the declaration from the CLI:
 
 ```bash
-python -m nmrforge_api compat --out compat.json
-python -m nmrforge_api compat --golden
+python -m nmrfinesse_api compat --out compat.json
+python -m nmrfinesse_api compat --golden
 ```
 
 Use `behavior_changed` for numerical behavior changes and `contract_changed` for output fields,

@@ -41,7 +41,7 @@ result = run_batch(
 
 两者解决的是不同问题,值得分清:
 
-| | 批量 | 参数扫描(`nmrforge_api`) |
+| | 批量 | 参数扫描(`nmrfinesse_api`) |
 | --- | --- | --- |
 | 变的是 | 数据集 | 处理参数 |
 | 不变的是 | 方法 | 数据集与参考 |
@@ -49,7 +49,7 @@ result = run_batch(
 | 产出 | 逐数据集的谱与峰表 | 逐组合的谱、峰位与不确定度 |
 | 维度 | 仅 2D | 2D 与 3D |
 
-如果你要的是「同一个数据集上的参数网格」,请用 `nmrforge_api`;见
+如果你要的是「同一个数据集上的参数网格」,请用 `nmrfinesse_api`;见
 [external-api/README.md](external-api/README.md)。
 
 ## 边界

@@ -47,7 +47,7 @@ Report unacceptable behaviour privately to the maintainers.
 
 Reports go to the project maintainer, **@RociferX** on GitHub. If the report needs to stay
 private, use GitHub's private reporting (Security ▸ Report a vulnerability on
-<https://github.com/RociferX/nmrforge>) and state that it is a conduct report; the maintainer will
+<https://github.com/RociferX/nmrfinesse>) and state that it is a conduct report; the maintainer will
 open a private channel. No personal email address is published.
 
 All reports will be reviewed and investigated promptly and fairly. Maintainers are obliged to

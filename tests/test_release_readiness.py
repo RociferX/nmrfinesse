@@ -72,11 +72,11 @@ def _private_trunk() -> bool:
 
 
 # Runtime packages: developer-machine absolute paths must not appear.
-RUNTIME_PACKAGES = ["core", "backend", "workflow", "gui", "viewer", "nmrforge_api"]
+RUNTIME_PACKAGES = ["core", "backend", "workflow", "gui", "viewer", "nmrfinesse_api"]
 
 ABSOLUTE_PATH_PATTERNS = [
     re.compile(r"[A-Za-z]:\\\\?Users\\\\?"),  # drive-letter user paths (both separators)
-    re.compile(r"/home/(?!nmrforge\b)[A-Za-z0-9_.-]+/"),
+    re.compile(r"/home/(?!nmrfinesse\b)[A-Za-z0-9_.-]+/"),
     re.compile(r"/Users/[A-Za-z0-9_.-]+/"),  # macOS home
     re.compile(r"OneDrive", re.IGNORECASE),
     re.compile(r"~/Desktop"),
@@ -136,7 +136,7 @@ def test_relative_links_in_public_docs_resolve() -> None:
 
 
 #: Repository paths written in the public docs must really ship with the snapshot: documents
-#: (`docs/xxx.md`) and scripts / assets (`scripts/xxx.py`, `tests/xxx.py`, `nmrforge_data/xxx`
+#: (`docs/xxx.md`) and scripts / assets (`scripts/xxx.py`, `tests/xxx.py`, `nmrfinesse_data/xxx`
 #: ...) alike, plain-text mentions included -- a reader can neither click them nor find them, and
 #: the markdown link check cannot see that form.
 #: 2026-09-22 external review: architecture.md's "related documents" listed three records that
@@ -145,7 +145,7 @@ def test_relative_links_in_public_docs_resolve() -> None:
 #: the same kind of defect, so this check widened from "only `docs/*.md`" to the documents and
 #: assets under those directories.
 PLAIN_DOC_REF_RE = re.compile(
-    r"(?i)\b(?:docs|scripts|tests|nmrforge_data|packaging)/[A-Za-z0-9_./-]+"
+    r"(?i)\b(?:docs|scripts|tests|nmrfinesse_data|packaging)/[A-Za-z0-9_./-]+"
     r"\.(?:md|py|sh|json|yaml|yml|toml|spec|txt|cff)"
 )
 
@@ -155,7 +155,7 @@ def _shipped_paths(root: Path) -> set[str] | None:
     ``None`` when it cannot be obtained.
 
     Looking at ``Path.exists()`` alone treats files that **exist only locally** as published --
-    for instance the runtime-generated ``nmrforge_data/config/nmrforge.local.yaml`` (listed in
+    for instance the runtime-generated ``nmrfinesse_data/config/nmrfinesse.local.yaml`` (listed in
     ``.gitignore``): present locally, absent from a clean CI checkout, so the same commit is
     green on Windows and red on Linux CI (actually hit on 2026-09-23). "Published" = git-tracked.
     """
@@ -201,7 +201,7 @@ def _ignored_paths(root: Path, targets: set[str]) -> set[str]:
 #: only as a fallback when `_shipped_paths` cannot reach git: the regex itself is `(?i)`, while
 #: Windows filesystems are case-insensitive and Linux is not -- a bare `Path.exists()` would make
 #: the same document green on Windows and red on Linux CI (actually hit on 2026-09-23:
-#: `docs/packaging.md` wrote `Packaging/linux/NMRForge.spec`).
+#: `docs/packaging.md` wrote `Packaging/linux/NMRFinesse.spec`).
 def _path_resolves_case_insensitively(base: Path, target: str) -> bool:
     """Walk ``target``'s path components from ``base``, case-insensitively, checking existence."""
     current = base
@@ -358,7 +358,7 @@ def test_wheel_ships_every_fingerprinted_file() -> None:
     must reproduce the same fingerprint.
 
     Miss any one of them (typically a package's README) and the fingerprint computed inside the
-    wheel no longer matches ``nmrforge_api/compat_declaration.py``; ``compat_verified`` is then
+    wheel no longer matches ``nmrfinesse_api/compat_declaration.py``; ``compat_verified`` is then
     permanently false -- the engine version stamp downstream receives is worthless. The
     translation tooling's manifests (``source.json`` / ``converted.json``) are the opposite: they
     only serve the development flow and must not enter the artefact.
@@ -368,7 +368,7 @@ def test_wheel_ships_every_fingerprinted_file() -> None:
     excluded = data["tool"]["setuptools"].get("exclude-package-data", {})
 
     missing: list[str] = []
-    for package in ("core", "backend", "workflow", "nmrforge_api"):
+    for package in ("core", "backend", "workflow", "nmrfinesse_api"):
         for path in sorted((ROOT / package).rglob("*")):
             if not path.is_file() or "__pycache__" in path.parts:
                 continue
@@ -473,7 +473,7 @@ def test_citation_metadata_matches_the_version() -> None:
     )
     assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(data["date-released"])), data["date-released"]
     assert data["license"] == "Apache-2.0"
-    assert data["repository-code"] == "https://github.com/RociferX/nmrforge"
+    assert data["repository-code"] == "https://github.com/RociferX/nmrfinesse"
 
 
 def test_third_party_inventory_names_external_engines() -> None:
@@ -505,8 +505,8 @@ def test_no_raw_nmr_binary_data_in_repository() -> None:
 
 
 def test_readme_gui_asset_exists() -> None:
-    assert (ROOT / "gui" / "assets" / "nmrforge.png").is_file()
-    assert (ROOT / "packaging" / "linux" / "icons" / "nmrforge.png").is_file()
+    assert (ROOT / "gui" / "assets" / "nmrfinesse.png").is_file()
+    assert (ROOT / "packaging" / "linux" / "icons" / "nmrfinesse.png").is_file()
 
 
 def test_examples_are_referenced_by_the_readme() -> None:
@@ -537,7 +537,7 @@ def test_benchmark_output_schema_columns_are_documented() -> None:
     import importlib.util
 
     spec = importlib.util.spec_from_file_location(
-        "nmrforge_benchmarks", ROOT / "benchmarks" / "run_benchmarks.py"
+        "nmrfinesse_benchmarks", ROOT / "benchmarks" / "run_benchmarks.py"
     )
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
@@ -597,7 +597,7 @@ def test_release_documents_the_appimage_and_its_language_switch() -> None:
         checklist = _read("APPIMAGE_RELEASE_CHECKLIST.md")
         assert "Apache-2.0" in checklist and "LGPL-3.0" in checklist
         assert "APPIMAGE_RELEASE_CHECKLIST.md" in _read("RELEASE_CHECKLIST_v0.9.0.md")
-        assert f"NMRForge-{released}-x86_64.AppImage" in checklist
+        assert f"NMRFinesse-{released}-x86_64.AppImage" in checklist
         # 2026-09-21: single artefact, the edition suffix is gone for good
         assert "单产物" in checklist
         script = _read("packaging/linux/build_appimage.sh")

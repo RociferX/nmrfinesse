@@ -115,7 +115,7 @@ class LogPanel(QWidget):
             path.parent.mkdir(parents=True, exist_ok=True)
             if not path.is_file():
                 path.write_text(
-                    "# NMRForge 数据日志(report 文件夹)\n",  # i18n: keep
+                    "# NMRFinesse 数据日志(report 文件夹)\n",  # i18n: keep
                     encoding="utf-8",  # i18n: keep
                 )
             with path.open("a", encoding="utf-8") as fh:
@@ -151,7 +151,7 @@ class LogPanel(QWidget):
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(
-                "# NMRForge 数据日志(report 文件夹)\n",  # i18n: keep
+                "# NMRFinesse 数据日志(report 文件夹)\n",  # i18n: keep
                 encoding="utf-8",  # i18n: keep
             )
         except OSError:

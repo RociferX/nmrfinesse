@@ -18,7 +18,7 @@ Design rules (see ``docs/pyside6-migration/migration-plan.md``):
    process is a hard failure, so nothing outside this module may name a binding at all;
    ``tests/test_qt_independence.py`` enforces that across the repository.
 2. **The core never imports this module.** ``core/``, ``backend/``, ``workflow/`` and
-   ``nmrforge_api/`` must stay importable on a machine with no Qt at all; the same test enforces
+   ``nmrfinesse_api/`` must stay importable on a machine with no Qt at all; the same test enforces
    it, statically and at runtime.
 3. **The choice is forced, not inherited.** ``pyqtgraph`` picks a binding for itself, preferring
    whatever is already in ``sys.modules`` and otherwise probing PyQt6 first. This module therefore
@@ -71,9 +71,9 @@ def _import_binding():
         return importlib.import_module(BINDING_MODULE)
     except ImportError as exc:  # pragma: no cover - depends on the environment
         raise ImportError(
-            "nmrForge's user interface needs PySide6, which is not installed. "
+            "NMRFinesse's user interface needs PySide6, which is not installed. "
             "Install it with:  pip install PySide6  "
-            "(the computational core, the command line and nmrforge_api do not need it)"
+            "(the computational core, the command line and nmrfinesse_api do not need it)"
         ) from exc
 
 
@@ -134,7 +134,7 @@ def _factory(name: str):
     except AttributeError as exc:  # pragma: no cover - only if the binding is broken
         raise RuntimeError(
             f"{BINDING_MODULE}.QtCore has no {name!r}; this PySide6 installation is not usable "
-            "by nmrForge"
+            "by NMRFinesse"
         ) from exc
 
 

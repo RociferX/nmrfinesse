@@ -1,6 +1,6 @@
 # 共享接口与API契约
 
-软件 **1.0.8** · Python/CLI API **1.1.4** · 项目schema **1.4**。
+软件 **1.0.9** · Python/CLI API **1.1.5** · 项目schema **1.4**。
 
 ## 1. 采集数据模型
 
@@ -112,7 +112,7 @@ uniform走常规处理，NUS走SMILE重建。
 ## 9. 工作区与数据目录
 
 [`WorkspaceManager`](../../core/workspace.py)建立/列出工作区，并创建、打开、重命名或删除其中的项目。
-默认工作区为`~/NMRForgeWorkspace`。`ProjectManager.data_base(exp_id, data_id)`定位数据基座，`data_dir`定位其产物。
+默认工作区为`~/NMRFinesseWorkspace`。`ProjectManager.data_base(exp_id, data_id)`定位数据基座，`data_dir`定位其产物。
 
 ```text
 project/
@@ -135,11 +135,11 @@ project/
 完整三维结果与平面目录都是支持的存储形态。`Spectrum3D`按谱头映射存储轴，读取/缓存所需平面并提供二维切片。
 GUI默认F3–F2视图、固定F1，也可保留选定平面。投影汇总三维体，不建立独立三维峰身份，也不能消除全部重叠。
 
-## 11. 对外nmrforge_api契约
+## 11. 对外nmrfinesse_api契约
 
 ### 11.1 工作流语义
 
-API **v1.1.4**仅在`nmrforge_api.session.API_VERSION`定义。研究按条件标签组织，每条件有独立参考谱/峰表。
+API **v1.1.5**仅在`nmrfinesse_api.session.API_VERSION`定义。研究按条件标签组织，每条件有独立参考谱/峰表。
 参考构建导入、转换、合并指定源，并冻结FID、采样表和转换证据。
 
 组合研究只读复用冻结FID，执行显式参数组合/网格，逐workflow和条件独立检测/定位峰；
@@ -150,7 +150,7 @@ API **v1.1.4**仅在`nmrforge_api.session.API_VERSION`定义。研究按条件�
 
 公开入口包括会话/数据集管理、`build_reference`、`detect_and_localize`、`run_reference_study`、
 `run_combination_study`、`run_parameter_study`、状态/报告和兼容函数。精确签名/返回结构见
-[API参考](external-api/03-api-reference.md)，`python -m nmrforge_api`见[CLI参考](external-api/04-cli-reference.md)。
+[API参考](external-api/03-api-reference.md)，`python -m nmrfinesse_api`见[CLI参考](external-api/04-cli-reference.md)。
 API可构建3D NUS参考，3D NUS组合执行抛`SweepError`。桌面批量操作仅2D，脚本组合支持矩阵见
 [API支持范围](external-api/09-limitations-and-roadmap.md)。
 

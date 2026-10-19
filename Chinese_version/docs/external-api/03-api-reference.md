@@ -1,6 +1,6 @@
-# 03 · API 参考(v1.1.4)
+# 03 · API 参考(v1.1.5)
 
-顶层导出见`nmrforge_api/__init__.py`，API **1.1.4**仅在`nmrforge_api.session.API_VERSION`定义。软件**1.0.8**与API分别版本化，统一峰表为38列。
+顶层导出见`nmrfinesse_api/__init__.py`，API **1.1.5**仅在`nmrfinesse_api.session.API_VERSION`定义。软件**1.0.9**与API分别版本化，统一峰表为38列。
 
 ## 3.1 会话与数据集
 
@@ -11,7 +11,7 @@ add_dataset(session, source, *, condition="", exp_id="", title="",
 dataset_info(session, dataset=None) -> dict
 ```
 
-- `root/project.json` 存在则打开,否则新建 NMRForge 项目;研究状态
+- `root/project.json` 存在则打开,否则新建 NMRFinesse 项目;研究状态
   (`study/study.json`)恢复条件数据集列表;
 - `condition` 缺省自动分配下一个未用字母(A/B/C…);标签必须唯一;
 - 导入 = 链接 raw + 写 metadata + 登记 import 运行,**不做**转换/处理。
@@ -68,7 +68,7 @@ build_reference_peak_tables(session, reference, *, window_pts=None,
   因为这些运行复用转换后的 FID;
 - 参考输入以完整规范化请求绑定。指纹覆盖处理参数（包括`optimization_candidates`及列表顺序）、`phase_route` 与规范化直接维范围;
   点号参数(如 `window.F1.off`)和等价的嵌套结构按相同规范形式处理。指纹保存为
-  `reference.json.input_fingerprint = {"schema":"nmrforge_api.reference_input.v1",
+  `reference.json.input_fingerprint = {"schema":"nmrfinesse_api.reference_input.v1",
   "params":{...},"sha256":"..."}`。仅完全一致的请求可复用参考;包括 FT、谱宽、范围、
   窗函数、基线、zero-fill 在内的任意变化,或旧参考缺少/含无效指纹,都抛 `ReferenceError`
   并要求显式 `force=True`(CLI `reference --force`)重建,不会自动重建。多条件调用会先
@@ -86,7 +86,7 @@ build_reference_peak_tables(session, reference, *, window_pts=None,
 - 峰定位使用三点抛物线:
   参考层不接受 `localization_method` / `gaussian_roi_*` 参数,请求 `"gaussian"`
   不是参考层的公开 API 参数。`LocalizationError` 属于内部 `core` 层,不属于
-  `nmrforge_api` 的公开异常契约;公开测量入口和组合执行入口的高斯请求异常分别见下文。
+  `nmrfinesse_api` 的公开异常契约;公开测量入口和组合执行入口的高斯请求异常分别见下文。
 
 `ReferenceSpectrum` 关键字段:`dataset_key`、`condition`、`ndim`、`sampling`、
 `frozen_spectrum`、`script_path`、`script_sha256`、`spectrum_sha256`、`params`、
@@ -360,10 +360,10 @@ run_combination_study(reference,                  # ← 必填:显式指定参�
 不变、数值会变)。使用者要能机读地回答「这批数字由哪套行为产生、要不要重跑」。
 
 ```python
-from nmrforge_api import compat_manifest, compat_status, check_conformance
+from nmrfinesse_api import compat_manifest, compat_status, check_conformance
 
-manifest = compat_manifest()      # nmrforge_api.compat.v1(可 JSON 序列化)
-manifest["behavior_digest"]       # 内容指纹(core/backend/workflow/nmrforge_api + 随包数据)
+manifest = compat_manifest()      # nmrfinesse_api.compat.v1(可 JSON 序列化)
+manifest["behavior_digest"]       # 内容指纹(core/backend/workflow/nmrfinesse_api + 随包数据)
 manifest["token_digest"]          # 去注释/docstring 的代码指纹(中英副本可比)
 manifest["compat_level"]          # same / additive / behavior_changed / contract_changed / unverified
 manifest["affected"]              # 行为变化影响的使用者步骤
@@ -373,9 +373,9 @@ check_conformance()               # 跑黄金配方并逐项比对(秒级)
 ```
 
 ```bash
-python -m nmrforge_api compat                     # 打印清单(纯 JSON)
-python -m nmrforge_api compat --out compat.json   # 落盘
-python -m nmrforge_api compat --golden            # 顺带跑黄金向量自证行为未变
+python -m nmrfinesse_api compat                     # 打印清单(纯 JSON)
+python -m nmrfinesse_api compat --out compat.json   # 落盘
+python -m nmrfinesse_api compat --golden            # 顺带跑黄金向量自证行为未变
 ```
 
 - **两个指纹**:`behavior_digest` 按**文件内容**取 SHA-256(改任何一行代码或随包
@@ -388,7 +388,7 @@ python -m nmrforge_api compat --golden            # 顺带跑黄金向量自证�
 - **产物自带戳**:`run.json` / `records/reference.json` / `records/manifest.json`
   与 `versions` 并列写 `behavior_digest` / `token_digest` / `compat_level` /
   `compat_affected` / `compat_verified`,可从任一产物反查;
-- **声明的维护**:声明在 `nmrforge_api/compat_declaration.py`(纯数据模块,刻意
+- **声明的维护**:声明在 `nmrfinesse_api/compat_declaration.py`(纯数据模块,刻意
   不算进指纹);守卫 `tests/test_compat.py` 要求指纹与声明一致、分级与 `affected`
   自洽、`same` 时 token 不变、黄金向量可复现。改动用
   `python scripts/update_compat_declaration.py --level <分级> [--affected …]` 更新。

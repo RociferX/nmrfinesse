@@ -21,7 +21,7 @@ that importing the core does not pull a Qt module into the process.
 | `processing/` | axis conventions, phase and baseline primitives |
 | `project/` | the on-disk project model and `ProjectManager` |
 | `audit/` | the structured record of the quality-control corrections applied to data |
-| `experiments/` | the experiment-preset registry, loaded from `nmrforge_data/presets/*.yaml` |
+| `experiments/` | the experiment-preset registry, loaded from `nmrfinesse_data/presets/*.yaml` |
 
 Single-file modules worth knowing: `version.py` (the single version source), `user_errors.py`
 (user-facing error translation), `logging_setup.py` (logging setup and per-run log files),

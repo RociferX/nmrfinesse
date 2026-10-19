@@ -1,16 +1,16 @@
 # Command-line reference
 
-The command line is part of the versioned `nmrforge_api` package and uses the same processing
+The command line is part of the versioned `nmrfinesse_api` package and uses the same processing
 implementation as the desktop application. It does not require Qt:
 
 ```bash
-python -m nmrforge_api --help
+python -m nmrfinesse_api --help
 ```
 
-The current CLI uses API v1.1.4 / software 1.0.8. API parameters and the retained 38-column peak-table
+The current CLI uses API v1.1.5 / software 1.0.9. API parameters and the retained 38-column peak-table
 contract are documented in the [Python API](python-api.md). Desktop users can download the
-[1.0.8 AppImage](https://github.com/RociferX/nmrforge/releases/tag/v1.0.8).
-Install from a source checkout containing API v1.1.4. See
+[1.0.9 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.9).
+Install from a source checkout containing API v1.1.5. See
 [Installation](installation.md). Processing requires separately installed NMRPipe; NUS
 reconstruction also requires SMILE.
 
@@ -29,14 +29,14 @@ reconstruction also requires SMILE.
 ## Typical sequence
 
 ```bash
-python -m nmrforge_api init --study ./study --dataset /path/to/bruker/dataset --condition A
-python -m nmrforge_api init --study ./study-segmented --segmented \
+python -m nmrfinesse_api init --study ./study --dataset /path/to/bruker/dataset --condition A
+python -m nmrfinesse_api init --study ./study-segmented --segmented \
     --dataset /path/to/segment1 --dataset /path/to/segment2 --condition A
-python -m nmrforge_api reference --study ./study
-python -m nmrforge_api peaks --study ./study
-python -m nmrforge_api sweep --study ./study --reference ./study --combos design.csv
-python -m nmrforge_api report --study ./study
-python -m nmrforge_api status --study ./study
+python -m nmrfinesse_api reference --study ./study
+python -m nmrfinesse_api peaks --study ./study
+python -m nmrfinesse_api sweep --study ./study --reference ./study --combos design.csv
+python -m nmrfinesse_api report --study ./study
+python -m nmrfinesse_api status --study ./study
 ```
 
 For multiple conditions, register each dataset with a unique condition label before building

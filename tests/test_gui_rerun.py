@@ -352,7 +352,7 @@ def test_reprocess_downstream_becomes_outdated(tmp_path: Path, qapp: QApplicatio
 # (one FT for the direct dimension F2, one FT for the indirect dimension F1)
 _SCRIPT_2D_UNIFORM = (
     "#!/bin/csh\n"
-    "# NMRForge processing script\n"
+    "# NMRFinesse processing script\n"
     "# experiment: d_001\n"
     "xyz2pipe -in d_001.fid -x \\\n"
     "| nmrPipe -fn SP -off 0.5 -end 0.95 -pow 2 -c 0.5 \\\n"
@@ -374,7 +374,7 @@ _SCRIPT_2D_UNIFORM = (
 # gui.pipeline_panel._INDIRECT_AXIS_ORDER)
 _SCRIPT_3D_UNIFORM = (
     "#!/bin/csh\n"
-    "# NMRForge processing script\n"
+    "# NMRFinesse processing script\n"
     "xyz2pipe -in d_001.fid -x \\\n"
     "| nmrPipe -fn SP -off 0.5 -end 0.95 -pow 2 -c 0.5 \\\n"
     "| nmrPipe -fn FT \\\n"
@@ -398,7 +398,7 @@ _SCRIPT_3D_UNIFORM = (
 # nus3d_rc, step 3 reads the retained nus3d_rc back for the indirect dimensions (F2/F1)
 _SCRIPT_3D_NUS = (
     "#!/bin/csh\n"
-    "# NMRForge 3D NUS SMILE reconstruction\n"
+    "# NMRFinesse 3D NUS SMILE reconstruction\n"
     "mkdir -p nus3d_1 nus3d_rc\n"
     "# step 1: direct dim (F3) FT + EXT + PS\n"
     "xyz2pipe -in d_001.fid -x \\\n"

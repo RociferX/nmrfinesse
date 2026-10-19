@@ -27,6 +27,8 @@ __all__ = ["CATEGORIES", "CATEGORY_MARKERS", "category_of"]
 
 #: filename → category (single source of truth)
 CATEGORIES: dict[str, str] = {
+    "test_peak_sign_weights.py": "regression",
+    "test_current_brand.py": "regression",
     "test_window_sampling.py": "regression",
     "test_api_reference_fid_only.py": "regression",
     "test_reference_fid_input.py": "regression",
@@ -111,7 +113,7 @@ CATEGORIES: dict[str, str] = {
     "test_memory_disk.py": "integration",
     "test_memory_guard.py": "unit",
     "test_memory_phase_search.py": "unit",
-    "test_nmrforge_api.py": "integration",
+    "test_nmrfinesse_api.py": "integration",
     "test_nmrpipe_backend.py": "integration",
     "test_nmrpipe_finder.py": "integration",
     "test_nmrpipe_scripts.py": "integration",

@@ -20,11 +20,12 @@ Rules:
 from __future__ import annotations
 
 import importlib.metadata
-import os
 import platform
 import subprocess
 import sys
 from pathlib import Path
+
+from core.environment import get_environment_value
 
 # key dependencies: recording their versions lets an artifact answer "which tool chain made this"
 _DEPENDENCIES = ("numpy", "scipy", "nmrglue", "matplotlib", "PySide6", "PyYAML")
@@ -100,19 +101,19 @@ def reset_git_probe() -> None:
 
 
 def software_version() -> str:
-    """NMRForge own version (the single source is ``core.__version__``)."""
+    """NMRFinesse own version (the single source is ``core.__version__``)."""
     from core import __version__
 
     return str(__version__)
 
 
 def software_commit() -> str:
-    """Source commit hash: the build-time stamp ``NMRFORGE_GIT_COMMIT`` if set, else the repo.
+    """Source commit hash: the build-time stamp ``NMRFINESSE_GIT_COMMIT`` if set, else the repo.
 
     Returns an empty string when it cannot be discovered (frozen build without .git);
     it is never faked as ``unknown``.
     """
-    stamped = os.environ.get("NMRFORGE_GIT_COMMIT", "").strip()
+    stamped = get_environment_value("NMRFINESSE_GIT_COMMIT").strip()
     if stamped:
         return stamped
     return git_commit()
@@ -154,7 +155,8 @@ def tool_versions() -> dict[str, str]:
     """Full tool version table written to a WorkflowRun (itself + dependencies +
     probed external tools).
     """
-    versions = {"nmrforge": software_version()}
+    version = software_version()
+    versions = {"nmrfinesse": version}
     versions.update(dependency_versions())
     versions.update(registered_tool_versions())
     # source commit: results trace back to a concrete code state (the key is omitted when

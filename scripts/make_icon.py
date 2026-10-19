@@ -1,6 +1,6 @@
-"""Generate NMRForge application icon (256x256 PNG, same design as
-packaging/linux/icons/nmrforge.svg). Usage: python scripts/make_icon.py Output:
-packaging/linux/icons/nmrforge.png (for AppImage desktop icon use)."""
+"""Generate NMRFinesse application icon (256x256 PNG, same design as
+packaging/linux/icons/nmrfinesse.svg). Usage: python scripts/make_icon.py Output:
+packaging/linux/icons/nmrfinesse.png (for AppImage desktop icon use)."""
 
 from __future__ import annotations
 
@@ -53,7 +53,10 @@ def main() -> None:
         joint="curve",
     )
 
-    out = Path(__file__).resolve().parent.parent / "packaging" / "linux" / "icons" / "nmrforge.png"
+    out = (
+        Path(__file__).resolve().parent.parent
+        / "packaging" / "linux" / "icons" / "nmrfinesse.png"
+    )
     out.parent.mkdir(parents=True, exist_ok=True)
     img.resize((SIZE, SIZE), Image.LANCZOS).save(out)
     print(f"written {out}")

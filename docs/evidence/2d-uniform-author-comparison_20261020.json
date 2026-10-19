@@ -1,0 +1,323 @@
+{
+  "kind": "display_projection_comparison_not_independent_truth",
+  "projection": "signed_max_absolute_voxel; all-axis common crop before projection",
+  "source_ndim": 2,
+  "offset_fitted": false,
+  "reference_offset_ppm": {
+    "H": 0.07258459433886566,
+    "N": 0.05977570099166485
+  },
+  "offset_source": "frozen_20261009_strong_anchor_translation",
+  "matching": "same polarity; joint normalized distance <=1; greedy one-to-one",
+  "primary_metric": "reference_candidate_coverage; not true-peak recovery",
+  "requested_sigma_floor": 0.0,
+  "requested_sign_mode": "dominant",
+  "min_height_fraction": 0.1,
+  "tolerance_ppm": {
+    "H": 0.02,
+    "N": 0.2,
+    "C": 0.15
+  },
+  "spectrum_sha256": {
+    "automatic": "acc2a004c6cbc4a7a08dc6db55a9be97e5b6c0ab0df854d32c9f856d080798ef",
+    "comparison": "3d4e1041c085b05e14cdf1bfb889670daa5d5caacaeeda5c1f58ce35dccb15d5"
+  },
+  "planes": {
+    "HN": {
+      "automatic": {
+        "requested_sigma_floor": 0.0,
+        "resolved_sigma_multiplier": 12.884138334275793,
+        "requested_sign_mode": "dominant",
+        "sign_mode": "dominant",
+        "sign_evidence": {
+          "weighting": "squared_snr",
+          "positive_count": 147,
+          "negative_count": 25,
+          "positive_weight": 28.588469162371684,
+          "negative_weight": 0.4813171772487608,
+          "positive_share": 0.983442699866261,
+          "negative_share": 0.016557300133738965,
+          "dominant_sign": 1
+        },
+        "positive_candidates": 147,
+        "negative_candidates": 0,
+        "detected_before_height_filter": 147,
+        "noise_estimate": 174313.47497812498,
+        "baseline": 9692.74853515625,
+        "max_abs_centered_voxel": 22458789.251464844,
+        "height_cutoff": 2245878.9251464843,
+        "count": 147,
+        "shape": [
+          510,
+          1028
+        ]
+      },
+      "comparison": {
+        "requested_sigma_floor": 0.0,
+        "resolved_sigma_multiplier": 17.718986622864392,
+        "requested_sign_mode": "dominant",
+        "sign_mode": "dominant",
+        "sign_evidence": {
+          "weighting": "squared_snr",
+          "positive_count": 126,
+          "negative_count": 0,
+          "positive_weight": 34.041630349973246,
+          "negative_weight": 0.0,
+          "positive_share": 1.0,
+          "negative_share": 0.0,
+          "dominant_sign": 1
+        },
+        "positive_candidates": 126,
+        "negative_candidates": 0,
+        "detected_before_height_filter": 126,
+        "noise_estimate": 1471.7418372070313,
+        "baseline": 356.9931640625,
+        "max_abs_centered_voxel": 260777.7392578125,
+        "height_cutoff": 26077.77392578125,
+        "count": 126,
+        "shape": [
+          256,
+          514
+        ]
+      },
+      "matched": 125,
+      "automatic_matched_fraction": 0.8503401360544217,
+      "comparison_matched_fraction": 0.9920634920634921,
+      "reference_candidate_coverage": 0.9920634920634921,
+      "automatic_unmatched_candidates": [
+        {
+          "candidate_index_1based": 25,
+          "ppm": {
+            "H": 8.376293291992056,
+            "N": 125.6066647914922
+          },
+          "intensity": 12043646.251464844,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 35,
+          "ppm": {
+            "H": 8.596912876795349,
+            "N": 120.23222184366736
+          },
+          "intensity": 11301346.251464844,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 62,
+          "ppm": {
+            "H": 9.079658921423857,
+            "N": 119.76653787996105
+          },
+          "intensity": 9600452.251464844,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 72,
+          "ppm": {
+            "H": 9.020365725103794,
+            "N": 130.79982507006372
+          },
+          "intensity": 9029134.251464844,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 115,
+          "ppm": {
+            "H": 8.112407416525564,
+            "N": 110.03684599591875
+          },
+          "intensity": 5319714.251464844,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 119,
+          "ppm": {
+            "H": 7.191019826587279,
+            "N": 118.58999468957394
+          },
+          "intensity": 5171091.251464844,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 129,
+          "ppm": {
+            "H": 6.899979985353788,
+            "N": 112.17308721720329
+          },
+          "intensity": 3870801.0014648438,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 130,
+          "ppm": {
+            "H": 6.8731635468235615,
+            "N": 112.28678376536718
+          },
+          "intensity": 3807369.2514648438,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 131,
+          "ppm": {
+            "H": 7.561690250419373,
+            "N": 112.1784246626069
+          },
+          "intensity": 3712448.0014648438,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 132,
+          "ppm": {
+            "H": 7.637382924069749,
+            "N": 112.29116759855292
+          },
+          "intensity": 3178902.2514648438,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 135,
+          "ppm": {
+            "H": 7.524783007124903,
+            "N": 112.64651007754456
+          },
+          "intensity": 3065437.0014648438,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 136,
+          "ppm": {
+            "H": 7.594425594024643,
+            "N": 112.71379849561497
+          },
+          "intensity": 3032517.0014648438,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 137,
+          "ppm": {
+            "H": 6.8454544640267745,
+            "N": 113.25029288043717
+          },
+          "intensity": 2797448.5014648438,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 138,
+          "ppm": {
+            "H": 7.473012509454114,
+            "N": 112.8139703329287
+          },
+          "intensity": 2712144.7514648438,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 139,
+          "ppm": {
+            "H": 8.592373859965837,
+            "N": 123.50022193406643
+          },
+          "intensity": 2625803.7514648438,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 140,
+          "ppm": {
+            "H": 6.846901099997333,
+            "N": 111.81585271992829
+          },
+          "intensity": 2565542.5014648438,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 141,
+          "ppm": {
+            "H": 8.140948527071146,
+            "N": 118.6138515502557
+          },
+          "intensity": 2528040.7514648438,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 143,
+          "ppm": {
+            "H": 7.559851416034778,
+            "N": 113.17632211924142
+          },
+          "intensity": 2486977.7514648438,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 144,
+          "ppm": {
+            "H": 8.421238594803041,
+            "N": 125.59407754693554
+          },
+          "intensity": 2477441.0014648438,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 145,
+          "ppm": {
+            "H": 8.572094365617,
+            "N": 117.53227871067884
+          },
+          "intensity": 2403270.7514648438,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 146,
+          "ppm": {
+            "H": 8.67470493851597,
+            "N": 123.81368455043432
+          },
+          "intensity": 2364703.5014648438,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 147,
+          "ppm": {
+            "H": 8.523629624830019,
+            "N": 120.23790610286555
+          },
+          "intensity": 2291180.2514648438,
+          "sign": 1
+        }
+      ],
+      "reference_unmatched_candidates": [
+        {
+          "candidate_index_1based": 126,
+          "ppm": {
+            "H": 8.543705039745257,
+            "N": 129.7483741652692
+          },
+          "intensity": 29501.9521484375,
+          "sign": 1
+        }
+      ],
+      "median_abs_delta_ppm": {
+        "H": 0.0009990602839202722,
+        "N": 0.008051866561146426
+      },
+      "windows_ppm": {
+        "H": [
+          6.4967250218616535,
+          10.498915245036136
+        ],
+        "N": [
+          100.21694636549852,
+          136.00736690393254
+        ]
+      },
+      "intensity_pearson": 0.9464555391446295,
+      "median_fwhm_ratio_by_nucleus": {
+        "H": 0.8241113415352479,
+        "N": 0.9310701732252059
+      }
+    }
+  },
+  "date": "2026-10-20",
+  "software_version": "1.0.9",
+  "api_version": "1.1.5",
+  "software_name": "NMRFinesse"
+}

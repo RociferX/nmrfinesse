@@ -1,6 +1,6 @@
 # Third-Party Dependencies
 
-This file records every third-party component that nmrForge depends on, whether it is
+This file records every third-party component that NMRFinesse depends on, whether it is
 bundled with this repository, and under which terms it is used.
 
 Status note: this inventory was produced during public-release preparation and updated when the
@@ -38,7 +38,7 @@ the environment the release audit was performed in.
 
 ## 2. Reproducible upstream citations
 
-If you use nmrForge for published work, the processing engine and reconstruction engine should
+If you use NMRFinesse for published work, the processing engine and reconstruction engine should
 be cited as well:
 
 - NMRPipe - Delaglio, F., Grzesiek, S., Vuister, G. W., Zhu, G., Pfeifer, J., Bax, A.
@@ -59,16 +59,16 @@ The following are deliberately **not** included in this repository or in any bui
 - third-party Java runtimes;
 - any real (or unpublished) NMR datasets.
 
-nmrForge only *invokes* NMRPipe/SMILE as external executables found on the user's own machine.
+NMRFinesse only *invokes* NMRPipe/SMILE as external executables found on the user's own machine.
 The backend locates them at runtime (`backend/nmrpipe_finder.py`) and reports a clear,
 user-facing error when they are missing, instead of shipping or downloading them.
 
 ## 4. Redistribution rules applied here
 
 1. Nothing from an NMRPipe/SMILE installation is copied into this repository.
-2. No third-party licensed script is vendored under `scripts/` or `nmrforge_data/presets/`.
-3. `nmrforge_data/presets/*.yaml` and the code in `core/`, `backend/`, `workflow/`, `gui/`, `viewer/`,
-   `nmrforge_api/` are original project code. The pulse-program keyword lists they contain are
+2. No third-party licensed script is vendored under `scripts/` or `nmrfinesse_data/presets/`.
+3. `nmrfinesse_data/presets/*.yaml` and the code in `core/`, `backend/`, `workflow/`, `gui/`, `viewer/`,
+   `nmrfinesse_api/` are original project code. The pulse-program keyword lists they contain are
    identifiers (laboratory sample shorthand), not copied source code.
 4. Icons under `gui/assets/` and `packaging/linux/icons/` are project assets.
 5. Users who build the Linux AppImage (`packaging/linux/build_appimage.sh`) are responsible for
@@ -104,7 +104,7 @@ What this means for distribution:
 
 ### This project's own licence (decided 2026-09-16)
 
-nmrforge's own code is licensed under the **Apache License 2.0** (`Apache-2.0`, SPDX); the text is at
+NMRFinesse's own code is licensed under the **Apache License 2.0** (`Apache-2.0`, SPDX); the text is at
 the repository root as [LICENSE](LICENSE) and `pyproject.toml` declares the same expression. The
 copyright holder is recorded as "Xuanfeng Li (李宣锋)". **LGPL is used only for what a packaged distribution
 bundles**: the AppImage's Qt/PySide6 libraries (see the next section). Installing from source pulls
@@ -160,7 +160,7 @@ is why the texts are vendored in `packaging/linux/THIRD_PARTY_LICENSES/`.
 | iniconfig | 2.3.0 | MIT | permissive | 1 | no |
 | kiwisolver | 1.5.0 | BSD License | permissive | 1 | no |
 | matplotlib | 3.11.1 | Python Software Foundation License | permissive | 3 | yes |
-| nmrforge | 0.2.199 | (none declared) | unknown | 1 | no |
+| NMRFinesse | 0.2.199 | (none declared) | unknown | 1 | no |
 | nmrglue | 0.11 | New BSD License | permissive | 1 | yes |
 | numpy | 2.4.6 | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 | permissive | 20 | yes |
 | packaging | 26.3 | Apache-2.0 OR BSD-2-Clause | permissive | 5 | no |

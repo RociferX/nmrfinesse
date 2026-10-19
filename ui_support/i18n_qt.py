@@ -3,7 +3,7 @@
 The interface text itself has nothing to do with Qt (see ``ui_support/i18n.py``); all this
 module does is register the ``QLocale`` system language as a default source once the
 QApplication exists. An explicit setting or an environment variable still wins, so an
-AppImage can pin its language with ``NMRFORGE_LANG``.
+AppImage can pin its language with ``NMRFINESSE_LANG``.
 """
 
 from __future__ import annotations

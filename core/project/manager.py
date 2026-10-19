@@ -445,10 +445,10 @@ class ProjectManager:
         return [d for d in entry.data if not d.trashed]
 
     def _trash_dir(self) -> Path:
-        """The fallback in-app trash directory (<project>/.nmrforge_trash)."""
+        """Return the in-project trash fallback directory."""
         if self.root is None:
             raise ProjectError(tr("project not loaded"))
-        return self.root / ".nmrforge_trash"
+        return self.root / ".nmrfinesse_trash"
 
     # Only these entries count as "real artifacts": pure UI records (report/log.txt,
     # ui_state.json) do not -- otherwise any UI write-back after deleting data would make
@@ -594,7 +594,7 @@ class ProjectManager:
         (recoverable
         from the trash).
 
-        The files go to the system trash (send2trash, falling back to .nmrforge_trash inside the
+        The files go to the system trash (send2trash, falling back to .nmrfinesse_trash inside the
         project); the entry keeps its trashed flag, group references and notes -- once the user
         restores the directory from the trash to its original path, opening or refreshing the
         project
@@ -829,7 +829,7 @@ class ProjectManager:
         """Delete an experiment: the artifacts go to the system trash and the entry is soft-deleted
         (recoverable from the trash).
 
-        The files go to the system trash (send2trash, falling back to .nmrforge_trash inside the
+        The files go to the system trash (send2trash, falling back to .nmrfinesse_trash inside the
         project); the entry keeps its trashed flag and is recovered automatically once the
         directory is
         back at its original path. The WorkflowRun audit is preserved.

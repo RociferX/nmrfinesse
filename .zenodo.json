@@ -1,9 +1,9 @@
 {
-  "title": "nmrForge: automation, parameter optimisation and quality control for Bruker multidimensional NMR data",
+  "title": "NMRFinesse: automation, parameter optimisation and quality control for Bruker multidimensional NMR data",
   "upload_type": "software",
-  "publication_date": "2026-10-14",
-  "description": "nmrForge automates Bruker multidimensional NMR processing with NMRPipe and SMILE, records processing parameters and quality-control decisions, and provides spectrum viewing and peak localization. Version 1.0.8 / API 1.1.4 adds continuous resolution scoring and exports the component scores for window and baseline optimization during reference construction. Candidate windows share representative traces and reference peaks. The 38-column peak-table contract is retained.",
-  "version": "1.0.8",
+  "publication_date": "2026-10-20",
+  "description": "NMRFinesse automates Bruker multidimensional NMR processing with NMRPipe and SMILE, records processing parameters and quality-control decisions, and provides spectrum viewing and peak localization. Version 1.0.9 / API 1.1.5 introduces the NMRFinesse name and selects dominant peak polarity using squared signal-to-noise weights, preventing numerous weak opposite-sign candidates from overruling stronger signals. Explicit sign requests and mixed-sign experiments are preserved. Reference optimization component scores and the 38-column peak table remain available.",
+  "version": "1.0.9",
   "language": "eng",
   "creators": [
     {
@@ -25,7 +25,7 @@
   "license": "Apache-2.0",
   "related_identifiers": [
     {
-      "identifier": "https://github.com/RociferX/nmrforge",
+      "identifier": "https://github.com/RociferX/nmrfinesse",
       "relation": "isSupplementTo",
       "resource_type": "software"
     }

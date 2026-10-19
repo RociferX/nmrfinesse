@@ -1,6 +1,6 @@
 # External dependencies
 
-nmrForge automates NMRPipe. It does not contain, download or install it. This page explains what
+NMRFinesse automates NMRPipe. It does not contain, download or install it. This page explains what
 is external, how it is located, and what happens when it is missing.
 
 ## What must be installed by you
@@ -13,10 +13,10 @@ is external, how it is located, and what happens when it is missing.
 | Java runtime | some NMRPipe accessory tools, depending on installation | your OS package manager, or an OpenJDK distribution |
 
 Nothing from these packages is copied into this repository, and no script from an NMRPipe
-installation is vendored under `scripts/` or `nmrforge_data/presets/`. See
+installation is vendored under `scripts/` or `nmrfinesse_data/presets/`. See
 [THIRD_PARTY.md](../THIRD_PARTY.md).
 
-## How nmrForge finds them
+## How NMRFinesse finds them
 
 The NMRPipe executable is located by `find_nmrpipe_bin` in this order:
 
@@ -34,8 +34,8 @@ For other NMRPipe companion tools, a configured and valid per-tool path takes pr
 the application checks the `csh` environment first, then searches `com/` subdirectories under the
 discovered installation directory and its parent directories.
 
-Default configuration lives in `nmrforge_data/config/nmrforge.yaml`. Copy it to
-`nmrforge_data/config/nmrforge.local.yaml` for machine-local overrides; that file is git-ignored precisely so
+Default configuration lives in `nmrfinesse_data/config/nmrfinesse.yaml`. Copy it to
+`nmrfinesse_data/config/nmrfinesse.local.yaml` for machine-local overrides; that file is git-ignored precisely so
 that machine paths never end up in the repository.
 
 ```yaml
@@ -75,7 +75,7 @@ This boundary is deliberate: results are never silently produced by a substitute
 ## Resource notes
 
 - NUS reconstruction memory is dominated by the direct-dimension size multiplied by the
-  iterative indirect FT grid, so zero filling inflates it quickly. nmrForge estimates the peak
+  iterative indirect FT grid, so zero filling inflates it quickly. NMRFinesse estimates the peak
   before running SMILE and passes an explicit `-maxMem`, and refuses to start a reconstruction
   it expects to exceed the available memory.
 - Linux is the target runtime. Do not treat Windows-specific RAM-disk setup or other Windows-only

@@ -161,12 +161,12 @@ def test_gui_saved_settings_are_loaded_by_backend(
     from backend import config as backend_config
     from gui import settings as gui_settings
 
-    local = tmp_path / "nmrforge.local.yaml"
+    local = tmp_path / "nmrfinesse.local.yaml"
     monkeypatch.setattr(gui_settings, "_settings_path", lambda: local)
     monkeypatch.setattr(
         backend_config,
         "local_config_path",
-        lambda filename="nmrforge.local.yaml": local,
+        lambda filename="nmrfinesse.local.yaml": local,
     )
     gui_settings.save_settings(
         {
@@ -200,7 +200,7 @@ def test_gui_settings_migrate_legacy_top_level_keys(
 
     from gui import settings as gui_settings
 
-    local = tmp_path / "nmrforge.local.yaml"
+    local = tmp_path / "nmrfinesse.local.yaml"
     local.write_text(
         "nmrpipe_path: /legacy/bin\nlinewidth_hz:\n  1H: 11\n"
         "smile:\n  nthread: 2\n  thread_offset: 7\n",
@@ -216,7 +216,7 @@ def test_gui_settings_migrate_legacy_top_level_keys(
     monkeypatch.setattr(
         backend_config,
         "local_config_path",
-        lambda filename="nmrforge.local.yaml": local,
+        lambda filename="nmrfinesse.local.yaml": local,
     )
     backend_defaults = backend_config.load_processing_defaults(backend_config.load_config())
     assert backend_defaults["nmrpipe_path"] == "/legacy/bin"
@@ -244,7 +244,7 @@ def test_gui_saved_language_preference_round_trips(
     from gui import settings as gui_settings
     from ui_support import i18n
 
-    local = tmp_path / "nmrforge.local.yaml"
+    local = tmp_path / "nmrfinesse.local.yaml"
     monkeypatch.setattr(gui_settings, "_settings_path", lambda: local)
 
     gui_settings.save_settings({"language": "en", "nmrpipe_path": "/opt/bin"})
@@ -281,7 +281,7 @@ def test_language_value_accepts_locale_style_spellings(
     """
     from gui import settings as gui_settings
 
-    local = tmp_path / "nmrforge.local.yaml"
+    local = tmp_path / "nmrfinesse.local.yaml"
     monkeypatch.setattr(gui_settings, "_settings_path", lambda: local)
     for raw, expected in (
         ("zh_CN", "zh"),
@@ -323,10 +323,10 @@ def test_settings_and_ui_state_writes_go_through_the_atomic_helper(
         return real_json(path, data)
 
     monkeypatch.setattr(manager, "atomic_write_json", _spy_json)
-    monkeypatch.setattr(gui_settings, "_settings_path", lambda: tmp_path / "nmrforge.local.yaml")
+    monkeypatch.setattr(gui_settings, "_settings_path", lambda: tmp_path / "nmrfinesse.local.yaml")
 
     gui_settings.save_settings({"nmrpipe_path": "/opt/bin"})
-    assert calls and calls[-1].name == "nmrforge.local.yaml"
+    assert calls and calls[-1].name == "nmrfinesse.local.yaml"
     assert not list(tmp_path.glob("*.tmp"))  # no temp files left behind in the directory
 
     state_path = tmp_path / "ui_state.json"

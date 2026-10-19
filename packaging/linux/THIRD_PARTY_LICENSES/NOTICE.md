@@ -1,18 +1,18 @@
-# Third-party notices for the NMRForge AppImage
+# Third-party notices for the NMRFinesse AppImage
 
 This directory is copied **into** every built AppImage (see `../build_appimage.sh`), so the notices
 travel with the binary that actually distributes the libraries. Extract them from an AppImage with:
 
-    ./NMRForge-<version>-x86_64.AppImage --appimage-extract
-    # then: squashfs-root/usr/share/doc/NMRForge/third-party/
+    ./NMRFinesse-<version>-x86_64.AppImage --appimage-extract
+    # then: squashfs-root/usr/share/doc/NMRFinesse/third-party/
 
 or ask the application to print them:
 
-    ./NMRForge-<version>-x86_64.AppImage --licenses
+    ./NMRFinesse-<version>-x86_64.AppImage --licenses
 
 ## Scope of the LGPL obligations in this directory
 
-nmrforge's own source code is licensed under **Apache-2.0** (root `LICENSE`). The LGPL-3.0 text in
+NMRFinesse's own source code is licensed under **Apache-2.0** (root `LICENSE`). The LGPL-3.0 text in
 this directory, and the obligations that come with it, apply to the **third-party libraries bundled
 into this AppImage** - Qt and PySide6/shiboken6, distributed under Qt's `LGPL-3.0-only` option -
 and not to the project's own code. Everything below is the notice for those libraries.
@@ -40,7 +40,7 @@ licence/notice files under `_internal/third_party_licenses/`, including the Pyth
 and PyInstaller's bootloader exception. The manifest records names, versions and relative licence
 paths, not machine configuration. It can include build-only dependencies, not all of which are
 embedded in the executable. The application's own Apache licence and NOTICE are under
-`_internal/licenses/nmrforge/`. Qt/PySide6's LGPL/GPL texts are provided beside this notice because
+`_internal/licenses/NMRFinesse/`. Qt/PySide6's LGPL/GPL texts are provided beside this notice because
 the installed wheels do not provide those texts.
 
 ## Corresponding source
@@ -53,7 +53,7 @@ directly from the distributors:
     #           https://code.qt.io/cgit/pyside/pyside-setup.git/
     # Qt itself: https://download.qt.io/archive/qt/6.11/6.11.2/single/
 
-NMRForge's own corresponding source is the public repository at the commit recorded in
+NMRFinesse's own corresponding source is the public repository at the commit recorded in
 the AppImage's `BUILD_INFO.txt`, exposed by `--licenses`.
 
 ## Replacing or relinking the LGPL libraries

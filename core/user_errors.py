@@ -6,10 +6,10 @@ Rules (see ``docs/development.md``, "user-visible errors and debugging informati
   and missing-field failures each get their own wording;
 - **never** hand the user a bare ``KeyError`` / ``IndexError`` / ``TypeError`` /
   ``NoneType`` type name, or a raw traceback;
-- the full traceback goes to the debug channel (CLI ``--debug`` / ``NMRFORGE_DEBUG=1``,
+- the full traceback goes to the debug channel (CLI ``--debug`` / ``NMRFINESSE_DEBUG=1``,
   the log for the GUI).
 
-This is a Qt-free leaf module: ``gui/``, ``viewer/`` and ``nmrforge_api/`` only read it.
+This is a Qt-free leaf module: ``gui/``, ``viewer/`` and ``nmrfinesse_api/`` only read it.
 """
 
 from __future__ import annotations

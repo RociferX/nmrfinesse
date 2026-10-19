@@ -1,37 +1,37 @@
-# nmrForge
+# NMRFinesse
 
-[![CI](https://github.com/RociferX/nmrforge/actions/workflows/ci.yml/badge.svg)](https://github.com/RociferX/nmrforge/actions/workflows/ci.yml)
+[![CI](https://github.com/RociferX/nmrfinesse/actions/workflows/ci.yml/badge.svg)](https://github.com/RociferX/nmrfinesse/actions/workflows/ci.yml)
 
 **An automation, parameter-optimisation and quality-control platform for Bruker multidimensional NMR data.**
 
-![nmrForge](gui/assets/nmrforge.png)
+![NMRFinesse](gui/assets/nmrfinesse.png)
 
-nmrForge reads a Bruker dataset, identifies its experiment and sampling scheme, plans a processing
+NMRFinesse reads a Bruker dataset, identifies its experiment and sampling scheme, plans a processing
 strategy, and drives NMRPipe and SMILE to produce spectra. It brings data inspection, automatic and
 manual processing, optimisation, quality control, peak picking and viewing into one workflow, with
 the resolved parameters, scripts, warnings and outputs saved alongside the result.
 
-**Software: 1.0.8 · Python/CLI API: 1.1.4 · Target platform: Linux**
+**Software: 1.0.9 · Python/CLI API: 1.1.5 · Target platform: Linux**
 
 **For desktop use on Linux, the simplest option is the AppImage.**
-Download the [1.0.8 AppImage](https://github.com/RociferX/nmrforge/releases/download/v1.0.8/NMRForge-1.0.8-x86_64.AppImage)
-and its [checksum file](https://github.com/RociferX/nmrforge/releases/download/v1.0.8/SHA256SUMS-v1.0.8.txt)
+Download the [1.0.9 AppImage](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.9/NMRFinesse-1.0.9-x86_64.AppImage)
+and its [checksum file](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.9/SHA256SUMS-v1.0.9.txt)
 from the release; no separate Python or Qt setup is needed. Follow
 [Installation](#installation) for startup and source/API setup. Real spectral processing still
 requires a separate NMRPipe installation; NUS reconstruction also needs SMILE.
 
 Desktop users can use the AppImage or a source installation; the Python/CLI API uses a source
-or package installation. API **v1.1.4** retains the **38-column** peak-table contract and records
+or package installation. API **v1.1.5** retains the **38-column** peak-table contract and records
 bounded reference-window scoring, including shared representative traces and reference peaks.
 The packaged binary's `BUILD_INFO.txt` identifies its version, source revision and dependencies.
 
 Author: **Xuanfeng Li**, University of Science and Technology of China.
 Source licence: [Apache-2.0](LICENSE), with attribution in [NOTICE](NOTICE).
-Repository: [RociferX/nmrforge](https://github.com/RociferX/nmrforge).
+Repository: [RociferX/NMRFinesse](https://github.com/RociferX/nmrfinesse).
 
 > **Language:** the public code comments and documentation are in English, with a
 > [Chinese documentation edition](Chinese_version/README.md). The same application supports
-> English and Chinese: it follows the system language, accepts `NMRFORGE_LANG=en|zh` for a run,
+> English and Chinese: it follows the system language, accepts `NMRFinesse_LANG=en|zh` for a run,
 > and offers a persistent choice in Settings → Software settings → Interface language.
 
 The desktop application and the Qt-free Python/CLI API use the same processing backend. The API
@@ -92,7 +92,7 @@ core: project model, data reading, experiment identification, planning,
       processing primitives, optimisation, QC
 ```
 
-The `core/`, `backend/`, `workflow/` and `nmrforge_api/` layers are Qt-free, so processing can
+The `core/`, `backend/`, `workflow/` and `nmrfinesse_api/` layers are Qt-free, so processing can
 run headless on a server while `gui/` and `viewer/` provide the desktop interface.
 
 ## Repository layout
@@ -106,9 +106,9 @@ run headless on a server while `gui/` and `viewer/` provide the desktop interfac
 | [`viewer/`](viewer/README.md) | the 1D/2D/3D spectrum viewer, embedded by the GUI |
 | [`ui_support/`](ui_support/README.md) | UI helpers shared by the GUI and the viewer |
 | [`qtcompat/`](qtcompat/README.md) | the single module that names a Qt binding |
-| [`nmrforge_api/`](nmrforge_api/README.md) | the scriptable parameter-study API and its CLI |
-| [`nmrforge_data/config/`](nmrforge_data/config/README.md) | shipped defaults and machine-local overrides |
-| [`nmrforge_data/presets/`](nmrforge_data/presets/README.md) | experiment templates; the YAML files are the single source |
+| [`nmrfinesse_api/`](nmrfinesse_api/README.md) | the scriptable parameter-study API and its CLI |
+| [`nmrfinesse_data/config/`](nmrfinesse_data/config/README.md) | shipped defaults and machine-local overrides |
+| [`nmrfinesse_data/presets/`](nmrfinesse_data/presets/README.md) | experiment templates; the YAML files are the single source |
 | [`tests/`](tests/README.md) | the pytest suite: unit / integration / regression |
 | [`examples/`](examples/README.md) | runnable synthetic-dataset and walkthrough scripts |
 | [`packaging/`](packaging/README.md) | AppImage build assets |
@@ -125,12 +125,12 @@ Dependencies run one way: `gui/` and `viewer/` on top, then `workflow/`, then `b
 | Requirement | Notes |
 | --- | --- |
 | Python | 3.12 or newer for the current source release |
-| NMRPipe | Required for real processing (conversion, FT, baseline, phase). Not bundled - install it yourself and make sure the executables are on `PATH`, or point nmrForge at the installation directory. |
+| NMRPipe | Required for real processing (conversion, FT, baseline, phase). Not bundled - install it yourself and make sure the executables are on `PATH`, or point NMRFinesse at the installation directory. |
 | SMILE | Required for NUS reconstruction. Ships with NMRPipe and is located the same way. |
 | Python packages | See `pyproject.toml`; `pip install -e .` installs them. |
 | Display (GUI only) | The main window and viewer need a desktop session. Headless machines can use the Python API or the command line. |
 
-nmrForge never ships, downloads or installs NMRPipe/SMILE for you. It detects them at runtime and
+NMRFinesse never ships, downloads or installs NMRPipe/SMILE for you. It detects them at runtime and
 tells you what is missing. See [THIRD_PARTY.md](THIRD_PARTY.md) for the full dependency and
 licence inventory.
 
@@ -138,14 +138,14 @@ licence inventory.
 
 ### Linux AppImage — simplest desktop setup
 
-Use the [1.0.8 release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.8).
-Download `NMRForge-1.0.8-x86_64.AppImage` and
-`SHA256SUMS-v1.0.8.txt`, then run:
+Use the [1.0.9 release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.9).
+Download `NMRFinesse-1.0.9-x86_64.AppImage` and
+`SHA256SUMS-v1.0.9.txt`, then run:
 
 ```bash
-sha256sum -c SHA256SUMS-v1.0.8.txt
-chmod +x NMRForge-1.0.8-x86_64.AppImage
-./NMRForge-1.0.8-x86_64.AppImage
+sha256sum -c SHA256SUMS-v1.0.9.txt
+chmod +x NMRFinesse-1.0.9-x86_64.AppImage
+./NMRFinesse-1.0.9-x86_64.AppImage
 ```
 
 The AppImage bundles Python, Qt and the desktop application, so desktop users can start without
@@ -159,8 +159,8 @@ Use a source installation for the Python/CLI API or to work with the source code
 Python 3.12 or newer is required. From a Linux terminal:
 
 ```bash
-git clone https://github.com/RociferX/nmrforge.git
-cd nmrforge
+git clone https://github.com/RociferX/nmrfinesse.git
+cd nmrfinesse
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e .
@@ -168,7 +168,7 @@ python main.py
 ```
 
 Ordinary `pip install .` and wheel installations also carry the runtime resources. Install
-NMRPipe separately for real processing and SMILE for NUS reconstruction; nmrForge does not bundle,
+NMRPipe separately for real processing and SMILE for NUS reconstruction; NMRFinesse does not bundle,
 download or install them. See [Installation](docs/installation.md),
 [External dependencies](docs/external-dependencies.md) and [Packaging](docs/packaging.md).
 The [AppImage build recipe](packaging/linux/build_appimage.sh) is included for maintainers.
@@ -213,7 +213,7 @@ pipeline for the selected dataset in the middle, and per-scope logs on the right
 The standalone viewer can be opened separately:
 
 ```bash
-nmrforge-viewer                 # after an editable install
+nmrfinesse-viewer                 # after an editable install
 python -m viewer
 ```
 
@@ -223,10 +223,10 @@ Register a dataset, build and freeze its reference, pick the reference peaks, th
 parameter combinations. Reference and sweep processing require NMRPipe; NUS also requires SMILE.
 
 ```bash
-python -m nmrforge_api --help
-python -m nmrforge_api init --study ./study --dataset /path/to/bruker/dataset
-python -m nmrforge_api reference --study ./study
-python -m nmrforge_api peaks --study ./study
+python -m nmrfinesse_api --help
+python -m nmrfinesse_api init --study ./study --dataset /path/to/bruker/dataset
+python -m nmrfinesse_api reference --study ./study
+python -m nmrfinesse_api peaks --study ./study
 
 cat > combinations.csv <<'CSV'
 zero_fill
@@ -234,9 +234,9 @@ zero_fill
 2
 4
 CSV
-python -m nmrforge_api sweep --study ./study --reference ./study --combos combinations.csv
-python -m nmrforge_api report --study ./study
-python -m nmrforge_api status --study ./study
+python -m nmrfinesse_api sweep --study ./study --reference ./study --combos combinations.csv
+python -m nmrfinesse_api report --study ./study
+python -m nmrfinesse_api status --study ./study
 ```
 
 See the [CLI reference](docs/external-api/04-cli-reference.md) for grids, conditions and options.
@@ -244,7 +244,7 @@ See the [CLI reference](docs/external-api/04-cli-reference.md) for grids, condit
 ## Python API
 
 ```python
-from nmrforge_api import run_reference_study, run_combination_study
+from nmrfinesse_api import run_reference_study, run_combination_study
 
 run_reference_study(
     "~/studies/hsqc_params",
@@ -265,7 +265,7 @@ statistics. Reference construction converts the raw inputs; combinations reuse t
 read-only. Explicit multi-segment import is opt-in with `segmented=True`; missing or incompatible
 reference evidence requires rebuilding with `force=True`.
 
-The separately versioned API is currently **v1.1.4**. Use `compat_manifest()` to inspect processing fingerprints and the retained 38-column table contract. Reference construction records bounded window-scoring diagnostics in per-condition `optimization_scores.csv` files. Explicit candidate pools replace the corresponding defaults, and a selected valid candidate is applied to the reference. The [API guide](docs/external-api/README.md) documents the scoring defaults, CSV fields and boundaries.
+The separately versioned API is currently **v1.1.5**. Use `compat_manifest()` to inspect processing fingerprints and the retained 38-column table contract. Reference construction records bounded window-scoring diagnostics in per-condition `optimization_scores.csv` files. Explicit candidate pools replace the corresponding defaults, and a selected valid candidate is applied to the reference. The [API guide](docs/external-api/README.md) documents the scoring defaults, CSV fields and boundaries.
 See the [API guide](docs/external-api/README.md), [Python reference](docs/python-api.md),
 and [outputs and records](docs/external-api/06-outputs-and-records.md).
 
@@ -327,7 +327,7 @@ dynamically, so the package version and the version written into run records can
 - The Python API performs processing and archiving; it does not provide cross-spectrum peak
   matching, chemical-shift perturbation analysis or statistical inference.
 - Linux is the target runtime. Questions and issues can be reported through
-  [GitHub](https://github.com/RociferX/nmrforge/issues).
+  [GitHub](https://github.com/RociferX/nmrfinesse/issues).
 
 For input, cache and processing boundaries, see the [API limitations](docs/external-api/09-limitations-and-roadmap.md)
 and [FAQ](docs/faq.md).
@@ -339,13 +339,13 @@ and [FAQ](docs/faq.md).
 - [GUI guide](docs/gui.md) | [CLI reference](docs/cli.md) | [Python API](docs/python-api.md)
 - [Processing model](docs/processing-model.md) | [QC system](docs/qc-system.md) | [Peak picking](docs/peak-picking.md) | [Batch processing](docs/batch-processing.md)
 - [External dependencies](docs/external-dependencies.md) | [Troubleshooting](docs/troubleshooting.md) | [FAQ](docs/faq.md)
-- [Architecture](docs/architecture.md) | [Release notes](https://github.com/RociferX/nmrforge/releases)
+- [Architecture](docs/architecture.md) | [Release notes](https://github.com/RociferX/nmrfinesse/releases)
 
 ## Citation
 
 [CITATION.cff](CITATION.cff) provides the software citation metadata, including the author,
 version and release date. The concept DOI [10.5281/zenodo.22909415](https://doi.org/10.5281/zenodo.22909415)
-identifies nmrForge across archived versions. For a specific archived release, use its version DOI
+identifies NMRFinesse across archived versions. For a specific archived release, use its version DOI
 when available and identify the software version or commit used.
 
 If your work uses NMRPipe or SMILE, cite those processing and reconstruction engines as well;
@@ -417,13 +417,13 @@ tools recognise the repository as Apache-2.0.
 third-party libraries, each under its own licence (including LGPL-3.0 components). A released
 AppImage is tied to its release version and source commit; a source checkout may be newer. The
 binary's licence notices and provenance are included with the release artefact. This does not
-change the Apache-2.0 terms of nmrForge's own source code.
+change the Apache-2.0 terms of NMRFinesse's own source code.
 
 See [LICENSE_OPTIONS.md](LICENSE_OPTIONS.md) for third-party licensing and redistribution notes.
 
 What this means in practice:
 
-- **using nmrforge from source**: Apache-2.0, including the patent grant, the requirement to keep
+- **using NMRFinesse from source**: Apache-2.0, including the patent grant, the requirement to keep
   attribution notices, and a statement of changes if you redistribute modified files;
 - **the AppImage**: check the notices and terms that accompany the specific binary before
   redistribution;

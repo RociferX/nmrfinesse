@@ -387,7 +387,7 @@ def test_pick_peaks_spectrum_evidence_respects_confident_uniform(
     assert not any("谱面回补" in log for log in result["debug_logs"])
 
 
-def test_pick_peaks_spectrum_evidence_rejects_contamination(
+def test_single_extreme_peak_does_not_trigger_mixed_inference(
     tmp_path: Path,
 ) -> None:
     """0.2.199-patch29fc-fix: a minor sign dominated by a single very strong
@@ -411,7 +411,7 @@ def test_pick_peaks_spectrum_evidence_rejects_contamination(
 
     result = pick_peaks(manager, exp_id, data_id, sigma_multiplier=25.0)
     rows = _read_rows(Path(result["peak_path"]))
-    assert all(float(r["Intensity"]) > 0 for r in rows)
+    assert all(float(r["Intensity"]) < 0 for r in rows)
     assert not any("谱面回补" in log for log in result["debug_logs"])
 
 
@@ -581,7 +581,7 @@ def test_automatic_axial_filter_matches_workflow_api_and_smile(tmp_path: Path) -
     from nmrglue.fileio import pipe
 
     from core.peaks.axial import filter_axial_peaks
-    from nmrforge_api.peaks import detect_and_localize
+    from nmrfinesse_api.peaks import detect_and_localize
     from workflow.pick_peaks import _axial_experiment, read_spectrum_axes
     from workflow.smile_optimize import evaluate_candidate_peaks
 

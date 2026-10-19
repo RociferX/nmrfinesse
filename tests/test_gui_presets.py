@@ -7,7 +7,7 @@ import yaml
 
 from core.app_paths import resource_path
 
-#: the same lookup the product uses (data package nmrforge_data/presets; identical when
+#: the same lookup the product uses (data package nmrfinesse_data/presets; identical when
 #: installed and inside the AppImage)
 PRESETS_DIR = resource_path("presets")
 

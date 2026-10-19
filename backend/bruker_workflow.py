@@ -1,6 +1,6 @@
 """NMRPipe bruker workflow helpers: fid.com parameter parsing and the acqus cross-check.
 
-Ported from NMRFlow's processing/bruker_workflow.py and adapted to the NMRForge internal data
+Ported from NMRFlow's processing/bruker_workflow.py and adapted to the NMRFinesse internal data
 model. Used to verify and patch the fid.com that bruker -AUTO generates (acqus is the
 authoritative parameter source).
 """
@@ -39,7 +39,7 @@ _KEY_RE = re.compile(
 _OUT_RE = re.compile(r"(-out\s+)(\S+)")
 
 
-logger = logging.getLogger("nmrforge.backend.bruker_workflow")
+logger = logging.getLogger("nmrfinesse.backend.bruker_workflow")
 
 #: bruk2pipe acquisition mode keys, plus the E-A spellings bruker -AUTO parses out of the
 #: pulse program (com/pprog.tcl).

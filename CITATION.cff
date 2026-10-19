@@ -1,4 +1,4 @@
-# Citation metadata for nmrForge.
+# Citation metadata for NMRFinesse.
 #
 # STATUS: usable for citing the software. Author: Xuanfeng Li (李宣锋), University of Science and
 # Technology of China (中国科学技术大学; ROR https://ror.org/04c4dkn09). Zenodo archives tagged
@@ -16,10 +16,10 @@
 # README.md and LICENSE_OPTIONS.md together (a test enforces that they agree).
 
 cff-version: 1.2.0
-message: "If you use nmrForge, please cite this metadata (concept DOI 10.5281/zenodo.22909415)."
-title: "nmrForge: automation, parameter optimisation and quality control for Bruker multidimensional NMR data"
+message: "If you use NMRFinesse, please cite this metadata (concept DOI 10.5281/zenodo.22909415)."
+title: "NMRFinesse: automation, parameter optimisation and quality control for Bruker multidimensional NMR data"
 abstract: >-
-  nmrForge is a platform for automating Bruker multidimensional NMR data processing. It reads
+  NMRFinesse is a platform for automating Bruker multidimensional NMR data processing. It reads
   Bruker acquisition parameters, identifies the experiment type and the sampling scheme, plans a
   processing strategy, drives NMRPipe (and SMILE for non-uniform sampling reconstruction) to
   execute it, performs quality control on the result, and records the resolved parameters,
@@ -29,9 +29,9 @@ authors:
   - family-names: "Li"
     given-names: "Xuanfeng"
     affiliation: "University of Science and Technology of China"
-version: 1.0.8
-date-released: 2026-10-15
-repository-code: "https://github.com/RociferX/nmrforge"
+version: 1.0.9
+date-released: 2026-10-20
+repository-code: "https://github.com/RociferX/nmrfinesse"
 doi: "10.5281/zenodo.22909415"
 identifiers:
   - type: doi

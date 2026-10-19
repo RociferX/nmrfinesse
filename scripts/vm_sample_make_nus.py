@@ -6,7 +6,7 @@ with the program 2D convention), NusTD writing line unit; - first verify that th
 lines (ser bytes / acqus TD) is consistent with acqu2s TD, if inconsistent, an error will be
 reported directly (no semi-finished product is produced); - acqu2s sets NusTD (unit: incremental
 line, consistent with the real NUS The data is consistent; nuslist index is the complex point),
-acqus assumes NusAMOUNT(<100). Usage (VM): nmrforge/bin/python
+acqus assumes NusAMOUNT(<100). Usage (VM): nmrfinesse/bin/python
 scripts/vm_sample_make_nus.py \ <full sampling directory > <output directory > [--points 32]
 [--seed 42] Output: The constructed NUS dataset (for vm_sample_regression.py processing)."""
 

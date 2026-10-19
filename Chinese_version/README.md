@@ -1,33 +1,33 @@
-# nmrForge
+# NMRFinesse
 
-[![CI](https://github.com/RociferX/nmrforge/actions/workflows/ci.yml/badge.svg)](https://github.com/RociferX/nmrforge/actions/workflows/ci.yml)
+[![CI](https://github.com/RociferX/nmrfinesse/actions/workflows/ci.yml/badge.svg)](https://github.com/RociferX/nmrfinesse/actions/workflows/ci.yml)
 
 **面向 Bruker 多维 NMR 数据的自动化处理、参数优化与质量控制平台。**
 
-![nmrForge](../gui/assets/nmrforge.png)
+![NMRFinesse](../gui/assets/nmrfinesse.png)
 
-nmrForge读取Bruker数据集，识别实验类型与采样方式，规划处理方案，驱动NMRPipe与SMILE生成谱图。
+NMRFinesse读取Bruker数据集，识别实验类型与采样方式，规划处理方案，驱动NMRPipe与SMILE生成谱图。
 数据检查、自动与人工处理、参数优化、质量控制、选峰和查看在同一工作流中完成，
 实际采用的参数、脚本、告警和输出与结果一同留档，便于复现和核查。
 
-**软件版本：1.0.8 · Python/CLI API：1.1.4 · 目标平台：Linux**
+**软件版本：1.0.9 · Python/CLI API：1.1.5 · 目标平台：Linux**
 
 **Linux桌面用户最简单的使用方式是AppImage。**
-下载[1.0.8 AppImage](https://github.com/RociferX/nmrforge/releases/download/v1.0.8/NMRForge-1.0.8-x86_64.AppImage)
-及[校验文件](https://github.com/RociferX/nmrforge/releases/download/v1.0.8/SHA256SUMS-v1.0.8.txt)，
+下载[1.0.9 AppImage](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.9/NMRFinesse-1.0.9-x86_64.AppImage)
+及[校验文件](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.9/SHA256SUMS-v1.0.9.txt)，
 按[安装步骤](#安装)校验、赋予执行权限并启动，无需自行配置Python或Qt。
 真实谱图处理仍需单独安装NMRPipe，NUS重构还需要SMILE。
 
 桌面程序可通过AppImage或源码安装使用，Python/CLI API通过源码或Python包安装提供。
-API **v1.1.4**保留**38列**峰表契约，并记录参考窗评分诊断，包括共用代表迹线与参考峰；
+API **v1.1.5**保留**38列**峰表契约，并记录参考窗评分诊断，包括共用代表迹线与参考峰；
 二进制的`BUILD_INFO.txt`记录版本、源码修订与依赖。
 
 作者：**李宣锋（Xuanfeng Li），中国科学技术大学**。
 源码许可：[Apache-2.0](../LICENSE)，署名见[NOTICE](../NOTICE)。
-仓库：[RociferX/nmrforge](https://github.com/RociferX/nmrforge)。
+仓库：[RociferX/NMRFinesse](https://github.com/RociferX/nmrfinesse)。
 
 > **语言：**这是[英文项目首页](../README.md)的中文文档版，公开代码的注释为英文。
-> 同一份程序支持中英文，默认跟随系统语言；单次运行可设置`NMRFORGE_LANG=en|zh`，
+> 同一份程序支持中英文，默认跟随系统语言；单次运行可设置`NMRFinesse_LANG=en|zh`，
 > 也可在「设置 → 软件设置 → 界面语言」中长期指定。
 
 桌面程序与不依赖Qt的Python/CLI API使用同一处理后端。API可生成参考、执行显式参数组合或网格，
@@ -81,7 +81,7 @@ ProcessingBackend(NMRPipeBackend 是唯一的生产后端)
 core:项目模型、数据读取、实验判定、规划、处理原语、优化、QC
 ```
 
-`core/`、`backend/`、`workflow/` 与 `nmrforge_api/` 四层不依赖 Qt,
+`core/`、`backend/`、`workflow/` 与 `nmrfinesse_api/` 四层不依赖 Qt,
 因此处理可以在服务器上无界面运行;`gui/` 与 `viewer/` 提供桌面界面。
 
 ## 仓库结构
@@ -95,9 +95,9 @@ core:项目模型、数据读取、实验判定、规划、处理原语、优化
 | [`viewer/`](../viewer/README.md) | 1D/2D/3D 谱图查看器,GUI 内嵌使用 |
 | [`ui_support/`](../ui_support/README.md) | GUI 与查看器共用的界面辅助 |
 | [`qtcompat/`](../qtcompat/README.md) | 唯一指定 Qt 绑定的模块 |
-| [`nmrforge_api/`](../nmrforge_api/README.md) | 可脚本化的参数研究 API 及其命令行 |
-| [`nmrforge_data/config/`](../nmrforge_data/config/README.md) | 随包默认值与机器本地覆盖 |
-| [`nmrforge_data/presets/`](../nmrforge_data/presets/README.md) | 实验模板;YAML 文件是唯一数据源 |
+| [`nmrfinesse_api/`](../nmrfinesse_api/README.md) | 可脚本化的参数研究 API 及其命令行 |
+| [`nmrfinesse_data/config/`](../nmrfinesse_data/config/README.md) | 随包默认值与机器本地覆盖 |
+| [`nmrfinesse_data/presets/`](../nmrfinesse_data/presets/README.md) | 实验模板;YAML 文件是唯一数据源 |
 | [`tests/`](../tests/README.md) | pytest 测试套件:unit / integration / regression |
 | [`examples/`](../examples/README.md) | 可运行的合成数据集与走查脚本 |
 | [`packaging/`](../packaging/README.md) | AppImage 构建素材与发布验收要求 |
@@ -114,25 +114,25 @@ core:项目模型、数据读取、实验判定、规划、处理原语、优化
 | 依赖 | 说明 |
 | --- | --- |
 | Python | 当前源码发布要求 3.12 或更高 |
-| NMRPipe | 真实处理(转换、FT、基线、相位)必需。不随本软件分发 —— 请自行安装,确保可执行文件在 `PATH` 上,或让 nmrForge 指向安装目录。 |
+| NMRPipe | 真实处理(转换、FT、基线、相位)必需。不随本软件分发 —— 请自行安装,确保可执行文件在 `PATH` 上,或让 NMRFinesse 指向安装目录。 |
 | SMILE | NUS 重构必需。随 NMRPipe 提供,查找方式相同。 |
 | Python 包 | 见 `pyproject.toml`;`pip install -e .` 会安装。 |
 | 显示器(仅 GUI) | 主窗口与查看器需要桌面会话。无头机器可以用 Python API 或命令行。 |
 
-nmrForge 不会替你分发、下载或安装 NMRPipe/SMILE。它在运行时探测两者,并告诉你缺什么。
+NMRFinesse 不会替你分发、下载或安装 NMRPipe/SMILE。它在运行时探测两者,并告诉你缺什么。
 完整的依赖与许可清单见 [THIRD_PARTY.md](../THIRD_PARTY.md)。
 
 ## 安装
 
 ### Linux AppImage：最简单的桌面使用方式
 
-从[1.0.8发行页](https://github.com/RociferX/nmrforge/releases/tag/v1.0.8)下载
-`NMRForge-1.0.8-x86_64.AppImage`与`SHA256SUMS-v1.0.8.txt`，然后运行：
+从[1.0.9发行页](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.9)下载
+`NMRFinesse-1.0.9-x86_64.AppImage`与`SHA256SUMS-v1.0.9.txt`，然后运行：
 
 ```bash
-sha256sum -c SHA256SUMS-v1.0.8.txt
-chmod +x NMRForge-1.0.8-x86_64.AppImage
-./NMRForge-1.0.8-x86_64.AppImage
+sha256sum -c SHA256SUMS-v1.0.9.txt
+chmod +x NMRFinesse-1.0.9-x86_64.AppImage
+./NMRFinesse-1.0.9-x86_64.AppImage
 ```
 
 AppImage包含Python、Qt和桌面程序，无需自行创建Python环境或安装Python依赖；
@@ -146,8 +146,8 @@ NMRPipe与SMILE仍需单独安装。
 需要Python 3.12或更高版本。在Linux终端运行：
 
 ```bash
-git clone https://github.com/RociferX/nmrforge.git
-cd nmrforge
+git clone https://github.com/RociferX/nmrfinesse.git
+cd nmrfinesse
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e .
@@ -155,7 +155,7 @@ python main.py
 ```
 
 普通`pip install .`及wheel安装同样包含运行资源。真实处理需要另行安装NMRPipe，
-NUS重构还需要SMILE；nmrForge不捆绑、下载或安装这两个工具。
+NUS重构还需要SMILE；NMRFinesse不捆绑、下载或安装这两个工具。
 详见[安装说明](docs/installation.md)、[外部依赖](docs/external-dependencies.md)和[打包说明](docs/packaging.md)。
 维护者可使用随源码提供的[AppImage构建配方](../packaging/linux/build_appimage.sh)。
 
@@ -195,7 +195,7 @@ python main.py    # 源码发布的 GUI 入口;会创建/复用本地 venv
 独立查看器可以单独打开:
 
 ```bash
-nmrforge-viewer                 # 可编辑安装之后
+nmrfinesse-viewer                 # 可编辑安装之后
 python -m viewer
 ```
 
@@ -205,10 +205,10 @@ python -m viewer
 参考和组合处理需要NMRPipe，NUS还需要SMILE。
 
 ```bash
-python -m nmrforge_api --help
-python -m nmrforge_api init --study ./study --dataset /path/to/bruker/dataset
-python -m nmrforge_api reference --study ./study
-python -m nmrforge_api peaks --study ./study
+python -m nmrfinesse_api --help
+python -m nmrfinesse_api init --study ./study --dataset /path/to/bruker/dataset
+python -m nmrfinesse_api reference --study ./study
+python -m nmrfinesse_api peaks --study ./study
 
 cat > combinations.csv <<'CSV'
 zero_fill
@@ -216,9 +216,9 @@ zero_fill
 2
 4
 CSV
-python -m nmrforge_api sweep --study ./study --reference ./study --combos combinations.csv
-python -m nmrforge_api report --study ./study
-python -m nmrforge_api status --study ./study
+python -m nmrfinesse_api sweep --study ./study --reference ./study --combos combinations.csv
+python -m nmrfinesse_api report --study ./study
+python -m nmrfinesse_api status --study ./study
 ```
 
 参数网格、多条件和其它选项见[CLI参考](docs/external-api/04-cli-reference.md)。
@@ -226,7 +226,7 @@ python -m nmrforge_api status --study ./study
 ## Python API 用法
 
 ```python
-from nmrforge_api import run_reference_study, run_combination_study
+from nmrfinesse_api import run_reference_study, run_combination_study
 
 run_reference_study(
     "~/studies/hsqc_params",
@@ -245,7 +245,7 @@ for run in result.runs:
 也不计算下游统计。参考阶段转换原始输入，组合只读复用冻结FID。
 显式多段导入通过`segmented=True`开启；参考证据缺失或不兼容时需用`force=True`重建。
 
-API单独版本化，当前为**v1.1.4**。跨版本比较前可检查`compat_manifest()`；
+API单独版本化，当前为**v1.1.5**。跨版本比较前可检查`compat_manifest()`；
 参考构建可保存每条件的`optimization_scores.csv`评分记录，并支持显式候选池；传入池中评分最高且有效的候选用于生成参考。
 窗评分把逐迹检测、分峰、对称和旁瓣因子的乘积中位数乘以连续分辨率因子`width_ratio^-2`，
 有效但较宽的候选仍保留非零分辨率分，且峰表仍为38列。详见[API指南](docs/external-api/README.md)、
@@ -294,7 +294,7 @@ python examples/quickstart.py ./example_data/hsqc_2d
 - 自动选峰与QC结合实验类型、信号质量和处理参数；证据页按统一规则统计候选匹配，
   并逐组解释旁瓣、重叠与弱信号对候选数量的影响。
 - Python API负责处理与留档，不提供跨谱峰匹配、化学位移扰动分析或统计推断。
-- Linux是目标运行平台，问题通过[GitHub](https://github.com/RociferX/nmrforge/issues)报告。
+- Linux是目标运行平台，问题通过[GitHub](https://github.com/RociferX/nmrfinesse/issues)报告。
 
 输入、缓存和处理范围详见[API边界](docs/external-api/09-limitations-and-roadmap.md)与[FAQ](docs/faq.md)。
 
@@ -305,7 +305,7 @@ python examples/quickstart.py ./example_data/hsqc_2d
 - [GUI 指南](docs/gui.md) | [命令行参考](docs/cli.md) | [Python API](docs/python-api.md)
 - [处理模型](docs/processing-model.md) | [QC 体系](docs/qc-system.md) | [选峰](docs/peak-picking.md) | [批量处理](docs/batch-processing.md)
 - [外部依赖](docs/external-dependencies.md) | [故障排查](docs/troubleshooting.md) | [常见问题](docs/faq.md)
-- [架构](docs/architecture.md) | [脚本 API](docs/external-api/README.md) | [发布说明](https://github.com/RociferX/nmrforge/releases)
+- [架构](docs/architecture.md) | [脚本 API](docs/external-api/README.md) | [发布说明](https://github.com/RociferX/nmrfinesse/releases)
 
 ## 引用
 
@@ -367,13 +367,13 @@ CI运行仓库配置的检查。模拟测试通过说明被覆盖的软件行为
 
 **AppImage 另有一条分发边界。** 它捆绑 PySide6/Qt 与其他第三方库,这些组件按各自的许可
 (含 LGPL-3.0)随产物分发。发布的 AppImage 对应特定发布版本与源码提交；源码更新不会自动
-更新它。二进制的许可声明和构建来源随发布产物提供。这不改变 nmrForge 自身源码的 Apache-2.0 条款。
+更新它。二进制的许可声明和构建来源随发布产物提供。这不改变 NMRFinesse 自身源码的 Apache-2.0 条款。
 
 第三方库的许可与再分发说明见[LICENSE_OPTIONS.md](../LICENSE_OPTIONS.md)。
 
 实际含义:
 
-- **从源码使用 nmrforge**:Apache-2.0,包括专利授权、保留署名声明的要求,以及再分发修改过的
+- **从源码使用 NMRFinesse**:Apache-2.0,包括专利授权、保留署名声明的要求,以及再分发修改过的
   文件时说明改动的要求;
 - **AppImage**:再分发前核对该二进制随附的声明和许可要求;
 - 第三方组件各自保留其许可;见 [THIRD_PARTY.md](../THIRD_PARTY.md),

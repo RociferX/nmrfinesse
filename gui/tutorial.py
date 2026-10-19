@@ -1,6 +1,6 @@
 """The usage tutorial: the document window opened from the Help menu (Qt layer).
 
-The tutorial text is **shipped data** (``nmrforge_data/tutorial/{zh,en}.md``) and follows the
+The tutorial text is **shipped data** (``nmrfinesse_data/tutorial/{zh,en}.md``) and follows the
 same language rule as the interface strings: the file for the current language is loaded at run
 time, and if that language has no text the other one is used. Why not ``ui_support/locales``:
 that is the lookup table for **individual** short strings (keyed by the English source), while
@@ -8,9 +8,9 @@ the tutorial is a whole document (a dozen sections, lists and examples) - keepin
 package means it ships with the program and can be switched as a document.
 
 Resources are located through ``core.app_paths.resource_path``: in a source checkout it lives
-under ``nmrforge_data/``, in an installed copy under ``site-packages/nmrforge_data/`` and in a
-frozen build under ``_MEIPASS/nmrforge_data/`` - the same relative path in all three shapes
-(see packaging/linux/NMRForge.spec and docs/packaging.md).
+under ``nmrfinesse_data/``, in an installed copy under ``site-packages/nmrfinesse_data/`` and in a
+frozen build under ``_MEIPASS/nmrfinesse_data/`` - the same relative path in all three shapes
+(see packaging/linux/NMRFinesse.spec and docs/packaging.md).
 """
 
 from __future__ import annotations
@@ -67,7 +67,7 @@ class TutorialDialog(QDialog):
 
     def __init__(self, parent: QWidget | None = None, language: str | None = None) -> None:
         super().__init__(parent)
-        self.setWindowTitle(tr("NMRForge usage tutorial"))
+        self.setWindowTitle(tr("NMRFinesse usage tutorial"))
         self.resize(960, 720)
         layout = QVBoxLayout(self)
         self.view = QTextBrowser()

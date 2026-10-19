@@ -17,7 +17,7 @@ def collect_license_data(output: Path, distributions=None, python_prefix=None):
     seen = set()
     for dist in distributions:
         name = re.sub(r"[^a-z0-9_.-]", "_", dist.metadata["Name"].lower())
-        if name == "nmrforge" or name in seen:
+        if name == "nmrfinesse" or name in seen:
             continue
         seen.add(name)
         files = []

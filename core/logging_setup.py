@@ -2,11 +2,11 @@
 
 Conventions (see "Logging (Phase 22)" in ``docs/development.md``):
 
-- library code only calls ``logging.getLogger("nmrforge.<module>")`` and never
+- library code only calls ``logging.getLogger("nmrfinesse.<module>")`` and never
   configures a handler at import time;
 - the entry points own the configuration: the GUI entry ``main.py`` and the command line
-  ``python -m nmrforge_api`` both call :func:`configure_logging`;
-- the level comes from ``NMRFORGE_LOG_LEVEL`` (DEBUG/INFO/WARNING/ERROR, WARNING by
+  ``python -m nmrfinesse_api`` both call :func:`configure_logging`;
+- the level comes from ``NMRFINESSE_LOG_LEVEL`` (DEBUG/INFO/WARNING/ERROR, WARNING by
   default) or from an explicit argument;
 - absolute paths inside log text are sanitised by :func:`sanitize_path`, which folds the
   home directory into ``~``;
@@ -20,11 +20,12 @@ This module is Qt-free and has no third-party dependencies; it is a ``core/`` le
 from __future__ import annotations
 
 import logging
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import IO, Any
+
+from core.environment import get_environment_value
 
 __all__ = [
     "DEFAULT_LEVEL",
@@ -40,17 +41,17 @@ __all__ = [
 ]
 
 #: global logger name (library code hangs off this one)
-LOGGER_NAME = "nmrforge"
+LOGGER_NAME = "nmrfinesse"
 #: level environment variable (DEBUG/INFO/WARNING/ERROR; invalid values fall back to WARNING)
-LEVEL_ENV = "NMRFORGE_LOG_LEVEL"
+LEVEL_ENV = "NMRFINESSE_LOG_LEVEL"
 LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s: %(message)s"
 DEFAULT_LEVEL = "WARNING"
 #: marks the console handler installed by an entry point, so repeat calls do not stack
-_OWN_HANDLER_FLAG = "_nmrforge_handler"
+_OWN_HANDLER_FLAG = "_nmrfinesse_handler"
 #: marks the per-run FileHandler separately (it must not be confused with the console
 #: handler, or configure_logging would think the console handler is already installed,
 #: and would stop installing one, while a run is active)
-_RUN_HANDLER_FLAG = "_nmrforge_run_handler"
+_RUN_HANDLER_FLAG = "_nmrfinesse_run_handler"
 
 
 def resolve_level(level: str | int | None = None) -> int:
@@ -59,7 +60,8 @@ def resolve_level(level: str | int | None = None) -> int:
     """
     if isinstance(level, int):
         return int(level)
-    name = str(level or os.environ.get(LEVEL_ENV, DEFAULT_LEVEL)).strip().upper()
+    configured = level or get_environment_value(LEVEL_ENV, DEFAULT_LEVEL)
+    name = str(configured).strip().upper()
     value: Any = logging.getLevelName(name)
     return int(value) if isinstance(value, int) else logging.WARNING
 
@@ -69,7 +71,7 @@ def configure_logging(
     *,
     stream: IO[str] | None = None,
 ) -> logging.Logger:
-    """Configure the ``nmrforge`` logger (idempotent: repeat calls only update the level
+    """Configure the ``nmrfinesse`` logger (idempotent: repeat calls only update the level
     and never stack console handlers).
 
     Logs go to stderr by default -- the CLI stdout carries machine-readable JSON and must
@@ -126,7 +128,7 @@ def append_run_log_line(path: Path | str, message: str) -> None:
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")[:-3]
-    line = f"{stamp} INFO nmrforge.run: {sanitize_path(message)}\n"
+    line = f"{stamp} INFO nmrfinesse.run: {sanitize_path(message)}\n"
     with target.open("a", encoding="utf-8") as handle:
         handle.write(line)
 

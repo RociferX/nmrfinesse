@@ -1,0 +1,146 @@
+{
+  "date": "2026-10-20",
+  "software_version": "1.0.9",
+  "api_version": "1.1.5",
+  "cases": {
+    "uniform2d": {
+      "automatic": {
+        "N": [
+          265.0,
+          0.0
+        ],
+        "H": [
+          0.0,
+          0.0
+        ]
+      },
+      "reference_bruker_phc": {
+        "H": [
+          7.599999,
+          0
+        ],
+        "N": [
+          -2.4,
+          0
+        ]
+      },
+      "residual": null,
+      "reason": "Bruker PHC and NMRPipe PS conventions not mapped; no cross-vendor angle error claimed."
+    },
+    "nus75": {
+      "automatic": {
+        "N": [
+          85.0,
+          0.0
+        ],
+        "H": [
+          173.5590057373047,
+          0.0
+        ]
+      },
+      "reference": {
+        "N": [
+          265.0,
+          0.0
+        ],
+        "H": [
+          0.0,
+          0.0
+        ]
+      },
+      "joint_reference_H_N_p0_correction": 180,
+      "p0_residual": {
+        "N": 0.0,
+        "H": -6.4409942626953125
+      },
+      "reference_kind": "same-source NMRFinesse uniform automatic phase; internal consistency check",
+      "spectrum_comparison_reference_kind": "author_Bruker_pdata/1"
+    },
+    "uniform3d": {
+      "automatic": {
+        "N": [
+          267.5,
+          0.0
+        ],
+        "H": [
+          15.0,
+          0.0
+        ],
+        "C": [
+          2.5,
+          0.0
+        ]
+      },
+      "reference": {
+        "H": [
+          -1.0,
+          43.0
+        ],
+        "N": [
+          -90.0,
+          0.0
+        ],
+        "C": [
+          0.0,
+          0.0
+        ]
+      },
+      "joint_reference_H_N_p0_correction": 0,
+      "p0_residual": {
+        "N": -2.5,
+        "C": 2.5
+      },
+      "h_phase_operator": {
+        "method": "Apply both actual PS operators to the same complex FT, retain imaginary data, then take complex-ratio angle.",
+        "common_H_window_ppm": [
+          6.0205049618294,
+          9.991333437565487
+        ],
+        "sample_count": 271,
+        "residual_deg": {
+          "min": -2.0566396713256836,
+          "max": 9.28125,
+          "median": 3.612305164337158
+        },
+        "near_8ppm_residual_deg": 3.612305164337158
+      }
+    },
+    "acquired3d": {
+      "automatic": {
+        "N": [
+          182.5,
+          0.0
+        ],
+        "H": [
+          107.96900177001953,
+          0.0
+        ],
+        "C": [
+          0.0,
+          0.0
+        ]
+      },
+      "reference": {
+        "N": [
+          0.0,
+          0.0
+        ],
+        "H": [
+          -73.0,
+          0.0
+        ],
+        "C": [
+          0.0,
+          0.0
+        ]
+      },
+      "joint_reference_H_N_p0_correction": 180,
+      "p0_residual": {
+        "N": 2.5,
+        "H": 0.9690017700195312,
+        "C": 0.0
+      }
+    }
+  },
+  "software_name": "NMRFinesse"
+}

@@ -1,19 +1,19 @@
-# 04 · Command line reference (v1.1.4)
+# 04 · Command line reference (v1.1.5)
 
-Entry:`python -m nmrforge_api <Order> --study <Research roots>`.
+Entry:`python -m nmrfinesse_api <Order> --study <Research roots>`.
 Public parameter:`--study`(required), `--name`(new research name), `--condition <A|B|…>`.
 (Default = all conditions).
-The CLI uses API **1.1.4** and software **1.0.8**, with the retained 38-column peak-table contract.
+The CLI uses API **1.1.5** and software **1.0.9**, with the retained 38-column peak-table contract.
 Install the source or wheel to use this entry point; see [installation](../installation.md).
 
 ## Init -- Create the study and import the dataset
 
 ```bash
-python -m nmrforge_api init --study ~/studies/s1 --dataset ~/data/apo --condition A
-python -m nmrforge_api init --study ~/studies/s1 --dataset ~/data/holo --condition B
-python -m nmrforge_api init --study ~/studies/segments --segmented \
+python -m nmrfinesse_api init --study ~/studies/s1 --dataset ~/data/apo --condition A
+python -m nmrfinesse_api init --study ~/studies/s1 --dataset ~/data/holo --condition B
+python -m nmrfinesse_api init --study ~/studies/segments --segmented \
     --dataset ~/data/segment1 --dataset ~/data/segment2 --condition A
-python -m nmrforge_api init --study ~/studies/s1            # only lists the registered conditions
+python -m nmrfinesse_api init --study ~/studies/s1            # only lists the registered conditions
 ```
 
 Output: study root + condition + dataset summary (ndim/nuclear/sampling/source/raw_dir/number of files).
@@ -33,12 +33,12 @@ rebuilds the reference but does not change its bound source list.
 ## Reference -- reference workflow (one copy for each condition)
 
 ```bash
-python -m nmrforge_api reference --study ~/studies/s1
-python -m nmrforge_api reference --study ~/studies/s1 --condition A --force
-python -m nmrforge_api reference --study ~/studies/s1 --params auto.yaml
-python -m nmrforge_api reference --study ~/studies/s1 --condition-params condition-overrides.json
-python -m nmrforge_api reference --study ~/studies/s1 --carrier-ppm F1=120.0 --carrier-ppm F2=4.7 --force
-python -m nmrforge_api reference --study ~/studies/s3 --carrier-ppm F3=4.7 --force
+python -m nmrfinesse_api reference --study ~/studies/s1
+python -m nmrfinesse_api reference --study ~/studies/s1 --condition A --force
+python -m nmrfinesse_api reference --study ~/studies/s1 --params auto.yaml
+python -m nmrfinesse_api reference --study ~/studies/s1 --condition-params condition-overrides.json
+python -m nmrfinesse_api reference --study ~/studies/s1 --carrier-ppm F1=120.0 --carrier-ppm F2=4.7 --force
+python -m nmrfinesse_api reference --study ~/studies/s3 --carrier-ppm F3=4.7 --force
 ```
 
 `--params` is the input override of the automatic process (YAML/JSON); `--phase-route` explicitly specifies the
@@ -84,9 +84,9 @@ record plus the study-level aggregate `records/reference.json`**.
 ## Peaks -- reference peak table (identity + parabolic localisation table)
 
 ```bash
-python -m nmrforge_api peaks --study ~/studies/s1
-python -m nmrforge_api peaks --study ~/studies/s1 --sigma 25 --max-peaks 60
-python -m nmrforge_api peaks --study ~/studies/s1 --peak-table external.list
+python -m nmrfinesse_api peaks --study ~/studies/s1
+python -m nmrfinesse_api peaks --study ~/studies/s1 --sigma 25 --max-peaks 60
+python -m nmrfinesse_api peaks --study ~/studies/s1 --peak-table external.list
 ```
 
 Each condition automatically selects its own reference peaks and creates its own `reference.list`;
@@ -103,11 +103,11 @@ The error message states "the threshold has been locked at the reference"), beca
 **`--reference` Required** (combination mode must explicitly specify the reference):
 
 ```bash
-python -m nmrforge_api sweep --study ~/studies/s1 \
+python -m nmrfinesse_api sweep --study ~/studies/s1 \
     --reference ~/studies/s1 --combos design.csv
-python -m nmrforge_api sweep --study ~/studies/s1 \
+python -m nmrfinesse_api sweep --study ~/studies/s1 \
     --reference ~/studies/s1#B --grid grid.yaml
-python -m nmrforge_api sweep --study ~/studies/s1 \
+python -m nmrfinesse_api sweep --study ~/studies/s1 \
     --reference ~/studies/s1/study/reference/exp_001_d_001/reference.json \
     --combos design.csv --localization parabolic --no-resume
 ```
@@ -141,7 +141,7 @@ Output: workflow number, condition list, status count, records path.
 ## Report -- Recalculate the summary using existing records (no re-run processing)
 
 ```bash
-python -m nmrforge_api report --study ~/studies/s1
+python -m nmrfinesse_api report --study ~/studies/s1
 ```
 
 Reassemble `study/records/`(long list/manifest/workflows/runs/measurement).
@@ -152,7 +152,7 @@ count.
 ## Status -- current situation
 
 ```bash
-python -m nmrforge_api status --study ~/studies/s1
+python -m nmrfinesse_api status --study ~/studies/s1
 ```
 
 Output: Conditional dataset, condition-by-condition reference (script/spectral hash, peak number, peak table), planned workflow number and.
@@ -167,9 +167,9 @@ ID, number of recorded workflows, running status count, records directory.
 ## `compat`: behaviour compatibility manifest (needs no study root)
 
 ```bash
-python -m nmrforge_api compat
-python -m nmrforge_api compat --out compat.json
-python -m nmrforge_api compat --golden --workdir /tmp/nmrforge_golden
+python -m nmrfinesse_api compat
+python -m nmrfinesse_api compat --out compat.json
+python -m nmrfinesse_api compat --golden --workdir /tmp/NMRFinesse_golden
 ```
 
 | Option | Meaning |

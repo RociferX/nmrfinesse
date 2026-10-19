@@ -1,13 +1,13 @@
 # 命令行参考
 
-处理命令行在 `nmrforge_api` 包里,驱动的就是 GUI 用的同一套引擎:
+处理命令行在 `nmrfinesse_api` 包里,驱动的就是 GUI 用的同一套引擎:
 
 ```bash
-python -m nmrforge_api --help
+python -m nmrfinesse_api --help
 ```
 
-当前命令行属于 API v1.1.4，统一峰表为38列。安装源码或wheel后使用命令行入口。
-Linux AppImage 与源码可从 [1.0.8 Release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.8) 获取；见
+当前命令行属于 API v1.1.5，统一峰表为38列。安装源码或wheel后使用命令行入口。
+Linux AppImage 与源码可从 [1.0.9 Release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.9) 获取；见
 [installation.md](installation.md)。
 
 ## 子命令
@@ -24,14 +24,14 @@ Linux AppImage 与源码可从 [1.0.8 Release](https://github.com/RociferX/nmrfo
 ## 典型顺序
 
 ```bash
-python -m nmrforge_api init      --study ./study --dataset /path/to/bruker/dataset
-python -m nmrforge_api init      --study ./study-segmented --segmented \
+python -m nmrfinesse_api init      --study ./study --dataset /path/to/bruker/dataset
+python -m nmrfinesse_api init      --study ./study-segmented --segmented \
     --dataset /path/to/segment1 --dataset /path/to/segment2 --condition A
-python -m nmrforge_api reference --study ./study
-python -m nmrforge_api peaks     --study ./study
-python -m nmrforge_api sweep     --study ./study --grid grid.yaml --reference ./study
-python -m nmrforge_api report    --study ./study
-python -m nmrforge_api status    --study ./study
+python -m nmrfinesse_api reference --study ./study
+python -m nmrfinesse_api peaks     --study ./study
+python -m nmrfinesse_api sweep     --study ./study --grid grid.yaml --reference ./study
+python -m nmrfinesse_api report    --study ./study
+python -m nmrfinesse_api status    --study ./study
 ```
 
 `init` 默认接受至多一个 `--dataset`；加 `--segmented` 后需重复提供至少两个完整原始

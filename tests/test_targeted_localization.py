@@ -31,7 +31,7 @@ import numpy as np
 import pytest
 from scipy.ndimage import gaussian_filter
 
-from nmrforge_api import (
+from nmrfinesse_api import (
     MeasurementError,
     SweepError,
     detect_and_localize,
@@ -40,16 +40,16 @@ from nmrforge_api import (
     run_combination_study,
     run_parameter_study,
 )
-from nmrforge_api.cli import _targets_spec_from_args, build_parser
-from nmrforge_api.compat import behavior_digest, compat_status
-from nmrforge_api.localization_targets import (
+from nmrfinesse_api.cli import _targets_spec_from_args, build_parser
+from nmrfinesse_api.compat import behavior_digest, compat_status
+from nmrfinesse_api.localization_targets import (
     read_localization_targets,
     resolve_conditional_targets,
     resolve_localization_targets,
     resolve_localization_targets_by_method,
     split_target_specs,
 )
-from nmrforge_api.sweep import split_combo
+from nmrfinesse_api.sweep import split_combo
 
 # Synthetic spectrum geometry: data axis 0 = indirect (15N, 64 points),
 # axis 1 = direct (1H, 128 points)
@@ -100,7 +100,7 @@ def _write_ft2(path: Path, *, shift_y: float = 0.0, shift_x: float = 0.0) -> Pat
 
 class _FakeBackend:
     """Minimal backend stand-in: writes spectra deterministically (same shape as
-    tests/test_nmrforge_api.py).
+    tests/test_nmrfinesse_api.py).
     """
 
     def __init__(self) -> None:

@@ -180,7 +180,7 @@ def test_settings_dialog_persists_the_chosen_language(
     from gui import settings as gui_settings
     from gui.dialogs import SettingsDialog
 
-    local = tmp_path / "nmrforge.local.yaml"
+    local = tmp_path / "nmrfinesse.local.yaml"
     local.write_text("language: zh\n", encoding="utf-8")
     monkeypatch.setattr(gui_settings, "_settings_path", lambda: local)
     # save_settings refreshes the language-layer cache; keep it away from the user's real config
@@ -203,7 +203,7 @@ def test_settings_dialog_preselects_locale_style_language(
     from gui import settings as gui_settings
     from gui.dialogs import SettingsDialog
 
-    local = tmp_path / "nmrforge.local.yaml"
+    local = tmp_path / "nmrfinesse.local.yaml"
     local.write_text("language: zh_CN\n", encoding="utf-8")
     monkeypatch.setattr(gui_settings, "_settings_path", lambda: local)
     dialog = SettingsDialog(None)

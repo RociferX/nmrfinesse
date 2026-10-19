@@ -1,6 +1,6 @@
 # Shared interfaces and API contract
 
-Software **1.0.8** · Python/CLI API **1.1.4** · Project schema **1.4**.
+Software **1.0.9** · Python/CLI API **1.1.5** · Project schema **1.4**.
 
 ## 1. Acquisition data model
 
@@ -140,7 +140,7 @@ storage geometry remain governed by the input and backend conversion logic.
 ## 9. Workspace and dataset layout
 
 [`WorkspaceManager`](../core/workspace.py) ensures/lists a workspace and creates, opens, renames
-or deletes its projects. The default workspace is `~/NMRForgeWorkspace`.
+or deletes its projects. The default workspace is `~/NMRFinesseWorkspace`.
 `ProjectManager.data_base(exp_id, data_id)` resolves the dataset base; `data_dir` resolves its products.
 
 ```text
@@ -167,11 +167,11 @@ axes from the header, reads/caches requested planes and supplies 2D slices. The 
 F3–F2 view with F1 fixed, and can retain a selected plane. Projections summarize a volume;
 they do not establish independent 3D peak identities or resolve every overlap.
 
-## 11. Public nmrforge_api contract
+## 11. Public nmrfinesse_api contract
 
 ### 11.1 Workflow semantics
 
-API **v1.1.4** is defined once by `nmrforge_api.session.API_VERSION`. A study has labelled conditions,
+API **v1.1.5** is defined once by `nmrfinesse_api.session.API_VERSION`. A study has labelled conditions,
 each with an independent reference spectrum/table. Reference construction imports/converts/merges
 the specified sources and freezes the FID, schedule and conversion evidence.
 
@@ -185,7 +185,7 @@ as a fallback. Missing or changed frozen evidence requires reference rebuilding 
 Public calls include session/dataset management, `build_reference`, `detect_and_localize`,
 `run_reference_study`, `run_combination_study`, `run_parameter_study`, status/report and compatibility
 functions. Exact signatures and return records are in the [API reference](external-api/03-api-reference.md).
-The [CLI reference](external-api/04-cli-reference.md) documents `python -m nmrforge_api`.
+The [CLI reference](external-api/04-cli-reference.md) documents `python -m nmrfinesse_api`.
 The API builds 3D NUS references; 3D NUS combination execution raises `SweepError`.
 Desktop batch operations are 2D-only; the [API support matrix](external-api/09-limitations-and-roadmap.md)
 describes scripting combinations separately.

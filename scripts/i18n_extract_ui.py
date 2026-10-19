@@ -31,7 +31,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 #: Packages that take part in run-time interface text (tests/ and scripts/ do not)
-SOURCE_ROOTS = ("core", "backend", "workflow", "nmrforge_api", "gui", "viewer", "ui_support")
+SOURCE_ROOTS = ("core", "backend", "workflow", "nmrfinesse_api", "gui", "viewer", "ui_support")
 LOCALES = ROOT / "ui_support" / "locales"
 SOURCE_PATH = LOCALES / "source.json"
 ZH_PATH = LOCALES / "zh.json"

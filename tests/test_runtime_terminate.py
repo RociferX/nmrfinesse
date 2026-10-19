@@ -74,7 +74,7 @@ def test_orphan_targets_require_dead_parent_and_current_workspace() -> None:
     from backend.runtime import _orphan_targets
 
     procs = [
-        {"pid": 100, "ppid": 1, "name": "python", "args": "nmrforge"},
+        {"pid": 100, "ppid": 1, "name": "python", "args": "nmrfinesse"},
         {
             "pid": 101,
             "ppid": 100,

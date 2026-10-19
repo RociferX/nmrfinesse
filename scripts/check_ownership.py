@@ -22,7 +22,7 @@ BACKEND_PREFIXES = (
     "workflow/",
     # External interface package: no Qt, processing side implementation (2026-09-13 v0.2 included in
     # the ownership table).
-    "nmrforge_api/",
+    "nmrfinesse_api/",
     "core/data/",
     "core/experiment/",
     "core/experiments/",
@@ -51,7 +51,7 @@ SHARED_PREFIXES = (
     "gui/processing.py",
     "pyproject.toml",
     ".gitignore",
-    "nmrforge_data/",
+    "nmrfinesse_data/",
     ".codex/",
     "docs/",
     "scripts/check_ownership.py",

@@ -361,8 +361,8 @@ def test_neg_sign_keys_are_wired_everywhere() -> None:
     """
     from backend.script_generator import param_schema
     from core.experiment.acquisition_mode_detector import SIGN_SAMPLING_KEYS
-    from nmrforge_api.errors import SweepError
-    from nmrforge_api.sweep import _LOCKED_AXIS_KEYS, validate_axes
+    from nmrfinesse_api.errors import SweepError
+    from nmrfinesse_api.sweep import _LOCKED_AXIS_KEYS, validate_axes
 
     schema = param_schema()
     props = schema["properties"]["sampling"]["properties"]

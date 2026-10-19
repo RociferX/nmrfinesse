@@ -56,7 +56,7 @@ class SpectrumWindow(QMainWindow):
 
     def __init__(self, parent=None, start_dir: str = "") -> None:
         super().__init__(parent)
-        self.setWindowTitle(tr("NMRForge spectrum viewer"))
+        self.setWindowTitle(tr("NMRFinesse spectrum viewer"))
         self.resize(1080, 720)
         self.start_dir = start_dir
         self.viewer = SpectrumViewer()
@@ -185,7 +185,7 @@ class SpectrumWindow(QMainWindow):
         else:
             status_text = tr("Loaded: {p0}", p0=path)
         self.statusBar().showMessage(status_text)
-        self.setWindowTitle(tr("NMRForge spectrum viewer - {p0}", p0=path.name))
+        self.setWindowTitle(tr("NMRFinesse spectrum viewer - {p0}", p0=path.name))
         return True
 
     def _enter_3d_mode(self, spectrum3d: Spectrum3D, name: str) -> None:
@@ -212,7 +212,7 @@ class SpectrumWindow(QMainWindow):
         self._spectrum3d_active = False
         self._spectrum3d_panel.clear()
         self.viewer.clear()
-        self.setWindowTitle(tr("NMRForge spectrum viewer"))
+        self.setWindowTitle(tr("NMRFinesse spectrum viewer"))
         self.statusBar().showMessage(tr("spectrum cleared"))
 
     def _refresh_recent(self) -> None:
@@ -315,7 +315,7 @@ def _install_dialog_centering(app) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Command line entry: nmrforge-viewer [spectrum.ft2...]."""
+    """Command line entry: nmrfinesse-viewer [spectrum.ft2...]."""
     from qtcompat.QtWidgets import QApplication
 
     args = argv if argv is not None else sys.argv[1:]
@@ -328,9 +328,9 @@ def main(argv: list[str] | None = None) -> int:
     _icon = app_icon()
     if _icon is not None:
         app.setWindowIcon(_icon)
-    app.setApplicationName("NMRForge")
+    app.setApplicationName("NMRFinesse")
     try:
-        app.setDesktopFileName("NMRForge")
+        app.setDesktopFileName("NMRFinesse")
     except AttributeError:
         pass
     window = SpectrumWindow()

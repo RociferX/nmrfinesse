@@ -1,4 +1,4 @@
-# 02 · 快速上手(v1.1.4)
+# 02 · 快速上手(v1.1.5)
 
 ## 1. 两个模式
 
@@ -6,7 +6,7 @@
 处理),组合模式**必须显式指定参考**。
 
 ```python
-from nmrforge_api import run_reference_study, run_combination_study, run_parameter_study
+from nmrfinesse_api import run_reference_study, run_combination_study, run_parameter_study
 
 # 1) 参考模式:导入数据 + 自动优化参考谱/脚本 + 一张参考峰表
 reference = run_reference_study(
@@ -120,7 +120,7 @@ reference = run_reference_study(
 完整校验和复用边界见[输入与数据](05-inputs-and-data.md)。
 
 ```python
-from nmrforge_api import (
+from nmrfinesse_api import (
     add_dataset, build_reference, ensure_reference_peaks, open_study,
     plan_sweep, run_sweep, write_records,
 )
@@ -140,16 +140,16 @@ print(records)
 ## 4. 命令行
 
 ```bash
-python -m nmrforge_api init      --study ~/studies/s1 --dataset ~/data/a --condition A
-python -m nmrforge_api init      --study ~/studies/s1 --dataset ~/data/b --condition B
-python -m nmrforge_api init      --study ~/studies/segmented --segmented \
+python -m nmrfinesse_api init      --study ~/studies/s1 --dataset ~/data/a --condition A
+python -m nmrfinesse_api init      --study ~/studies/s1 --dataset ~/data/b --condition B
+python -m nmrfinesse_api init      --study ~/studies/segmented --segmented \
     --dataset ~/data/segment1 --dataset ~/data/segment2 --condition A
-python -m nmrforge_api reference --study ~/studies/s1
-python -m nmrforge_api peaks     --study ~/studies/s1
-python -m nmrforge_api sweep     --study ~/studies/s1 --reference ~/studies/s1 \
+python -m nmrfinesse_api reference --study ~/studies/s1
+python -m nmrfinesse_api peaks     --study ~/studies/s1
+python -m nmrfinesse_api sweep     --study ~/studies/s1 --reference ~/studies/s1 \
     --combos design.csv
-python -m nmrforge_api status    --study ~/studies/s1
-python -m nmrforge_api report    --study ~/studies/s1
+python -m nmrfinesse_api status    --study ~/studies/s1
+python -m nmrfinesse_api report    --study ~/studies/s1
 ```
 
 ## 5. 看什么文件

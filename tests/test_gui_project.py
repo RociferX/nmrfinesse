@@ -70,7 +70,7 @@ def test_new_project_action(
 ) -> None:
     """With no project open, "New project" names it inline on the welcome page (no dialog)."""
     # A new project lands in the default workspace (to avoid polluting the real
-    # ~/NMRForgeWorkspace)
+    # ~/NMRFinesseWorkspace)
     workspace = tmp_path / "ws"
     workspace.mkdir()
     monkeypatch.setattr(

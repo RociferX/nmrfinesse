@@ -13,10 +13,10 @@ from backend.script_generator import generate_convert_script, generate_process_s
 from core.data.bruker_reader import read_dataset, resolve_sweep_width
 from core.data.sweep_width import apply_sweep_width_overrides
 from core.planning.method_selector import select_method
-from nmrforge_api import MeasurementError, detect_and_localize, measure_peak_positions
-from nmrforge_api.peak_tables import peak_table_rows
-from nmrforge_api.peaks import PeakMeasurement, read_reference_peaks
-from nmrforge_api.processing_audit import ft_processing_audit, validate_ft_options
+from nmrfinesse_api import MeasurementError, detect_and_localize, measure_peak_positions
+from nmrfinesse_api.peak_tables import peak_table_rows
+from nmrfinesse_api.peaks import PeakMeasurement, read_reference_peaks
+from nmrfinesse_api.processing_audit import ft_processing_audit, validate_ft_options
 from workflow.pick_peaks import SpectrumAxes
 
 
@@ -189,7 +189,7 @@ def test_missing_identity_stays_empty_when_measurements_reload() -> None:
 
 
 def test_empty_identity_and_unknown_boolean_survive_csv_roundtrip(tmp_path: Path) -> None:
-    from nmrforge_api.peak_tables import read_peak_table, write_peak_table
+    from nmrfinesse_api.peak_tables import read_peak_table, write_peak_table
 
     first = tmp_path / "first.csv"
     second = tmp_path / "second.csv"
@@ -203,8 +203,8 @@ def test_empty_identity_and_unknown_boolean_survive_csv_roundtrip(tmp_path: Path
 
 
 def test_legacy_reference_contract_must_be_rebuilt(tmp_path: Path) -> None:
-    from nmrforge_api import ReferenceError
-    from nmrforge_api.reference import ReferenceSpectrum, validate_reference_peak_contract
+    from nmrfinesse_api import ReferenceError
+    from nmrfinesse_api.reference import ReferenceSpectrum, validate_reference_peak_contract
 
     reference = ReferenceSpectrum(dataset_key="test", exp_id="exp", data_id="data")
     reference.peak_source = "shared:A"
@@ -230,9 +230,9 @@ def test_per_condition_inputs_are_independent_and_timings_include_peak_work(
 ) -> None:
     import shutil
 
-    from test_nmrforge_api import _FakeSweepBackend
+    from test_nmrfinesse_api import _FakeSweepBackend
 
-    from nmrforge_api import run_combination_study, run_reference_study
+    from nmrfinesse_api import run_combination_study, run_reference_study
 
     second = tmp_path / "second"
     shutil.copytree(bruker_dir / "hsqc_2d", second)

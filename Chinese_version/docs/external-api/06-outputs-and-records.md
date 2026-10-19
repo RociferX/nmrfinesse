@@ -1,10 +1,10 @@
-# 06 · 输出与记录(v1.1.4)
+# 06 · 输出与记录(v1.1.5)
 
 ## 6.1 目录布局
 
 ```text
 <root>/
-  project.json                    NMRForge 项目(数据与 WorkflowRun 登记)
+  project.json                    NMRFinesse 项目(数据与 WorkflowRun 登记)
   study/
     study.json                    条件数据集 + 参考摘要
     work/                         共享 fid、转换侧车与每次运行的脚本/候选谱
@@ -86,7 +86,7 @@ print(reference.optimization_scores["path"])
 本次增加的评分列追加在既有CSV列之后，CSV旧列顺序不变；JSON结构化行沿用相同字段集合，schema仍为`v1`。
 有效旧CSV按原文件复用，可能仍是旧列；旧JSON行未保存的新字段保持缺键。
 CSV丢失或损坏后按当前表头从冻结行恢复，缺失项写空列，不从旧参考谱追算或回填。
-需要完整新子项时用`force=True`重建参考。统一峰表仍为38列，API仍为v1.1.4。
+需要完整新子项时用`force=True`重建参考。统一峰表仍为38列，API仍为v1.1.5。
 
 ## 6.2 统一峰表字段(当前 **38 列**)
 
@@ -115,7 +115,7 @@ resume 指纹绑定冻结 FID 证据与当前输入策略。
 `reference_peak_id` 留空,其中 `peak_id` 是本谱序号,不能跨谱连接。
 
 参考记录中的 `input_fingerprint` 为
-`{"schema":"nmrforge_api.reference_input.v1","params":{...},"sha256":"..."}`。
+`{"schema":"nmrfinesse_api.reference_input.v1","params":{...},"sha256":"..."}`。
 它覆盖完整规范化的处理参数、`phase_route` 与直接维范围;等价点号/嵌套参数得到同一输入。
 复用要求完整对象一致。差异或缺失/无效的旧指纹必须由调用方显式 `force=True` / `--force`
 重建,不会自动重建;多条件参考先全部预检,确认匹配后才启动任一条件的后端处理。
@@ -164,7 +164,7 @@ shift_vs_picked_H, shift_vs_picked_N
   每条 `run.json.peak_localization.parabolic` 也有 `n_duplicate`,出现同坐标行时
   `run.json.warnings` 另留一条 `duplicate_localization`(码 + 行数)。
 
-- 列序即上面的代码块顺序,`nmrforge_api.peak_tables.PEAK_TABLE_COLUMNS`
+- 列序即上面的代码块顺序,`nmrfinesse_api.peak_tables.PEAK_TABLE_COLUMNS`
   是唯一来源;参考表与组合表**结构完全一致(38 列)**;
 - `localization_requested` 是请求(`parabolic`);`localization_method` 是实际结果:
   实际执行精修时为 `parabolic`（不代表 QC 一定通过）,未检出或 targeted 跳过时为 `none`。
@@ -274,8 +274,8 @@ shift_vs_picked_H, shift_vs_picked_N
 | `window` | 选峰边距:物理宽度、等效点数、点距、来源 |
 | `script_diff` | 参考脚本 vs 本 workflow 脚本的差异(`n_changed` + 前 20 行 diff):用于审计“只改组合表指定的那几行” |
 | `log_path` | 完整日志路径 |
-| `versions` | nmrforge / python / 依赖 / NMRPipe / SMILE(真机登记后) |
-| `behavior_digest` / `token_digest` | **行为指纹**:前者对 `core/`+`backend/`+`workflow/`+`nmrforge_api/` 与随包数据取内容 SHA-256,后者去掉注释/docstring 后归一化 |
+| `versions` | nmrfinesse / python / 依赖 / NMRPipe / SMILE(真机登记后) |
+| `behavior_digest` / `token_digest` | **行为指纹**:前者对 `core/`+`backend/`+`workflow/`+`nmrfinesse_api/` 与随包数据取内容 SHA-256,后者去掉注释/docstring 后归一化 |
 | `compat_level` / `compat_affected` / `compat_verified` | 该次运行由哪套行为产生:分级 `same`/`additive`/`behavior_changed`/`contract_changed`(另加 `unverified`);`compat_affected` 是行为变化影响的使用者步骤;`compat_verified` 为 false 表示工作树与声明不一致(别拿去复用) |
 | `status` / `warnings` / `message` | 三值状态 + 警告码与计数 |
 

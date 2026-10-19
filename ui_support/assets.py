@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 #: Application icon candidates, in priority order.
-_ICON_NAMES = ("nmrforge.png",)
+_ICON_NAMES = ("nmrfinesse.png",)
 
 #: Images the theme's QSS refers to.
 _THEME_IMAGES = ("spin_up.png", "spin_down.png")
@@ -19,7 +19,7 @@ _THEME_IMAGES = ("spin_up.png", "spin_down.png")
 def gui_assets_dir() -> Path | None:
     """``gui/assets`` in a source checkout, an installed wheel and a frozen AppImage.
 
-    2026-09-21 (option A): now that the runtime data moved into ``nmrforge_data``,
+    2026-09-21 (option A): now that the runtime data moved into ``nmrfinesse_data``,
     ``resource_path("gui")`` only holds for the AppImage (``_MEIPASS/gui/assets``) and the
     old layout; an installed copy has to resolve through the ``gui`` package itself. Both
     candidates are tried, first hit wins; None means the caller falls back on its own.

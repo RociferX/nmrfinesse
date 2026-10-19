@@ -2,7 +2,7 @@
 rejection, config default.
 
 These cases reuse the synthetic spectrum/peak table/fake backend fixtures from
-``tests/test_nmrforge_api.py`` (same ppm convention) to verify that the downstream
+``tests/test_nmrfinesse_api.py`` (same ppm convention) to verify that the downstream
 research interface can select the localization algorithm through the API -- that is, the
 entry point for "comparing the peak-position difference the two algorithms bring".
 """
@@ -16,27 +16,27 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from test_nmrforge_api import (  # noqa: E402
+from test_nmrfinesse_api import (  # noqa: E402
     _FakeSweepBackend,
     _write_ft2,
     _write_peak_table,
 )
 
-import nmrforge_api  # noqa: E402
-import nmrforge_api.peaks as api_peaks  # noqa: E402
+import nmrfinesse_api  # noqa: E402
+import nmrfinesse_api.peaks as api_peaks  # noqa: E402
 import workflow.pick_peaks as wf  # noqa: E402
 from core.peaks import localize as lz  # noqa: E402
 from core.peaks.peak_table import load_peaks  # noqa: E402
-from nmrforge_api import (  # noqa: E402
+from nmrfinesse_api import (  # noqa: E402
     PEAK_TABLE_COLUMNS,
     add_dataset,
     measure_peak_positions,
     open_study,
 )
-from nmrforge_api.compat import default_snapshot  # noqa: E402
-from nmrforge_api.errors import MeasurementError, SweepError  # noqa: E402
-from nmrforge_api.peaks import detect_and_localize  # noqa: E402
-from nmrforge_api.reference import REFERENCE_TABLE_FILENAMES  # noqa: E402
+from nmrfinesse_api.compat import default_snapshot  # noqa: E402
+from nmrfinesse_api.errors import MeasurementError, SweepError  # noqa: E402
+from nmrfinesse_api.peaks import detect_and_localize  # noqa: E402
+from nmrfinesse_api.reference import REFERENCE_TABLE_FILENAMES  # noqa: E402
 from ui_support import i18n  # noqa: E402
 
 
@@ -94,8 +94,8 @@ def test_detect_and_localize_has_no_method_choice(tmp_path: Path) -> None:
 
 def test_api_no_longer_exposes_gaussian_surface() -> None:
     """Regression coverage: test api no longer exposes gaussian surface."""
-    assert not hasattr(nmrforge_api, "GAUSSIAN_ONLY_COLUMNS")
-    assert not hasattr(nmrforge_api, "gaussian_fallback_rows")
+    assert not hasattr(nmrfinesse_api, "GAUSSIAN_ONLY_COLUMNS")
+    assert not hasattr(nmrfinesse_api, "gaussian_fallback_rows")
     assert not hasattr(api_peaks, "GAUSSIAN_UNSUPPORTED_MESSAGE")
     assert not hasattr(lz, "GAUSSIAN_SUPPORTED_NDIM")
     assert not hasattr(lz, "DEFAULT_GAUSSIAN_MAX_NFEV")
@@ -160,7 +160,7 @@ def test_reference_build_has_no_localization_choice(
 
 def test_localization_choice_is_rejected_at_api_level(tmp_path: Path) -> None:
     """Regression coverage: test localization choice is rejected at api level."""
-    from nmrforge_api.sweep import _localization_methods
+    from nmrfinesse_api.sweep import _localization_methods
 
     assert _localization_methods("parabolic") == ["parabolic"]
     assert _localization_methods(None) == []
@@ -174,8 +174,8 @@ def test_localization_choice_is_rejected_at_api_level(tmp_path: Path) -> None:
 
 def test_per_method_target_keys_are_rejected() -> None:
     """Regression coverage: test per method target keys are rejected."""
-    from nmrforge_api.localization_targets import split_target_specs
-    from nmrforge_api.sweep import split_combo
+    from nmrfinesse_api.localization_targets import split_target_specs
+    from nmrfinesse_api.sweep import split_combo
 
     for spec in ({"gaussian": "g.csv"}, {"both": "b.csv"}):
         with pytest.raises(SweepError) as exc:

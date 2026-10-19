@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "nmrforge"
+name = "nmrfinesse"
 # PROV-009: the version lives in exactly one place (core.__version__) so that pyproject / package / AppImage cannot drift
 dynamic = ["version"]
 description = "Automated processing, parameter optimisation and quality control for Bruker 2D/3D NMR data"
@@ -25,8 +25,8 @@ license = { text = "Apache-2.0" }
 #       peak list are not reported as peak recovery or comprehensive scientific validation
 #       (see docs/evidence/real-data-comparison.md);
 #   (2) a compatibility promise carried by the compat process (the behaviour digests and the
-#       four levels plus a golden vector, see nmrforge_api/compat_declaration.py).
-# - `nmrforge_api` is v1.1.4 (2026-10-15), with bounded reference-window scoring; the 38-column table is retained.
+#       four levels plus a golden vector, see nmrfinesse_api/compat_declaration.py).
+# - `nmrfinesse_api` is v1.1.5 (2026-10-20), with bounded reference-window scoring; the 38-column table is retained.
 #   Software and API versions are maintained separately; the source tree carries both current contracts.
 #   the historical 1.0.2 AppImage does not include the current API contract.
 # - Linux is the validation and release target. Windows is an editing environment only;
@@ -55,13 +55,13 @@ dependencies = [
 ]
 
 [project.scripts]
-nmrforge-viewer = "viewer.app:main"
+nmrfinesse-viewer = "viewer.app:main"
 
 # Optional dependency groups (PEP 621). Notes:
 # - There is no `gui` group: PySide6/pyqtgraph are runtime-required dependencies of the current design, not optional extras;
 #   installing the GUI means installing this package itself.
 # - `pip install .` / a wheel is supported since 2026-09-21: the runtime resources
-#   (config/, presets/) moved into the data package `nmrforge_data` (see its __init__.py),
+#   (config/, presets/) moved into the data package `nmrfinesse_data` (see its __init__.py),
 #   and gui/assets, ui_support/locales ship as package-data. The relative position is the
 #   same in a checkout and in an installed copy, so `resource_path()` works in both.
 #   The Linux AppImage is a single artefact with runtime language selection.
@@ -80,7 +80,7 @@ docs = [
 ]
 
 # Shipped data is declared explicitly below instead of relying on "everything tracked by the
-# VCS counts as package data", which would drag the git-ignored nmrforge.local.yaml along
+# VCS counts as package data", which would drag the git-ignored nmrfinesse.local.yaml along
 [tool.setuptools]
 include-package-data = false
 
@@ -91,18 +91,18 @@ include = [
     "workflow*",
     "gui*",
     "viewer*",
-    "nmrforge_api*",
+    "nmrfinesse_api*",
     "qtcompat*",
     "ui_support*",
-    "nmrforge_data*",
+    "nmrfinesse_data*",
 ]
 
 # Shipped data (YAML/JSON/images cannot ride along through package discovery alone)
 [tool.setuptools.package-data]
 # list the files that belong in the package: config/ also holds the git-ignored
-# nmrforge.local.yaml (machine paths), which "config/*.yaml" would package as well
-nmrforge_data = [
-    "config/nmrforge.yaml",
+# nmrfinesse.local.yaml (machine paths), which "config/*.yaml" would package as well
+nmrfinesse_data = [
+    "config/nmrfinesse.yaml",
     "config/README.md",
     "presets/*.yaml",
     "presets/*.md",
@@ -119,20 +119,20 @@ ui_support = [
     "locales/zh.json",
     "locales/*.md",
 ]
-# The four behaviour-tree READMEs ship as well: nmrforge_api.compat behaviour_digest covers
-# EVERY file under core/ + backend/ + workflow/ + nmrforge_api/, so without them an installed
+# The four behaviour-tree READMEs ship as well: nmrfinesse_api.compat behaviour_digest covers
+# EVERY file under core/ + backend/ + workflow/ + nmrfinesse_api/, so without them an installed
 # copy computes a different fingerprint and compat_verified / compat_level read
 # false / unverified there. Guarded by
 # tests/test_release_readiness.py::test_wheel_ships_every_fingerprinted_file
 core = ["README.md"]
 backend = ["README.md"]
 workflow = ["README.md"]
-nmrforge_api = ["README.md"]
+nmrfinesse_api = ["README.md"]
 
-# The machine-local override (nmrforge.local.yaml) is a git-ignored local file that may carry
+# The machine-local override (nmrfinesse.local.yaml) is a git-ignored local file that may carry
 # developer absolute paths: never put it in a wheel/sdist (the AppImage build stashes it first)
 [tool.setuptools.exclude-package-data]
-nmrforge_data = ["config/*.local.yaml"]
+nmrfinesse_data = ["config/*.local.yaml"]
 
 [tool.setuptools.dynamic]
 version = {attr = "core.__version__"}
@@ -142,7 +142,7 @@ testpaths = ["tests"]
 pythonpath = ["."]
 # Chinese_version/ holds the Chinese edition of the documentation; it is excluded from test
 # collection and static checks
-norecursedirs = ["Chinese_version", ".git", ".venv", "build", "dist"]
+norecursedirs = ["nmrforge", "nmrfinesse", "Chinese_version", ".git", ".venv", "build", "dist"]
 addopts = "-q"
 markers = [
     "unit: pure logic tests (no temp dirs, Qt or project manager); the fastest group",
@@ -153,7 +153,7 @@ markers = [
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-exclude = ["nmrforge", ".venv", ".git", "build", "dist", "Chinese_version"]
+exclude = ["nmrforge", "nmrfinesse", ".venv", ".git", "build", "dist", "Chinese_version"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP"]

@@ -5,7 +5,7 @@ from __future__ import annotations
 from workflow.script_check import check_script
 
 GOOD_SCRIPT = """#!/bin/csh
-# NMRForge processing script
+# NMRFinesse processing script
 xyz2pipe -in d_001.fid -x \\
 | nmrPipe -fn SP -off 0.45 -end 0.98 -pow 1 -c 0.5 \\
 | nmrPipe -fn ZF -size 4096 \\

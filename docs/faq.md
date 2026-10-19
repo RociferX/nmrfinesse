@@ -1,11 +1,11 @@
 # FAQ
 
-### Is nmrForge a replacement for NMRPipe?
+### Is NMRFinesse a replacement for NMRPipe?
 
-No. nmrForge decides *what* to run and records *why*,
+No. NMRFinesse decides *what* to run and records *why*,
 then drives NMRPipe to do the processing. You need an NMRPipe installation.
 
-### Do I need Python to use nmrForge?
+### Do I need Python to use NMRFinesse?
 
 Not for the AppImage: it bundles Python and Qt. For the source path you need Python 3.12+ and the
 editable repository checkout.
@@ -13,12 +13,12 @@ editable repository checkout.
 ### Can I run it on Windows or macOS?
 
 Linux is the target runtime; Windows is an editing environment. macOS has not been validated.
-The current version is software 1.0.8 / API v1.1.4. Download the Linux AppImage from the
-[1.0.8 release](https://github.com/RociferX/nmrforge/releases/tag/v1.0.8).
+The current version is software 1.0.9 / API v1.1.5. Download the Linux AppImage from the
+[1.0.9 release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.9).
 API parameters and the
 38-column peak-table contract are documented in the [Python API](python-api.md).
 
-### Does nmrForge send my data anywhere?
+### Does NMRFinesse send my data anywhere?
 
 No. There is no telemetry, upload or account requirement. Processing is local, and the
 application itself makes no network calls. Source installation downloads dependencies; the AppImage
@@ -56,30 +56,30 @@ log states which rule fired.
 
 Yes - English is the interface's source language, so the menus, panel labels, statuses and
 messages are English by default. The same build also speaks Chinese: the interface follows the
-system language, or you can pin it with `NMRFORGE_LANG=zh` (the Chinese text lives in
+system language, or you can pin it with `NMRFinesse_LANG=zh` (the Chinese text lives in
 `ui_support/locales/zh.json`). One code base, two languages; a Chinese edition of the
 **documentation** is in `Chinese_version/`.
 
 **You can also change it inside the GUI**: `Settings -> Software settings -> Interface
 language`, choosing "Follow the system language / Chinese / English"; it is saved to the local
 override config and takes effect after a restart. The resolution order is "explicit setting,
-then the `NMRFORGE_LANG` environment variable, then the preference from the settings, then the
-system locale (QLocale / `LANG` / `LC_ALL`), then the default of this tree". `NMRFORGE_LANG`
-deliberately comes before the setting so that `NMRFORGE_LANG=zh ./NMRForge.AppImage` keeps
+then the `NMRFinesse_LANG` environment variable, then the preference from the settings, then the
+system locale (QLocale / `LANG` / `LC_ALL`), then the default of this tree". `NMRFinesse_LANG`
+deliberately comes before the setting so that `NMRFinesse_LANG=zh ./NMRFinesse.AppImage` keeps
 overriding a stale setting for one run - while `LANG=en_US.UTF-8` is only the system locale and
 does **not** override the Chinese you picked in the settings.
 
-### Does nmrForge include HSQC CSP analysis?
+### Does NMRFinesse include HSQC CSP analysis?
 
-No. nmrForge does not provide HSQC CSP analysis. Downstream analysis code can consume
-`nmrforge_api` output.
+No. NMRFinesse does not provide HSQC CSP analysis. Downstream analysis code can consume
+`nmrfinesse_api` output.
 
 ### How is the version number managed?
 
 `core/__init__.py` defines `__version__`. `pyproject.toml` and the AppImage build read it, and run
-records store it. The scripting API version is managed separately by `nmrforge_api.API_VERSION`.
+records store it. The scripting API version is managed separately by `nmrfinesse_api.API_VERSION`.
 
-### How do I cite nmrForge?
+### How do I cite NMRFinesse?
 
 Citation metadata is in [CITATION.cff](../CITATION.cff): author Xuanfeng Li, affiliation University
 of Science and Technology of China. The concept DOI is
@@ -88,7 +88,7 @@ obtain a version-specific DOI from that release’s archive record when needed.
 If you publish results, also cite NMRPipe and SMILE;
 see [THIRD_PARTY.md](../THIRD_PARTY.md).
 
-### Can I use nmrForge commercially?
+### Can I use NMRFinesse commercially?
 
 Yes. This project's own source is Apache-2.0: the verbatim text is [LICENSE](../LICENSE) and the
 copyright line plus SPDX identifier are in [NOTICE](../NOTICE). The Qt/PySide6 libraries bundled
@@ -96,7 +96,7 @@ inside the packaged distribution are LGPL-3.0, which constrains that distributio
 the source. [LICENSE_OPTIONS.md](../LICENSE_OPTIONS.md) records the source/binary split and
 [THIRD_PARTY.md](../THIRD_PARTY.md) the third-party components.
 
-### How do I know a published result is reproducible from nmrForge?
+### How do I know a published result is reproducible from NMRFinesse?
 
 Run records contain the resolved parameters, the scripts used, the software version, the external
 tool versions and the warnings; generated scripts and spectra are kept. See

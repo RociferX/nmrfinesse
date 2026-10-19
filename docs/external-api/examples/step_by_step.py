@@ -11,7 +11,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from nmrforge_api import (
+from nmrfinesse_api import (
     add_dataset,
     build_reference,
     ensure_reference_peaks,
@@ -24,7 +24,7 @@ from nmrforge_api import (
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="nmrforge_api Step-by-step example")
+    parser = argparse.ArgumentParser(description="nmrfinesse_api Step-by-step example")
     parser.add_argument("--study", required=True, help="Study the root directory")
     parser.add_argument("--dataset", required=True, help="Bruker directory")
     parser.add_argument("--condition", default="A", help="Conditional label (default A)")

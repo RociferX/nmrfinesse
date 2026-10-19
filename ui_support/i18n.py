@@ -13,15 +13,15 @@ Model (since 2026-09-21):
 - a key with no translation falls back to the English original: nothing goes blank and
   nothing raises;
 - where the language comes from, in order: ``set_language()`` -> the environment variables
-  ``NMRFORGE_LANG`` / ``NMRFORGE_LANGUAGE`` -> **the preference in the user config**
-  (``language: auto|zh|en`` in ``nmrforge.local.yaml``, written by the GUI's software
+  ``NMRFINESSE_LANG`` / ``NMRFINESSE_LANGUAGE`` -> **the preference in the user config**
+  (``language: auto|zh|en`` in ``nmrfinesse.local.yaml``, written by the GUI's software
   settings; ``auto`` means "do not take part") -> the system-language resolver the caller
   injects (``set_system_language_resolver``; the GUI injects QLocale) -> ``LANG`` /
   ``LC_ALL`` -> the default declared in :data:`DEFAULT_LANGUAGE_PATH` (private repository =
   zh, public English tree = en; the source language when that file is missing).
-  ``NMRFORGE_LANG`` / ``NMRFORGE_LANGUAGE`` come **before** the user config on purpose: they
-  are the documented way to pin the language for one run (``NMRFORGE_LANG=zh
-  ./NMRForge.AppImage``) and should not be quietly overridden by a stale setting; use the GUI
+  ``NMRFINESSE_LANG`` / ``NMRFINESSE_LANGUAGE`` come **before** the user config on purpose: they
+  are the documented way to pin the language for one run (``NMRFINESSE_LANG=zh
+  ./NMRFinesse.AppImage``) and should not be quietly overridden by a stale setting; use the GUI
   setting to change the language for good. ``LANG`` / ``LC_ALL`` / ``LC_MESSAGES`` are only the
   **system locale** and come *after* the setting - otherwise the ``LANG=en_US.UTF-8`` that
   almost every Linux machine has would silently defeat "Settings -> Interface language =
@@ -50,7 +50,7 @@ SOURCE_LANGUAGE = "en"
 DEFAULT_LANGUAGE_PATH = Path(__file__).resolve().parent / "locales" / "default.json"
 #: Supported language codes -> catalogue file name. Anything else falls back to the source.
 SUPPORTED_LANGUAGES: dict[str, str] = {"en": "en.json", "zh": "zh.json"}
-#: Key in the user config (``nmrforge.local.yaml``) that selects the interface language;
+#: Key in the user config (``nmrfinesse.local.yaml``) that selects the interface language;
 #: written by the GUI's software settings.
 USER_CONFIG_KEY = "language"
 #: The values that key may take; ``auto`` (or a missing/invalid value) follows the system.
@@ -59,7 +59,7 @@ USER_CHOICES: tuple[str, ...] = ("auto", *SUPPORTED_LANGUAGES)
 CATALOGUE_DIR = Path(__file__).resolve().parent / "locales"
 
 #: Explicit pins (temporary; they come before the user setting)
-_ENV_KEYS = ("NMRFORGE_LANG", "NMRFORGE_LANGUAGE")
+_ENV_KEYS = ("NMRFINESSE_LANG", "NMRFINESSE_LANGUAGE")
 #: System-locale variables (equivalent to "follow the system"; they come after the user setting)
 _LOCALE_ENV_KEYS = ("LC_ALL", "LC_MESSAGES", "LANG")
 
@@ -117,7 +117,7 @@ def set_system_language_resolver(resolver: Callable[[], str | None] | None) -> N
 
 
 def language_from_environment() -> str | None:
-    """Read ``NMRFORGE_LANG`` / ``NMRFORGE_LANGUAGE`` (a temporary pin); else ``None``."""
+    """Read an explicit language environment variable, if present."""
     for key in _ENV_KEYS:
         found = normalize_language(os.environ.get(key))
         if found:
@@ -144,14 +144,14 @@ def read_user_preference(path: Path | None = None) -> str | None:
 
     ``auto``, a missing key, an unsupported code or a broken file all give ``None`` (follow
     the system). ``path`` is for tests; the default is the local override shared by the GUI
-    and the backend (``core.app_paths.local_config_path("nmrforge.local.yaml")``), so the
+    and the backend (``core.app_paths.local_config_path("nmrfinesse.local.yaml")``), so the
     language pinned in the settings also applies to the viewer and the command line.
     """
     import yaml
 
     from core.app_paths import local_config_path
 
-    target = Path(path) if path is not None else local_config_path("nmrforge.local.yaml")
+    target = Path(path) if path is not None else local_config_path("nmrfinesse.local.yaml")
     try:
         raw = yaml.safe_load(target.read_text(encoding="utf-8")) or {}
     except (OSError, ValueError, yaml.YAMLError):
@@ -191,7 +191,7 @@ def default_language() -> str:
 
 
 def resolve_language() -> str:
-    """The language in force: explicit -> NMRFORGE_LANG -> setting -> system locale -> default."""
+    """Resolve explicit language, environment, setting, system locale, then default."""
     explicit = normalize_language(_language)
     if explicit:
         return explicit

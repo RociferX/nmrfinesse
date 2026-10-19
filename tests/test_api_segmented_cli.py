@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from nmrforge_api import cli
+from nmrfinesse_api import cli
 
 
 def _fake_study(root: Path) -> SimpleNamespace:

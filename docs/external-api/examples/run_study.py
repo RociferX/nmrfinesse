@@ -7,11 +7,11 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from nmrforge_api import load_combo_table, run_parameter_study
+from nmrfinesse_api import load_combo_table, run_parameter_study
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="nmrforge_api One-step example")
+    parser = argparse.ArgumentParser(description="nmrfinesse_api One-step example")
     parser.add_argument("--study", required=True, help="Study the root directory")
     parser.add_argument("--a", required=True, help="Bruker directory for condition A")
     parser.add_argument("--b", default="", help="Bruker directory for condition B (optional)")

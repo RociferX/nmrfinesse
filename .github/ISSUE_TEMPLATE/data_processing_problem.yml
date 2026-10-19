@@ -42,7 +42,7 @@ body:
         - automatic (generate spectrum)
         - manual (edited script)
         - batch / data group
-        - parameter sweep (nmrforge_api)
+        - parameter sweep (nmrfinesse_api)
     validations:
       required: true
 
@@ -65,7 +65,7 @@ body:
   - type: input
     id: versions
     attributes:
-      label: nmrForge version, NMRPipe version, OS
+      label: NMRFinesse version, NMRPipe version, OS
     validations:
       required: true
 

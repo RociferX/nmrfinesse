@@ -1,17 +1,17 @@
-# 04 · 命令行参考(v1.1.4)
+# 04 · 命令行参考(v1.1.5)
 
-入口:`python -m nmrforge_api <命令> --study <研究根>`。
+入口:`python -m nmrfinesse_api <命令> --study <研究根>`。
 公共参数:`--study`(必填)、`--name`(新建研究名)、`--condition <A|B|…>`
 (缺省 = 全部条件)。
 
 ## init — 建研究并导入数据集
 
 ```bash
-python -m nmrforge_api init --study ~/studies/s1 --dataset ~/data/apo --condition A
-python -m nmrforge_api init --study ~/studies/s1 --dataset ~/data/holo --condition B
-python -m nmrforge_api init --study ~/studies/segments --segmented \
+python -m nmrfinesse_api init --study ~/studies/s1 --dataset ~/data/apo --condition A
+python -m nmrfinesse_api init --study ~/studies/s1 --dataset ~/data/holo --condition B
+python -m nmrfinesse_api init --study ~/studies/segments --segmented \
     --dataset ~/data/segment1 --dataset ~/data/segment2 --condition A
-python -m nmrforge_api init --study ~/studies/s1            # 只看已登记条件
+python -m nmrfinesse_api init --study ~/studies/s1            # 只看已登记条件
 ```
 
 输出:研究根 + 条件 + 数据集摘要(ndim/核/采样/来源/raw_dir/文件数)。
@@ -23,18 +23,18 @@ python -m nmrforge_api init --study ~/studies/s1            # 只看已登记条
 每个段必须是完整 Bruker 原始数据目录。逐段动力学实验、缺少 `nuslist` 的 NUS 数据会拒绝；
 段的维数、核、有效 TD、谱宽、采样模式、采集轴布局、SFO 频率及载频必须一致。段可位于不同父目录。复用
 现有条件时，所有源段及其顺序都必须一致；要换段或改顺序请使用新条件或新研究根，
-`reference --force` 只重建参数参考，不更改源段绑定。版本号为 API v1.1.4 / 软件 1.0.8；
+`reference --force` 只重建参数参考，不更改源段绑定。版本号为 API v1.1.5 / 软件 1.0.9；
 此处描述的多段工程行为尚无真实 NMRPipe/SMILE 引擎验证。
 
 ## reference — 参考工作流(每个条件一份)
 
 ```bash
-python -m nmrforge_api reference --study ~/studies/s1
-python -m nmrforge_api reference --study ~/studies/s1 --condition A --force
-python -m nmrforge_api reference --study ~/studies/s1 --params auto.yaml
-python -m nmrforge_api reference --study ~/studies/s1 --condition-params conditions.json
-python -m nmrforge_api reference --study ~/studies/s1 --carrier-ppm F1=120.0 --carrier-ppm F2=4.7 --force
-python -m nmrforge_api reference --study ~/studies/s3 --carrier-ppm F3=4.7 --force
+python -m nmrfinesse_api reference --study ~/studies/s1
+python -m nmrfinesse_api reference --study ~/studies/s1 --condition A --force
+python -m nmrfinesse_api reference --study ~/studies/s1 --params auto.yaml
+python -m nmrfinesse_api reference --study ~/studies/s1 --condition-params conditions.json
+python -m nmrfinesse_api reference --study ~/studies/s1 --carrier-ppm F1=120.0 --carrier-ppm F2=4.7 --force
+python -m nmrfinesse_api reference --study ~/studies/s3 --carrier-ppm F3=4.7 --force
 ```
 
 `--params` 是自动流程的输入覆盖(YAML/JSON);`--carrier-ppm` 可重复指定逻辑 F 轴载频，
@@ -78,9 +78,9 @@ optimization_candidates:
 ## peaks — 参考峰表(身份 + 一张统一峰表)
 
 ```bash
-python -m nmrforge_api peaks --study ~/studies/s1
-python -m nmrforge_api peaks --study ~/studies/s1 --sigma 25 --max-peaks 60
-python -m nmrforge_api peaks --study ~/studies/s1 --peak-table external.list
+python -m nmrfinesse_api peaks --study ~/studies/s1
+python -m nmrfinesse_api peaks --study ~/studies/s1 --sigma 25 --max-peaks 60
+python -m nmrfinesse_api peaks --study ~/studies/s1 --peak-table external.list
 ```
 
 每个条件都在自己的参考谱上独立选峰并生成 `reference.list` 和
@@ -98,14 +98,14 @@ python -m nmrforge_api peaks --study ~/studies/s1 --peak-table external.list
 **`--reference` 必填**(组合模式必须显式指定参考):
 
 ```bash
-python -m nmrforge_api sweep --study ~/studies/s1 \
+python -m nmrfinesse_api sweep --study ~/studies/s1 \
     --reference ~/studies/s1 --combos design.csv
-python -m nmrforge_api sweep --study ~/studies/s1 \
+python -m nmrfinesse_api sweep --study ~/studies/s1 \
     --reference ~/studies/s1#B --grid grid.yaml
-python -m nmrforge_api sweep --study ~/studies/s1 \
+python -m nmrfinesse_api sweep --study ~/studies/s1 \
     --reference ~/studies/s1/study/reference/exp_001_d_001/reference.json \
     --combos design.csv --no-resume
-python -m nmrforge_api sweep --study ~/studies/s1 \
+python -m nmrfinesse_api sweep --study ~/studies/s1 \
     --reference ~/studies/s1 --combos design.csv \
     --localize-peaks truth_peaks.csv
 ```
@@ -126,7 +126,7 @@ python -m nmrforge_api sweep --study ~/studies/s1 \
 | `--max-runs` | 组合数上限(缺省 256) |
 | `--localize-peaks` | 仅目标峰从检出整数格点做三点抛物线精修；非目标保留整数格点，方法记 `none`、定位 QC 为 NaN。CSV 至少含 `peak_id`，可带 `condition`；条件缺行默认报错 |
 | `--edge-margin-ppm` | 人工覆盖选峰边缘排除宽度(ppm);缺省依据采集先验与原始边缘候选证据保守筛查,不设固定边缘遮罩 |
-| `--no-resume` | 不跳过已完成 workflow(续跑指纹 schema 为 `nmrforge_api.resume.v4`) |
+| `--no-resume` | 不跳过已完成 workflow(续跑指纹 schema 为 `nmrfinesse_api.resume.v4`) |
 
 `--combos` 与 `--grid` 必须且只能给一个。组合表支持把显式布尔值作为扫描候选:
 `sampling.ft_neg`、`sampling.ft_neg_f1`、`sampling.ft_neg_f2` 及兼容别名
@@ -150,7 +150,7 @@ stdout;进度、日志和错误写到 stderr,便于管道读取 JSON。
 ## report — 用已有记录重算汇总(不重跑处理)
 
 ```bash
-python -m nmrforge_api report --study ~/studies/s1
+python -m nmrfinesse_api report --study ~/studies/s1
 ```
 
 重新拼装 `study/records/`(长表 `peak_table_parabolic.csv`、manifest、workflows、runs 与
@@ -159,7 +159,7 @@ measurement)，不调用后端，并刷新 `records/reference.json` 参考聚合
 ## status — 现状
 
 ```bash
-python -m nmrforge_api status --study ~/studies/s1
+python -m nmrfinesse_api status --study ~/studies/s1
 ```
 
 输出:条件数据集、逐条件参考(脚本/谱哈希、峰数、峰表)、计划的 workflow 数与
@@ -174,9 +174,9 @@ ID、已记录 workflow 数、运行状态计数、records 目录。
 ## `compat`:行为兼容清单(不需要研究根)
 
 ```bash
-python -m nmrforge_api compat
-python -m nmrforge_api compat --out compat.json
-python -m nmrforge_api compat --golden --workdir /tmp/nmrforge_golden
+python -m nmrfinesse_api compat
+python -m nmrfinesse_api compat --out compat.json
+python -m nmrfinesse_api compat --golden --workdir /tmp/nmrfinesse_golden
 ```
 
 | 选项 | 含义 |

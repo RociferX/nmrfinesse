@@ -132,7 +132,7 @@ def test_run_records_software_and_tool_versions(tmp_path: Path) -> None:
         params={"phase_route": "none"},
     )
     assert run.software_version == core.__version__
-    assert run.tool_versions["nmrforge"] == core.__version__
+    assert run.tool_versions["nmrfinesse"] == core.__version__
     assert run.tool_versions.get("python")
     assert run.history == [{"at": run.started_at, "event": "started"}]
     assert run.decisions[0]["kind"] == "params"
@@ -148,7 +148,7 @@ def test_run_records_software_and_tool_versions(tmp_path: Path) -> None:
     stored = reopened.project.run(run.run_id)
     assert stored is not None
     assert stored.software_version == core.__version__
-    assert stored.tool_versions["nmrforge"] == core.__version__
+    assert stored.tool_versions["nmrfinesse"] == core.__version__
     assert stored.history[0]["event"] == "started"
     assert stored.history[-1]["event"] == "finished"
 
@@ -323,7 +323,7 @@ def test_default_config_has_no_consumerless_sections() -> None:
 
     from core.app_paths import resource_path
 
-    raw = yaml.safe_load(resource_path("config/nmrforge.yaml").read_text(encoding="utf-8"))
+    raw = yaml.safe_load(resource_path("config/nmrfinesse.yaml").read_text(encoding="utf-8"))
     for section in ("app", "optimization", "qc", "reporting", "logging"):
         assert section not in raw, section
     # peaks.localization (2026-09-13) is consumed by
@@ -346,14 +346,14 @@ def test_smile_wording_matches_scheme_b() -> None:
 def test_appimage_build_guards_against_missing_runtime_pieces() -> None:
     """The build blocks two classes of accident: resources missing from the artifact, and
     the artifact not starting at all (each hit once on a real machine, 2026-09-21)."""
-    spec = Path("packaging/linux/NMRForge.spec").read_text(encoding="utf-8")
+    spec = Path("packaging/linux/NMRFinesse.spec").read_text(encoding="utf-8")
     script = Path("packaging/linux/build_appimage.sh").read_text(encoding="utf-8")
     # 1. the resource self-check must recognize PyInstaller 6's content directory _internal
     #    (otherwise a real-machine build falsely reports missing resources)
     assert "BUNDLE_DIR" in script and "_internal" in script
     # 2. frozen-startup smoke test: the packaged executable must stay alive offscreen for
     #    20 seconds
-    assert 'timeout 20 "$APPDIR/usr/bin/NMRForge"' in script
+    assert 'timeout 20 "$APPDIR/usr/bin/NMRFinesse"' in script
     assert "SMOKE_STATUS" in script
     # 3. qtcompat imports PySide6.QtTest unconditionally -- excluding it crashes the GUI at
     #    startup
@@ -364,12 +364,12 @@ def test_appimage_build_guards_against_missing_runtime_pieces() -> None:
 def test_appimage_spec_covers_runtime_resources() -> None:
     """PACK-015: the AppImage datas must keep covering the runtime resource directories
     (including the language packs)."""
-    spec = Path("packaging/linux/NMRForge.spec").read_text(encoding="utf-8")
+    spec = Path("packaging/linux/NMRFinesse.spec").read_text(encoding="utf-8")
     # Shipped data is taken from the data package and keeps the same shape inside the
     # artifact (installed = frozen = source tree)
     resources = {
-        "nmrforge_data/config": "nmrforge_data/config",
-        "nmrforge_data/presets": "nmrforge_data/presets",
+        "nmrfinesse_data/config": "nmrfinesse_data/config",
+        "nmrfinesse_data/presets": "nmrfinesse_data/presets",
         "gui/assets": "gui/assets",
         "ui_support/locales": "ui_support/locales",
     }
@@ -394,19 +394,19 @@ def test_appimage_build_is_single_artifact_with_runtime_language() -> None:
 
 def test_machine_local_config_cannot_reach_the_wheel() -> None:
     """Shipped data goes into the wheel, but the machine-level override
-    `nmrforge.local.yaml` must be excluded (it carries absolute local paths)."""
+    `nmrfinesse.local.yaml` must be excluded (it carries absolute local paths)."""
     import tomllib
 
     data = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
     setuptools = data["tool"]["setuptools"]
-    packaged = setuptools["package-data"]["nmrforge_data"]
-    excluded = setuptools["exclude-package-data"]["nmrforge_data"]
+    packaged = setuptools["package-data"]["nmrfinesse_data"]
+    excluded = setuptools["exclude-package-data"]["nmrfinesse_data"]
     assert all("local" not in item for item in packaged), packaged
     assert any("local" in item for item in excluded), excluded
     # The same concern on the AppImage side: the build script moves it out of the build
     # tree first
     script = Path("packaging/linux/build_appimage.sh").read_text(encoding="utf-8")
-    assert 'LOCAL_CFG="nmrforge_data/config/nmrforge.local.yaml"' in script
+    assert 'LOCAL_CFG="nmrfinesse_data/config/nmrfinesse.local.yaml"' in script
 
 
 def test_both_trees_declare_a_default_language_file() -> None:
@@ -442,9 +442,9 @@ def test_appimage_build_keeps_the_machine_local_config_out() -> None:
     """PACK-015: the machine-level local config (git-ignored) must not enter the artifact
     -- it carries the build machine's absolute paths."""
     script = Path("packaging/linux/build_appimage.sh").read_text(encoding="utf-8")
-    assert 'LOCAL_CFG="nmrforge_data/config/nmrforge.local.yaml"' in script
-    # It must be moved out before PyInstaller, otherwise the datas of NMRForge.spec copy it
+    assert 'LOCAL_CFG="nmrfinesse_data/config/nmrfinesse.local.yaml"' in script
+    # It must be moved out before PyInstaller, otherwise the datas of NMRFinesse.spec copy it
     # into the AppDir
-    assert script.index('LOCAL_CFG="nmrforge_data/config/nmrforge.local.yaml"') < script.index(
+    assert script.index('LOCAL_CFG="nmrfinesse_data/config/nmrfinesse.local.yaml"') < script.index(
         "--distpath"
     )

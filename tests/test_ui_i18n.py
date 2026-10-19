@@ -48,7 +48,15 @@ def _restore_language(monkeypatch: pytest.MonkeyPatch):
     tests cannot pollute each other."""
     saved_language = i18n._language
     saved_resolver = i18n._system_resolver
-    for key in ("NMRFORGE_LANG", "NMRFORGE_LANGUAGE", "LANG", "LC_ALL", "LC_MESSAGES"):
+    for key in (
+        "NMRFINESSE_LANG",
+        "NMRFINESSE_LANGUAGE",
+        "NMRFINESSE_LANG",
+        "NMRFINESSE_LANGUAGE",
+        "LANG",
+        "LC_ALL",
+        "LC_MESSAGES",
+    ):
         monkeypatch.delenv(key, raising=False)
     i18n.reset_cache()
     yield
@@ -84,10 +92,10 @@ def test_tr_interpolates_placeholders() -> None:
 def test_language_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     """The explicit environment variable and the system locale both normalise to zh / en;
     with neither, the tree's declared default language is used."""
-    monkeypatch.setenv("NMRFORGE_LANG", "zh_CN.UTF-8")
+    monkeypatch.setenv("NMRFINESSE_LANG", "zh_CN.UTF-8")
     assert i18n.language_from_environment() == "zh"
     assert i18n.get_language() == "zh"
-    monkeypatch.delenv("NMRFORGE_LANG")
+    monkeypatch.delenv("NMRFINESSE_LANG")
     monkeypatch.setenv("LANG", "en_US.UTF-8")
     # The system locale is not an explicit pin: it ranks below the settings preference
     # (see the regression test below)
@@ -115,10 +123,10 @@ def test_language_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_explicit_language_wins_over_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     """An explicit setting beats the environment variable; an unknown language falls
     back to this tree's default language."""
-    monkeypatch.setenv("NMRFORGE_LANG", "zh")
+    monkeypatch.setenv("NMRFINESSE_LANG", "zh")
     assert i18n.set_language("en") == "en"
     assert i18n.tr("Determined") == "Determined"
-    monkeypatch.delenv("NMRFORGE_LANG")
+    monkeypatch.delenv("NMRFINESSE_LANG")
     i18n.set_system_language_resolver(lambda: None)  # drop any resolver left by another test
     assert i18n.set_language("de") == i18n.default_language()
 
@@ -126,7 +134,7 @@ def test_explicit_language_wins_over_environment(monkeypatch: pytest.MonkeyPatch
 def test_user_preference_from_config(tmp_path: Path) -> None:
     """The ``language`` key in the user config can pin the language; auto/unsupported/broken
     files all fall back to "follow the system"."""
-    config = tmp_path / "nmrforge.local.yaml"
+    config = tmp_path / "nmrfinesse.local.yaml"
     config.write_text("language: zh_CN\n", encoding="utf-8")
     assert i18n.read_user_preference(config) == "zh"
     config.write_text("language: auto\n", encoding="utf-8")
@@ -141,24 +149,24 @@ def test_user_preference_from_config(tmp_path: Path) -> None:
 def test_user_preference_sits_between_environment_and_system(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Resolution order: explicit setting > NMRFORGE_LANG > the settings preference >
+    """Resolution order: explicit setting > NMRFINESSE_LANG > the settings preference >
     the system language.
 
     The environment variable deliberately comes first: the README and the packaging docs
     use it to pin the language for one run, and a stale setting must not override that.
     """
-    config = tmp_path / "nmrforge.local.yaml"
+    config = tmp_path / "nmrfinesse.local.yaml"
     config.write_text("language: en\n", encoding="utf-8")
     monkeypatch.setattr("core.app_paths.local_config_path", lambda *a, **k: config)
     i18n.reset_cache()
     i18n.set_language(None)
     i18n.set_system_language_resolver(lambda: "zh-CN")
     assert i18n.get_language() == "en"  # the setting beats the system language
-    monkeypatch.setenv("NMRFORGE_LANG", "zh")
+    monkeypatch.setenv("NMRFINESSE_LANG", "zh")
     assert i18n.get_language() == "zh"  # the environment variable beats the setting
-    monkeypatch.delenv("NMRFORGE_LANG")
+    monkeypatch.delenv("NMRFINESSE_LANG")
     assert i18n.set_language("en") == "en"  # an explicit setting wins outright
-    monkeypatch.setenv("NMRFORGE_LANG", "zh")
+    monkeypatch.setenv("NMRFINESSE_LANG", "zh")
     assert i18n.get_language() == "en"
 
 
@@ -172,10 +180,10 @@ def test_system_locale_does_not_override_the_user_setting(
     setting, "Settings → Interface language = Chinese" would never take effect -- the
     same "changed it and nothing happened" symptom.
     """
-    config = tmp_path / "nmrforge.local.yaml"
+    config = tmp_path / "nmrfinesse.local.yaml"
     config.write_text("language: zh\n", encoding="utf-8")
     monkeypatch.setattr("core.app_paths.local_config_path", lambda *a, **k: config)
-    for key in ("NMRFORGE_LANG", "NMRFORGE_LANGUAGE"):
+    for key in ("NMRFINESSE_LANG", "NMRFINESSE_LANGUAGE"):
         monkeypatch.delenv(key, raising=False)
     monkeypatch.setenv("LANG", "en_US.UTF-8")
     monkeypatch.setenv("LC_ALL", "en_US.UTF-8")
@@ -184,7 +192,7 @@ def test_system_locale_does_not_override_the_user_setting(
     i18n.set_system_language_resolver(lambda: "en-US")
     try:
         assert i18n.get_language() == "zh"  # the setting beats the system locale and QLocale
-        monkeypatch.setenv("NMRFORGE_LANG", "en")
+        monkeypatch.setenv("NMRFINESSE_LANG", "en")
         assert i18n.get_language() == "en"  # an explicit pin still wins
     finally:
         i18n.set_system_language_resolver(None)

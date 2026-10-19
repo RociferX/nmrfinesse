@@ -1,0 +1,496 @@
+{
+  "kind": "display_projection_comparison_not_independent_truth",
+  "projection": "signed_max_absolute_voxel; all-axis common crop before projection",
+  "source_ndim": 3,
+  "offset_fitted": false,
+  "reference_offset_ppm": {},
+  "offset_source": "none",
+  "matching": "same polarity; joint normalized distance <=1; greedy one-to-one",
+  "primary_metric": "reference_candidate_coverage; not true-peak recovery",
+  "requested_sigma_floor": 0.0,
+  "requested_sign_mode": "dominant",
+  "min_height_fraction": 0.1,
+  "tolerance_ppm": {
+    "H": 0.02,
+    "N": 0.2,
+    "C": 0.15
+  },
+  "spectrum_sha256": {
+    "automatic": "b04b6c74ffb4dd7af3222a02f054a493619f949976641af30bc7e9e4bd33239f",
+    "comparison": "10b8a86aaa1792d7553586503d074117da0181a9576eb1767bb5f14d008fe5d5"
+  },
+  "planes": {
+    "HN": {
+      "automatic": {
+        "requested_sigma_floor": 0.0,
+        "resolved_sigma_multiplier": 83.86481740833804,
+        "requested_sign_mode": "dominant",
+        "sign_mode": "dominant",
+        "sign_evidence": {
+          "weighting": "squared_snr",
+          "positive_count": 95,
+          "negative_count": 3,
+          "positive_weight": 10.277039739420509,
+          "negative_weight": 0.04051633503994221,
+          "positive_share": 0.9960730685883806,
+          "negative_share": 0.003926931411619295,
+          "dominant_sign": 1
+        },
+        "positive_candidates": 95,
+        "negative_candidates": 0,
+        "detected_before_height_filter": 95,
+        "noise_estimate": 2533041.5591249997,
+        "baseline": 863177.5625,
+        "max_abs_centered_voxel": 2124330678.4375,
+        "height_cutoff": 212433067.84375,
+        "count": 95,
+        "shape": [
+          254,
+          1174
+        ]
+      },
+      "comparison": {
+        "requested_sigma_floor": 0.0,
+        "resolved_sigma_multiplier": 17.365747717090258,
+        "requested_sign_mode": "dominant",
+        "sign_mode": "dominant",
+        "sign_evidence": {
+          "weighting": "squared_snr",
+          "positive_count": 89,
+          "negative_count": 0,
+          "positive_weight": 10.260257304150356,
+          "negative_weight": 0.0,
+          "positive_share": 1.0,
+          "negative_share": 0.0,
+          "dominant_sign": 1
+        },
+        "positive_candidates": 89,
+        "negative_candidates": 0,
+        "detected_before_height_filter": 89,
+        "noise_estimate": 1796248.2924749998,
+        "baseline": 655893.15625,
+        "max_abs_centered_voxel": 311931946.84375,
+        "height_cutoff": 31193194.684375003,
+        "count": 89,
+        "shape": [
+          128,
+          588
+        ]
+      },
+      "matched": 89,
+      "automatic_matched_fraction": 0.9368421052631579,
+      "comparison_matched_fraction": 1.0,
+      "reference_candidate_coverage": 1.0,
+      "automatic_unmatched_candidates": [
+        {
+          "candidate_index_1based": 27,
+          "ppm": {
+            "H": 8.433687911319993,
+            "N": 123.28164337523773
+          },
+          "intensity": 419595574.4375,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 42,
+          "ppm": {
+            "H": 8.278682023703007,
+            "N": 118.09443867320888
+          },
+          "intensity": 372919286.4375,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 50,
+          "ppm": {
+            "H": 8.292970479053825,
+            "N": 118.81146046983771
+          },
+          "intensity": 355231286.4375,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 62,
+          "ppm": {
+            "H": 8.183533126361246,
+            "N": 120.06714821619185
+          },
+          "intensity": 328102070.4375,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 71,
+          "ppm": {
+            "H": 8.008007119761348,
+            "N": 123.46786436800818
+          },
+          "intensity": 305673654.4375,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 93,
+          "ppm": {
+            "H": 7.686580294720697,
+            "N": 112.14285823441095
+          },
+          "intensity": 247942678.4375,
+          "sign": 1
+        }
+      ],
+      "reference_unmatched_candidates": [],
+      "median_abs_delta_ppm": {
+        "H": 0.0003285809738624579,
+        "N": 0.009460990637762734
+      },
+      "windows_ppm": {
+        "H": [
+          5.999361071289801,
+          9.995254494684481
+        ],
+        "N": [
+          103.30287401178308,
+          130.97450679157217
+        ]
+      },
+      "intensity_pearson": 0.9951320597821406,
+      "median_fwhm_ratio_by_nucleus": {
+        "H": 0.9465154757608134,
+        "N": 0.7649757203635114
+      }
+    },
+    "HC": {
+      "automatic": {
+        "requested_sigma_floor": 0.0,
+        "resolved_sigma_multiplier": 81.24453675777286,
+        "requested_sign_mode": "dominant",
+        "sign_mode": "dominant",
+        "sign_evidence": {
+          "weighting": "squared_snr",
+          "positive_count": 99,
+          "negative_count": 0,
+          "positive_weight": 11.066813450947208,
+          "negative_weight": 0.0,
+          "positive_share": 1.0,
+          "negative_share": 0.0,
+          "dominant_sign": 1
+        },
+        "positive_candidates": 99,
+        "negative_candidates": 0,
+        "detected_before_height_filter": 99,
+        "noise_estimate": 2614686.858525,
+        "baseline": 903630.125,
+        "max_abs_centered_voxel": 2124290225.875,
+        "height_cutoff": 212429022.5875,
+        "count": 99,
+        "shape": [
+          254,
+          1174
+        ]
+      },
+      "comparison": {
+        "requested_sigma_floor": 0.0,
+        "resolved_sigma_multiplier": 16.94773465846145,
+        "requested_sign_mode": "dominant",
+        "sign_mode": "dominant",
+        "sign_evidence": {
+          "weighting": "squared_snr",
+          "positive_count": 93,
+          "negative_count": 0,
+          "positive_weight": 10.545169255219262,
+          "negative_weight": 0.0,
+          "positive_share": 1.0,
+          "negative_share": 0.0,
+          "dominant_sign": 1
+        },
+        "positive_candidates": 93,
+        "negative_candidates": 0,
+        "detected_before_height_filter": 93,
+        "noise_estimate": 1840464.93789375,
+        "baseline": 670725.84375,
+        "max_abs_centered_voxel": 311917114.15625,
+        "height_cutoff": 31191711.415625002,
+        "count": 93,
+        "shape": [
+          127,
+          588
+        ]
+      },
+      "matched": 93,
+      "automatic_matched_fraction": 0.9393939393939394,
+      "comparison_matched_fraction": 1.0,
+      "reference_candidate_coverage": 1.0,
+      "automatic_unmatched_candidates": [
+        {
+          "candidate_index_1based": 6,
+          "ppm": {
+            "H": 8.031747765139684,
+            "C": 176.988260878427
+          },
+          "intensity": 1749815857.875,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 51,
+          "ppm": {
+            "H": 8.228750748789002,
+            "C": 179.20760431475017
+          },
+          "intensity": 358114513.875,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 53,
+          "ppm": {
+            "H": 8.292970479053825,
+            "C": 177.99733570479958
+          },
+          "intensity": 355190833.875,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 68,
+          "ppm": {
+            "H": 8.37979118236366,
+            "C": 178.6181535994607
+          },
+          "intensity": 321862545.875,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 97,
+          "ppm": {
+            "H": 7.686580294720697,
+            "C": 177.02831560837691
+          },
+          "intensity": 247902225.875,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 99,
+          "ppm": {
+            "H": 8.346909903980949,
+            "C": 178.58158672047117
+          },
+          "intensity": 245878113.875,
+          "sign": 1
+        }
+      ],
+      "reference_unmatched_candidates": [],
+      "median_abs_delta_ppm": {
+        "H": 0.0002855539930317619,
+        "C": 0.0031747373220696318
+      },
+      "windows_ppm": {
+        "H": [
+          5.999361071289801,
+          9.995254494684481
+        ],
+        "C": [
+          169.36946652722682,
+          183.09925187484518
+        ]
+      },
+      "intensity_pearson": 0.9944423275837139,
+      "median_fwhm_ratio_by_nucleus": {
+        "H": 0.943815484286362,
+        "C": 0.7757431350182503
+      }
+    },
+    "NC": {
+      "automatic": {
+        "requested_sigma_floor": 0.0,
+        "resolved_sigma_multiplier": 65.07845528222784,
+        "requested_sign_mode": "dominant",
+        "sign_mode": "dominant",
+        "sign_evidence": {
+          "weighting": "squared_snr",
+          "positive_count": 91,
+          "negative_count": 3,
+          "positive_weight": 10.573589608833924,
+          "negative_weight": 0.040585727961937317,
+          "positive_share": 0.9961762711963839,
+          "negative_share": 0.00382372880361604,
+          "dominant_sign": 1
+        },
+        "positive_candidates": 91,
+        "negative_candidates": 0,
+        "detected_before_height_filter": 91,
+        "noise_estimate": 3263969.3821874997,
+        "baseline": 1053001.1875,
+        "max_abs_centered_voxel": 2124140854.8125,
+        "height_cutoff": 212414085.48125002,
+        "count": 91,
+        "shape": [
+          254,
+          254
+        ]
+      },
+      "comparison": {
+        "requested_sigma_floor": 0.0,
+        "resolved_sigma_multiplier": 12.064440067291295,
+        "requested_sign_mode": "dominant",
+        "sign_mode": "dominant",
+        "sign_evidence": {
+          "weighting": "squared_snr",
+          "positive_count": 79,
+          "negative_count": 0,
+          "positive_weight": 10.527539724493463,
+          "negative_weight": 0.0,
+          "positive_share": 1.0,
+          "negative_share": 0.0,
+          "dominant_sign": 1
+        },
+        "positive_candidates": 79,
+        "negative_candidates": 0,
+        "detected_before_height_filter": 79,
+        "noise_estimate": 2583557.77194375,
+        "baseline": 896061.0,
+        "max_abs_centered_voxel": 311691779.0,
+        "height_cutoff": 31169177.900000002,
+        "count": 79,
+        "shape": [
+          127,
+          128
+        ]
+      },
+      "matched": 79,
+      "automatic_matched_fraction": 0.8681318681318682,
+      "comparison_matched_fraction": 1.0,
+      "reference_candidate_coverage": 1.0,
+      "automatic_unmatched_candidates": [
+        {
+          "candidate_index_1based": 30,
+          "ppm": {
+            "N": 118.31566267141865,
+            "C": 180.14704714610366
+          },
+          "intensity": 400884918.8125,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 33,
+          "ppm": {
+            "N": 119.80507415323765,
+            "C": 178.90299309237201
+          },
+          "intensity": 396364662.8125,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 37,
+          "ppm": {
+            "N": 119.71582703657236,
+            "C": 179.29232736038767
+          },
+          "intensity": 377881398.8125,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 42,
+          "ppm": {
+            "N": 120.86810602085224,
+            "C": 176.0707518577934
+          },
+          "intensity": 371092694.8125,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 44,
+          "ppm": {
+            "N": 124.20988234779995,
+            "C": 178.1075761349945
+          },
+          "intensity": 369089590.8125,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 47,
+          "ppm": {
+            "N": 118.95745633951668,
+            "C": 179.207166987782
+          },
+          "intensity": 357965142.8125,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 48,
+          "ppm": {
+            "N": 118.80811245958917,
+            "C": 177.99733570479958
+          },
+          "intensity": 355041462.8125,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 76,
+          "ppm": {
+            "N": 119.68909571538549,
+            "C": 178.4039218132069
+          },
+          "intensity": 282427062.8125,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 79,
+          "ppm": {
+            "N": 116.54862133381557,
+            "C": 178.5011089568194
+          },
+          "intensity": 270685302.8125,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 82,
+          "ppm": {
+            "N": 122.23931392093797,
+            "C": 175.03170048124048
+          },
+          "intensity": 267930390.8125,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 88,
+          "ppm": {
+            "N": 112.14285823441095,
+            "C": 177.02831560837691
+          },
+          "intensity": 247752854.8125,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 89,
+          "ppm": {
+            "N": 119.56941948550163,
+            "C": 178.00241393432285
+          },
+          "intensity": 247181750.8125,
+          "sign": 1
+        }
+      ],
+      "reference_unmatched_candidates": [],
+      "median_abs_delta_ppm": {
+        "N": 0.010058410081782654,
+        "C": 0.003349725677225024
+      },
+      "windows_ppm": {
+        "N": [
+          103.30287401178308,
+          130.97450679157217
+        ],
+        "C": [
+          169.36946652722682,
+          183.09925187484518
+        ]
+      },
+      "intensity_pearson": 0.9951381355885373,
+      "median_fwhm_ratio_by_nucleus": {
+        "N": 0.7545345801913871,
+        "C": 0.774754611096923
+      }
+    }
+  },
+  "date": "2026-10-20",
+  "software_version": "1.0.9",
+  "api_version": "1.1.5",
+  "software_name": "NMRFinesse"
+}

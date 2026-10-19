@@ -427,6 +427,10 @@ def test_auto_full_path(
 
     peaks = pick_peaks(manager, exp_id, data_id)
     assert peaks.get("status") == "success"
+    sign_evidence = peaks["detection"]["sign_evidence"]
+    assert sign_evidence["weighting"] == "squared_snr"
+    assert sign_evidence["dominant_sign"] == 1
+    assert sign_evidence["positive_weight"] > sign_evidence["negative_weight"]
     assert any(
         r.workflow_ref == "pick_peaks" and r.status == "success"
         for r in manager.project.workflow_runs

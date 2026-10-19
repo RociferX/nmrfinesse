@@ -1,6 +1,6 @@
 # 外部依赖
 
-nmrForge 自动化 NMRPipe。它不包含、不下载、也不安装 NMRPipe。本页说明哪些东西是外部的、
+NMRFinesse 自动化 NMRPipe。它不包含、不下载、也不安装 NMRPipe。本页说明哪些东西是外部的、
 它们是怎么被找到的,以及缺失时会发生什么。
 
 ## 需要你自己安装的东西
@@ -13,9 +13,9 @@ nmrForge 自动化 NMRPipe。它不包含、不下载、也不安装 NMRPipe。�
 | Java 运行时 | 视安装方式而定,部分 NMRPipe 附件工具需要 | 你的操作系统包管理器,或某个 OpenJDK 发行版 |
 
 这些软件包里的任何内容都不会被复制进本仓库,也没有任何来自 NMRPipe 安装的脚本被收进
-`scripts/` 或 `nmrforge_data/presets/`。见 [THIRD_PARTY.md](../../THIRD_PARTY.md)。
+`scripts/` 或 `nmrfinesse_data/presets/`。见 [THIRD_PARTY.md](../../THIRD_PARTY.md)。
 
-## nmrForge 如何找到它们
+## NMRFinesse 如何找到它们
 
 NMRPipe 主程序由 `find_nmrpipe_bin` 查找,顺序如下:
 
@@ -30,8 +30,8 @@ NMRPipe 主程序由 `find_nmrpipe_bin` 查找,顺序如下:
 其它 NMRPipe companion 工具优先使用已配置且有效的单工具路径；否则先在 `csh` 环境中查找，
 再从已发现的安装目录及其父目录下的 `com/` 子目录查找。
 
-默认配置在 `nmrforge_data/config/nmrforge.yaml`。要做机器本地覆盖,就把它复制成
-`nmrforge_data/config/nmrforge.local.yaml`;该文件被 git 忽略,正是为了让机器路径永远不会进仓库。
+默认配置在 `nmrfinesse_data/config/nmrfinesse.yaml`。要做机器本地覆盖,就把它复制成
+`nmrfinesse_data/config/nmrfinesse.local.yaml`;该文件被 git 忽略,正是为了让机器路径永远不会进仓库。
 
 ```yaml
 backend:
@@ -68,7 +68,7 @@ backend:
 ## 资源说明
 
 - NUS 重构的内存主要由直接维尺寸乘以迭代间接 FT 网格决定,因此填零会让它迅速膨胀。
-  nmrForge 在运行 SMILE 之前先估算峰值,并传入显式的 `-maxMem`,
+  NMRFinesse 在运行 SMILE 之前先估算峰值,并传入显式的 `-maxMem`,
   对预计会超过可用内存的重构直接拒绝启动。
 - Linux 是目标运行平台；不要将 RAM 盘或其它 Windows 专用资源配置当作受支持的运行建议。
 - SMILE 的线程数是 `smile.nthread`(默认 2,并夹在「CPU 数减二」以内)。

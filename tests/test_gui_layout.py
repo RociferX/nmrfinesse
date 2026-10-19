@@ -166,10 +166,13 @@ def test_project_tree_structure(
     tmp_path: Path, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     manager = _manager_with_experiment(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        "core.workspace.default_workspace_path", lambda: tmp_path / "NMRFinesseWorkspace"
+    )
     panel = ProjectTreePanel(manager)
     assert panel.tree.topLevelItemCount() == 1
     workspace_item = panel.tree.topLevelItem(0)
-    assert workspace_item.text(0) == "NMRForgeWorkspace"  # Workspace root node
+    assert workspace_item.text(0) == "NMRFinesseWorkspace"  # Workspace root node
     project_item = workspace_item.child(0)
     assert project_item.text(0) == "demo"  # Current project shows project.name
     assert project_item.text(1) == "当前"  # Current-project marker
@@ -899,7 +902,7 @@ def test_comparison_plot_heights_match_after_open_resize_and_drag(
 def test_main_window_has_app_icon(
     tmp_path: Path, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """0.2.199-patch29eq: the main window sets the app icon (gui/assets/nmrforge.png)."""
+    """0.2.199-patch29eq: the main window sets the app icon (gui/assets/nmrfinesse.png)."""
     from ui_support.theme import app_icon
 
     manager = _manager_with_experiment(tmp_path, monkeypatch)
@@ -932,7 +935,7 @@ def test_tools_run_jumps_to_workspace_log(
     tmp_path: Path, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """0.2.199-patch29em: running a tool jumps to the top level (workspace root) and
-    switches the log to the global (NMRForgeWorkspace) scope."""
+    switches the log to the global (NMRFinesseWorkspace) scope."""
     manager = _manager_with_experiment(tmp_path, monkeypatch)
     window = MainWindow(manager=manager)
     tree = window.project_tree.tree

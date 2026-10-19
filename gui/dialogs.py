@@ -602,7 +602,7 @@ class RunHistoryDialog(QDialog):
         project_root: Path | str | None = None,
     ) -> None:
         super().__init__(parent)
-        self.setWindowTitle(tr("run history - {p0}", p0=project_name or "NMRForge"))
+        self.setWindowTitle(tr("run history - {p0}", p0=project_name or "NMRFinesse"))
         self.project_root = Path(project_root) if project_root else None
         self._current_snapshot = ""
         self.resize(720, 480)
@@ -696,7 +696,7 @@ class BatchSummaryDialog(QDialog):
         project_name: str = "",
     ) -> None:
         super().__init__(parent)
-        self.setWindowTitle(tr("Batch processing summary - {p0}", p0=project_name or "NMRForge"))
+        self.setWindowTitle(tr("Batch processing summary - {p0}", p0=project_name or "NMRFinesse"))
         self.resize(520, 380)
         layout = QVBoxLayout(self)
         info = QLabel(str(summary.get("info", "")))
@@ -734,7 +734,7 @@ class BatchSummaryDialog(QDialog):
 class SettingsDialog(QDialog):
     """Software settings (simplification, stage C3): interface language, NMRPipe path, default
     line width, simple mode; line width access generates spectrum parameter; save to
-    nmrforge_data/config/nmrforge.local.yaml, restart to take effect.
+    nmrfinesse_data/config/nmrfinesse.local.yaml, restart to take effect.
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -788,7 +788,7 @@ class SettingsDialog(QDialog):
         self.language_combo.setCurrentIndex(_index if _index >= 0 else 0)
         self.language_combo.setToolTip(
             tr(
-                "Pins the interface language; when following the system, NMRFORGE_LANG can "
+                "Pins the interface language; when following the system, NMRFINESSE_LANG can "
                 "still override it for a single run. Takes effect after restarting the program.",
             )
         )
@@ -857,9 +857,9 @@ class SettingsDialog(QDialog):
         self.simple_mode_check.setVisible(not is_appimage())
         layout.addWidget(self.simple_mode_check)
         if is_appimage():
-            dest = str(Path.home() / ".config" / "NMRForge" / SETTINGS_FILENAME)
+            dest = str(Path.home() / ".config" / "NMRFinesse" / SETTINGS_FILENAME)
         else:
-            dest = "nmrforge_data/config/" + SETTINGS_FILENAME
+            dest = "nmrfinesse_data/config/" + SETTINGS_FILENAME
         hint = QLabel(
             tr(
                 "save to {p0}, it will take effect after restarting; the default value will be "

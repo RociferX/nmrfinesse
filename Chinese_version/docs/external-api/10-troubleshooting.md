@@ -1,4 +1,4 @@
-# 10 · 排查(v1.1.4)
+# 10 · 排查(v1.1.5)
 
 ## 10.1 常见错误与处理
 
@@ -46,11 +46,11 @@
 ## 10.4 找不到东西时
 
 ```bash
-python -m nmrforge_api status --study <root>     # 条件/参考/workflow 概览
+python -m nmrfinesse_api status --study <root>     # 条件/参考/workflow 概览
 cat <root>/study/workflows/W0001/workflow.json   # 组合级记录
 cat <root>/study/workflows/W0001/A/log.txt       # 该条件完整日志
 cat <root>/study/records/manifest.json           # 全局清单与边界声明
 ```
 
 报告问题请附:研究根路径、`records/manifest.json`、涉及的 `run.json` 与
-`log.txt`、以及 `python -m nmrforge_api status` 输出。
+`log.txt`、以及 `python -m nmrfinesse_api status` 输出。

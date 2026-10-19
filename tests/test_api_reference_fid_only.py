@@ -5,11 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from test_nmrforge_api import _FakeSweepBackend
+from test_nmrfinesse_api import _FakeSweepBackend
 
 from backend.nmrpipe_backend import NMRPipeBackend
-from nmrforge_api import run_combination_study, run_reference_study
-from nmrforge_api.errors import ReferenceError
+from nmrfinesse_api import run_combination_study, run_reference_study
+from nmrfinesse_api.errors import ReferenceError
 
 
 @pytest.mark.parametrize(

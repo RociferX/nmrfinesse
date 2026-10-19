@@ -125,7 +125,7 @@ def test_compare_reports_all_dimensions_unfitted_fraction_and_hashes(tmp_path, m
     scales = [np.linspace(7, 9, 16), np.linspace(110, 130, 16), np.linspace(40, 60, 16)]
     axes = SimpleNamespace(data=np.zeros((16, 16, 16)), nuclei=nuclei, ppm=scales)
     pick_peaks = importlib.import_module("workflow.pick_peaks")
-    api_peaks = importlib.import_module("nmrforge_api.peaks")
+    api_peaks = importlib.import_module("nmrfinesse_api.peaks")
     monkeypatch.setattr(pick_peaks, "read_spectrum_axes", lambda path: axes)
 
     rows_by_path = {

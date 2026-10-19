@@ -1,0 +1,171 @@
+{
+  "kind": "display_projection_comparison_not_independent_truth",
+  "projection": "signed_max_absolute_voxel; all-axis common crop before projection",
+  "source_ndim": 2,
+  "offset_fitted": false,
+  "reference_offset_ppm": {
+    "H": 0.07258459433886566,
+    "N": 0.05977570099166485
+  },
+  "offset_source": "frozen_20261009_strong_anchor_translation; same author reference convention as uniform2d",
+  "matching": "same polarity; joint normalized distance <=1; greedy one-to-one",
+  "primary_metric": "reference_candidate_coverage; not true-peak recovery",
+  "requested_sigma_floor": 0.0,
+  "requested_sign_mode": "dominant",
+  "min_height_fraction": 0.1,
+  "tolerance_ppm": {
+    "H": 0.02,
+    "N": 0.2,
+    "C": 0.15
+  },
+  "spectrum_sha256": {
+    "automatic": "e798eb95644d9e7f42ef1cf400a1da339674223eeba2c355e284443fba1b1b1d",
+    "comparison": "3d4e1041c085b05e14cdf1bfb889670daa5d5caacaeeda5c1f58ce35dccb15d5"
+  },
+  "planes": {
+    "HN": {
+      "automatic": {
+        "requested_sigma_floor": 0.0,
+        "resolved_sigma_multiplier": 10.351125195350226,
+        "requested_sign_mode": "dominant",
+        "sign_mode": "dominant",
+        "sign_evidence": {
+          "weighting": "squared_snr",
+          "positive_count": 126,
+          "negative_count": 0,
+          "positive_weight": 34.85711634309084,
+          "negative_weight": 0.0,
+          "positive_share": 1.0,
+          "negative_share": 0.0,
+          "dominant_sign": 1
+        },
+        "positive_candidates": 126,
+        "negative_candidates": 0,
+        "detected_before_height_filter": 126,
+        "noise_estimate": 98953.82912460937,
+        "baseline": 5477.26171875,
+        "max_abs_centered_voxel": 10242834.73828125,
+        "height_cutoff": 1024283.473828125,
+        "count": 126,
+        "shape": [
+          255,
+          1028
+        ]
+      },
+      "comparison": {
+        "requested_sigma_floor": 0.0,
+        "resolved_sigma_multiplier": 17.690127468321077,
+        "requested_sign_mode": "dominant",
+        "sign_mode": "dominant",
+        "sign_evidence": {
+          "weighting": "squared_snr",
+          "positive_count": 126,
+          "negative_count": 0,
+          "positive_weight": 34.04147895328617,
+          "negative_weight": 0.0,
+          "positive_share": 1.0,
+          "negative_share": 0.0,
+          "dominant_sign": 1
+        },
+        "positive_candidates": 126,
+        "negative_candidates": 0,
+        "detected_before_height_filter": 126,
+        "noise_estimate": 1474.1387554687499,
+        "baseline": 357.70751953125,
+        "max_abs_centered_voxel": 260777.02490234375,
+        "height_cutoff": 26077.702490234376,
+        "count": 126,
+        "shape": [
+          255,
+          514
+        ]
+      },
+      "matched": 123,
+      "automatic_matched_fraction": 0.9761904761904762,
+      "comparison_matched_fraction": 0.9761904761904762,
+      "reference_candidate_coverage": 0.9761904761904762,
+      "automatic_unmatched_candidates": [
+        {
+          "candidate_index_1based": 22,
+          "ppm": {
+            "H": 8.595139436390705,
+            "N": 120.22983468713917
+          },
+          "intensity": 6511591.73828125,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 125,
+          "ppm": {
+            "H": 9.014643505227484,
+            "N": 115.62815435261084
+          },
+          "intensity": 1168800.98828125,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 126,
+          "ppm": {
+            "H": 8.521574776340092,
+            "N": 120.20997890851129
+          },
+          "intensity": 1159894.86328125,
+          "sign": 1
+        }
+      ],
+      "reference_unmatched_candidates": [
+        {
+          "candidate_index_1based": 94,
+          "ppm": {
+            "H": 9.275114128130578,
+            "N": 118.05760136245794
+          },
+          "intensity": 97133.44482421875,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 125,
+          "ppm": {
+            "H": 8.131289764517504,
+            "N": 118.61218976568716
+          },
+          "intensity": 32220.64208984375,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 126,
+          "ppm": {
+            "H": 8.543705039745257,
+            "N": 129.7483741652692
+          },
+          "intensity": 29501.23779296875,
+          "sign": 1
+        }
+      ],
+      "median_abs_delta_ppm": {
+        "H": 0.0012524514603349246,
+        "N": 0.007383921204095145
+      },
+      "windows_ppm": {
+        "H": [
+          6.4967250218616535,
+          10.498915245036136
+        ],
+        "N": [
+          100.33825853921292,
+          135.93705247365412
+        ]
+      },
+      "intensity_pearson": 0.9744934560432986,
+      "median_fwhm_ratio_by_nucleus": {
+        "H": 0.8595202542609967,
+        "N": 1.3680915196027248
+      }
+    }
+  },
+  "date": "2026-10-20",
+  "software_version": "1.0.9",
+  "api_version": "1.1.5",
+  "software_name": "NMRFinesse",
+  "reference_kind": "author_Bruker_pdata/1"
+}

@@ -1,4 +1,4 @@
-# 08 · Handover to a downstream analysis program (v1.1.4)
+# 08 · Handover to a downstream analysis program (v1.1.5)
 
 This software ends at "spectrum + peak table + processing record". **Statistical inference and
 significance judgement belong to your own independent analysis program**, which should read the
@@ -38,7 +38,7 @@ print(len(values), values[:3])
 ```
 
 > This example only reads and filters rows. Establish cross-spectrum correspondence and missing-peak
-> handling before statistical inference. `nmrforge_api.uncertainty` is separate from the two-stage
+> handling before statistical inference. `nmrfinesse_api.uncertainty` is separate from the two-stage
 > processing interface; independent spectra's local `peak_id` values do not establish corresponding peaks.
 
 ## 8.3 Recommended processing conventions

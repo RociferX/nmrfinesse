@@ -5,7 +5,7 @@ Two small, self-contained scripts.
 | Script | What it does |
 | --- | --- |
 | `make_synthetic_dataset.py` | writes a synthetic Bruker dataset (2D or 3D) so the pipeline can be exercised without spectrometer data |
-| `quickstart.py` | walks through what nmrForge understands about a dataset: dimensions, nuclei, experiment type and its evidence, sampling classification, the time-domain layout, and whether NMRPipe/SMILE are available |
+| `quickstart.py` | walks through what NMRFinesse understands about a dataset: dimensions, nuclei, experiment type and its evidence, sampling classification, the time-domain layout, and whether NMRPipe/SMILE are available |
 
 ```bash
 python examples/make_synthetic_dataset.py --out example_data/hsqc_2d

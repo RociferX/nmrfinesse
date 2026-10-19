@@ -264,7 +264,7 @@ def _mtime_ns(path: Path) -> int:
 
 
 def _pipeline_flags() -> bool:
-    """Pipeline simple mode switch (config/nmrforge.local.yaml -> gui.settings): After turning it
+    """Pipeline simple mode switch (config/nmrfinesse.local.yaml -> gui.settings): After turning it
     on, only press the previous step to determine whether the product file exists (the next step
     only recognizes the file of the corresponding format), no input/script fingerprint is
     compared with the old and new product, and "expired" is not displayed.

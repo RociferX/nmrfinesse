@@ -1073,7 +1073,7 @@ def test_load_from_ft3_without_fddimorder_keeps_storage_order(
     acquisition order cannot serve as a fallback)."""
     dic, data = _misordered_dic_and_data()
     monkeypatch.setattr("nmrglue.pipe.read", lambda path: (dic, data))
-    with caplog.at_level(logging.INFO, logger="nmrforge.viewer.spectrum"):
+    with caplog.at_level(logging.INFO, logger="nmrfinesse.viewer.spectrum"):
         spec = Spectrum3D.load_from_ft3(
             tmp_path / "61.ft3",
             labels=("C", "N", "H"),
@@ -1115,7 +1115,7 @@ def test_load_from_ft3_warns_ppm_range_mismatch(
         "FDF3LABEL": "H1",
     }
     monkeypatch.setattr("nmrglue.pipe.read", lambda path: (dic, data))
-    with caplog.at_level(logging.WARNING, logger="nmrforge.viewer.spectrum"):
+    with caplog.at_level(logging.WARNING, logger="nmrfinesse.viewer.spectrum"):
         Spectrum3D.load_from_ft3(tmp_path / "x.ft3")
     assert "轴序/引用自检" in caplog.text
 
@@ -1143,7 +1143,7 @@ def test_load_from_ft2_without_fddimorder_keeps_storage_order(
         "FDF2LABEL": "N15",
     }
     monkeypatch.setattr("nmrglue.pipe.read", lambda path: (dic, data))
-    with caplog.at_level(logging.INFO, logger="nmrforge.viewer.spectrum"):
+    with caplog.at_level(logging.INFO, logger="nmrfinesse.viewer.spectrum"):
         spec = Spectrum.load_from_ft2(tmp_path / "x.ft2", labels=("N", "H"), nuclei=["15N", "1H"])
     # storage order (FDF1=1H, FDF2=15N): no reordering; load_from_ft2 does no
     # display orientation, so the raw axis order is x=F2(15N), y=F1(1H); the

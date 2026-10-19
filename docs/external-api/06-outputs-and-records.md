@@ -1,10 +1,10 @@
-# 06 · Output and records (v1.1.4)
+# 06 · Output and records (v1.1.5)
 
 ## 6.1 directory layout
 
 ```text
 <root>/
-  project.json                    NMRForge project (datasets and WorkflowRun registrations)
+  project.json                    NMRFinesse project (datasets and WorkflowRun registrations)
   study/
     study.json                    condition datasets + reference summary
     work/                         shared fid plus each run's scripts/candidate spectra
@@ -99,8 +99,8 @@ authentication. Legacy references without this evidence require an explicit `for
 calling reference mode again with its default cache policy is not enough. Resume fingerprints include
 the frozen FID evidence and strict input policy, so older permissive runs are not silently reused.
 
-The unified API v1.1.4 table has **38 columns**, in the order below. Reference peak tables must
-match `nmrforge_api.peak_tables.PEAK_TABLE_COLUMNS`. Both modes use three-point parabolic refinement
+The unified API v1.1.5 table has **38 columns**, in the order below. Reference peak tables must
+match `nmrfinesse_api.peak_tables.PEAK_TABLE_COLUMNS`. Both modes use three-point parabolic refinement
 and write one table. `rebuild_reference_peak_tables()` can rebuild tables from the frozen spectrum;
 a missing or invalid input fingerprint requires explicit reference rebuilding with `force=True`.
 
@@ -248,8 +248,8 @@ intensity_ratio_vs_picked, shift_vs_picked_H, shift_vs_picked_N
 | `stage_times_s` | Per-stage elapsed times; each `workflow.json` `condition_records[]` copies the timing from its run, and `total` matches `wall_time_s` |
 | `script_diff` | Reference script vs this workflow script difference (`n_changed` + first 20 lines diff): used for auditing "only change the rows specified in the combination table" |
 | `log_path` | Full log path |
-| `versions` | nmrforge / python / dependencies / NMRPipe / SMILE (after real machine registration) |
-| `behavior_digest` / `token_digest` | **Behaviour fingerprints**: the first hashes the content of `core/`+`backend/`+`workflow/`+`nmrforge_api/` plus the shipped data, the second normalises through the AST with comments/docstrings stripped (comparable across editions) |
+| `versions` | NMRFinesse / python / dependencies / NMRPipe / SMILE (after real machine registration) |
+| `behavior_digest` / `token_digest` | **Behaviour fingerprints**: the first hashes the content of `core/`+`backend/`+`workflow/`+`nmrfinesse_api/` plus the shipped data, the second normalises through the AST with comments/docstrings stripped (comparable across editions) |
 | `compat_level` / `compat_affected` / `compat_verified` | which behaviour produced this run: `same`/`additive`/`behavior_changed`/`contract_changed` (plus `unverified`); `compat_affected` names the downstream steps a behaviour change touches; `compat_verified` false means the working tree disagrees with the declaration (do not reuse) |
 | `status` / `warnings` / `message` | Three-value status + warning code and count |
 
@@ -278,7 +278,7 @@ versions. `peak_identity.matching` records that cross-spectrum matching belongs 
 analysis. `manifest["boundary"]` describes the processing and analysis interface.
 
 Records contain processing and peak-table products. Cross-spectrum peak matching and statistical
-inference belong to downstream analysis; `nmrforge_api.uncertainty` is separate from the processing
+inference belong to downstream analysis; `nmrfinesse_api.uncertainty` is separate from the processing
 chain. See the [shared API contract](../API_CONTRACT.md).
 
 ## 6.6 Reference input fingerprint
@@ -286,7 +286,7 @@ chain. See the [shared API contract](../API_CONTRACT.md).
 Each reference record stores an `input_fingerprint` with this shape:
 
 ```json
-{"schema":"nmrforge_api.reference_input.v1","params":{...},"sha256":"..."}
+{"schema":"nmrfinesse_api.reference_input.v1","params":{...},"sha256":"..."}
 ```
 
 The fingerprint binds the complete normalized processing request, `phase_route`, and normalized

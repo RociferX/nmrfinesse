@@ -3,10 +3,10 @@
 桌面程序是处理谱图的正式界面。本页是界面的导览;底层引擎的行为见
 [processing-model.md](processing-model.md) 与 [qc-system.md](qc-system.md)。
 
-![nmrForge 主窗口](../../gui/assets/nmrforge.png)
+![NMRFinesse 主窗口](../../gui/assets/nmrfinesse.png)
 
 > **语言说明:本页是中文文档。** 英文是界面的源语言,菜单与面板默认是英文;同一份构建也带
-> 中文界面(跟随系统语言,在「设置 → 软件设置 → 界面语言」里选,或用 `NMRFORGE_LANG=zh`
+> 中文界面(跟随系统语言,在「设置 → 软件设置 → 界面语言」里选,或用 `NMRFinesse_LANG=zh`
 > 临时钉死)。中文文案在
 > [`ui_support/locales/zh.json`](../../ui_support/locales/zh.json),与英文版是**同一份代码**。
 
@@ -17,7 +17,7 @@ python main.py
 ```
 
 Linux 是目标运行平台。已发布的 AppImage 对应其 Release 标明的确切源码 tag；可用产物见
-[Releases](https://github.com/RociferX/nmrforge/releases)。首次正常运行会装桌面菜单项
+[Releases](https://github.com/RociferX/nmrfinesse/releases)。首次正常运行会装桌面菜单项
 (`--remove-desktop` 移除),构建与验收记录见 [packaging.md](packaging.md)。
 
 GUI 启动时会探测 NMRPipe 和 SMILE 并报告可用状态。这不表示所有操作都需要这些工具：已有处理谱
@@ -38,12 +38,12 @@ GUI 启动时会探测 NMRPipe 和 SMILE 并报告可用状态。这不表示所
 
 菜单:`文件`(新建/打开/保存项目、最近项目)、`实验`(新建/重命名/删除实验)、
 `查看`(收起/展开 项目树 / 流水线 / 谱图)、`工具`(数据质量检测、谱图质量评估)、`设置`(软件设置)、
-`帮助`(使用教程、关于)。**`帮助 → 使用教程`** 弹出随包的教程文档(有哪些功能、怎么用,按当前界面语言),正文在 `nmrforge_data/tutorial/{zh,en}.md`。
+`帮助`(使用教程、关于)。**`帮助 → 使用教程`** 弹出随包的教程文档(有哪些功能、怎么用,按当前界面语言),正文在 `nmrfinesse_data/tutorial/{zh,en}.md`。
 
 `设置 → 软件设置` 里可以改:界面语言(跟随系统 / 中文 / 英文)、NMRPipe 路径、
 数据总目录、各核默认线宽与对齐容差、SMILE 线程数(开发态还有「简单模式」)。这些都写进本地
-覆盖配置(`nmrforge_data/config/nmrforge.local.yaml`;AppImage 里是
-`~/.config/NMRForge/nmrforge.local.yaml`),重启后生效。
+覆盖配置(`nmrfinesse_data/config/nmrfinesse.local.yaml`;AppImage 里是
+`~/.config/NMRFinesse/nmrfinesse.local.yaml`),重启后生效。
 
 ## 处理流水线
 
@@ -62,7 +62,7 @@ GUI 启动时会探测 NMRPipe 和 SMILE 并报告可用状态。这不表示所
 
 ## 一次典型会话
 
-界面内自带逐步走查:`帮助 → 使用教程`(正文 `nmrforge_data/tutorial/{zh,en}.md`)。下面是同一
+界面内自带逐步走查:`帮助 → 使用教程`(正文 `nmrfinesse_data/tutorial/{zh,en}.md`)。下面是同一
 流程的简版;每一步的按钮位置与分支见教程。
 
 1. **新建或打开项目**(`文件 → 新建项目...` / `最近项目`),然后**导入**一个 Bruker 数据目录
@@ -127,7 +127,7 @@ GUI 启动时会探测 NMRPipe 和 SMILE 并报告可用状态。这不表示所
 ## 独立查看器
 
 ```bash
-nmrforge-viewer          # 完成可编辑安装之后
+nmrfinesse-viewer          # 完成可编辑安装之后
 python -m viewer
 ```
 

@@ -7,9 +7,9 @@ decisions or scientific validation.
 
 Usage:
 
-    nmrforge/bin/python scripts/vm_qc_score.py \
+    nmrfinesse/bin/python scripts/vm_qc_score.py \
         --spectrum <automatic final spectrum.ft2> --label "automatic processing" --h-window 6.5,10.5
-    nmrforge/bin/python scripts/vm_qc_score.py \
+    nmrfinesse/bin/python scripts/vm_qc_score.py \
         --spectrum <pdata/1 directory> --label "processed spectrum shipped with the data" \
         --h-window 6.5,10.5
 

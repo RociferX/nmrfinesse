@@ -14,7 +14,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from nmrforge_api import (
+from nmrfinesse_api import (
     measure_peak_positions,
     peak_table_rows,
     read_peak_table,
@@ -24,7 +24,7 @@ from nmrforge_api import (
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="nmrforge_api Measure examples only")
+    parser = argparse.ArgumentParser(description="nmrfinesse_api Measure examples only")
     parser.add_argument("--spectrum", required=True, help="NMRPipe spectrum(ft2)")
     parser.add_argument("--peaks", required=True, help="Reference peak table (.list/CSV)")
     parser.add_argument("--out", default="tables", help="output directory")

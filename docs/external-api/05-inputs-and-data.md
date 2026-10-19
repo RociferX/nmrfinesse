@@ -1,4 +1,4 @@
-# 05 · Input: data, condition and parameter combination table (v1.1.4)
+# 05 · Input: data, condition and parameter combination table (v1.1.5)
 
 ## 5.1 Raw data
 
@@ -133,7 +133,7 @@ run_parameter_study(..., peaks="library.list")   # or a peak_id,H_ppm,N_ppm CSV
 - An external peak table is given: the peak identity table as the main condition is frozen (`peak_source="external"`), other conditions
   The **reference peak table** follows the same identity (the peak table in combined mode does not track it -- the combined peak table selects peaks independently.
   `reference_peak_id` leave blank);
-- Accepted formats: Poky/Sparky `.list`, NMRForge CSV, research project
+- Accepted formats: Poky/Sparky `.list`, NMRFinesse CSV, research project
   `peak_id,H_ppm,N_ppm,height,linewidth,volume`.
 
 ## 5.6 parameter principle (software does not cross boundaries)
@@ -145,15 +145,15 @@ run_parameter_study(..., peaks="library.list")   # or a peak_id,H_ppm,N_ppm CSV
 - All parameters that affect the result must be traceable: `parameters_requested` ->
   `parameters_used` -> `parameters_resolved` (automatic parameter actual result).
 
-### Reference cache, carrier and spectral width (v1.1.4)
+### Reference cache, carrier and spectral width (v1.1.5)
 
 Reference reuse requires an exact normalized processing request match, including phase route,
 direct range, and all parameters (nested mappings and equivalent dotted keys normalize alike).
 The SHA-256 input fingerprint is stored at reference.json.input_fingerprint using schema
-nmrforge_api.reference_input.v1. Any mismatch, or an old reference without a valid fingerprint,
+nmrfinesse_api.reference_input.v1. Any mismatch, or an old reference without a valid fingerprint,
 raises ReferenceError and requires explicit force=True / CLI --force; there is no automatic rebuild.
 Multi-condition requests preflight every condition before the processing engine starts. Resume uses
-schema nmrforge_api.resume.v4.
+schema nmrfinesse_api.resume.v4.
 
 Reference construction accepts carrier_ppm as a per-axis mapping or params["carrier_ppm"] /
 dotted carrier_ppm.F1. CLI reference accepts repeatable --carrier-ppm F1=120.0 --carrier-ppm
@@ -189,7 +189,7 @@ run_parameter_study(root, datasets=..., combos=..., sigma_multiplier=20)
 ```
 
 ```bash
-python -m nmrforge_api peaks --study ~/studies/s1 --sigma 20
+python -m nmrfinesse_api peaks --study ~/studies/s1 --sigma 20
 ```
 
 - **Threshold is part of the reference definition**: Once the reference peak table is frozen, all subsequent workflow/parameter disturbances
@@ -226,8 +226,8 @@ run_reference_study(root, dataset, ext_lo="10.5", ext_hi="6.5")    # explicit
 ```
 
 ```bash
-python -m nmrforge_api reference --study ~/studies/s1 --direct-range 10.5 6.5
-python -m nmrforge_api sweep --study ~/studies/s1 --reference ~/studies/s1 \
+python -m nmrfinesse_api reference --study ~/studies/s1 --direct-range 10.5 6.5
+python -m nmrfinesse_api sweep --study ~/studies/s1 --reference ~/studies/s1 \
     --combos design.csv --direct-range 9 7
 ```
 
@@ -364,7 +364,7 @@ detect_and_localize(spectrum, targets=(1, 5, 9))
 ```
 
 ```bash
-python -m nmrforge_api sweep --study ~/studies/s1 --reference ~/studies/s1 \
+python -m nmrfinesse_api sweep --study ~/studies/s1 --reference ~/studies/s1 \
     --combos design.csv --localize-peaks targets.csv
 ```
 

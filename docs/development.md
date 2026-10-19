@@ -4,8 +4,8 @@ Linux is the target runtime. Development requires Python 3.12 or newer. Create a
 installation and start the desktop application with:
 
 ```bash
-git clone https://github.com/RociferX/nmrforge.git
-cd nmrforge
+git clone https://github.com/RociferX/nmrfinesse.git
+cd nmrfinesse
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
@@ -41,15 +41,15 @@ NUS data. Path-specific behaviour should be limited to operations that require i
 Use `tests/test_full_paths.py` to check route coverage. Keep records faithful to the values actually
 applied; requested, resolved, and applied values are distinct.
 
-The `nmrforge_api` compatibility manifest records a content `behavior_digest`, a normalized-code
+The `nmrfinesse_api` compatibility manifest records a content `behavior_digest`, a normalized-code
 `token_digest`, one of `same`, `additive`, `behavior_changed`, or `contract_changed`, and affected
 processing steps. The content fingerprint includes every file under `core/`, `backend/`,
-`workflow/`, and `nmrforge_api/`, plus the shipped default configuration and presets. After changing
+`workflow/`, and `nmrfinesse_api/`, plus the shipped default configuration and presets. After changing
 any of these, inspect the manifest and golden-vector result with:
 
 ```bash
-python -m nmrforge_api compat --out compat.json
-python -m nmrforge_api compat --golden
+python -m nmrfinesse_api compat --out compat.json
+python -m nmrfinesse_api compat --golden
 ```
 
 Update the declaration with `scripts/update_compat_declaration.py`, for example:
@@ -59,7 +59,7 @@ python scripts/update_compat_declaration.py --level behavior_changed \
   --affected localization,sweep_detection --note "Describe the numerical change"
 ```
 
-Supported steps are defined in `nmrforge_api.compat.AFFECTED_STEPS`.
+Supported steps are defined in `nmrfinesse_api.compat.AFFECTED_STEPS`.
 The script validates the level and regenerates golden hashes
 unless `--no-golden` is supplied. For a documentation-only update with unchanged executable tokens,
 use `--level same --affected "" --no-golden`.
@@ -72,10 +72,10 @@ record.
 
 ## Runtime resources and interface text
 
-Default configuration, presets, and tutorials live in `nmrforge_data/`; `gui/assets/` and
+Default configuration, presets, and tutorials live in `nmrfinesse_data/`; `gui/assets/` and
 `ui_support/locales/` are also runtime resources. `core/app_paths.py` resolves resources from the
 source checkout, an installed package, or the frozen AppImage layout. Keep resource paths in that
-shared layout and exclude machine-local `nmrforge.local.yaml` from distributable files.
+shared layout and exclude machine-local `nmrfinesse.local.yaml` from distributable files.
 
 Interface strings use English literals passed to `tr()` and Chinese translations in
 `ui_support/locales/zh.json`. When changing interface text, keep the translation and extraction
@@ -92,7 +92,7 @@ catalogues are `default.json`, `en.json`, and `zh.json`; packaging lists resourc
 
 ## Public interfaces and documentation
 
-Software version **1.0.8** and scripting API version **1.1.4** are versioned separately. For API
+Software version **1.0.9** and scripting API version **1.1.5** are versioned separately. For API
 changes, update the implementation, tests, compatibility declaration, API contract, and relevant
 external API pages together. Keep examples aligned with the supported arguments and outputs. See
 the [contributing guide](../CONTRIBUTING.md), [API contract](API_CONTRACT.md),

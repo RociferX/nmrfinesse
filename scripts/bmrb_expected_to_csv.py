@@ -18,7 +18,7 @@ Usage:
         --output expected_27493.csv
 
     # Run the truth benchmark.
-    nmrforge/bin/python scripts/vm_truth_benchmark.py \
+    nmrfinesse/bin/python scripts/vm_truth_benchmark.py \
         --dataset <Bruker directory> --expected expected_27493.csv --tag "<anonymous label>" ...
 
 The output CSV includes a UTF-8 BOM, matching the utf-8-sig reader used by load_expected_csv.

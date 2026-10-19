@@ -45,7 +45,7 @@ result = run_batch(
 
 They solve different problems, and it is worth not confusing them:
 
-| | Batch | Parameter sweep (`nmrforge_api`) |
+| | Batch | Parameter sweep (`nmrfinesse_api`) |
 | --- | --- | --- |
 | Varies | the dataset | the processing parameters |
 | Constant | the method | the dataset and the reference |
@@ -53,7 +53,7 @@ They solve different problems, and it is worth not confusing them:
 | Output | per-dataset spectra and peak tables | per-combination spectra, peak positions and uncertainties |
 | Dimensionality | 2D only | 2D and 3D |
 
-If what you want is a grid of processing parameters on one dataset, use `nmrforge_api`; see
+If what you want is a grid of processing parameters on one dataset, use `nmrfinesse_api`; see
 [external-api/README.md](external-api/README.md).
 
 ## Boundaries

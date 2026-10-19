@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import math
 
-from nmrforge_api.peak_tables import (
+from nmrfinesse_api.peak_tables import (
     PEAK_TABLE_COLUMNS,
     peak_table_row,
     read_peak_table,
     write_peak_table,
 )
-from nmrforge_api.peaks import PeakMeasurement
+from nmrfinesse_api.peaks import PeakMeasurement
 
 
 def test_missing_measurement_keeps_requested_actual_and_failure_separate() -> None:

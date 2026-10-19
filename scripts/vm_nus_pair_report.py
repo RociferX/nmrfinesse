@@ -69,7 +69,7 @@ def _match(source, target, tolerance):
 
 
 def compare(uniform: Path, nus: Path, sigma: float, tolerances: dict) -> dict:
-    from nmrforge_api.peaks import detect_and_localize
+    from nmrfinesse_api.peaks import detect_and_localize
     from workflow.pick_peaks import read_spectrum_axes
 
     if not math.isfinite(sigma) or sigma <= 0:

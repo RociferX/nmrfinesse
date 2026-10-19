@@ -1,9 +1,11 @@
-r"""NMRForge SMILE parameter optimisation CLI (optional tool, does not enter automatic processing).
+r"""NMRFinesse SMILE parameter optimisation CLI.
+
+An optional tool outside automatic processing.
 It has the same origin as the smile step of GUI (workflow.smile_optimize.scan_smile_parameters):
 use the final script as the template and only replace the SMILE parameter -- each set of
 parameters is run once for the candidate spectrum, and is deleted immediately after taking the
 indicator. Finally, the "parameter combination sorting list (CSV/JSON) + the top three scripts"
-is output; the active spectrum is not replaced. Usage (VM): PYTHONPATH=$HOME/NMRForge python
+is output; the active spectrum is not replaced. Usage (VM): PYTHONPATH=$HOME/NMRFinesse python
 scripts/smile_optimize.py <dataset directory > \ [--grid-size 4] [--rank-mode
 true_peaks|consistency] [--out output directory ] 0.2.199-patch29hz - Fix 24: The new scan chain
 is called directly after the old two-stage chain is deleted (consistent with GUI); --grid is

@@ -257,7 +257,7 @@ def select_memory_dir(
     if root is None:
         return None
     try:
-        return Path(tempfile.mkdtemp(prefix="nmrforge-mem-", dir=str(root)))
+        return Path(tempfile.mkdtemp(prefix="nmrfinesse-mem-", dir=str(root)))
     except OSError:
         return None
 

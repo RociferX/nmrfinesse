@@ -75,7 +75,7 @@ def test_detect_plane_passes_2d_axes_and_applies_baseline_centered_height_gate(
         selected_rows = rows if sign_mode == "both" else rows[:2]
         return selected_rows, {"n_peaks": len(rows), "sign_mode": sign_mode}
 
-    monkeypatch.setattr("nmrforge_api.peaks.detect_and_localize", fake_detect)
+    monkeypatch.setattr("nmrfinesse_api.peaks.detect_and_localize", fake_detect)
     monkeypatch.setattr(
         "core.qc.noise.estimate",
         lambda plane: SimpleNamespace(global_sigma=2.0, baseline=10.0),

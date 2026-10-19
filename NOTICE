@@ -1,4 +1,4 @@
-nmrforge - NMR processing, parameter study and QC
+nmrfinesse - NMR processing, parameter study and QC
 
 Copyright 2026 Xuanfeng Li (李宣锋)
 
@@ -22,7 +22,7 @@ copyright line, the SPDX identifier and the scope notes.
 Scope
 -----
 - Apache-2.0 covers this project's own source code (the repository and the
-  `nmrforge` package). It does not change the terms of any third-party component,
+  `nmrfinesse` package). It does not change the terms of any third-party component,
   and it is not the licence of the files under
   packaging/linux/THIRD_PARTY_LICENSES/.
 - LGPL is used only where a *packaged distribution* actually bundles an
@@ -31,7 +31,7 @@ Scope
   libraries (and to the relink/replace route), not to this project's source. The
   texts and notices travel inside the AppImage
   (packaging/linux/THIRD_PARTY_LICENSES/), are printable with
-  `nmrforge --licenses`, and the build script accepts self-built bindings
+  the AppImage's `--licenses` option, and the build script accepts self-built bindings
   (PYSIDE6_REQUIREMENT / SHIBOKEN6_REQUIREMENT / EXTRA_PIP_ARGS) so a recipient
   can replace or relink them.
 - Third-party components keep their own licences; see THIRD_PARTY.md.

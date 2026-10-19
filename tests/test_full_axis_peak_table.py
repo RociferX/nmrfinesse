@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import math
 
-from nmrforge_api.peak_tables import (
+from nmrfinesse_api.peak_tables import (
     PEAK_TABLE_COLUMNS,
     mark_duplicate_localization,
     peak_table_row,
 )
-from nmrforge_api.peaks import PeakMeasurement
+from nmrfinesse_api.peaks import PeakMeasurement
 
 
 def test_full_axis_schema_and_row_fields() -> None:

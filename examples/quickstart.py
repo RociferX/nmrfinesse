@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-"""Walkthrough: inspect a Bruker dataset with nmrForge, step by step.
+"""Walkthrough: inspect a Bruker dataset with NMRFinesse, step by step.
 
 This script deliberately stops before anything that needs NMRPipe, so it runs on a plain
-machine with only the Python dependencies installed. It shows what nmrForge understands
+machine with only the Python dependencies installed. It shows what NMRFinesse understands
 about a dataset:
 
 1. read the Bruker parameters (``acqus``/``acqu2s``/``acqu3s``);
@@ -107,7 +107,8 @@ def main(argv: list[str] | None = None) -> int:
         print()
         print("Install NMRPipe and make sure its `bin` directory is on PATH, or set")
         print(
-            "`backend.nmrpipe.path` in nmrforge_data/config/nmrforge.yaml. Nothing was processed."
+            "`backend.nmrpipe.path` in nmrfinesse_data/config/nmrfinesse.yaml. "
+            "Nothing was processed."
         )
     else:
         print(f"NMRPipe           : {nmrpipe_bin}")
@@ -117,9 +118,9 @@ def main(argv: list[str] | None = None) -> int:
 
     _rule("Next steps")
     print("With an NMRPipe installation available, the full processing path is:")
-    print(f"  python -m nmrforge_api init      --study ./study --dataset {dataset}")
-    print("  python -m nmrforge_api reference --study ./study")
-    print("  python -m nmrforge_api peaks     --study ./study")
+    print(f"  python -m nmrfinesse_api init      --study ./study --dataset {dataset}")
+    print("  python -m nmrfinesse_api reference --study ./study")
+    print("  python -m nmrfinesse_api peaks     --study ./study")
     print("Or start the GUI:")
     print("  python main.py")
     return 0

@@ -8,7 +8,7 @@ Report it privately through GitHub's "Report a vulnerability" feature on the rep
 tab (Security Advisories). If that is not available, contact the maintainer directly:
 
 The repository maintainer is **@RociferX** on GitHub. Use GitHub's private vulnerability
-reporting (<https://github.com/RociferX/nmrforge/security/advisories/new>) — it is the preferred
+reporting (<https://github.com/RociferX/nmrfinesse/security/advisories/new>) — it is the preferred
 channel and keeps the report private without publishing an email address. If the repository is not
 yet public, or advisories are unavailable, contact @RociferX through GitHub and ask for a private
 channel before sharing details.
@@ -18,7 +18,7 @@ could achieve.
 
 ## What counts as a security issue here
 
-nmrForge is a local desktop and command-line application that processes files you point it at.
+NMRFinesse is a local desktop and command-line application that processes files you point it at.
 The realistic classes of issue are:
 
 - **Path handling**: writing outside the project or work directory, following a symbolic link into
@@ -47,7 +47,7 @@ channel will be arranged.
 
 ## Data privacy
 
-nmrForge processes data locally and makes no network calls of its own. It has no telemetry and no
+NMRFinesse processes data locally and makes no network calls of its own. It has no telemetry and no
 account system. What you process stays on your machine, with one caveat worth stating explicitly:
 processed spectra, scripts and run records are written into the study/project directories you
 chose, which may be a shared or backed-up location. Review those directories before sharing them.
@@ -65,6 +65,6 @@ Only the latest release is supported with security fixes:
 ## Status of this file
 
 This policy was written during public-release preparation (2026-09). The reporting channel is
-**GitHub private vulnerability reporting** on <https://github.com/RociferX/nmrforge>, with the
+**GitHub private vulnerability reporting** on <https://github.com/RociferX/nmrfinesse>, with the
 maintainer (@RociferX) as the fallback contact; no email address is published. See
 the maintainer's private release audit for details.

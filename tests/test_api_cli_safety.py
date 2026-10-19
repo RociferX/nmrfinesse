@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from nmrforge_api import cli
+from nmrfinesse_api import cli
 from ui_support.i18n import tr
 
 
@@ -125,7 +125,7 @@ def test_reference_rejects_unknown_condition_before_building(tmp_path, monkeypat
 
 
 def test_reference_preflights_cache_before_any_condition_runs(tmp_path, monkeypatch, capsys):
-    from nmrforge_api.reference import ReferenceSpectrum, _reference_request
+    from nmrfinesse_api.reference import ReferenceSpectrum, _reference_request
 
     targets = [SimpleNamespace(condition=label, key=label) for label in ("A", "B")]
     session = SimpleNamespace(datasets=targets)
