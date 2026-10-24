@@ -870,3 +870,54 @@ def test_sample_dtype_prefers_dtype_then_dtypa() -> None:
     # DTYPE takes precedence over DTYPA
     assert sample_dtype({"DTYPE": 0, "DTYPA": 2}) == np.dtype("<i4")
     assert sample_dtype({}) == np.dtype("<i4")
+
+
+def test_manual_carrier_choices_are_read_only(bruker_dir: Path) -> None:
+    import copy
+
+    from backend.carrier_choices import carrier_choices
+
+    exp = read_dataset(bruker_dir / "nus_2d")
+    exp.acquisition_parameters["acqus"].update(O1=2820, BF1=600, SFO1=600.00282, TE=298)
+    exp.acquisition_parameters["acqu2s"].update(O1=7080, BF1=60, SFO1=60.00708, O1P=118)
+    original = copy.deepcopy(exp.acquisition_parameters)
+    choices = carrier_choices(exp)
+    assert [row['key'] for row in choices] == ['xCAR', 'yCAR']
+    assert choices[0]['options'][0]['value'] == pytest.approx(4.7)
+    assert choices[1]['options'][0]['value'] == pytest.approx(118)
+    assert len(choices[1]['options']) == 5
+    assert all(o['label'] and o['description'] for row in choices for o in row['options'])
+    assert exp.acquisition_parameters == original
+    exp.acquisition_parameters = {}
+    assert all(not row['options'] for row in carrier_choices(exp))
+
+@pytest.mark.parametrize('ndim', [1, 2, 3])
+def test_manual_carrier_choices_keep_axis_identity(ndim: int) -> None:
+    from backend.carrier_choices import carrier_choices
+
+    axes = ['F3', 'F2', 'F1'] if ndim == 3 else ['F2', 'F1'][:ndim]
+    exp = Experiment(dataset_id='manual', source_path=Path('.'), ndim=ndim, dimensions=[
+        Dimension(logical_axis=axis, nucleus='13C', sf=150) for axis in axes
+    ], acquisition_parameters={
+        'acqus': {'O1': 0, 'BF1': 150, 'SFO1': 150},
+        'acqu2s': {'O1': 3000, 'BF1': 150, 'SFO1': 150},
+        'acqu3s': {'O1': 6000, 'BF1': 150, 'SFO1': 150},
+    })
+    choices = carrier_choices(exp)
+    assert [row['key'] for row in choices] == [letter+'CAR' for letter in 'xyz'[:ndim]]
+    assert [row['axis'] for row in choices] == axes
+    assert [row['options'][0]['value'] for row in choices] == [0, 20, 40][:ndim]
+    exp.acquisition_parameters['acqus']['BF1'] = -150
+    exp.acquisition_parameters['acqus']['SFO1'] = -150
+    assert not carrier_choices(exp)[0]['options']
+
+def test_manual_carrier_script_edit_preserves_other_parameters() -> None:
+    from backend.carrier_choices import replace_script_carrier, script_carrier_values
+
+    script = '# -xCAR 99\n' + FID_COM + '# -yCAR 999\n'
+    changed = replace_script_carrier(script, 'xCAR', '-1.234e+1')
+    assert changed == script.replace('-xCAR 4.703', '-xCAR -1.234e+1')
+    assert script_carrier_values(changed) == {'xCAR': '-1.234e+1', 'yCAR': '118.500'}
+    for key, value in [('zCAR', '12'), ('xCAR', 'nan'), ('xCAR', '3;echo')]:
+        with pytest.raises(ValueError):
+            replace_script_carrier(script, key, value)

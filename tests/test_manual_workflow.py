@@ -244,3 +244,13 @@ def test_previous_script_only_uses_same_data_successful_snapshot(tmp_path: Path)
     assert (
         previous_script(manager, exp.id, d1.id, "../../project.json", ("manual_process",)) is None
     )
+
+
+def test_manual_carrier_choices_read_registered_raw(bruker_dir: Path, tmp_path: Path) -> None:
+    from workflow.manual import manual_carrier_choices
+
+    manager = _manager(bruker_dir / 'hnca_3d', tmp_path)
+    choices = manual_carrier_choices(manager, 'exp_001', 'd_001')
+    assert [(row['key'], row['axis']) for row in choices] == [
+        ('xCAR', 'F3'), ('yCAR', 'F2'), ('zCAR', 'F1')
+    ]

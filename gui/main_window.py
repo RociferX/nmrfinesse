@@ -1555,8 +1555,19 @@ class MainWindow(QMainWindow):
             save_dir = self.manager.data_dir(exp_id, data_id, "raw")
         except Exception:  # noqa: BLE001
             save_dir = None
+        carrier_choices = []
+        get_choices = getattr(self.controller, "fid_carrier_options", None)
+        if callable(get_choices):
+            try:
+                carrier_choices = get_choices(data_node, exp_id=exp_id, data_id=data_id)
+            except (OSError, ValueError, KeyError):
+                # Manual script editing remains available with incomplete acquisition metadata.
+                carrier_choices = []
         dialog = ScriptEditorDialog(
-            self, label, script_name="fid.com", content=content, save_dir=save_dir
+            self, label, script_name="fid.com", content=content, save_dir=save_dir,
+            carrier_choices=carrier_choices,
+            carrier_read=getattr(self.controller, "fid_carrier_values", None),
+            carrier_write=getattr(self.controller, "edit_fid_carrier", None),
         )
         self._wire_script_run(dialog, data_node, exp_id, data_id, "fid.com")
         self._keep_script_dialog(dialog, data_id, "fid")

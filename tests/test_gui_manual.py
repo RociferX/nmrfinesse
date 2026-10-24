@@ -737,3 +737,48 @@ def test_assignment_header_toggles_labels(tmp_path, qapp, monkeypatch) -> None:
     assert panel.viewer._show_peak_labels
     assert panel.viewer._label_overlay.visible_label_count() == 1
     panel.close()
+
+
+def test_fid_carrier_editor_explicit_edits_and_cancel(qapp: QApplication) -> None:
+    from qtcompat.QtCore import Qt
+    from qtcompat.QtTest import QTest
+
+    from backend.carrier_choices import replace_script_carrier, script_carrier_values
+
+    original = 'bruk2pipe -xCAR 4.703 -yCAR 118.500 -xSW 6000\n'
+    dialog = ScriptEditorDialog(
+        None, 'sample', script_name='fid.com', content=original,
+        carrier_choices=[{'key': 'xCAR', 'axis': 'F2', 'nucleus': '1H', 'options': [
+            {'value': 4.7, 'label': 'Acquisition', 'description': 'Use acquisition reference.'}
+        ]}], carrier_read=script_carrier_values, carrier_write=replace_script_carrier,
+    )
+    dialog.show()
+    qapp.processEvents()
+    panel = dialog.carrier_panel
+    combo = panel.combos['xCAR']
+    assert dialog.editor.toPlainText() == original
+    combo.setCurrentIndex(1)
+    combo.activated.emit(1)
+    assert '-xCAR 4.700000' in dialog.editor.toPlainText()
+    assert panel.description.text() == 'xCAR: Use acquisition reference.'
+    assert panel.combos['xCAR'].mapTo(panel, panel.combos['xCAR'].rect().topLeft()).y() == (
+        panel.combos['yCAR'].mapTo(panel, panel.combos['yCAR'].rect().topLeft()).y()
+    )
+    combo.setFocus()
+    combo.setEditText('4.85')
+    QTest.keyClick(combo.lineEdit(), Qt.Key.Key_Return)
+    assert '-xCAR 4.85' in dialog.editor.toPlainText()
+    combo.setEditText('55')
+    QTest.keyClick(combo.lineEdit(), Qt.Key.Key_Escape)
+    assert combo.currentText() == '4.85'
+    combo.setEditText('66')
+    dialog.editor.setFocus()
+    qapp.processEvents()
+    assert combo.currentText() == '4.85'
+    combo.setFocus()
+    combo.setEditText('nan')
+    QTest.keyClick(combo.lineEdit(), Qt.Key.Key_Return)
+    assert '-xCAR 4.85' in dialog.editor.toPlainText()
+    dialog.editor.setPlainText('bruk2pipe -yCAR 120\n')
+    assert not combo.isEnabled()
+    dialog.close()

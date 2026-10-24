@@ -21,10 +21,12 @@ from qtcompat.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QLabel,
+    QLayout,
     QListWidget,
     QListWidgetItem,
     QMenu,
     QPushButton,
+    QSizePolicy,
     QSlider,
     QSplitter,
     QVBoxLayout,
@@ -41,6 +43,43 @@ from viewer.spectrum import Spectrum, Spectrum1D, SpectrumAxis
 
 _COLORS = ("#1f77b4", "#d62728", "#2ca02c", "#9467bd", "#ff7f0e", "#17becf")
 _DEFAULT_LEVELS = 8
+
+
+class _ContourControls(QWidget):
+    """Keep each value and slider together when a plot moves to a narrow sidebar."""
+
+    def __init__(self, groups):
+        super().__init__()
+        self._groups = groups
+        self._compact = None
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Maximum)
+        self._grid = QGridLayout(self)
+        self._grid.setSizeConstraint(QLayout.SizeConstraint.SetNoConstraint)
+        self._grid.setContentsMargins(0, 0, 0, 0)
+        self._grid.setHorizontalSpacing(20)
+        self._grid.setVerticalSpacing(6)
+        self._grid.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self._reflow()
+
+    def _reflow(self):
+        required = sum(group.minimumSizeHint().width() for group in self._groups) + 40
+        compact = self.width() < required
+        if compact == self._compact:
+            return
+        self._compact = compact
+        for group in self._groups:
+            self._grid.removeWidget(group)
+        for column in range(3):
+            self._grid.setColumnStretch(column, 0 if compact else 1)
+        for index, group in enumerate(self._groups):
+            self._grid.addWidget(group, index if compact else 0,
+                                 0 if compact else index, 1, 3 if compact else 1,
+                                 Qt.AlignmentFlag.AlignTop)
+        self.updateGeometry()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._reflow()
 
 
 class _BoxSelectOverlay(QWidget):
@@ -357,6 +396,7 @@ class SpectrumViewer(QWidget):
             dimensionality requires.
             """
             group = QWidget()
+            group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
             box = QVBoxLayout(group)
             box.setContentsMargins(0, 0, 0, 0)
             box.setSpacing(2)
@@ -379,9 +419,10 @@ class SpectrumViewer(QWidget):
         self.aspect_controls = _labeled_slider(
             "Aspect", self.aspect_label, self.aspect_slider, self.aspect_unit_label
         )
-        controls_layout.addWidget(self.level_controls, 0, 0)
-        controls_layout.addWidget(self.count_controls, 0, 1)
-        controls_layout.addWidget(self.aspect_controls, 0, 2)
+        self.contour_controls = _ContourControls(
+            (self.level_controls, self.count_controls, self.aspect_controls)
+        )
+        controls_layout.addWidget(self.contour_controls, 0, 0, 1, 3)
 
         row1 = QHBoxLayout()
         row1.setSpacing(16)

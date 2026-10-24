@@ -123,6 +123,12 @@ def test_settings_dialog_trimmed_and_linewidth_saved(
     )
     dialog = SettingsDialog(None)
     assert set(dialog.linewidth_spins) == {"1H", "15N", "13C"}
+    dialog.resize(560, 360)
+    dialog.show()
+    qapp.processEvents()
+    assert dialog.data_root_edit.height() >= dialog.data_root_edit.sizeHint().height()
+    assert dialog.settings_scroll.verticalScrollBar().maximum() > 0
+    assert dialog.data_root_edit.toolTip()
     assert set(dialog.tolerance_spins) == {"1H", "15N", "13C"}
     assert not hasattr(dialog, "ppl_spin")
     assert not hasattr(dialog, "smile_spin")

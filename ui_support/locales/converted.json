@@ -2,6 +2,7 @@
   "_comment": "Converted files (a ratchet: it only grows): no Chinese literals outside tr().",
   "files": [
     "backend/bruker_workflow.py",
+    "backend/carrier_choices.py",
     "backend/environment_probe.py",
     "backend/factory.py",
     "backend/memory_disk.py",
@@ -34,6 +35,7 @@
     "core/trash.py",
     "core/user_errors.py",
     "core/workspace.py",
+    "gui/carrier_editor.py",
     "gui/center_panel.py",
     "gui/dashboards.py",
     "gui/dialogs.py",

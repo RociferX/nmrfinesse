@@ -479,6 +479,28 @@ class ProcessingController:
         data_id = data_id or getattr(data, "id", "")
         return backend_manual_fid_com(self._manager, exp_id, data_id, self._backend_instance())
 
+    def fid_carrier_options(self, data, exp_id=None, data_id=None) -> list[dict]:
+        """Read optional reference alternatives for the manual FID editor."""
+        from workflow.manual import manual_carrier_choices
+
+        self._require_manager()
+        return manual_carrier_choices(
+            self._manager, exp_id or getattr(data, "exp_id", ""), data_id or getattr(data, "id", "")
+        )
+
+    @staticmethod
+    def fid_carrier_values(content):
+        from backend.carrier_choices import script_carrier_values
+
+        return script_carrier_values(content)
+
+    @staticmethod
+    def edit_fid_carrier(content, key, value):
+        from backend.carrier_choices import replace_script_carrier
+
+        return replace_script_carrier(content, key, value)
+
+
     def run_manual_fid_com(
         self,
         data,

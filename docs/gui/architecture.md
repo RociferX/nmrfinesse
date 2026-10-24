@@ -16,6 +16,11 @@ requests to `ProcessingController` and project services. The controller adapts G
 and group batch processing. It resolves processing parameters and records step success and script
 snapshots with the project manager.
 
+The manual FID editor's CAR dropdowns present explicit choices supplied by
+`workflow.manual.manual_carrier_choices` and calculated by `backend.carrier_choices` from acquisition
+metadata. The GUI preserves the current numeric CAR when opened and does not parse NMRPipe syntax or
+automatically change the reference convention.
+
 Long-running import and processing work runs in daemon `threading.Thread` workers. Progress,
 completion, and failure are sent back through Qt signals; slots update widgets on the GUI thread.
 The worker does not own the UI. The controller creates its backend lazily per worker thread using

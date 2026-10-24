@@ -898,3 +898,27 @@ def test_highlight_flash_only_when_requested(qapp: QApplication) -> None:
     viewer._clear_flash()
     assert viewer._flash_item is None
     viewer.close()
+
+
+def test_contour_controls_reflow_without_overlap(qapp: QApplication) -> None:
+    viewer = SpectrumViewer()
+    controls = viewer.contour_controls
+    controls.setParent(None)
+    controls.resize(1000, 190)
+    controls.show()
+    qapp.processEvents()
+    wide = [w.geometry() for w in controls._groups]
+    assert wide[0].right() < wide[1].left() < wide[2].left()
+    assert len({r.top() for r in wide}) == 1
+    assert all(r.height() < 80 for r in wide)
+    controls.resize(340, 230)
+    qapp.processEvents()
+    narrow = [w.geometry() for w in controls._groups]
+    assert narrow[0].bottom() < narrow[1].top()
+    assert narrow[1].bottom() < narrow[2].top()
+    assert all(r.right() < controls.width() for r in narrow)
+    controls.resize(1000, 190)
+    qapp.processEvents()
+    assert controls._groups[0].geometry().right() < controls._groups[1].geometry().left()
+    controls.close()
+    viewer.close()

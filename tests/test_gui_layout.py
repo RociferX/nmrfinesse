@@ -737,6 +737,12 @@ def test_main_window_spectrum_expand_toggle(
     assert title.height() <= 40
     assert panel._expand_splitter is not None
     assert panel._expand_splitter.height() >= panel.height() - 80
+    controls = panel.viewer.contour_controls
+    groups = (panel.viewer.level_controls, panel.viewer.count_controls,
+              panel.viewer.aspect_controls)
+    assert all(not left.geometry().intersects(right.geometry())
+               for left, right in zip(groups, groups[1:]))
+    assert all(group.geometry().right() < controls.width() for group in groups)
     btn.setChecked(False)
     assert btn.text() == "放大"
     assert not window.project_tree.isHidden()

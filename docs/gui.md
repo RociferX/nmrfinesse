@@ -8,7 +8,7 @@ what the interface does; the underlying engine behaviour is in
 
 > **Language note.** English is the interface's source language, and the public-repo build shows
 > English by default; the same build also speaks Chinese: follow the system language, pick it in
-> `Settings -> Software settings -> Interface language`, or pin it with `NMRFinesse_LANG=zh`. The
+> `Settings -> Software settings -> Interface language`, or pin it with `NMRFINESSE_LANG=zh`. The
 > Chinese wording lives in `ui_support/locales/zh.json` and is the **same code** as the English
 > version. A Chinese edition of this guide is in
 > [`Chinese_version/docs/gui.md`](../Chinese_version/docs/gui.md).
@@ -38,7 +38,7 @@ The window has **four columns** (the separators can be dragged; the View menu on
 | 1 | Project tree: Project -> Experiment -> Input / Processing / Output / Figures. Selecting a node sets the context for everything else. |
 | 2 | Processing pipeline for the selected dataset: a breadcrumb plus the status-driven step list and the "what next" prompt. |
 | 3 | Task log: the permanent middle column. Dataset, group and global logs are independent; individual member runs go to that member's log, and group runs go to the group log. |
-| 4 | Spectrum panel: selecting a dataset automatically shows its current spectrum (large files load in the background); 3D opens on the F3-F2 plane. Expanded comparison places the reference on the left and current spectrum in the centre, with independent controls and equal plot heights. |
+| 4 | Spectrum panel: selecting a dataset automatically shows its current spectrum (large files load in the background); 3D opens on the F3-F2 plane. Expanded comparison places the reference on the left and current spectrum in the centre, with independent controls and equal plot heights. Contour start, Levels and Aspect each pair a value field with its slider; the groups keep their natural height and top alignment, wrap when space is limited, and return to one row when width allows. |
 
 Single, segmented and batch import forms stay inline on the experiment page. Scroll that page to reach them; importing from the experiment's project-tree context menu is also available.
 
@@ -53,6 +53,10 @@ widths and alignment tolerances, and the SMILE thread count (plus "simple mode" 
 checkout). All of it goes into the local override config
 (`nmrfinesse_data/config/nmrfinesse.local.yaml`; `~/.config/NMRFinesse/nmrfinesse.local.yaml` inside
 the AppImage) and takes effect after a restart.
+
+The data directory sets the import browser's default starting point. An existing input path takes
+priority; when it is blank or unavailable, the browser starts in the user's home directory. Settings
+labels and fields have tooltips, and the form scrolls when it does not fit.
 
 ## The processing pipeline
 
@@ -69,6 +73,14 @@ afterwards):
 
 Steps unlock in order. A finished step whose inputs or parameters changed is marked `Expired`
 rather than silently reused - the step fingerprints its inputs, its script and its parameters.
+
+The manual `fid.com` editor provides editable CAR dropdowns for each axis. Choices include the current
+script value, acquisition O1/BF1, O1P when present, legacy O1/SFO1, and values inferred from a direct
+reference or water at the recorded temperature using the nucleus frequency ratio. Only choices with
+required acquisition metadata appear. All axis dropdowns share one row; the explanation below follows
+the active axis, and each option has a tooltip. Opening the editor preserves the current value. Selecting
+a suggestion updates the script; typed values commit with Enter, while focus loss or Escape discards
+the draft. These choices are metadata-derived and do not automatically replace the reference convention.
 
 ## Typical session
 

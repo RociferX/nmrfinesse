@@ -17,6 +17,7 @@ from qtcompat.QtWidgets import (
     QDialogButtonBox,
     QDoubleSpinBox,
     QFormLayout,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -24,6 +25,7 @@ from qtcompat.QtWidgets import (
     QListWidgetItem,
     QPlainTextEdit,
     QPushButton,
+    QScrollArea,
     QSpinBox,
     QTableWidget,
     QTableWidgetItem,
@@ -518,6 +520,9 @@ class ScriptEditorDialog(QDialog):
         script_name: str = "process.com",
         content: str = "",
         save_dir: Path | None = None,
+        carrier_choices=None,
+        carrier_read=None,
+        carrier_write=None,
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle(tr("script editor - {p0} ({p1})", p0=experiment_label, p1=script_name))
@@ -534,6 +539,20 @@ class ScriptEditorDialog(QDialog):
         font.setFamily("Consolas")
         font.setStyleHint(font.StyleHint.Monospace)
         self.editor.setFont(font)
+        self.carrier_panel = None
+        if script_name == "fid.com" and carrier_read is not None and carrier_write is not None:
+            from gui.carrier_editor import FidCarrierPanel
+
+            self.carrier_panel = FidCarrierPanel(
+                self.editor, carrier_choices or [], carrier_read, carrier_write
+            )
+            carrier_scroll = QScrollArea()
+            carrier_scroll.setWidgetResizable(True)
+            carrier_scroll.setFrameShape(QFrame.Shape.NoFrame)
+            carrier_scroll.setMaximumHeight(160)
+            carrier_scroll.setWidget(self.carrier_panel)
+            layout.addWidget(carrier_scroll)
+            self.resize(900, 640)
         layout.addWidget(self.editor, 1)
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
@@ -768,14 +787,26 @@ class SettingsDialog(QDialog):
 
         self.data_root_edit = QLineEdit(str(settings.get("data_root", "")))
         self.data_root_edit.setPlaceholderText(tr("default: {p0}", p0=Path.home()))
+        data_root_help = tr(
+            "Default starting folder when browsing to import data "
+            "and no input path has been entered. "
+            "If blank or unavailable, your home directory is used. "
+            "This setting does not move data or change the project workspace."
+        )
+        self.data_root_edit.setToolTip(data_root_help)
         data_root_browse = QPushButton(tr("Browse..."))
+        data_root_browse.setToolTip(data_root_help)
         data_root_browse.clicked.connect(self._browse_data_root)
         data_root_row = QHBoxLayout()
+        data_root_row.setContentsMargins(0, 0, 0, 0)
+        self.data_root_edit.setMinimumHeight(self.data_root_edit.sizeHint().height())
         data_root_row.addWidget(self.data_root_edit, 1)
         data_root_row.addWidget(data_root_browse)
         data_root_widget = QWidget()
         data_root_widget.setLayout(data_root_row)
-        form.addRow(tr("Data directory"), data_root_widget)
+        data_root_label = QLabel(tr("Data directory"))
+        data_root_label.setToolTip(data_root_help)
+        form.addRow(data_root_label, data_root_widget)
 
         self.language_combo = QComboBox()
         for _label, _code in (
@@ -839,7 +870,13 @@ class SettingsDialog(QDialog):
             )
         )
         form.addRow(tr("SMILE Number of threads"), self.smile_thread_spin)
-        layout.addLayout(form)
+        form_widget = QWidget()
+        form_widget.setLayout(form)
+        self.settings_scroll = QScrollArea()
+        self.settings_scroll.setWidgetResizable(True)
+        self.settings_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.settings_scroll.setWidget(form_widget)
+        layout.addWidget(self.settings_scroll, 1)
         pipeline = settings.get("pipeline") or {}
         self.simple_mode_check = QCheckBox(
             tr("Simple mode (just press the previous step product file to determine the status)")

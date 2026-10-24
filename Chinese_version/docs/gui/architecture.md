@@ -12,6 +12,10 @@
 项目服务。控制器把 GUI 操作转接到 `workflow/` 函数，包括导入、生成 FID、生成谱图、选峰、
 人工处理和数据组批处理。它还解析处理参数，并通过项目管理器登记步骤成功状态及脚本快照。
 
+人工 FID 编辑器的 CAR 下拉框只呈现并显式应用选项。`ProcessingController` 通过
+`workflow.manual.manual_carrier_choices` 查询采集元数据，`backend.carrier_choices` 计算参考口径；
+打开编辑器时保留当前数字 CAR。GUI 不解析 NMRPipe 语法，也不会自动更换参考口径。
+
 耗时的导入和处理在守护型 `threading.Thread` 工作线程中执行。进度、完成和失败通过 Qt
 信号返回，槽函数在 GUI 主线程更新控件；工作线程不直接持有界面。控制器使用线程局部存储，
 在各工作线程中按需创建 backend，因此并发任务不会共享 `NMRPipeBackend` 可变的工作目录。

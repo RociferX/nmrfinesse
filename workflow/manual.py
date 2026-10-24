@@ -246,6 +246,13 @@ def _finish_run(
     return run.run_id
 
 
+def manual_carrier_choices(manager: ProjectManager, exp_id: str, data_id: str) -> list[dict]:
+    """Read acquisition-derived CAR alternatives without converting or editing data."""
+    from backend.carrier_choices import carrier_choices
+
+    return carrier_choices(_read_experiment(manager, exp_id, data_id))
+
+
 def manual_fid_com(
     manager: ProjectManager,
     exp_id: str,
