@@ -19,8 +19,8 @@ what the interface does; the underlying engine behaviour is in
 python main.py
 ```
 
-Linux is the target runtime. A released AppImage corresponds to the exact source tag named by its
-release; see the [releases page](https://github.com/RociferX/nmrfinesse/releases) for available
+Linux is the target runtime. An AppImage records its exact source commit in `BUILD_INFO.txt`, also
+available through `--licenses`; see the [releases page](https://github.com/RociferX/nmrfinesse/releases) for available
 artifacts. The first normal run installs the desktop entry (`--remove-desktop` removes it). Build
 and acceptance records are in [packaging.md](packaging.md).
 

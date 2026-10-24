@@ -16,7 +16,7 @@
 python main.py
 ```
 
-Linux 是目标运行平台。已发布的 AppImage 对应其 Release 标明的确切源码 tag；可用产物见
+Linux 是目标运行平台。AppImage 在 `BUILD_INFO.txt` 中记录确切源码提交，也可通过 `--licenses` 查看；可用产物见
 [Releases](https://github.com/RociferX/nmrfinesse/releases)。首次正常运行会装桌面菜单项
 (`--remove-desktop` 移除),构建与验收记录见 [packaging.md](packaging.md)。
 
