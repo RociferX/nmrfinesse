@@ -1,6 +1,6 @@
 # 03 · API reference (v1.1.5)
 
-Top-level exports are defined in `nmrfinesse_api/__init__.py`; `nmrfinesse_api.session.API_VERSION` defines API **1.1.5**. Software **1.0.9** and the API have separate version identifiers. The unified peak table retains 38 columns.
+Top-level exports are defined in `nmrfinesse_api/__init__.py`; `nmrfinesse_api.session.API_VERSION` defines API **1.1.5**. Software **1.0.10** and the API have separate version identifiers. The unified peak table retains 38 columns.
 
 ## 3.1 Sessions and Datasets
 

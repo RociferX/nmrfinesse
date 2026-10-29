@@ -1,6 +1,6 @@
 # Shared interfaces and API contract
 
-Software **1.0.9** · Python/CLI API **1.1.5** · Project schema **1.4**.
+Software **1.0.10** · Python/CLI API **1.1.5** · Project schema **1.4**.
 
 ## 1. Acquisition data model
 

@@ -1,6 +1,6 @@
 # nmrfinesse_api guide (API 1.1.5)
 
-`nmrfinesse_api` is the Qt-free Python/CLI interface for software **1.0.9**. It imports Bruker data,
+`nmrfinesse_api` is the Qt-free Python/CLI interface for software **1.0.10**. It imports Bruker data,
 builds and freezes an independent reference spectrum/table per condition, runs explicit parameter
 combinations and writes independently detected parabolic peak tables with provenance and QC records.
 

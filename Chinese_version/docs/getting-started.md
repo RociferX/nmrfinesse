@@ -1,6 +1,6 @@
 # 快速开始
 
-本页介绍 1.0.9 的安装与首次处理。Linux 桌面用户可从 [1.0.9 Release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.9) 下载 AppImage；源码安装见下方步骤。公开 API 版本为 v1.1.5。
+本页介绍 1.0.10 的安装与首次处理。Linux 桌面用户可从 [1.0.10 Release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.10) 下载 AppImage；源码安装见下方步骤。公开 API 版本为 v1.1.5。
 
 ## 路线 A —— 源码安装与 GUI
 

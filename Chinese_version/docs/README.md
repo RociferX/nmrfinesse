@@ -1,8 +1,8 @@
 # NMRFinesse 文档导航
 
-软件 **1.0.9** · Python/CLI API **1.1.5**。
+软件 **1.0.10** · Python/CLI API **1.1.5**。
 [项目README](../README.md)介绍功能、工作流、示例和证据。
-Linux桌面使用可直接下载[1.0.9 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.9)，按[安装说明](installation.md)启动；NMRPipe和SMILE另行安装。
+Linux桌面使用可直接下载[1.0.10 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.10)，按[安装说明](installation.md)启动；NMRPipe和SMILE另行安装。
 
 ## 安装与使用
 

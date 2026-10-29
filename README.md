@@ -11,11 +11,11 @@ strategy, and drives NMRPipe and SMILE to produce spectra. It brings data inspec
 manual processing, optimisation, quality control, peak picking and viewing into one workflow, with
 the resolved parameters, scripts, warnings and outputs saved alongside the result.
 
-**Software: 1.0.9 · Python/CLI API: 1.1.5 · Target platform: Linux**
+**Software: 1.0.10 · Python/CLI API: 1.1.5 · Target platform: Linux**
 
 **For desktop use on Linux, the simplest option is the AppImage.**
-Download the [1.0.9 AppImage](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.9/NMRFinesse-1.0.9-x86_64.AppImage)
-and its [checksum file](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.9/SHA256SUMS-v1.0.9.txt)
+Download the [1.0.10 AppImage](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.10/NMRFinesse-1.0.10-x86_64.AppImage)
+and its [checksum file](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.10/SHA256SUMS-v1.0.10.txt)
 from the release; no separate Python or Qt setup is needed. Follow
 [Installation](#installation) for startup and source/API setup. Real spectral processing still
 requires a separate NMRPipe installation; NUS reconstruction also needs SMILE.
@@ -141,14 +141,14 @@ licence inventory.
 
 ### Linux AppImage — simplest desktop setup
 
-Use the [1.0.9 release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.9).
-Download `NMRFinesse-1.0.9-x86_64.AppImage` and
-`SHA256SUMS-v1.0.9.txt`, then run:
+Use the [1.0.10 release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.10).
+Download `NMRFinesse-1.0.10-x86_64.AppImage` and
+`SHA256SUMS-v1.0.10.txt`, then run:
 
 ```bash
-sha256sum -c SHA256SUMS-v1.0.9.txt
-chmod +x NMRFinesse-1.0.9-x86_64.AppImage
-./NMRFinesse-1.0.9-x86_64.AppImage
+sha256sum -c SHA256SUMS-v1.0.10.txt
+chmod +x NMRFinesse-1.0.10-x86_64.AppImage
+./NMRFinesse-1.0.10-x86_64.AppImage
 ```
 
 The AppImage bundles Python, Qt and the desktop application, so desktop users can start without

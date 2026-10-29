@@ -145,7 +145,7 @@ CSV同时保存四个分项在同一批迹上的各自中位数，因此分项�
 若参考扫描仍无合格迹，则不能产生赢家：常规优化保留当前/default设置，显式候选请求明确失败。
 峰表仍为38列；独立评分附件保存`raw_score`、四个窗分项、`resolution_score`、`width_ratio`、
 `resolution_reference_fwhm`、`resolution_weight`，并保留`reference_sigma`、`scanned_traces`、
-`used_traces`、`total_traces`及可选诊断对象`sampling_json`。软件/API版本保持1.0.9/v1.1.5；
+`used_traces`、`total_traces`及可选诊断对象`sampling_json`。软件/API版本保持1.0.10/v1.1.5；
 既有冻结参考须以`force=True`重建后才采用新窗选择。
 
 分数只适合比较同阶段、同轴的候选，不能比较窗分与基线分，也不表示全弱峰或终谱的全局最优。

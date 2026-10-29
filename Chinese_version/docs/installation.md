@@ -1,18 +1,18 @@
 # 安装
 
 Linux 是目标运行平台；Windows 可用于编辑源码，但不属于支持的运行环境。Linux 桌面用户可直接使用
-[NMRFinesse 1.0.9 Release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.9) 中的 AppImage。
+[NMRFinesse 1.0.10 Release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.10) 中的 AppImage。
 Python API 和命令行工具请按下方源码步骤单独安装。
 
 ## AppImage(Linux)
 
-下载 `NMRFinesse-1.0.9-x86_64.AppImage` 与 `SHA256SUMS-v1.0.9.txt`，在同一目录校验并启动：
+下载 `NMRFinesse-1.0.10-x86_64.AppImage` 与 `SHA256SUMS-v1.0.10.txt`，在同一目录校验并启动：
 
 ```bash
-sha256sum -c SHA256SUMS-v1.0.9.txt
-chmod +x NMRFinesse-1.0.9-x86_64.AppImage
-./NMRFinesse-1.0.9-x86_64.AppImage --licenses
-./NMRFinesse-1.0.9-x86_64.AppImage
+sha256sum -c SHA256SUMS-v1.0.10.txt
+chmod +x NMRFinesse-1.0.10-x86_64.AppImage
+./NMRFinesse-1.0.10-x86_64.AppImage --licenses
+./NMRFinesse-1.0.10-x86_64.AppImage
 ```
 
 它们捆绑 PySide6/Qt,这些库按 LGPL-3.0 随产物分发(许可与 NMRFinesse 源码的 Apache-2.0

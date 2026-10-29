@@ -7,9 +7,9 @@ implementation as the desktop application. It does not require Qt:
 python -m nmrfinesse_api --help
 ```
 
-The current CLI uses API v1.1.5 / software 1.0.9. API parameters and the retained 38-column peak-table
+The current CLI uses API v1.1.5 / software 1.0.10. API parameters and the retained 38-column peak-table
 contract are documented in the [Python API](python-api.md). Desktop users can download the
-[1.0.9 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.9).
+[1.0.10 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.10).
 Install from a source checkout containing API v1.1.5. See
 [Installation](installation.md). Processing requires separately installed NMRPipe; NUS
 reconstruction also requires SMILE.

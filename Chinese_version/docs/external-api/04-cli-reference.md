@@ -23,7 +23,7 @@ python -m nmrfinesse_api init --study ~/studies/s1            # 只看已登记�
 每个段必须是完整 Bruker 原始数据目录。逐段动力学实验、缺少 `nuslist` 的 NUS 数据会拒绝；
 段的维数、核、有效 TD、谱宽、采样模式、采集轴布局、SFO 频率及载频必须一致。段可位于不同父目录。复用
 现有条件时，所有源段及其顺序都必须一致；要换段或改顺序请使用新条件或新研究根，
-`reference --force` 只重建参数参考，不更改源段绑定。版本号为 API v1.1.5 / 软件 1.0.9；
+`reference --force` 只重建参数参考，不更改源段绑定。版本号为 API v1.1.5 / 软件 1.0.10；
 此处描述的多段工程行为尚无真实 NMRPipe/SMILE 引擎验证。
 
 ## reference — 参考工作流(每个条件一份)

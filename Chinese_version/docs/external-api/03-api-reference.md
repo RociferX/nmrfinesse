@@ -1,6 +1,6 @@
 # 03 · API 参考(v1.1.5)
 
-顶层导出见`nmrfinesse_api/__init__.py`，API **1.1.5**仅在`nmrfinesse_api.session.API_VERSION`定义。软件**1.0.9**与API分别版本化，统一峰表为38列。
+顶层导出见`nmrfinesse_api/__init__.py`，API **1.1.5**仅在`nmrfinesse_api.session.API_VERSION`定义。软件**1.0.10**与API分别版本化，统一峰表为38列。
 
 ## 3.1 会话与数据集
 

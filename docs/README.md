@@ -1,6 +1,6 @@
 # NMRFinesse documentation
 
-Software **1.0.9** · Python/CLI API **1.1.5**.
+Software **1.0.10** · Python/CLI API **1.1.5**.
 Start with the [project README](../README.md) for features, workflow, examples and evidence.
 For Linux desktop use, the AppImage is the simplest route; see [installation](installation.md)
 for the current release-artifact status. NMRPipe and SMILE are installed separately.

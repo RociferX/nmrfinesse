@@ -1,8 +1,8 @@
 # Python API
 
-The public scripting API version is `API_VERSION = "1.1.5"`; the software version is 1.0.9. API
+The public scripting API version is `API_VERSION = "1.1.5"`; the software version is 1.0.10. API
 parameters and the retained 38-column peak-table contract are defined by this API. Desktop users
-can use the [1.0.9 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.9).
+can use the [1.0.10 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.10).
 For scripting, follow [source installation](installation.md). Install source containing
 API v1.1.5 and check `compat_manifest()` before reusing results.
 

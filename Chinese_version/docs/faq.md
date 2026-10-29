@@ -12,7 +12,7 @@
 ### 能在 Windows 或 macOS 上跑吗?
 
 Linux 是目标运行平台，Windows 仅作为编辑环境；macOS 未验证。
-当前软件版本为 1.0.9，公开 API 版本为 v1.1.5。Linux AppImage 与源码可从 [1.0.9 Release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.9) 获取；API 参数和 38 列峰表契约见 [Python API](python-api.md)。
+当前软件版本为 1.0.10，公开 API 版本为 v1.1.5。Linux AppImage 与源码可从 [1.0.10 Release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.10) 获取；API 参数和 38 列峰表契约见 [Python API](python-api.md)。
 
 ### NMRFinesse 会把我的数据发到什么地方吗?
 

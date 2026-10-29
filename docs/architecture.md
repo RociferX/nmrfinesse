@@ -1,6 +1,6 @@
 # Architecture
 
-NMRFinesse 1.0.9 combines a Qt desktop application, a reusable data and processing core, workflow
+NMRFinesse 1.0.10 combines a Qt desktop application, a reusable data and processing core, workflow
 orchestration, an NMRPipe backend, and a separate Python/CLI API (API 1.1.5). The components share
 the same project and processing capabilities, but have different entry points and output records.
 

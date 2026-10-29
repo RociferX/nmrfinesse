@@ -29,8 +29,8 @@ authors:
   - family-names: "Li"
     given-names: "Xuanfeng"
     affiliation: "University of Science and Technology of China"
-version: 1.0.9
-date-released: 2026-10-20
+version: 1.0.10
+date-released: 2026-10-29
 repository-code: "https://github.com/RociferX/nmrfinesse"
 doi: "10.5281/zenodo.22909415"
 identifiers:
