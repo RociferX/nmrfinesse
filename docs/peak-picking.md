@@ -122,3 +122,11 @@ Scripting API localization uses `parabolic`, the only supported method; see the
   threshold matters for a publication so the chosen value is recorded.
 - The default threshold is a convention, not a measurement. If you rely on a specific threshold
   for a publication, set it explicitly so the recorded value is the one you mean.
+
+## Noise and signal-to-noise ratio
+
+Peak picking uses the global median `b` of the real spectrum as its baseline and estimates noise as `sigma = 1.4826 × median(abs(data - b))` (MAD), falling back to the global standard deviation when sigma is below `1e-12`. Peak height is `data - b` at the candidate grid point; `SNR = abs(height) / sigma`, or zero when noise is zero. Three-point parabolic localisation refines coordinates without changing height or SNR. The GUI displays one decimal place from the original detection; loading a table does not estimate noise again.
+
+POKY/Sparky `.list` exports append `S/N` when a finite SNR is available. Tables without SNR keep their original header; missing values in an extended table use `nan` and display as blank. Import also accepts `SNR` and `SN` headers. The `.localization.json` attachment records full-precision per-peak SNR and height, plus the run's `noise_sigma` and `baseline_offset`. Rerun peak picking to obtain these values for older tables that lack them.
+
+The noise definition differs from POKY: the [official iPick entry point](https://github.com/pokynmr/iPick/blob/master/iPick.py) samples 100 random points, and [ucsfTool](https://github.com/pokynmr/iPick/blob/master/ucsftool3.py) takes the middle sorted absolute intensity. The [peak-list code](https://github.com/pokynmr/iPick/blob/master/peak_list_dialog.py) divides peak height by the spectrum's noise and labels it S/N. This program retains its existing MAD estimator and thresholds; compatible columns do not imply identical numerical values.

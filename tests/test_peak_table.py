@@ -332,3 +332,35 @@ def test_import_poky_minimal_3d_with_nuclei(tmp_path: Path) -> None:
     assert rows[0]["F1_shift"] == 118.0
     assert rows[0]["F2_shift"] == 8.5
     assert rows[0]["F3_shift"] == 45.0
+
+
+def test_poky_optional_snr_roundtrip_2d_and_3d(tmp_path):
+    import math
+
+    import pytest
+
+    for ndim in (2, 3):
+        path = tmp_path / f"snr{ndim}.list"
+        shifts = ({"H_shift": 8.2, "N_shift": 118.5} if ndim == 2 else
+                  {"F1_shift": 118.5, "F2_shift": 35., "F3_shift": 8.2})
+        peaks = [{**shifts, "Intensity": -120, "SN": 24.567891},
+                 {**shifts, "Intensity": 10, "SNR": 2.5},
+                 {**shifts, "Intensity": 3, "SN": math.nan}]
+        export_peaks_poky(path, peaks, ndim=ndim)
+        assert path.read_text().splitlines()[0].endswith("Volume S/N")
+        rows = import_peaks_poky(path)
+        assert rows[0]["SN"] == pytest.approx(24.567891)
+        assert rows[0]["Intensity"] == -120
+        assert rows[1]["SN"] == 2.5
+        assert "SN" not in rows[2]
+        assert rows[0].get("H_shift", rows[0].get("F3_shift")) == 8.2
+
+
+def test_poky_snr_header_aliases_and_custom_column_order(tmp_path):
+    for name in ("S/N", "SNR", "SN"):
+        path = tmp_path / "custom.list"
+        path.write_text(f"Assignment w1 w2 {name} Height\nG1 118 8.2 12.5 250\n")
+        row = import_peaks_poky(path)[0]
+        assert row["SN"] == 12.5
+        assert row["Intensity"] == 250
+        assert row["Volume"] == 0

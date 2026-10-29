@@ -138,7 +138,7 @@ def test_pick_peaks_writes_poky_list(tmp_path: Path) -> None:
     path = Path(result["peak_path"])
     assert path.suffix == ".list"
     lines = path.read_text(encoding="utf-8").splitlines()
-    assert lines[0] == "Assignment w1 w2 Data Height Volume"
+    assert lines[0] == "Assignment w1 w2 Data Height Volume S/N"
     assert len(lines) >= 2
 
     report = "\n".join(result["logs"])
@@ -1074,3 +1074,37 @@ def test_nonfinite_spectrum_is_recorded_as_failed_not_empty_success(tmp_path):
     with pytest.raises(PickPeaksError):
         pick_peaks(manager, exp_id, data_id)
     assert manager.project.workflow_runs[-1].status == "failed"
+
+
+@pytest.mark.parametrize('ndim', [2, 3])
+def test_pick_attachment_preserves_detector_snr_and_noise(tmp_path, monkeypatch, ndim):
+    import json
+
+    from core.peaks.localize import localization_records_path
+    from core.qc import noise
+
+    rng = np.random.default_rng(29)
+    data = rng.normal(25, .04, (32,) * ndim).astype(np.float32)
+    data[(9,) * ndim] = 31
+    data[(20,) * ndim] = 17
+    spectrum = tmp_path / f'spectrum.ft{ndim}'
+    if ndim == 2:
+        _write_ft2(spectrum, data)
+    else:
+        from tests.test_viewer3d import _write_ft3_ordered
+
+        _write_ft3_ordered(spectrum, data, [3., 2., 1., 4.])
+    manager, exp_id, data_id = _manager_with_spectrum(tmp_path, spectrum)
+    monkeypatch.setattr('workflow.pick_peaks._sign_mode_for', lambda *_: 'both')
+    result = pick_peaks(manager, exp_id, data_id, sigma_multiplier=10,
+                        edge_margin_points=0)
+    peak_path = Path(result['peak_path'])
+    payload = json.loads(localization_records_path(peak_path).read_text('utf8'))
+    estimate = noise.estimate(data)
+    assert payload['meta']['noise_sigma'] == pytest.approx(estimate.global_sigma)
+    assert payload['meta']['baseline_offset'] == pytest.approx(estimate.baseline)
+    rows = payload['peaks']
+    assert {int(np.sign(row['Intensity'])) for row in rows} == {-1, 1}
+    for row in rows:
+        assert row['SNR'] == pytest.approx(abs(row['Intensity']) / estimate.global_sigma)
+        assert row['SNR'] > 0

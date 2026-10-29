@@ -210,3 +210,5 @@ Load a comparison spectrum from the comparison menu, then choose overlay mode fo
 In enlarged view, an expanded peak table fills the remaining sidebar height. Overlay mode hides the entire peak tools/table section and restores its fold state when leaving overlay. Successful auto-fit no longer displays a match-rate row; progress and errors remain visible.
 
 The main workspace keeps a 20 logical-pixel inset on the right and bottom. This places scrollbars inside the desktop boundary during maximized use and reduces accidental activation of virtual-machine edge drag detection. Scrolling remains available; dragging the pointer to the actual desktop edge can still activate the VM feature.
+
+Peak-table columns fit their headers, values and segmented Assignment editors when loaded or after a font change; headers remain manually resizable. The SNR column no longer stretches across unused space. It displays the original detection SNR and preserves it in the `.list` `S/N` column; see [noise and SNR](peak-picking.md#noise-and-signal-to-noise-ratio).

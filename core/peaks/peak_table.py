@@ -3,12 +3,12 @@ older NMRFlow project).
 
 - ``.list``: the internal peak file *is* Poky/Sparky format (0.2.199-patch29ar, user:
   peak files stay Poky from start to finish, never CSV); "Assignment w1 w2 [w3] Data
-  Height Volume", 2D w1=15N (N_shift) w2=1H (H_shift), 3D follows the external
+  Height Volume [S/N]", 2D w1=15N (N_shift) w2=1H (H_shift), 3D follows the external
   convention w1=15N/w2=13C/w3=1H (0.2.199-patch29dk, user: .list and the peak-table
   display both match the outside, while internally the axes are read as F1/F2/F3 --
   export/import permutes external w columns <-> internal F columns through ``nuclei``);
   unnamed peaks are ?-? (2D) / ?-?-? (3D), Height=Intensity %.3g, Data/Volume=0,
-  double spaces;
+  double spaces; optional S/N is retained, with nan for missing values;
 - import compatibility (0.2.199-patch29fx, user: a reference .list may carry extra
   trailing columns, a trimmed column set or a lowercase header): the header is
   case-insensitive, 2D needs at least 3 columns / 3D at least 4, Data/Height/Volume may
@@ -20,6 +20,7 @@ older NMRFlow project).
 from __future__ import annotations
 
 import csv
+import math
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -260,6 +261,18 @@ def _poky_num(value: Any) -> float:
         return 0.0
 
 
+def _poky_snr(peak: dict[str, Any]) -> float | None:
+    """Read an available finite SNR without replacing missing values with zero."""
+    for key in ("SN", "SNR", "S/N"):
+        try:
+            value = float(peak[key])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if math.isfinite(value):
+            return value
+    return None
+
+
 def export_peaks_poky(
     path: Path | str,
     peaks: list[dict[str, Any]],
@@ -274,18 +287,24 @@ def export_peaks_poky(
     F axis (F1/F2/F3 order), and when it is missing or does not form a permutation the
     export falls back to positional w1/w2/w3 = F1/F2/F3_shift; unnamed peaks are
     ?-? (2D) / ?-?-? (3D); Height=Intensity %.3g; Data/Volume=0; double spaces.
+    Optional S/N preserves detector SNR.
     """
+    # POKY peak lists support an optional S/N field; absent values stay missing.
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     is_3d = ndim >= 3 or (bool(peaks) and "F1_shift" in peaks[0])
     header = (
         "Assignment w1 w2 w3 Data Height Volume" if is_3d else "Assignment w1 w2 Data Height Volume"
     )
+    snr_values = [_poky_snr(peak) for peak in peaks]
+    include_snr = any(value is not None for value in snr_values)
+    if include_snr:
+        header += " S/N"
     lines = [header]
     order = (
         _external_w_to_internal_axes(nuclei, _EXTERNAL_3D_NUCLEI, 3) if is_3d else list(range(2))
     )
-    for peak in peaks:
+    for peak, snr in zip(peaks, snr_values):
         label = str(peak.get("label", "") or "").strip().replace(" ", "_")
         if not label:
             label = "?-?-?" if is_3d else "?-?"
@@ -298,6 +317,8 @@ def export_peaks_poky(
             ]
         height = _poky_num(peak.get("Intensity", 0.0))
         row = [label] + [f"{s:.3f}" for s in shifts] + ["0", f"{height:.3g}", "0"]
+        if include_snr:
+            row.append(f"{snr:.8g}" if snr is not None else "nan")
         lines.append("  ".join(row))
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
@@ -381,6 +402,7 @@ def import_peaks_poky(path: Path | str, *, nuclei: list[str] | None = None) -> l
         return []
     rows: list[dict[str, Any]] = []
     header_ndim: int | None = None
+    header_columns: dict[str, int] = {}
     for line in path.read_text(encoding="utf-8").splitlines():
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
@@ -389,6 +411,7 @@ def import_peaks_poky(path: Path | str, *, nuclei: list[str] | None = None) -> l
             guessed = _poky_header_ndim(stripped)
             if guessed is not None:
                 header_ndim = guessed
+                header_columns = {name.lower(): i for i, name in enumerate(stripped.split())}
                 continue
         tokens = stripped.split()
         if len(tokens) < 3:
@@ -398,6 +421,21 @@ def import_peaks_poky(path: Path | str, *, nuclei: list[str] | None = None) -> l
             continue
         row = _parse_poky_row(tokens, ndim, nuclei)
         if row is not None:
+            for name, key in (("data", "Data"), ("height", "Height"), ("volume", "Volume")):
+                index = header_columns.get(name)
+                if any(name in header_columns for name in ("s/n", "snr", "sn")):
+                    row[key] = (
+                        _poky_num(tokens[index])
+                        if index is not None and index < len(tokens) else 0.0
+                    )
+            row["Intensity"] = row["Height"]
+            for name in ("s/n", "snr", "sn"):
+                index = header_columns.get(name)
+                if index is not None and index < len(tokens):
+                    value = _poky_snr({"SN": tokens[index]})
+                    if value is not None:
+                        row["SN"] = value
+                    break
             rows.append(row)
     return rows
 

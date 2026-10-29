@@ -18,6 +18,7 @@ from qtcompat.QtWidgets import (
     QDoubleSpinBox,
     QFileDialog,
     QHBoxLayout,
+    QHeaderView,
     QLabel,
     QLineEdit,
     QListWidget,
@@ -68,7 +69,7 @@ def _contiguous_runs(indices: list[int]) -> list[tuple[int, int]]:
 
 
 def _format_snr(value) -> str:
-    """Format numeric peak SNR to one decimal place; leave missing or nonnumeric values blank."""
+    """Display SNR with one decimal place; keep missing values blank and legacy SN compatible."""
     if value is None or value == "":
         return ""
     try:
@@ -148,10 +149,12 @@ class _AssignmentCell(QWidget):
             )
             self.lines.append(le)
             lay.addWidget(le)
+        self._fit_segment_widths()
         for le in self.lines:
             le.textChanged.connect(self._on_text_changed)
 
     def _on_text_changed(self, *_args) -> None:
+        self._fit_segment_widths()
         self.edited.emit(self.row)
 
     def changeEvent(self, event):
@@ -162,7 +165,8 @@ class _AssignmentCell(QWidget):
     def _fit_segment_widths(self):
         for line in self.lines:
             metrics = line.fontMetrics()
-            width = metrics.horizontalAdvance('G1CA') + 14
+            width = max(metrics.horizontalAdvance('G1CA'),
+                        metrics.horizontalAdvance(line.text())) + 14
             line.setMinimumWidth(width)
             line.setMaximumWidth(width + metrics.horizontalAdvance('WW'))
 
@@ -413,8 +417,11 @@ class SpectrumPanel(QWidget):
         self.peak_table.setSelectionMode(
             QAbstractItemView.SelectionMode.ExtendedSelection
         )
-        self.peak_table.setHorizontalHeaderLabels(list(self._peak_keys))
-        self.peak_table.horizontalHeader().setStretchLastSection(True)
+        self.peak_table.setHorizontalHeaderLabels(
+            [{"SN": "SNR", "Peak_ID": "ID"}.get(key, key) for key in self._peak_keys]
+        )
+        self.peak_table.horizontalHeader().setStretchLastSection(False)
+        self.peak_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.peak_table.setMaximumHeight(
             max(150, self.peak_table.fontMetrics().height() * 6 + 32)
         )
@@ -1711,7 +1718,7 @@ class SpectrumPanel(QWidget):
 
 
         keys: list[str]
-        header_map: dict[str, str] = {}
+        header_map: dict[str, str] = {"SN": "SNR", "Peak_ID": "ID"}
         if is_3d:
             s3d = self._spectrum3d_panel.spectrum3d
             axes3 = getattr(s3d, "axes", None)
@@ -1728,20 +1735,20 @@ class SpectrumPanel(QWidget):
                     + [f"F{i + 1}_shift" for i in order]
                     + ["Intensity", "SN"]
                 )
-                header_map = {
+                header_map.update({
                     f"F{i + 1}_shift": f"{axes3[i].label}_shift"
                     for i in order
-                }
+                })
             else:
                 keys = [
                     "Peak_ID", "label", "F1_shift", "F2_shift", "F3_shift",
                     "Intensity", "SN",
                 ]
                 if axes3 and len(axes3) == 3:
-                    header_map = {
+                    header_map.update({
                         f"F{i + 1}_shift": f"{axes3[i].label}_shift"
                         for i in range(3)
-                    }
+                    })
         else:
             keys = ["Peak_ID", "label", "H_shift", "N_shift", "Intensity", "SN"]
         tuple_keys = tuple(keys)
@@ -1811,14 +1818,11 @@ class SpectrumPanel(QWidget):
                     item.setText("")
 
     def _populate_peak_table(self) -> None:
-        """Populate the peak table with dimensionality-specific columns.
+        """Populate 2D/3D rows from optional .list S/N or legacy CSV SNR values.
 
-        Map pipeline CSV SNR to the existing SN column and format one decimal place. Poky lists
-        contain no SNR column, so absent values remain blank rather than being invented.
-        """
+        Keep SN as the internal key and SNR as its visible title; never reestimate noise here."""
         is_3d = bool(self._peaks) and "F1_shift" in self._peaks[0]
         self._set_peak_columns(is_3d)
-        label_col = self._peak_keys.index("label")
         self._loading_peaks = True
         try:
             self.peak_table.setRowCount(len(self._peaks))
@@ -1836,11 +1840,36 @@ class SpectrumPanel(QWidget):
 
 
                 self.peak_table.item(row, 0).setData(0x0100, dict(peak))
-            self.peak_table.setColumnWidth(label_col, 142 if is_3d else 94)
         finally:
             self._loading_peaks = False
         self._ensure_assignment_widgets()
+        self._fit_peak_columns()
         self._fit_accessibility_controls()
+
+    def _fit_peak_columns(self) -> None:
+        """Size columns for their headers, values and assignment editors; keep manual resizing."""
+        table = self.peak_table
+        metrics = table.fontMetrics()
+        for col, key in enumerate(self._peak_keys):
+            header = table.horizontalHeaderItem(col)
+            width = metrics.horizontalAdvance(header.text() if header is not None else key) + 12
+            for row in range(table.rowCount()):
+                item = table.item(row, col)
+                if item is not None:
+                    width = max(width, metrics.horizontalAdvance(item.text()) + 10)
+                if key == 'label':
+                    label = str(self._peaks[row].get('label', '') or '')
+                    ndim = 3 if 'F1_shift' in self._peaks[row] else 2
+                    segments = (label.split('-') + ['?'] * ndim)[:ndim]
+                    editor_width = sum(max(metrics.horizontalAdvance('G1CA'),
+                                           metrics.horizontalAdvance(segment)) + 14
+                                       for segment in segments)
+                    editor_width += (ndim - 1) * (metrics.horizontalAdvance('-') + 12) + 12
+                    width = max(width, editor_width)
+                    widget = table.cellWidget(row, col)
+                    if widget is not None:
+                        width = max(width, widget.minimumSizeHint().width() + 12)
+            table.setColumnWidth(col, width)
 
     def _table_peaks(self) -> list[dict]:
         """Read the current contents of the table back into a peak dict list (the unedited line is
@@ -1919,6 +1948,10 @@ class SpectrumPanel(QWidget):
 
         if 0 <= row < len(self._peaks):
             self._peaks[row]["label"] = label
+        label_col = self._peak_keys.index('label')
+        required = widget.minimumSizeHint().width() + 12
+        if required > self.peak_table.columnWidth(label_col):
+            self.peak_table.setColumnWidth(label_col, required)
         self.viewer.apply_label_edit(row, label)
 
     def _on_add_peak_toggled(self, checked: bool) -> None:
@@ -2750,6 +2783,7 @@ class SpectrumPanel(QWidget):
         super().changeEvent(event)
         if event.type() == QEvent.Type.FontChange and hasattr(self, 'peak_toolbar_widget'):
             QTimer.singleShot(0, self, self._fit_accessibility_controls)
+            QTimer.singleShot(0, self, self._fit_peak_columns)
 
     def _fit_accessibility_controls(self) -> None:
         """Keep labels and action rows sized for the active UI font and width."""

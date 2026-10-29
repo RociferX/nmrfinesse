@@ -107,3 +107,5 @@ Run overlay, SVG, 1D and viewer-section tests when changing comparison or layout
 
 The shared suite pins the Chinese catalogue for message assertions. This is a test fixture;
 the public application's default remains English, and i18n tests exercise both languages.
+
+Peak-table SNR is an additive extension: optional S/N in project .list files and noise/baseline provenance in localisation attachments. Detection numerics and the 38-column API peak table are unchanged. See [noise and SNR](peak-picking.md#noise-and-signal-to-noise-ratio).

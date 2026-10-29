@@ -44,3 +44,5 @@
 
 引擎边界需要外部 NMRPipe 工具完成转换和傅里叶处理，NUS 重构需要 SMILE。另见[外部依赖]
 (../external-dependencies.md)、[处理模型](../processing-model.md)和共享[架构](../architecture.md)。
+
+选峰检测器SNR写入.list可选S/N列及定位附件；附件保留noise_sigma、baseline_offset和完整精度峰高，采用原有全局MAD算法。

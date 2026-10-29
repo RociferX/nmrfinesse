@@ -23,12 +23,13 @@ from typing import Any
 
 #: declared behaviour level (see the module doc; meaning matches nmrfinesse_api.compat)
 DECLARATION: dict[str, Any] = {'schema': 'nmrfinesse_api.compat.declaration.v1',
- 'digest': '90abb78cffa0df7f5d0e49fae86b1367a4fc5f187c913161a74600923ec0d76f',
- 'token_digest': 'cccbb0d39400be671e0412178f7b4bcc9ac531983c722c4a2829334b0213d734',
+ 'digest': 'd5b0778475f3d50f6be590c1af9d7c7092fab7e16ae88b8cab71608b3124a25a',
+ 'token_digest': '741f05604f4ceca7821e9023b9af9ca392a87e2fe894d410f1a44e828db05b6d',
  'compat_level': 'additive',
  'affected': [],
- 'updated': '2026-10-24',
- 'note': 'Add explicit manual CAR choices; automatic conversion is unchanged.',
+ 'updated': '2026-10-29',
+ 'note': 'Preserve detector SNR in optional POKY S/N and record noise; detection '
+         'unchanged.',
  'golden': {'name': 'conformance_v1',
             'spectrum_sha256': '382b330926da93d856feef40ca33c2df1eec21b61e50db471bdf7aa4bb2fb311',
             'peak_table_sha256': 'e9ef45f2cae32bc580fc1bdeea1928ceb8406154848f8aca3c4558285e532242',

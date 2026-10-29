@@ -284,3 +284,70 @@ def test_peak_table_sn_column_empty_for_poky_list(tmp_path: Path, qapp: QApplica
     sn_col = panel._peak_keys.index("SN")
     assert panel.peak_table.item(0, sn_col).text() == ""
     panel.close()
+
+
+def test_peak_columns_fit_values_and_assignment_editors(tmp_path, qapp):
+    manager, exp_id, data_id, spectrum, _ = _manager_for_snr(
+        tmp_path, 'column_sizes',
+        'Peak_ID,H_shift,N_shift,Intensity,SNR,label\n'
+        '1,8.125,115.25,120000000,120.5,G123H-G123CA\n', '.csv',
+    )
+    panel = SpectrumPanel(manager)
+    panel.set_context(exp_id, data_id)
+    panel._load_peaks(spectrum)
+    table = panel.peak_table
+    label_col = panel._peak_keys.index('label')
+    sn_col = panel._peak_keys.index('SN')
+    assert table.horizontalHeaderItem(sn_col).text() == 'SNR'
+    assert not table.horizontalHeader().stretchLastSection()
+    assert table.columnWidth(label_col) >= table.cellWidget(0, label_col).minimumSizeHint().width()
+    for col in range(table.columnCount()):
+        assert table.columnWidth(col) >= table.fontMetrics().horizontalAdvance(
+            table.horizontalHeaderItem(col).text(),
+        ) + 12
+    assert table.columnWidth(sn_col) < table.columnWidth(label_col)
+    assert table.horizontalHeaderItem(0).text() == 'ID'
+    widget = table.cellWidget(0, label_col)
+    for line in widget.lines:
+        assert line.minimumWidth() >= line.fontMetrics().horizontalAdvance(line.text()) + 14
+    widget.lines[0].setText('G123456789H')
+    qapp.processEvents()
+    assert table.columnWidth(label_col) >= widget.minimumSizeHint().width()
+    panel.close()
+
+
+def test_picked_snr_survives_standalone_poky_roundtrip(tmp_path, qapp):
+    import json
+
+    import numpy as np
+    import pytest
+
+    from core.peaks.localize import localization_records_path
+    from core.qc.noise import estimate
+    from tests.test_pick_peaks import _manager_with_spectrum, _write_ft2
+    from workflow.pick_peaks import pick_peaks
+
+    rng = np.random.default_rng(20261029)
+    data = rng.normal(50, .05, (64, 128))
+    data[24, 52] = 56
+    path = tmp_path / 'signal.ft2'
+    _write_ft2(path, data)
+    manager, exp_id, data_id = _manager_with_spectrum(tmp_path, path)
+    result = pick_peaks(manager, exp_id, data_id, sigma_multiplier=10,
+                        edge_margin_points=0)
+    peak_path = Path(result['peak_path'])
+    payload = json.loads(localization_records_path(peak_path).read_text('utf8'))
+    noise = estimate(data.astype(np.float32))
+    assert payload['meta']['noise_sigma'] == pytest.approx(noise.global_sigma)
+    assert payload['peaks']
+    for row in payload['peaks']:
+        assert row['SNR'] == pytest.approx(abs(row['Intensity']) / noise.global_sigma)
+    panel = SpectrumPanel(manager)
+    panel.set_context(exp_id, data_id)
+    panel._load_peaks(path)
+    sn_col = panel._peak_keys.index('SN')
+    assert panel.peak_table.item(0, sn_col).text() == f"{payload['peaks'][0]['SNR']:.1f}"
+    localization_records_path(peak_path).unlink()
+    panel._load_peaks(path)
+    assert panel.peak_table.item(0, sn_col).text() == f"{payload['peaks'][0]['SNR']:.1f}"
+    panel.close()

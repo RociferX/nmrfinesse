@@ -74,3 +74,5 @@ OverlayComparison uses the union of transformed spectral bounds for Full view. E
 Expanded peak tables consume the remaining sidebar space; ordinary view retains its compact content limit. Overlay mode hides the peak section without changing its fold state. Embedded controls are parented before explicit visibility changes, and lazy assignment editors belong to the table viewport, preventing temporary native top-level windows.
 
 The central workspace layout reserves 20 logical pixels at the right and bottom. Scrollbar geometry tests cover maximized use at 8, 12 and 18 pt. The application does not alter desktop services or VM drag-and-drop configuration.
+
+Peak-table columns fit headers, values and assignment editors on load and FontChange. The last column does not stretch; SNR uses the stored detector value without GUI noise estimation.

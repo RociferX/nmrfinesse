@@ -80,3 +80,11 @@ print(result["peak_count"], result["peak_path"])
 
 API 见 [接口参考](external-api/03-api-reference.md)。解析/导出已有峰表不需要 NMRPipe；
 从原始数据生成处理谱需要外部引擎。发表时请明确阈值、符号模式、人工边距、参考约束和软件版本。
+
+## 噪音与信噪比
+
+选峰以谱实部的全局中位数 `b` 为基线，噪音为 `sigma = 1.4826 × median(abs(data - b))`（MAD）；换算后的 sigma 小于 `1e-12` 时改用全局标准差。峰高为候选网格点的 `data - b`，`SNR = abs(峰高) / sigma`，噪音为零时记为 0。三点抛物线仅精修坐标，不改峰高或 SNR。GUI 的 SNR 保留一位小数，使用本次选峰的噪音，不在加载峰表时重估。
+
+POKY/Sparky `.list` 有有效 SNR 时追加 `S/N` 列；没有有效值则保持原表头。同表缺值写作 `nan`，导入后显示空白；同时兼容 `SNR`、`SN` 列名。选峰附件 `.localization.json` 保存逐峰完整精度 SNR、峰高以及运行的 `noise_sigma` 和 `baseline_offset`。旧表没有 SNR 时需重新选峰才能得到本程序的信噪比。
+
+这与 POKY 的噪音口径不同：[官方 iPick 选峰入口](https://github.com/pokynmr/iPick/blob/master/iPick.py)抽取100个随机点，[ucsfTool实现](https://github.com/pokynmr/iPick/blob/master/ucsftool3.py)取绝对强度排序的中间值；[峰表代码](https://github.com/pokynmr/iPick/blob/master/peak_list_dialog.py)以峰高除以谱的noise，并标记为S/N。本程序保留既有MAD算法与阈值，导出列兼容不表示计算值相同。

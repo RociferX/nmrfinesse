@@ -57,3 +57,5 @@ workflows, without importing GUI or viewer state.
 The engine boundary requires external NMRPipe tools for conversion and Fourier processing, and
 SMILE for NUS reconstruction. See [external dependencies](../external-dependencies.md), the
 [processing model](../processing-model.md), and the shared [architecture](../architecture.md).
+
+Detector SNR is preserved in the optional .list S/N field and in localisation attachments with full-precision height, noise_sigma and baseline_offset. Detection continues to use the global median baseline and MAD noise estimator.

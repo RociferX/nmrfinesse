@@ -412,6 +412,8 @@ def _localization_records(
             "label": str(getattr(peak, "label", "") or ""),
         }
         row.update(dict(peak.localization or {}))
+        row["SNR"] = float(peak.snr)
+        row["Intensity"] = float(peak.height)
         rows.append(row)
     return rows
 
@@ -929,6 +931,7 @@ def pick_peaks(
         try:
             estimate = noise.estimate(arr)
             noise_sigma: float | None = float(estimate.global_sigma)
+            detection["noise_sigma"] = noise_sigma
             detection["baseline_offset"] = float(estimate.baseline)
             detection["height_reference"] = "global_median_baseline"
         except Exception:
@@ -1176,7 +1179,8 @@ def pick_peaks(
         records_path = write_localization_records(
             peak_path,
             _localization_records(peaks),
-            meta=localization_summary,
+            meta={**localization_summary, "noise_sigma": noise_sigma,
+                  "baseline_offset": detection.get("baseline_offset")},
         )
         localization_summary["records_path"] = str(records_path)
         localization_summary["peak_table_path"] = str(peak_path)
