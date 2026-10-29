@@ -577,6 +577,7 @@ class SpectrumPanel(QWidget):
         _peak_rows.addLayout(self.peak_toolbar)
         _peak_rows.addLayout(self.peak_toolbar2)
         self.peaks_section = CollapsibleSection(tr('Peaks'), expanded=False)
+        self.peaks_section.toggled.connect(self._fit_accessibility_controls)
         peaks_body = QVBoxLayout(self.peaks_section.body)
         peaks_body.setContentsMargins(0, 0, 0, 0)
         peaks_body.setSpacing(4)
@@ -659,6 +660,7 @@ class SpectrumPanel(QWidget):
             self.manager.project is not None
             and not self._viewer_1d_active
             and not self._projection_active
+            and not self.overlay.toggle.isChecked()
         )
         self.peak_table.setVisible(show)
         self.peak_toolbar_widget.setVisible(show)
@@ -1801,7 +1803,7 @@ class SpectrumPanel(QWidget):
                     if 0 <= row < len(self._peaks)
                     else ""
                 )
-                widget = _AssignmentCell(3 if is_3d else 2, row, label)
+                widget = _AssignmentCell(3 if is_3d else 2, row, label, table.viewport())
                 widget.edited.connect(self._on_assignment_cell_edited)
                 table.setCellWidget(row, label_col, widget)
                 item = table.item(row, label_col)
@@ -2642,6 +2644,8 @@ class SpectrumPanel(QWidget):
         for index, viewer in enumerate(self._comparison_viewers()):
             viewer.set_spectrum_color(self.overlay.colors[index])
         enabled = self.overlay.toggle.isChecked()
+        self._sync_peak_ui_visibility()
+        self._fit_accessibility_controls()
         entering = enabled and self._overlay_column is None
         leaving = not enabled and self._overlay_column is not None
         for viewer, controls in zip(self._comparison_viewers(), self.overlay.spectrum_controls):
@@ -2658,6 +2662,7 @@ class SpectrumPanel(QWidget):
             except ValueError as exc:
                 self.overlay.toggle.setChecked(False)
                 self.overlay.status.setText(str(exc))
+                self.overlay.status.show()
                 return
             if self._overlay_column is None:
                 self._overlay_column = self._comparison_column(tr('Overlay'), self.overlay.viewer)
@@ -2763,11 +2768,18 @@ class SpectrumPanel(QWidget):
                 140 + max(0, font_height - 17) * 6
             )
         row_height = max(font_height + 6, self.peak_table.rowHeight(0))
+        fill_peaks = (self._expanded and self.peaks_section.is_expanded()
+                      and not self.peaks_section.isHidden())
         self.peak_table.setMaximumHeight(
+            16_777_215 if fill_peaks else
             self.peak_table.horizontalHeader().sizeHint().height()
             + max(2, min(6, self.peak_table.rowCount())) * row_height
             + 2 * self.peak_table.frameWidth()
         )
+        if self._expand_controls is not None:
+            column = self._expand_controls.layout()
+            column.setStretch(column.indexOf(self.peaks_section), int(fill_peaks))
+            column.setStretch(column.count() - 1, int(not fill_peaks))
         self.peak_toolbar_widget.setMinimumHeight(0)
         self._fit_section_heights()
 
@@ -3056,6 +3068,7 @@ class SpectrumPanel(QWidget):
         self._panel_splitter.setVisible(False)
         viewer.setVisible(False)
         self._expanded = True
+        self._fit_accessibility_controls()
         self.compare_button.setVisible(True)
 
     def _exit_expand_mode(self) -> None:
@@ -3088,6 +3101,7 @@ class SpectrumPanel(QWidget):
         viewer.setVisible(True)
         self._panel_splitter.setVisible(True)
         self._expanded = False
+        self._fit_accessibility_controls()
         self.compare_button.setVisible(False)
 
     def _on_peak_header_clicked(self, section: int) -> None:

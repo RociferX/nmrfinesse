@@ -172,7 +172,7 @@
       "workflow/phase_routes.py:296"
     ],
     "(alignment rate {p0:.0%}, shift {p1})": [
-      "gui/spectrum_panel.py:2287"
+      "gui/spectrum_panel.py:2289"
     ],
     "(automatically processed: {p0})": [
       "workflow/direct_diagnostics.py:1860"
@@ -304,8 +304,8 @@
       "backend/nmrpipe_backend.py:3235"
     ],
     "2D spectrum loading failed {p0}: {p1}": [
-      "gui/spectrum_panel.py:1036",
-      "gui/spectrum_panel.py:966"
+      "gui/spectrum_panel.py:1038",
+      "gui/spectrum_panel.py:968"
     ],
     "3D NUS parameter markers are present but no sampling schedule was found; even when the trace count equals the full grid, the two-dimensional sampling order cannot be recovered": [
       "core/experiment/sampling_detector.py:434"
@@ -317,10 +317,10 @@
       "gui/pipeline_panel.py:3513"
     ],
     "3D spectrum loading failed {p0}: {p1}": [
-      "gui/spectrum_panel.py:1119"
+      "gui/spectrum_panel.py:1121"
     ],
     "3D spectrum loading failed: {p0}": [
-      "gui/spectrum_panel.py:1116"
+      "gui/spectrum_panel.py:1118"
     ],
     "; backups still present: {p0}": [
       "workflow/direct_diagnostics.py:929"
@@ -411,7 +411,7 @@
       "viewer/app.py:237"
     ],
     "Add third: {p0}": [
-      "gui/spectrum_panel.py:2494"
+      "gui/spectrum_panel.py:2496"
     ],
     "After alignment export": [
       "gui/spectrum_panel.py:368"
@@ -420,24 +420,24 @@
       "viewer/spectrum_viewer.py:438"
     ],
     "Alignment check chart (PNG): {p0}": [
-      "gui/spectrum_panel.py:2277"
-    ],
-    "Alignment check chart (SVG): {p0}": [
       "gui/spectrum_panel.py:2279"
     ],
+    "Alignment check chart (SVG): {p0}": [
+      "gui/spectrum_panel.py:2281"
+    ],
     "Alignment check map generation failed: {p0}": [
-      "gui/spectrum_panel.py:2282"
+      "gui/spectrum_panel.py:2284"
     ],
     "Alignment export failed": [
-      "gui/spectrum_panel.py:2178",
-      "gui/spectrum_panel.py:2203",
-      "gui/spectrum_panel.py:2298"
+      "gui/spectrum_panel.py:2180",
+      "gui/spectrum_panel.py:2205",
+      "gui/spectrum_panel.py:2300"
     ],
     "Alignment rate is low": [
-      "gui/spectrum_panel.py:2209"
+      "gui/spectrum_panel.py:2211"
     ],
     "Alignment rate {p0:.0%} < {p1:.0%}: check whether the reference spectrum matches this one": [
-      "gui/spectrum_panel.py:2210"
+      "gui/spectrum_panel.py:2212"
     ],
     "Alignment tolerances and search ranges must be finite and positive": [
       "workflow/peak_align.py:69",
@@ -485,7 +485,7 @@
     ],
     "Auto-fit overlay": [
       "gui/overlay_comparison.py:136",
-      "gui/overlay_comparison.py:577"
+      "gui/overlay_comparison.py:581"
     ],
     "Autofill comments: {p0}": [
       "gui/main_window.py:1333"
@@ -673,7 +673,7 @@
       "gui/overlay_svg_export.py:370"
     ],
     "Close comparison": [
-      "gui/spectrum_panel.py:2472"
+      "gui/spectrum_panel.py:2474"
     ],
     "Coarse": [
       "gui/overlay_comparison.py:222"
@@ -682,7 +682,7 @@
       "ui_support/collapsible.py:57"
     ],
     "Color {p0}": [
-      "gui/overlay_comparison.py:340"
+      "gui/overlay_comparison.py:343"
     ],
     "Combination mode does not track reference peaks: each combination picks peaks on its own candidate spectrum using the reference-locked detection threshold; automatic axial screening requires acquisition parameters and aligned narrow peaks at original edges. Uncertain cases keep peaks; an explicit physical edge width is a manual override.": [
       "nmrfinesse_api/records.py:44"
@@ -715,7 +715,7 @@
       "viewer/spectrum_overlay.py:49"
     ],
     "Comparison spectrum loading failed {p0}: {p1}": [
-      "gui/spectrum_panel.py:2855"
+      "gui/spectrum_panel.py:2867"
     ],
     "Complete 1D phase optimisation: p0={p0:g}° p1={p1:g}°": [
       "backend/nmrpipe_backend.py:1007"
@@ -800,8 +800,8 @@
       "gui/carrier_editor.py:52"
     ],
     "Current spectrum": [
-      "gui/spectrum_panel.py:2927",
-      "gui/spectrum_panel.py:2623"
+      "gui/spectrum_panel.py:2939",
+      "gui/spectrum_panel.py:2625"
     ],
     "Current task has been stopped ({p0} Process tree, clean up the residue {p1} item(s); cancellation of the memory computation was requested, exiting shortly)": [
       "gui/main_window.py:2644"
@@ -1012,7 +1012,7 @@
       "gui/overlay_comparison.py:152"
     ],
     "Exported peak table after alignment: ": [
-      "gui/spectrum_panel.py:2284"
+      "gui/spectrum_panel.py:2286"
     ],
     "Expression system": [
       "gui/notes.py:20"
@@ -1138,7 +1138,7 @@
       "gui/overlay_comparison.py:222"
     ],
     "Fine range: ±{p0:.6f} ppm (five data points); release to recenter.": [
-      "gui/overlay_comparison.py:399"
+      "gui/overlay_comparison.py:402"
     ],
     "Finish": [
       "gui/dialogs.py:639"
@@ -1150,9 +1150,9 @@
       "workflow/phase_routes.py:1718"
     ],
     "Fitting spectra…": [
-      "gui/overlay_comparison.py:560",
-      "gui/overlay_comparison.py:561",
-      "gui/overlay_comparison.py:579"
+      "gui/overlay_comparison.py:563",
+      "gui/overlay_comparison.py:564",
+      "gui/overlay_comparison.py:583"
     ],
     "Fixed reference": [
       "gui/overlay_comparison.py:147"
@@ -1441,7 +1441,7 @@
       "viewer/app.py:250"
     ],
     "Left drag: box zoom; middle drag: pan; wheel: zoom\nHome / full-spectrum view: restore the full range\nSelection mode: drag with the left button to box-select peaks; with Add peak mode on, click to add a peak (snapped to the peak top)\n3D spectra (.ft3): pick the plane to view in the right-hand panel, and step through the planes with the slice\n  slider or switch to the MIP / summed projection\n2D spectra: right-click the spectrum to extract a 1D row/column slice; right-click a layer in the list to delete it": [
-      "gui/spectrum_panel.py:2404"
+      "gui/spectrum_panel.py:2406"
     ],
     "Legacy denominator: O1/SFO1": [
       "backend/carrier_choices.py:104"
@@ -1483,17 +1483,17 @@
       "viewer/spectrum.py:628"
     ],
     "Load an external NMRPipe spectrum to compare with the current spectrum.": [
-      "gui/spectrum_panel.py:2480"
+      "gui/spectrum_panel.py:2482"
     ],
     "Load spectrum...": [
-      "gui/spectrum_panel.py:2478",
-      "gui/spectrum_panel.py:2522"
+      "gui/spectrum_panel.py:2480",
+      "gui/spectrum_panel.py:2524"
     ],
     "Load spectrum: %s (%s)": [
       "viewer/spectrum.py:468"
     ],
     "Loaded 3D spectrum: {p0}": [
-      "gui/spectrum_panel.py:1086",
+      "gui/spectrum_panel.py:1088",
       "viewer/app.py:181"
     ],
     "Loaded FID: {p0}": [
@@ -1503,13 +1503,13 @@
       "viewer/app.py:185"
     ],
     "Loading 2D spectrum: {p0}": [
-      "gui/spectrum_panel.py:960"
+      "gui/spectrum_panel.py:962"
     ],
     "Loading 3D spectrum in the background: {p0} ({p1} MB)": [
-      "gui/spectrum_panel.py:905"
+      "gui/spectrum_panel.py:907"
     ],
     "Loading 3D spectrum: {p0}": [
-      "gui/spectrum_panel.py:915"
+      "gui/spectrum_panel.py:917"
     ],
     "Loading FID (two-dimensional time domain): %s (%s)": [
       "viewer/spectrum.py:1231"
@@ -1518,7 +1518,7 @@
       "viewer/spectrum.py:1208"
     ],
     "Loading planes: {p0} / {p1}": [
-      "gui/spectrum_panel.py:1152"
+      "gui/spectrum_panel.py:1154"
     ],
     "Low field end": [
       "gui/pipeline_panel.py:198"
@@ -1681,8 +1681,8 @@
       "workflow/stepwise.py:516"
     ],
     "NMRPipe spectrum (*.ft2 *.ft3 *.ft1 *.fid);; all files (*)": [
-      "gui/spectrum_panel.py:2367",
-      "gui/spectrum_panel.py:2524",
+      "gui/spectrum_panel.py:2369",
+      "gui/spectrum_panel.py:2526",
       "viewer/app.py:136"
     ],
     "NUS Conversion failed (bruker native recognition failed)": [
@@ -1760,7 +1760,7 @@
       "gui/dashboards.py:380"
     ],
     "No data is currently selected": [
-      "gui/spectrum_panel.py:2351"
+      "gui/spectrum_panel.py:2353"
     ],
     "No data selected": [
       "gui/pipeline_panel.py:2782"
@@ -1775,7 +1775,7 @@
       "gui/pipeline_panel.py:2831"
     ],
     "No other result spectra": [
-      "gui/spectrum_panel.py:2486"
+      "gui/spectrum_panel.py:2488"
     ],
     "No processing commands or parameters changed (comments and spacing excluded).": [
       "workflow/script_audit.py:173"
@@ -1856,8 +1856,8 @@
       "workflow/baseline_optimize.py:411"
     ],
     "Not recorded": [
-      "gui/spectrum_panel.py:2451",
-      "gui/spectrum_panel.py:2459"
+      "gui/spectrum_panel.py:2453",
+      "gui/spectrum_panel.py:2461"
     ],
     "Note:\n{p0}": [
       "gui/center_panel.py:276",
@@ -1914,7 +1914,7 @@
       "workflow/pick_peaks.py:1190"
     ],
     "Open NMRPipe spectrum": [
-      "gui/spectrum_panel.py:2365",
+      "gui/spectrum_panel.py:2367",
       "viewer/app.py:134"
     ],
     "Open any spectrum...": [
@@ -1954,11 +1954,11 @@
       "gui/main_window.py:696",
       "gui/main_window.py:2488",
       "gui/main_window.py:2451",
-      "gui/spectrum_panel.py:2375"
+      "gui/spectrum_panel.py:2377"
     ],
     "Operating Instructions": [
       "gui/spectrum_panel.py:523",
-      "gui/spectrum_panel.py:2403",
+      "gui/spectrum_panel.py:2405",
       "viewer/app.py:127",
       "viewer/app.py:249"
     ],
@@ -1987,7 +1987,7 @@
       "backend/nmrpipe_backend.py:1738"
     ],
     "Overlay": [
-      "gui/spectrum_panel.py:2663"
+      "gui/spectrum_panel.py:2668"
     ],
     "Overlay comparison": [
       "gui/overlay_comparison.py:120",
@@ -2062,7 +2062,7 @@
       "workflow/pick_peaks.py:1211"
     ],
     "Peak {p0} coordinate {p1} {p2:.2f} ppm is outside the current spectrum axis range ({p3:.1f}-{p4:.1f}); it may be a stale peak pick, pick again": [
-      "gui/spectrum_panel.py:3145"
+      "gui/spectrum_panel.py:3159"
     ],
     "Peak {p0}: {p1:.3f} / {p2:.3f} ppm ({p3})": [
       "viewer/spectrum_viewer.py:1956"
@@ -2107,13 +2107,13 @@
       "gui/group_panel.py:356"
     ],
     "Please select sample data first": [
-      "gui/spectrum_panel.py:2078"
+      "gui/spectrum_panel.py:2080"
     ],
     "Please select the Data node on the left to view/run processing steps": [
       "gui/pipeline_panel.py:2079"
     ],
     "Please select the sample data node first": [
-      "gui/spectrum_panel.py:2081"
+      "gui/spectrum_panel.py:2083"
     ],
     "Please select the segmented collection container directory first": [
       "gui/dashboards.py:480"
@@ -2125,13 +2125,13 @@
       "gui/overlay_comparison.py:193"
     ],
     "Poky peak table (*.list);; all files (*)": [
-      "gui/spectrum_panel.py:2031",
-      "gui/spectrum_panel.py:2127",
-      "gui/spectrum_panel.py:2157",
-      "gui/spectrum_panel.py:2240"
+      "gui/spectrum_panel.py:2033",
+      "gui/spectrum_panel.py:2129",
+      "gui/spectrum_panel.py:2159",
+      "gui/spectrum_panel.py:2242"
     ],
     "Poky peak table exported: {p0}": [
-      "gui/spectrum_panel.py:2137"
+      "gui/spectrum_panel.py:2139"
     ],
     "Poor": [
       "workflow/optimization_report.py:187"
@@ -2352,7 +2352,7 @@
       "nmrfinesse_api/reference.py:668"
     ],
     "Reference peak file is empty or cannot be parsed": [
-      "gui/spectrum_panel.py:2181"
+      "gui/spectrum_panel.py:2183"
     ],
     "Reference peak table constraint: The current spectrum and the reference peak have no common core coordinates and are not filtered": [
       "workflow/pick_peaks.py:1062"
@@ -2381,7 +2381,7 @@
       "gui/notes.py:42"
     ],
     "Remove third spectrum": [
-      "gui/spectrum_panel.py:2475"
+      "gui/spectrum_panel.py:2477"
     ],
     "Removed only the trailing nusExpand -mask generation stage from fid.com; the earlier nusExpand data-expansion stage is still required before bruk2pipe": [
       "backend/bruker_workflow.py:1411"
@@ -2570,7 +2570,7 @@
       "gui/project_tree.py:308"
     ],
     "Select a plane for the third spectrum.": [
-      "gui/spectrum_panel.py:2559"
+      "gui/spectrum_panel.py:2561"
     ],
     "Select a row to view details": [
       "gui/dialogs.py:654"
@@ -2579,7 +2579,7 @@
       "workflow/pick_peaks.py:1189"
     ],
     "Select export reference peak file (.list)": [
-      "gui/spectrum_panel.py:2155"
+      "gui/spectrum_panel.py:2157"
     ],
     "Select fid file": [
       "gui/main_window.py:1551"
@@ -2670,7 +2670,7 @@
       "gui/overlay_svg_export.py:353"
     ],
     "Spectrum color": [
-      "gui/overlay_comparison.py:432"
+      "gui/overlay_comparison.py:435"
     ],
     "Spectrum contains non-finite values; peak detection was stopped": [
       "core/qc/noise.py:34"
@@ -2696,11 +2696,11 @@
       "workflow/manual.py:631"
     ],
     "Spectrum {p0}": [
-      "gui/overlay_comparison.py:308"
+      "gui/overlay_comparison.py:309"
     ],
     "Spectrum: {p0}\nOriginal data: {p1}\nSpectrum file: {p2}": [
-      "gui/spectrum_panel.py:2464",
-      "gui/spectrum_panel.py:2462"
+      "gui/spectrum_panel.py:2466",
+      "gui/spectrum_panel.py:2464"
     ],
     "Start SMILE refactoring": [
       "backend/nmrpipe_backend.py:1899"
@@ -2795,7 +2795,7 @@
       "workflow/batch.py:269"
     ],
     "The current data has not generated spectrum yet": [
-      "gui/spectrum_panel.py:2356"
+      "gui/spectrum_panel.py:2358"
     ],
     "The current memory cannot process this spectrum": [
       "gui/pipeline_panel.py:1555"
@@ -2804,7 +2804,7 @@
       "backend/nmrpipe_backend.py:1759"
     ],
     "The current peak table association was replaced with the Poky peak table ({p0} peak(s));\n(click \"Save peak table\" to write back to the .list file)": [
-      "gui/spectrum_panel.py:2065"
+      "gui/spectrum_panel.py:2067"
     ],
     "The currently available memory is approx. {p0} MB; processing this spectrum (SMILE) peaks at about {p1:.0f} MB, which cannot be handled at the current memory level. Please provide at least {p2} GB of memory": [
       "backend/memory_guard.py:150"
@@ -2929,7 +2929,7 @@
       "gui/main_window.py:2653"
     ],
     "There are no parsable peak lines in the file": [
-      "gui/spectrum_panel.py:2048"
+      "gui/spectrum_panel.py:2050"
     ],
     "There is a loop in processing plan DAG": [
       "core/planning/dependency_graph.py:80"
@@ -3349,7 +3349,7 @@
       "viewer/app.py:84"
     ],
     "close": [
-      "gui/spectrum_panel.py:3005",
+      "gui/spectrum_panel.py:3017",
       "gui/tutorial.py:82"
     ],
     "column count {p0} does not match the expected {p1}": [
@@ -3833,7 +3833,7 @@
     ],
     "enlarge": [
       "gui/spectrum_panel.py:483",
-      "gui/spectrum_panel.py:3005"
+      "gui/spectrum_panel.py:3017"
     ],
     "experiment": [
       "gui/dashboards.py:516",
@@ -3888,20 +3888,20 @@
       "nmrfinesse_api/cli.py:688"
     ],
     "export Poky peak table": [
-      "gui/spectrum_panel.py:2126"
+      "gui/spectrum_panel.py:2128"
     ],
     "export Poky peak table after alignment": [
-      "gui/spectrum_panel.py:2238"
+      "gui/spectrum_panel.py:2240"
     ],
     "export completed": [
-      "gui/spectrum_panel.py:2135",
-      "gui/spectrum_panel.py:2296"
+      "gui/spectrum_panel.py:2137",
+      "gui/spectrum_panel.py:2298"
     ],
     "export directly": [
       "gui/spectrum_panel.py:365"
     ],
     "export failed": [
-      "gui/spectrum_panel.py:2143"
+      "gui/spectrum_panel.py:2145"
     ],
     "export peak table: direct export (original coordinates) or export after alignment (overall translation and alignment to the selected reference peak file)": [
       "gui/spectrum_panel.py:357"
@@ -4027,10 +4027,10 @@
       "gui/main_window.py:2312",
       "gui/main_window.py:2335",
       "gui/main_window.py:2470",
-      "gui/spectrum_panel.py:2078",
-      "gui/spectrum_panel.py:2081",
-      "gui/spectrum_panel.py:2351",
-      "gui/spectrum_panel.py:2354"
+      "gui/spectrum_panel.py:2080",
+      "gui/spectrum_panel.py:2083",
+      "gui/spectrum_panel.py:2353",
+      "gui/spectrum_panel.py:2356"
     ],
     "identification experiment": [
       "gui/notes.py:69"
@@ -4054,14 +4054,14 @@
       "gui/pipeline_panel.py:1630"
     ],
     "import Poky peak table": [
-      "gui/spectrum_panel.py:2028"
+      "gui/spectrum_panel.py:2030"
     ],
     "import complete({p0})": [
       "workflow/import_workflow.py:548"
     ],
     "import completed": [
       "workflow/import_workflow.py:546",
-      "gui/spectrum_panel.py:2064"
+      "gui/spectrum_panel.py:2066"
     ],
     "import completed (prompt)": [
       "gui/main_window.py:1382"
@@ -4072,7 +4072,7 @@
     "import failed": [
       "gui/main_window.py:1309",
       "gui/main_window.py:1715",
-      "gui/spectrum_panel.py:2043"
+      "gui/spectrum_panel.py:2045"
     ],
     "import failed: {p0}": [
       "gui/main_window.py:1308"
@@ -4087,7 +4087,7 @@
       "gui/main_window.py:1305"
     ],
     "import results": [
-      "gui/spectrum_panel.py:2046"
+      "gui/spectrum_panel.py:2048"
     ],
     "import sample data": [
       "gui/dashboards.py:214",
@@ -4561,7 +4561,7 @@
       "gui/main_window.py:1766"
     ],
     "peak table has been written:\n{p0}": [
-      "gui/spectrum_panel.py:2102"
+      "gui/spectrum_panel.py:2104"
     ],
     "peak table save failed": [
       "gui/processing.py:660"
@@ -4573,7 +4573,7 @@
       "workflow/pick_peaks.py:776"
     ],
     "peak {p0}: the fixed-axis coordinate is missing or 0, so the plane cannot be located": [
-      "gui/spectrum_panel.py:3133"
+      "gui/spectrum_panel.py:3147"
     ],
     "peak-picking threshold (multiples of sigma)": [
       "nmrfinesse_api/cli.py:647"
@@ -4920,12 +4920,12 @@
       "gui/dialogs.py:959"
     ],
     "save completed": [
-      "gui/spectrum_panel.py:2100"
+      "gui/spectrum_panel.py:2102"
     ],
     "save failed": [
       "gui/main_window.py:682",
       "gui/main_window.py:2413",
-      "gui/spectrum_panel.py:2094"
+      "gui/spectrum_panel.py:2096"
     ],
     "save failed: {p0}": [
       "gui/dialogs.py:616"
@@ -5778,9 +5778,6 @@
       "workflow/phase_routes.py:812",
       "workflow/phase_routes.py:1825"
     ],
-    "{p0}: peak match {p1:.1%}": [
-      "gui/overlay_comparison.py:590"
-    ],
     "{p0}: peak_id is empty (delete the blank row)": [
       "nmrfinesse_api/localization_targets.py:74"
     ],
@@ -6116,5 +6113,5 @@
     "workflow/ucsf_export.py",
     "workflow/window_optimize.py"
   ],
-  "coverage_floor_zh": 1892
+  "coverage_floor_zh": 1891
 }

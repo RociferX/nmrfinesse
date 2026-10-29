@@ -2992,3 +2992,46 @@ def test_log_panel_group_scope_persists_to_group_folder(tmp_path: Path, qapp: QA
     assert "组日志第一行" not in path.read_text(encoding="utf-8")
     log.close()
     log2.close()
+
+
+def test_embedded_controls_do_not_show_as_top_level_windows(qapp, tmp_path, monkeypatch):
+    from qtcompat.QtCore import QEvent, QObject
+    from qtcompat.QtWidgets import QWidget
+
+    class WindowShows(QObject):
+        def __init__(self):
+            super().__init__()
+            self.widgets = []
+
+        def eventFilter(self, obj, event):
+            if (event.type() == QEvent.Type.Show and isinstance(obj, QWidget)
+                    and obj.isWindow() and not isinstance(obj, MainWindow)):
+                self.widgets.append(type(obj).__name__)
+            return False
+
+    monkeypatch.setattr(MainWindow, '_resolve_environment_on_startup', lambda *_: None)
+    observer = WindowShows()
+    qapp.installEventFilter(observer)
+    window = None
+    try:
+        window = MainWindow(manager=_manager_with_experiment(tmp_path, monkeypatch))
+        window.resize(1280, 760)
+        window.show()
+        panel = window.spectrum_panel
+        panel.peaks_section.set_expanded(True)
+        panel._peaks = [dict(Peak_ID=i + 1, label='G1H-G1N', H_shift=8.0,
+                             N_shift=120.0, Intensity=1.0) for i in range(200)]
+        panel._populate_peak_table()
+        qapp.processEvents()
+        for fraction in (1.0, .3, .8, 0.0):
+            for bar in (panel.peak_table.verticalScrollBar(),
+                        window.workspace_scroll.verticalScrollBar()):
+                bar.setValue(round(bar.maximum() * fraction))
+            qapp.processEvents()
+        assert not observer.widgets, observer.widgets
+    finally:
+        qapp.removeEventFilter(observer)
+        if window is not None:
+            window.close()
+            window.deleteLater()
+        qapp.processEvents()

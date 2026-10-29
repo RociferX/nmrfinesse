@@ -242,6 +242,7 @@ class OverlayComparison(QWidget):
         layout.addWidget(self.slice_controls)
         self.status = QLabel()
         self.status.setWordWrap(True)
+        self.status.hide()
         layout.addWidget(self.status)
         self.fitted.connect(self._apply_fit)
         self.toggle.toggled.connect(self._mode_controls)
@@ -315,6 +316,7 @@ class OverlayComparison(QWidget):
             controls.hide_positive.setEnabled(spectra[index].data.ndim == 2)
             controls.hide_negative.setEnabled(spectra[index].data.ndim == 2)
         self.status.clear()
+        self.status.hide()
         try:
             validate_spectra(spectra)
             self.toggle.setEnabled(True)
@@ -322,6 +324,7 @@ class OverlayComparison(QWidget):
             self.toggle.setChecked(False)
             self.toggle.setEnabled(False)
             self.status.setText(str(exc))
+            self.status.show()
         with QSignalBlocker(self.reference_choice):
             self.reference_choice.clear()
             for index, name in enumerate(names[1:], 1):
@@ -559,6 +562,7 @@ class OverlayComparison(QWidget):
         self.fit_button.setEnabled(False)
         self.fit_button.setText(tr('Fitting spectra…'))
         self.status.setText(tr('Fitting spectra…'))
+        self.status.show()
         generation = self.generation
         anchor = self.reference_index
         spectra = list(self.spectra)
@@ -578,18 +582,19 @@ class OverlayComparison(QWidget):
         if generation != self.generation or not self.toggle.isChecked():
             if self.status.text() == tr('Fitting spectra…'):
                 self.status.clear()
+                self.status.hide()
             return
         if error:
             self.status.setText(error)
+            self.status.show()
             return
         for index, (shift, _score) in results.items():
             self.shifts[index] = np.array(shift)
         self.generation += 1
         self._sync_editors()
         self.apply_transforms()
-        text = '; '.join(tr('{p0}: peak match {p1:.1%}', p0=self.names[i], p1=score)
-                         for i, (_shift, score) in results.items())
-        self.status.setText(text)
+        self.status.clear()
+        self.status.hide()
 
     def export_svg(self, path, ppm_ranges=None, aspect_ratio=None):
         from gui.overlay_svg_export import export_svg

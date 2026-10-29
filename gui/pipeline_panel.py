@@ -1005,7 +1005,7 @@ class PipelineStepRow(QWidget):
         button_row = _FlowLayout()
         button_row.setContentsMargins(24, 0, 0, 0)
 
-        self.ext_range_button = QPushButton(tr("direct dimension range"))
+        self.ext_range_button = QPushButton(tr("direct dimension range"), self)
         self.ext_range_button.setToolTip(
             tr(
                 'Set the direct-dimension extraction window (EXT -x1/-xn); "apply this range to '
@@ -1020,15 +1020,15 @@ class PipelineStepRow(QWidget):
 
 
 
-        self.threshold_label = QLabel(tr("threshold (σ)"))
+        self.threshold_label = QLabel(tr("threshold (σ)"), self)
         self.threshold_label.setVisible(self.step_id == "peaks")
-        self.threshold_slider = QSlider(Qt.Orientation.Horizontal)
+        self.threshold_slider = QSlider(Qt.Orientation.Horizontal, self)
         self.threshold_slider.setRange(30, 500)
         self.threshold_slider.setSingleStep(5)
         self.threshold_slider.setValue(350)
         self.threshold_slider.setFixedWidth(120)
         self.threshold_slider.setVisible(self.step_id == "peaks")
-        self.threshold_spin = CommitDoubleSpinBox()
+        self.threshold_spin = CommitDoubleSpinBox(self)
         self.threshold_spin.setRange(3.0, 1_000_000.0)
         self.threshold_spin.setSingleStep(0.5)
         self.threshold_spin.setDecimals(1)
@@ -1068,9 +1068,9 @@ class PipelineStepRow(QWidget):
 
 
 
-        self.grid_label = QLabel(tr("degree of optimisation"))
+        self.grid_label = QLabel(tr("degree of optimisation"), self)
         self.grid_label.setVisible(self.step_id == "smile")
-        self.grid_combo = QComboBox()
+        self.grid_combo = QComboBox(self)
         for _n in (2, 3, 4, 5):
             self.grid_combo.addItem(f"{_n}x{_n}", _n)
         self.grid_combo.setCurrentIndex(2)
@@ -1088,14 +1088,14 @@ class PipelineStepRow(QWidget):
         button_row.addWidget(self.grid_combo)
 
 
-        self.smile_gap = QFrame()
+        self.smile_gap = QFrame(self)
         self.smile_gap.setFrameShape(QFrame.Shape.NoFrame)
         self.smile_gap.setFixedSize(12, 1)
         self.smile_gap.setVisible(self.step_id == "smile")
         button_row.addWidget(self.smile_gap)
-        self.rank_label = QLabel(tr("sort"))
+        self.rank_label = QLabel(tr("sort"), self)
         self.rank_label.setVisible(self.step_id == "smile")
-        self.rank_combo = QComboBox()
+        self.rank_combo = QComboBox(self)
 
         self.rank_combo.addItem(tr("Pure peaks first (fewer false peaks)"), "true_peaks")
         self.rank_combo.addItem(tr("Consistency first (small residuals)"), "consistency")
@@ -1123,7 +1123,7 @@ class PipelineStepRow(QWidget):
         fit_combo_width(self.rank_combo)
         button_row.addWidget(self.rank_label)
         button_row.addWidget(self.rank_combo)
-        self.ref_button = QPushButton(tr("Reference spectrum"))
+        self.ref_button = QPushButton(tr("Reference spectrum"), self)
         self.ref_button.setToolTip(
             tr(
                 "Use an existing peak table as a picking constraint: estimate an overall ppm "
@@ -1140,7 +1140,7 @@ class PipelineStepRow(QWidget):
         if self.step_id == "peaks":
             button_row.add_break()
         button_row.addWidget(self.ref_button)
-        self.ref_label = QLabel("")
+        self.ref_label = QLabel("", self)
         self.ref_label.setVisible(self.step_id == "peaks")
         self.ref_label.setStyleSheet("color: #16a085;")
         button_row.addWidget(self.ref_label)

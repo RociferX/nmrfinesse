@@ -428,7 +428,7 @@ class MainWindow(QMainWindow):
 
         self.main_splitter = QSplitter(Qt.Orientation.Horizontal)
         self.main_splitter.addWidget(self.project_tree)
-        self.log_panel = LogPanel()
+        self.log_panel = LogPanel(self)
         self.log_panel.set_manager(self.manager)
         self.log_panel.stop_requested.connect(self._on_stop_requested)
 

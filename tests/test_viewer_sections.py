@@ -111,3 +111,51 @@ def test_fold_state_survives_expand_and_restore(qapp, tmp_path, monkeypatch):
     panel.close()
     panel.deleteLater()
     qapp.processEvents()
+
+
+@pytest.mark.parametrize('size', [12, 18])
+def test_expanded_peak_table_fills_sidebar(qapp, tmp_path, monkeypatch, size):
+    panel = _panel(tmp_path, monkeypatch)
+    font = QFont(panel.font())
+    font.setPointSize(size)
+    panel.setFont(font)
+    panel.peaks_section.set_expanded(True)
+    panel.expand_button.setChecked(True)
+    for _ in range(3):
+        qapp.processEvents()
+    column = panel._expand_controls
+    bottom = panel.peak_table.mapTo(column, QPoint(0, panel.peak_table.height())).y()
+    assert bottom >= column.height() - 3
+    assert panel.peak_table.maximumHeight() == 16_777_215
+    panel.expand_button.setChecked(False)
+    qapp.processEvents()
+    assert panel.peak_table.maximumHeight() < 600
+    panel.close()
+    panel.deleteLater()
+    qapp.processEvents()
+
+
+def test_overlay_hides_peak_section_and_restores_fold_state(qapp, tmp_path, monkeypatch):
+    from tests.test_gui_layout import _write_ft2
+
+    panel = _panel(tmp_path, monkeypatch)
+    panel.peaks_section.set_expanded(True)
+    panel.expand_button.setChecked(True)
+    path = panel._current_spectrum.with_name('comparison.ft2')
+    _write_ft2(path)
+    assert panel._load_compare_spectrum(path)
+    panel._activate_comparison(path)
+    panel.overlay.toggle.setChecked(True)
+    qapp.processEvents()
+    assert panel.peaks_section.isHidden()
+    assert panel.peak_table.isHidden()
+    assert panel.peak_toolbar_widget.isHidden()
+    panel._sync_peak_ui_visibility()
+    assert panel.peaks_section.isHidden()
+    panel.overlay.toggle.setChecked(False)
+    qapp.processEvents()
+    assert not panel.peaks_section.isHidden()
+    assert panel.peaks_section.is_expanded()
+    panel.close()
+    panel.deleteLater()
+    qapp.processEvents()

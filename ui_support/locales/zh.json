@@ -1831,7 +1831,6 @@
   "intensity": "强度",
   "points": "数据点",
   "ppm": "ppm",
-  "{p0}: peak match {p1:.1%}": "{p0}：峰匹配{p1:.1%}",
   "Aspect (width / height)": "长宽比（宽/高）",
   "Image width divided by height. Changing it keeps the selected ppm ranges.": "图片宽度与高度的比值。调整比例时保留所选ppm范围。",
   "Blue": "蓝色",
