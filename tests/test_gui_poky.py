@@ -351,3 +351,72 @@ def test_picked_snr_survives_standalone_poky_roundtrip(tmp_path, qapp):
     panel._load_peaks(path)
     assert panel.peak_table.item(0, sn_col).text() == f"{payload['peaks'][0]['SNR']:.1f}"
     panel.close()
+
+
+def test_peak_export_stays_enabled_after_refresh_and_tracks_manual_rows(tmp_path, qapp):
+    import numpy as np
+
+    from tests.test_pick_peaks import _write_ft2
+
+    manager, exp_id, data_id, spectrum, _ = _manager_for_snr(
+        tmp_path, 'refresh_export',
+        'Assignment w1 w2 Data Height Volume S/N\nG1H-G1N 118 8.2 0 100 0 20\n', '.list',
+    )
+    _write_ft2(spectrum, np.random.default_rng(3).normal(0, 1, (32, 64)))
+    panel = SpectrumPanel(manager)
+    panel.set_context(exp_id, data_id)
+    assert panel.load_current_spectrum()
+    assert panel.export_poky_button.isEnabled()
+    panel.refresh()  # Pipeline run-finished refresh must preserve the loaded peak table.
+    assert panel.export_poky_button.isEnabled()
+    assert panel.save_peaks_button.isEnabled()
+    panel.peak_table.selectRow(0)
+    panel._on_delete_peak()
+    assert not panel.export_poky_button.isEnabled()
+    panel._on_manual_peak_added({'H_shift': 8.2, 'N_shift': 118., 'Intensity': 100., 'SN': 20.})
+    assert panel.export_poky_button.isEnabled()
+    panel.refresh()
+    assert panel.export_poky_button.isEnabled()
+    panel.set_context(exp_id, '')
+    assert not panel.export_poky_button.isEnabled()
+    panel.close()
+
+
+@pytest.mark.parametrize('ndim', [2, 3])
+@pytest.mark.parametrize('aligned', [False, True])
+def test_gui_export_only_assignment_and_coordinates(tmp_path, qapp, monkeypatch, ndim, aligned):
+    from core.peaks import export_peaks_poky
+    from gui.spectrum_panel import SpectrumPanel
+
+    manager, exp_id, data_id = _manager_with_peaks(tmp_path)
+    panel = SpectrumPanel(manager)
+    panel.set_context(exp_id, data_id)
+    nuclei = ['15N', '13C', '1H'] if ndim == 3 else None
+    monkeypatch.setattr(panel, '_current_3d_nuclei', lambda: nuclei)
+    shifts = ({'N_shift':118., 'H_shift':8.2} if ndim == 2 else
+              {'F1_shift':118., 'F2_shift':45., 'F3_shift':8.2})
+    peak = dict(shifts, label='G1H-G1N' if ndim == 2 else 'G1N-G1CA-G1H',
+                Peak_ID=1, Intensity=123456., SN=42.5)
+    panel._peaks = [peak]
+    panel._populate_peak_table()
+    reference = tmp_path / 'reference.list'
+    export_peaks_poky(reference, [peak], ndim, nuclei=nuclei)
+    out = tmp_path / 'export.list'
+    monkeypatch.setattr('qtcompat.QtWidgets.QFileDialog.getOpenFileName',
+                        lambda *_a, **_k: (str(reference), ''))
+    monkeypatch.setattr('qtcompat.QtWidgets.QFileDialog.getSaveFileName',
+                        lambda *_a, **_k: (str(out), ''))
+    monkeypatch.setattr('gui.spectrum_panel.InfoDialog.show_info', lambda *_a: None)
+    monkeypatch.setattr('workflow.peak_align.alignment_figure', lambda *_a, **_k: None)
+    if aligned:
+        panel._export_peaks_aligned()
+    else:
+        panel._export_peaks_poky()
+    lines = out.read_text('utf8').splitlines()
+    assert lines[0].split() == ['Assignment'] + [f'w{i+1}' for i in range(ndim)]
+    assert len(lines[1].split()) == ndim + 1
+    assert lines[1].split()[1:] == (['118.000', '8.200'] if ndim == 2 else
+                                   ['118.000', '45.000', '8.200'])
+    assert panel._peaks[0]['Intensity'] == 123456.
+    assert panel._peaks[0]['SN'] == 42.5
+    panel.close()

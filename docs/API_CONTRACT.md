@@ -273,3 +273,5 @@ executable-code comparison. The declaration classifies changes as `same`, `addit
 spectrum/table hashes identify deterministic conformance outputs. See [development](development.md).
 
 Project .list files may append S/N after Assignment, coordinate, Data, Height and Volume columns; missing values use nan. Import accepts SNR and SN aliases. The internal SN key and the 38-column API table remain unchanged. Peak-localisation attachments additionally retain full-precision SNR/Intensity and noise_sigma/baseline_offset; see [noise and SNR](peak-picking.md#noise-and-signal-to-noise-ratio).
+
+Internal project saves retain metrics. GUI direct and aligned exports contain assignments and coordinates only, via `export_peaks_poky(..., include_metrics=False)`; the default True preserves existing internal callers.

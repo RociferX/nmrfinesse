@@ -815,8 +815,9 @@ class SpectrumPanel(QWidget):
         self.file_list.setVisible(bool(paths))
         self._sync_peak_ui_visibility()
         self._fit_accessibility_controls()
-        self.export_poky_button.setEnabled(False)
-        self.save_peaks_button.setEnabled(False)
+        has_peaks = has_context and bool(self._peaks) and not self._projection_active
+        self.export_poky_button.setEnabled(has_peaks)
+        self.save_peaks_button.setEnabled(has_peaks)
         if not paths:
             self._clear_current_spectrum()
             return
@@ -2023,6 +2024,7 @@ class SpectrumPanel(QWidget):
         self._populate_peak_table()
         self.viewer.set_peaks(self._peaks)
         self._update_delete_button()
+        self.export_poky_button.setEnabled(True)
         self.save_peaks_button.setEnabled(True)
 
     def _on_delete_peak(self) -> None:
@@ -2044,6 +2046,7 @@ class SpectrumPanel(QWidget):
             peak for i, peak in enumerate(self._peaks) if i not in remove
         ]
         self.viewer.set_peaks(self._peaks)
+        self.export_poky_button.setEnabled(bool(self._peaks))
         self.save_peaks_button.setEnabled(bool(self._peaks))
         self._update_delete_button()
 
@@ -2165,7 +2168,7 @@ class SpectrumPanel(QWidget):
             return
         try:
             export_peaks_poky(
-                path, self._peaks, nuclei=self._current_3d_nuclei()
+                path, self._peaks, nuclei=self._current_3d_nuclei(), include_metrics=False,
             )
             InfoDialog.show_info(self, tr(
                 "export completed",
@@ -2276,7 +2279,7 @@ class SpectrumPanel(QWidget):
             )
             if not path:
                 return
-            export_peaks_poky(path, out_rows, nuclei=nuclei)
+            export_peaks_poky(path, out_rows, nuclei=nuclei, include_metrics=False)
 
             fig_lines: list[str] = []
             try:

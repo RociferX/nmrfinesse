@@ -76,3 +76,5 @@ Expanded peak tables consume the remaining sidebar space; ordinary view retains 
 The central workspace layout reserves 20 logical pixels at the right and bottom. Scrollbar geometry tests cover maximized use at 8, 12 and 18 pt. The application does not alter desktop services or VM drag-and-drop configuration.
 
 Peak-table columns fit headers, values and assignment editors on load and FontChange. The last column does not stretch; SNR uses the stored detector value without GUI noise estimation.
+
+GUI peak exports include assignments and coordinates only. Refresh preserves export/save availability for loaded peaks; manual addition enables export and deleting all peaks or leaving the data context disables it. Detection and noise calculations are unchanged.

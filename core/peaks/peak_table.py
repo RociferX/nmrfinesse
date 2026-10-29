@@ -279,6 +279,7 @@ def export_peaks_poky(
     ndim: int = 2,
     *,
     nuclei: list[str] | None = None,
+    include_metrics: bool = True,
 ) -> Path:
     """Export a Poky/Sparky peak table (.list): "Assignment w1 w2 [w3] Data Height Volume".
 
@@ -289,6 +290,7 @@ def export_peaks_poky(
     ?-? (2D) / ?-?-? (3D); Height=Intensity %.3g; Data/Volume=0; double spaces.
     Optional S/N preserves detector SNR.
     """
+    # GUI exports can omit all metrics while internal saves retain them.
     # POKY peak lists support an optional S/N field; absent values stay missing.
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -296,8 +298,10 @@ def export_peaks_poky(
     header = (
         "Assignment w1 w2 w3 Data Height Volume" if is_3d else "Assignment w1 w2 Data Height Volume"
     )
+    if not include_metrics:
+        header = "Assignment w1 w2 w3" if is_3d else "Assignment w1 w2"
     snr_values = [_poky_snr(peak) for peak in peaks]
-    include_snr = any(value is not None for value in snr_values)
+    include_snr = include_metrics and any(value is not None for value in snr_values)
     if include_snr:
         header += " S/N"
     lines = [header]
@@ -316,7 +320,9 @@ def export_peaks_poky(
                 _poky_num(peak.get("H_shift", 0.0)),
             ]
         height = _poky_num(peak.get("Intensity", 0.0))
-        row = [label] + [f"{s:.3f}" for s in shifts] + ["0", f"{height:.3g}", "0"]
+        row = [label] + [f"{s:.3f}" for s in shifts]
+        if include_metrics:
+            row += ["0", f"{height:.3g}", "0"]
         if include_snr:
             row.append(f"{snr:.8g}" if snr is not None else "nan")
         lines.append("  ".join(row))

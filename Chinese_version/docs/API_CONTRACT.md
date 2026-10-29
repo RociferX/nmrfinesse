@@ -208,3 +208,5 @@ schema仍为`v1`，已有有效CSV原样复用。评分附件不进入组合参�
 affected步骤说明重算范围。黄金向量的谱图/表哈希标识确定性一致性输出。维护操作见[开发说明](development.md)。
 
 项目.list可追加S/N列，缺值nan，导入接受SNR/SN别名；内部SN与38列API表保持。定位附件保存SNR/Intensity、noise_sigma和baseline_offset。
+
+项目内部保存保留峰指标；界面直接/对齐后导出仅指认和坐标，Shared Contract `export_peaks_poky(..., include_metrics=False)`省略指标，默认True兼容原内部调用。

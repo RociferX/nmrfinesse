@@ -212,3 +212,5 @@ In enlarged view, an expanded peak table fills the remaining sidebar height. Ove
 The main workspace keeps a 20 logical-pixel inset on the right and bottom. This places scrollbars inside the desktop boundary during maximized use and reduces accidental activation of virtual-machine edge drag detection. Scrolling remains available; dragging the pointer to the actual desktop edge can still activate the VM feature.
 
 Peak-table columns fit their headers, values and segmented Assignment editors when loaded or after a font change; headers remain manually resizable. The SNR column no longer stretches across unused space. It displays the original detection SNR and preserves it in the `.list` `S/N` column; see [noise and SNR](peak-picking.md#noise-and-signal-to-noise-ratio).
+
+The GUI Export peaks actions, including aligned export, write only `Assignment w1 w2 [w3]`. Exported files omit Data, Height/Intensity, Volume and SNR. The on-screen table and internal project saves retain intensity and SNR; reimporting a coordinate-only export does not invent missing SNR values.

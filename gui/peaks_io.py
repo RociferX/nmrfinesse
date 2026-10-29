@@ -44,9 +44,12 @@ def export_peaks_poky(
     ndim: int = 2,
     *,
     nuclei: list[str] | None = None,
+    include_metrics: bool = True,
 ) -> Path:
     """Export Poky/Sparky.list(core.peaks implementation; see core for nuclei)."""
-    return Path(core_export(path, peaks, ndim=ndim, nuclei=nuclei))
+    return Path(core_export(
+        path, peaks, ndim=ndim, nuclei=nuclei, include_metrics=include_metrics,
+    ))
 
 
 def import_peaks_poky(path: Path | str, *, nuclei: list[str] | None = None) -> list[dict[str, Any]]:
