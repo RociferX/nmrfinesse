@@ -51,9 +51,8 @@ from core.experiment.pulse_pathways import (
 )
 from core.planning.method_selector import select_method
 
-#: the expanded ``mc`` tail of ``hncogp3d`` (a verbatim fragment of the real
-#: deposited pulse program; only pulse bodies irrelevant to the criterion were
-#: dropped).
+# : the expanded ``mc`` tail of ``hncogp3d`` (a verbatim fragment of the real #: deposited pulse
+# program; only pulse bodies irrelevant to the criterion were #: dropped).
 HNCO_PULSEPROGRAM = """# 1 "/opt/topspin/exp/stan/nmr/lists/pp/hncogp3d"
 # 1 "/opt/topspin/exp/stan/nmr/lists/pp/Avance.incl" 1
 "ST1CNT = td1 / (2)"
@@ -83,9 +82,12 @@ ph6=3 3 1 1
 ph31=0 2 2 0 0 2 2 0 2 0 0 2 2 0 0 2
 """
 
-#: the **unexpanded** pulse-program fragment of one of the data owner's 3D NUS
-#: datasets (``cbcaconhgpwg3d``): the increment is written inside the mc clause's
-#: ``calph(phN, ±90)`` (unlike the expanded form of deposited pulse programs).
+# : the **unexpanded** pulse-program fragment of one of the data owner's 3D NUS #: datasets
+# (``cbcaconhgpwg3d``): the increment is written inside the mc clause's #: ``calph(phN, ±90)``
+# (unlike the expanded form of deposited pulse programs).
+# : the **unexpanded** pulse-program fragment of one of the data owner's 3D NUS #: datasets
+# (``cbcaconhgpwg3d``): the increment is written inside the mc clause's #: ``calph(phN, ±90)``
+# (unlike the expanded form of deposited pulse programs).
 CBCACONH_PULSEPROGRAM = """;cbcaconhgpwg3d
 ;avance-version (18/04/16)
 ;CBCACONH
@@ -114,8 +116,8 @@ ph5=0 0 2 2
 ph31=0 2 2 0 0 2 2 0 2 0 0 2 2 0 0 2
 """
 
-#: same family but with an E/A first indirect dimension (a ``hncacbgp3d.x``
-#: fragment from another 3D NUS dataset).
+# : same family but with an E/A first indirect dimension (a ``hncacbgp3d.x`` #: fragment from
+# another 3D NUS dataset).
 HNCACB_EA_CLAUSE = """  go=2 ph31 cpd3:f3
   d11 do:f3 mc #0 to 2
      F1PH(calph(ph5, -90) & calph(ph4, -90), caldel(d0, +in0) & calph(ph5, +180))
@@ -127,12 +129,8 @@ ph6=3
 ph31=0 2 2 0
 """
 
-#: same family but a 2D E/A version **without** a 3D second indirect dimension
-#: (an HSQC echo/antiecho fragment).
-HSQC_EA_PULSEPROGRAM = (
-    """# 1 "/opt/topspin/exp/stan/nmr/lists/pp/"""
-    + "hsqc_ea_fixture"
-    + """"
+
+HSQC_EA_PULSEPROGRAM = """# 1 "/opt/topspin/exp/stan/nmr/lists/pp/example_hsqc"
 1 ze
 2 MCWRK  * 2 do:f3
 LBLSTS1, MCWRK  * 4
@@ -147,7 +145,6 @@ ph5=1 1 3 3
 ph6=0
 ph31=0 2 2 0
 """
-)
 
 
 def _experiment(bruker_dir: Path, name: str = "hnca_3d"):
@@ -184,11 +181,12 @@ def _set_fnmode(experiment, logical_axis: str, value):
 
 
 # --------------------------------------------------------------------------- #
-# 1. Pulse-program parsing (real fragments)
+# --------------------------------------------------------------------------- # # 1. Pulse-
+# program parsing (real fragments) #
 # --------------------------------------------------------------------------- #
 def test_sequence_name_comes_from_the_expanded_pulse_program() -> None:
     assert pulse_sequence_name(HNCO_PULSEPROGRAM) == "hncogp3d"
-    assert pulse_sequence_name(HSQC_EA_PULSEPROGRAM) == "hsqc_ea_fixture"
+    assert pulse_sequence_name(HSQC_EA_PULSEPROGRAM) == "example_hsqc"
     assert pulse_sequence_name(";hncogp3d\n1 ze\n") == "hncogp3d"
     assert pulse_sequence_name("") is None
 
@@ -213,11 +211,10 @@ def test_mc_clause_form_is_parsed_alongside_the_expanded_form() -> None:
     assert f2 is not None and f2.clause == "F2PH" and f2.family == "F1PH"
     assert [(i.phase, i.delta_deg) for i in f1.increments] == [("ph3", 90.0)]
     assert [(i.phase, i.delta_deg) for i in f2.increments] == [("ph5", 90.0)]
-    # a calph +180 in the second argument (the outer evolution loop) does **not**
-    # count as a quadrature increment
+    # a calph +180 in the second argument (the outer evolution loop) does **not** # count as a
+    # quadrature increment
     assert "caldel(d0, +in0)" in f1.second_argument
-    # the E/A clause (F2EA) steps the gradient + ph6 only in the first argument
-    # ⇒ family = F1EA
+    # the E/A clause (F2EA) steps the gradient + ph6 only in the first argument # ⇒ family = F1EA
     ea = mc_clauses(HNCACB_EA_CLAUSE)
     assert ea["F2"].family == "F1EA"
     assert [(i.phase, i.delta_deg) for i in ea["F1"].increments] == [
@@ -243,26 +240,35 @@ def test_cbcaconh_facts_match_the_data_owners_script_but_no_neg_is_guessed(
     _set_fnmode(exp, "F2", 5)
     f1 = handedness_for(exp, "F1", fnmode=5)
     f2 = handedness_for(exp, "F2", fnmode=5)
-    # content facts: each dimension has one stepped phase (calph +90), both on the
-    # 90° pulse right next to the evolution delay
+    # content facts: each dimension has one stepped phase (calph +90), both on the # 90° pulse
+    # right next to the evolution delay
     assert (f1.stepped_phases, f1.quadrature_phase_deg, f1.pulse_role) == (("ph3",), 90.0, "create")
     assert (f2.stepped_phases, f2.quadrature_phase_deg, f2.pulse_role) == (("ph5",), 90.0, "create")
     # sign: pathway unsolved ⇒ unknown ⇒ **no** -neg (both dimensions get a reminder)
     assert (f1.handedness, f2.handedness) == (HANDEDNESS_UNKNOWN, HANDEDNESS_UNKNOWN)
     assert ft_neg_for(exp, 5, "F1") is False
     assert ft_neg_for(exp, 5, "F2") is False
-    script = generate_process_script(exp, select_method(exp), in_file="t.fid", out_file="o.ft3")
+    script = generate_process_script(
+        exp, select_method(exp), in_file="t.fid", out_file="o.ft3"
+    )
     assert "-neg" not in script
-    assert "| nmrPipe -fn FT -alt \\" in script  # -alt is still decided by FnMODE (States-TPPI)
-    # same sequence but the acquisition mode is changed to E/A (contradicting the F2PH
-    # clause in the pulse program) ⇒ family conflict ⇒ no -neg
+    # same sequence but the acquisition mode is changed to E/A (contradicting the F2PH # clause
+    # in the pulse program) ⇒ family conflict ⇒ no -neg # consistent with the family (FnMODE=6 =
+    # E/A) ⇒ a definite "do not add"; neither # dimension reminds any more # real hncogp3d
+    # acquNs: acqu2s (logical F2)=6 (E/A), acqu3s (logical F1)=5
+    assert "| nmrPipe -fn FT -alt \\" in script
+    # same sequence but the acquisition mode is changed to E/A (contradicting the F2PH # clause
+    # in the pulse program) ⇒ family conflict ⇒ no -neg # consistent with the family (FnMODE=6 =
+    # E/A) ⇒ a definite "do not add"; neither # dimension reminds any more # real hncogp3d
+    # acquNs: acqu2s (logical F2)=6 (E/A), acqu3s (logical F1)=5
     _set_fnmode(exp, "F2", 6)
     conflict = handedness_for(exp, "F2", fnmode=6)
     assert conflict.reason == "family_conflict"
     assert ft_neg_for(exp, 6, "F2") is False
-    # switch to a genuinely E/A-acquired pulse-program fragment (F2EA clause)
-    # ⇒ F1EA ⇒ unknown ⇒ no -neg
-    (exp.source_path / "pulseprogram").write_text(HNCACB_EA_CLAUSE, encoding="utf-8")
+
+    (exp.source_path / "pulseprogram").write_text(
+        HNCACB_EA_CLAUSE, encoding="utf-8"
+    )
     assert handedness_for(exp, "F2", fnmode=6).reason == "f1ea"
     assert ft_neg_for(exp, 6, "F2") is False
 
@@ -279,7 +285,7 @@ def test_quadrature_block_belongs_to_the_right_axis() -> None:
     f2_block = quadrature_block(HNCO_PULSEPROGRAM, "F2", 3)
     f1_block = quadrature_block(HNCO_PULSEPROGRAM, "F1", 3)
     assert f2_block is not None and f2_block.label == "LBLSTS2"
-    assert f2_block.has_gradient  # E/A block: stepped gradient table
+    assert f2_block.has_gradient
     assert [inc.phase for inc in f2_block.increments] == ["ph6"]
     assert f1_block is not None and f1_block.label == "LBLSTS1"
     assert [inc.phase for inc in f1_block.increments] == ["ph4"]
@@ -291,7 +297,8 @@ def test_quadrature_block_belongs_to_the_right_axis() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# 2. The authoritative table, line by line
+# --------------------------------------------------------------------------- # # 2. The
+# authoritative table, line by line #
 # --------------------------------------------------------------------------- #
 def test_phase_increment_uses_the_manual_divisor_rule() -> None:
     """Δφ is computed per the manual §3.3.2/§3.3.7: with no ``(d)`` written, the
@@ -322,7 +329,7 @@ def test_phase_increment_uses_the_manual_divisor_rule() -> None:
         steps=increment.steps,
         divisor=5,
     ).delta_deg == pytest.approx(72.0)
-    assert increment.delta_deg == pytest.approx(90.0)  # default divisor
+    assert increment.delta_deg == pytest.approx(90.0)
     assert PhaseIncrement("ph4", "dp", 2, 4).delta_deg == pytest.approx(-180.0)
     assert PhaseIncrement("ph4", "ip", 1, 8).delta_deg == pytest.approx(45.0)
     # float list: undecidable ⇒ None (the caller treats it as unsupported_phase_program)
@@ -340,8 +347,8 @@ def test_divisor_changes_the_read_dphi(bruker_dir: Path, tmp_path: Path) -> None
     )
     result = handedness_for(exp, "F1", fnmode=5)
     assert result.quadrature_phase_deg == pytest.approx(72.0)
-    # the sign is still unsolved ⇒ both files only get a reminder (a different Δφ
-    # value does not "guess" a sign)
+    # the sign is still unsolved ⇒ both files only get a reminder (a different Δφ # value does
+    # not "guess" a sign)
     assert result.reason == "pathway_not_solved"
     assert review_lines(exp)
 
@@ -368,7 +375,7 @@ def test_ft_neg_decision_uses_the_simple_rule_and_asks_the_user(
     exp.acquisition_parameters["acqus"]["AQSEQ"] = 0  # ⇒ 321
     storage, notes = storage_encoding(exp, "F1")
     assert "aqseq=321" in storage and "y=F2" in storage and "F1:separated" in storage
-    assert not notes  # 321 agrees with this project's assumption ⇒ no reminder
+    assert not notes
     layers = ft_neg_decision(exp, "F1")
     assert layers.ft_neg is False
     assert layers.decision == "none"
@@ -376,41 +383,49 @@ def test_ft_neg_decision_uses_the_simple_rule_and_asks_the_user(
     assert layers.reason == "second_indirect_dimension_in_the_states_family"
     assert layers.as_dict()["stepped_phases"] == ["ph4"]
     assert layers.as_dict()["storage"] == storage
-    # **family conflict**: hncogp3d's F2 pulse-program block is ``F1EA`` while
-    # ``FnMODE=5`` (States-TPPI) here ⇒ contradiction ⇒ hand it to the user (neither
-    # guessed nor silently decided as "do not add"; same convention as
-    # handedness_for's family_conflict)
+    # **family conflict**: hncogp3d's F2 pulse-program block is ``F1EA`` while # ``FnMODE=5``
+    # (States-TPPI) here ⇒ contradiction ⇒ hand it to the user (neither # guessed nor silently
+    # decided as "do not add"; same convention as # handedness_for's family_conflict)
+    # **family conflict**: hncogp3d's F2 pulse-program block is ``F1EA`` while # ``FnMODE=5``
+    # (States-TPPI) here ⇒ contradiction ⇒ hand it to the user (neither # guessed nor silently
+    # decided as "do not add"; same convention as # handedness_for's family_conflict)
     conflict = ft_neg_decision(exp, "F2", fnmode=5)
     assert (conflict.decision, conflict.ft_neg) == ("ask_user", False)
     assert conflict.reason == "family_conflict"
-    assert conflict.ask  # reminder text is present
-    # when the E/A family is **consistent** with FnMODE (ground truth: the data
-    # owner's E/A dimension is ``FT``) ⇒ a definite "do not add"
+    # when the E/A family is **consistent** with FnMODE (ground truth: the data # owner's E/A
+    # dimension is ``FT``) ⇒ a definite "do not add"
+    assert conflict.ask
+    # when the E/A family is **consistent** with FnMODE (ground truth: the data # owner's E/A
+    # dimension is ``FT``) ⇒ a definite "do not add"
     assert ft_neg_decision(exp, "F2", fnmode=6).decision == "none"
-    # 3D first indirect dimension + States family ⇒ **add -neg**: use the dimension
-    # without a family conflict (AQSEQ=312 ⇒ y is logical F1, and hncogp3d's F1
-    # pulse-program block is F1PH, which does not contradict FnMODE=5)
+    # 3D first indirect dimension + States family ⇒ **add -neg**: use the dimension # without a
+    # family conflict (AQSEQ=312 ⇒ y is logical F1, and hncogp3d's F1 # pulse-program block is
+    # F1PH, which does not contradict FnMODE=5)
+    # 3D first indirect dimension + States family ⇒ **add -neg**: use the dimension # without a
+    # family conflict (AQSEQ=312 ⇒ y is logical F1, and hncogp3d's F1 # pulse-program block is
+    # F1PH, which does not contradict FnMODE=5)
     exp.acquisition_parameters["acqus"]["AQSEQ"] = 1  # ⇒ 312 ⇒ y=F1
     first = ft_neg_decision(exp, "F1", fnmode=5)
     assert first.decision == "add" and first.ft_neg is True
     assert first.reason == "first_indirect_dimension_in_the_states_family"
-    exp.acquisition_parameters["acqus"]["AQSEQ"] = 0  # restore 321 (y=F2) for the assertions below
-    # 2D States: not covered by the simple criterion ⇒ **hand it to the user**
-    # (default no -neg + reminder text)
+    # 2D States: not covered by the simple criterion ⇒ **hand it to the user** # (default no
+    # -neg + reminder text)
+    exp.acquisition_parameters["acqus"]["AQSEQ"] = 0
+    # 2D States: not covered by the simple criterion ⇒ **hand it to the user** # (default no
+    # -neg + reminder text)
     exp2d = _set_fnmode(_experiment(bruker_dir, "hsqc_2d"), "F1", 5)
     ask = ft_neg_decision(exp2d, "F1", fnmode=5)
     assert (ask.decision, ask.ft_neg) == ("ask_user", False)
-    # reminder text is rendered in the UI language ⇒ assert only the
-    # language-independent parts (the reason code and criterion name are substituted)
+    # reminder text is rendered in the UI language ⇒ assert only the # language-independent
+    # parts (the reason code and criterion name are substituted)
     from core.experiment.acquisition_encoding import SIMPLE_RULE_NAME
 
     assert ask.ask and ask.reason in ask.ask and SIMPLE_RULE_NAME in ask.ask
-    # the canonical ``-N`` keyword is a fact of Layer C itself (independent of the
-    # pulse program)
+    # the canonical ``-N`` keyword is a fact of Layer C itself (independent of the # pulse program)
     canonical = ft_neg_decision(exp, "F1", mode_keyword="States-TPPI-N")
     assert canonical.ft_neg is True and canonical.basis == "canonical_N"
-    # with AQSEQ=312 the y axis should be logical F1 ⇒ Layer B must flag the fact
-    # that the conversion layer assumes F2
+    # with AQSEQ=312 the y axis should be logical F1 ⇒ Layer B must flag the fact # that the
+    # conversion layer assumes F2
     exp.acquisition_parameters["acqus"]["AQSEQ"] = 1
     _storage312, notes312 = storage_encoding(exp, "F1")
     assert notes312
@@ -433,15 +448,17 @@ def test_family_conflict_is_handed_to_the_user_with_a_reminder(
     from core.experiment.acquisition_encoding import ft_neg_decision
 
     exp = _with_pulseprogram(_experiment(bruker_dir), tmp_path, HNCO_PULSEPROGRAM)
-    _set_fnmode(exp, "F2", 5)  # contradicts hncogp3d's F2 pulse-program block (F1EA)
+    _set_fnmode(exp, "F2", 5)
     exp.acquisition_parameters["acqus"]["AQSEQ"] = 0
     decision = ft_neg_decision(exp, "F2", fnmode=5)
     assert (decision.decision, decision.ft_neg) == ("ask_user", False)
     assert decision.reason == "family_conflict"
     assert ft_neg_for(exp, 5, "F2") is False
     assert any(line.startswith("yMODE") for line in review_lines(exp))
-    # consistent with the family (FnMODE=6 = E/A) ⇒ a definite "do not add"; neither
-    # dimension reminds any more
+    # same sequence but the acquisition mode is changed to E/A (contradicting the F2PH # clause
+    # in the pulse program) ⇒ family conflict ⇒ no -neg # consistent with the family (FnMODE=6 =
+    # E/A) ⇒ a definite "do not add"; neither # dimension reminds any more # real hncogp3d
+    # acquNs: acqu2s (logical F2)=6 (E/A), acqu3s (logical F1)=5
     _set_fnmode(exp, "F2", 6)
     assert ft_neg_decision(exp, "F2", fnmode=6).decision == "none"
     assert review_lines(exp) == []
@@ -466,7 +483,7 @@ def test_alt_is_decided_by_fnmode_only() -> None:
     by ``-bruk``."""
     assert ft_alt_for(5) is True
     assert ft_alt_for(4) is False
-    assert ft_alt_for(6) is False  # seeing alternating gradients does not mechanically add -alt
+    assert ft_alt_for(6) is False
     assert ft_alt_for(3) is False  # TPPI → FT -real
     assert ft_alt_for(1) is False  # QF → magnitude
     assert _FT_FLAGS[4] == (False, False)
@@ -475,35 +492,48 @@ def test_alt_is_decided_by_fnmode_only() -> None:
 
 
 def test_qseq_uses_bruk_and_tppi_uses_real(bruker_dir: Path) -> None:
-    """QSEQ(2)→``FT -bruk``; TPPI(3)→``FT -real``; QF(1)→``FT`` + ``MC``."""
+    """QSEQ(2)→``FT -bruk``;TPPI(3)→``FT -real``;QF(1)→``FT`` + ``MC``。"""
     exp = _set_fnmode(_experiment(bruker_dir, "hsqc_2d"), "F1", 2)
-    script = generate_process_script(exp, select_method(exp), in_file="t.fid", out_file="o.ft2")
+    script = generate_process_script(
+        exp, select_method(exp), in_file="t.fid", out_file="o.ft2"
+    )
     assert "| nmrPipe -fn FT -bruk \\" in script
     assert "| nmrPipe -fn FT -alt" not in script
 
     exp = _set_fnmode(_experiment(bruker_dir, "hsqc_2d"), "F1", 3)
-    script = generate_process_script(exp, select_method(exp), in_file="t.fid", out_file="o.ft2")
+    script = generate_process_script(
+        exp, select_method(exp), in_file="t.fid", out_file="o.ft2"
+    )
     assert "| nmrPipe -fn FT -real \\" in script
     assert "| nmrPipe -fn FT -alt" not in script
 
     exp = _set_fnmode(_experiment(bruker_dir, "hsqc_2d"), "F1", 1)
-    script = generate_process_script(exp, select_method(exp), in_file="t.fid", out_file="o.ft2")
+    script = generate_process_script(
+        exp, select_method(exp), in_file="t.fid", out_file="o.ft2"
+    )
     assert "| nmrPipe -fn MC \\" in script
 
 
 def test_echo_antiecho_gets_no_alt(bruker_dir: Path, tmp_path: Path) -> None:
     """E/A data (FnMODE=6) gets no ``-alt`` — alternating gradients alone must not
     add it mechanically."""
-    exp = _with_pulseprogram(_experiment(bruker_dir, "hsqc_2d"), tmp_path, HSQC_EA_PULSEPROGRAM)
+    exp = _with_pulseprogram(
+        _experiment(bruker_dir, "hsqc_2d"), tmp_path, HSQC_EA_PULSEPROGRAM
+    )
     _set_fnmode(exp, "F1", 6)
-    script = generate_process_script(exp, select_method(exp), in_file="t.fid", out_file="o.ft2")
+    script = generate_process_script(
+        exp, select_method(exp), in_file="t.fid", out_file="o.ft2"
+    )
     assert "| nmrPipe -fn FT -alt" not in script
     assert "| nmrPipe -fn FT -neg" not in script
-    assert generate_convert_script(exp, direct_points=2048).find("-yMODE Echo-AntiEcho") > 0
+    assert generate_convert_script(exp, direct_points=2048).find(
+        "-yMODE Echo-AntiEcho"
+    ) > 0
 
 
 # --------------------------------------------------------------------------- #
-# 3. handedness: listed sequences / F1EA / no pulse program / conflict / unlisted
+# --------------------------------------------------------------------------- # # 3. handedness:
+# listed sequences / F1EA / no pulse program / conflict / unlisted #
 # --------------------------------------------------------------------------- #
 def test_hnco_facts_are_read_from_content_and_pathway_is_unsolved(
     bruker_dir: Path, tmp_path: Path
@@ -533,17 +563,22 @@ def test_hnco_facts_are_read_from_content_and_pathway_is_unsolved(
     assert f2.reason == "f1ea"
     assert ft_neg_for(exp, 6, "F2") is False
 
-    # 2026-09-25 second revision (automatic criterion = the simplest rule with the
-    # lowest error probability): F2 is in the E/A family, so the criterion is
-    # **definite** — no -neg and no more user prompts; only F1, whose missing AQSEQ
-    # leaves NMRPipe's y/z ambiguous, keeps a reminder (pointing at the spectrum
-    # step's flip control)
+    # 2026-09-25 second revision (automatic criterion = the simplest rule with the # lowest
+    # error probability): F2 is in the E/A family, so the criterion is # **definite** — no -neg
+    # and no more user prompts; only F1, whose missing AQSEQ # leaves NMRPipe's y/z ambiguous,
+    # keeps a reminder (pointing at the spectrum # step's flip control)
+    # 2026-09-25 second revision (automatic criterion = the simplest rule with the # lowest
+    # error probability): F2 is in the E/A family, so the criterion is # **definite** — no -neg
+    # and no more user prompts; only F1, whose missing AQSEQ # leaves NMRPipe's y/z ambiguous,
+    # keeps a reminder (pointing at the spectrum # step's flip control)
     lines = review_lines(exp)
     assert len(lines) == 1
     assert lines[0].startswith("zMODE")
 
 
-def test_verdict_does_not_depend_on_the_sequence_name(bruker_dir: Path, tmp_path: Path) -> None:
+def test_verdict_does_not_depend_on_the_sequence_name(
+    bruker_dir: Path, tmp_path: Path
+) -> None:
     """**Renaming does not affect the verdict**: replace the sequence name in the pulse
     program with any name and the facts read and the conclusion must stay the same.
 
@@ -560,8 +595,8 @@ def test_verdict_does_not_depend_on_the_sequence_name(bruker_dir: Path, tmp_path
     assert f2.sequence == "zzzunknownseq"
     assert (f2.family, f2.stepped_phases, f2.quadrature_phase_deg) == ("F1PH", ("ph5",), 90.0)
     assert (f1.family, f1.stepped_phases, f1.quadrature_phase_deg) == ("F1PH", ("ph3",), 90.0)
-    # the name changed but the conclusion is the same (pathway unsolved ⇒ both
-    # dimensions unknown + a reminder)
+    # the name changed but the conclusion is the same (pathway unsolved ⇒ both # dimensions
+    # unknown + a reminder)
     assert {f1.handedness, f2.handedness} == {HANDEDNESS_UNKNOWN}
     assert {f1.reason, f2.reason} == {"pathway_not_solved"}
     assert len(review_lines(exp)) == 2
@@ -602,26 +637,20 @@ def test_explicit_override_reaches_ft_neg_once_layer_a_is_determined(
     decision = ft_neg_decision(exp, "F1")
     assert decision.ft_neg is True
     assert "aqseq=" in decision.storage
-    # the automatic criterion applies by default: F1's FT line carries -neg directly
-    # (the hnca_3d fixture's F1 is FnMODE=4 ⇒ only -neg, no -alt)
-    plain = generate_process_script(exp, select_method(exp), in_file="t.fid", out_file="o.ft3")
+
+    plain = generate_process_script(
+        exp, select_method(exp), in_file="t.fid", out_file="o.ft3"
+    )
     assert "| nmrPipe -fn FT -neg \\" in plain
-    # the user has the final say: flip_f1=False (force off) removes the automatically
-    # added -neg
+    # the user has the final say: flip_f1=False (force off) removes the automatically # added -neg
     forced_off = generate_process_script(
-        exp,
-        select_method(exp),
-        in_file="t.fid",
-        out_file="o.ft3",
+        exp, select_method(exp), in_file="t.fid", out_file="o.ft3",
         sampling={"flip_f1": False},
     )
     assert "-neg" not in forced_off
     # an explicit True agrees with the automatic conclusion (idempotent)
     flipped = generate_process_script(
-        exp,
-        select_method(exp),
-        in_file="t.fid",
-        out_file="o.ft3",
+        exp, select_method(exp), in_file="t.fid", out_file="o.ft3",
         sampling={"flip_f1": True},
     )
     assert "| nmrPipe -fn FT -neg \\" in flipped
@@ -630,14 +659,18 @@ def test_explicit_override_reaches_ft_neg_once_layer_a_is_determined(
 def test_f1ea_never_gets_neg(bruker_dir: Path, tmp_path: Path) -> None:
     """``F1EA(...)`` is always unknown: the raw E/A pair is shuffled first, so the
     handedness depends on the encoding."""
-    exp = _with_pulseprogram(_experiment(bruker_dir, "hsqc_2d"), tmp_path, HSQC_EA_PULSEPROGRAM)
+    exp = _with_pulseprogram(
+        _experiment(bruker_dir, "hsqc_2d"), tmp_path, HSQC_EA_PULSEPROGRAM
+    )
     result = handedness_for(exp, "F1", fnmode=6)
     assert result.handedness == HANDEDNESS_UNKNOWN
     assert result.reason == "f1ea"
     assert ft_neg_for(exp, 6, "F1") is False
 
 
-def test_missing_pulseprogram_is_unknown_with_reminder(bruker_dir: Path, tmp_path: Path) -> None:
+def test_missing_pulseprogram_is_unknown_with_reminder(
+    bruker_dir: Path, tmp_path: Path
+) -> None:
     """No pulse program ⇒ unknown (not a "guess") + a reminder to review manually."""
     from ui_support.i18n import tr
 
@@ -646,8 +679,8 @@ def test_missing_pulseprogram_is_unknown_with_reminder(bruker_dir: Path, tmp_pat
     result = handedness_for(exp, "F2", fnmode=5)
     assert result.handedness == HANDEDNESS_UNKNOWN
     assert result.reason == "no_pulseprogram"
-    # reminder text is compared against the UI language: the tr() version of the same
-    # sentence (the language is pinned by conftest)
+    # reminder text is compared against the UI language: the tr() version of the same # sentence
+    # (the language is pinned by conftest)
     expected = tr("there is no pulse program for this dataset")
     lines = review_lines(exp)
     assert lines and all(expected in line for line in lines)
@@ -663,10 +696,10 @@ def test_sequence_outside_the_table_is_unknown(bruker_dir: Path, tmp_path: Path)
     result = handedness_for(exp, "F1", fnmode=5)
     assert result.sequence == "zzzunknownpp"
     assert (result.family, result.stepped_phases) == ("F1PH", ("ph4",))
-    assert result.reason == "pathway_not_solved"  # an unknown name still yields readable content
+    assert result.reason == "pathway_not_solved"
     assert [line for line in review_lines(exp) if "zMODE" in line]
-    # several phases stepped at once ⇒ even the facts are not unique ⇒ unknown +
-    # a reminder (a different reason word)
+    # several phases stepped at once ⇒ even the facts are not unique ⇒ unknown + # a reminder (a
+    # different reason word)
     multi = HNCO_PULSEPROGRAM.replace(
         "MCWRK rd10  MCWRK  rd29  MCWRK  rd30  MCWRK  ip4",
         "MCWRK ip4  MCWRK  ip6",
@@ -682,7 +715,9 @@ def test_sequence_outside_the_table_is_unknown(bruker_dir: Path, tmp_path: Path)
 def test_2d_states_is_left_undecided_with_a_notice(bruker_dir: Path, tmp_path: Path) -> None:
     """A 2D States/States-TPPI indirect dimension: pathway unsolved ⇒ ``unknown`` + a
     reminder (no ``-neg``)."""
-    exp = _with_pulseprogram(_experiment(bruker_dir, "hsqc_2d"), tmp_path, CBCACONH_PULSEPROGRAM)
+    exp = _with_pulseprogram(
+        _experiment(bruker_dir, "hsqc_2d"), tmp_path, CBCACONH_PULSEPROGRAM
+    )
     _set_fnmode(exp, "F1", 5)
     result = handedness_for(exp, "F1", fnmode=5)
     assert result.handedness == HANDEDNESS_UNKNOWN
@@ -699,7 +734,7 @@ def test_pulseprogram_fnmode_conflict_is_unknown(bruker_dir: Path, tmp_path: Pat
     ``FnMODE`` says States-TPPI (5).
     """
     exp = _with_pulseprogram(_experiment(bruker_dir), tmp_path, HNCO_PULSEPROGRAM)
-    _set_fnmode(exp, "F2", 5)  # the pulse program is F1EA, acqu2s says F1PH
+    _set_fnmode(exp, "F2", 5)
     result = handedness_for(exp, "F2", fnmode=5)
     assert result.handedness == HANDEDNESS_UNKNOWN
     assert result.reason == "family_conflict"
@@ -742,7 +777,9 @@ def test_acquisition_loop_model_is_deterministic(bruker_dir: Path, tmp_path: Pat
     assert [level.kind for level in model.levels].count("pair") == 2
 
 
-def test_aqseq_312_swaps_y_z_and_flags_a_conflict(bruker_dir: Path, tmp_path: Path) -> None:
+def test_aqseq_312_swaps_y_z_and_flags_a_conflict(
+    bruker_dir: Path, tmp_path: Path
+) -> None:
     """``AQSEQ=312``: the y axis should be logical F1; if the pulse program's mc order
     contradicts this ⇒ no confirmation + a notice."""
     from core.experiment.acquisition_loop import acquisition_model
@@ -751,20 +788,24 @@ def test_aqseq_312_swaps_y_z_and_flags_a_conflict(bruker_dir: Path, tmp_path: Pa
     exp.acquisition_parameters["acqus"]["AQSEQ"] = 1  # ⇒ 312
     model = acquisition_model(exp)
     assert model.aqseq == "312"
-    # the first pair block of this (expanded) pulse program belongs to logical F2 ⇒ it
+    # the first pair block of this (expanded) pulse program belongs to logical F2 ⇒ it #
     # contradicts the F1 inner layer implied by 312
     assert (model.y_axis, model.z_axis) == (None, None)
-    # reminder text is rendered in the UI language (conftest pins this tree's default)
-    # ⇒ assert only language-independent content
+    # reminder text is rendered in the UI language (conftest pins this tree's default) # ⇒
+    # assert only language-independent content
     assert model.notes and any("312" in note for note in model.notes)
 
 
-def test_acquisition_loop_on_a_real_2d_pulseprogram(bruker_dir: Path, tmp_path: Path) -> None:
+def test_acquisition_loop_on_a_real_2d_pulseprogram(
+    bruker_dir: Path, tmp_path: Path
+) -> None:
     """2D: only one indirect dimension (logical F1), the y axis is always F1 and the
     partners are adjacent; no 3D AQSEQ cross-check."""
     from core.experiment.acquisition_loop import acquisition_model
 
-    exp = _with_pulseprogram(_experiment(bruker_dir, "hsqc_2d"), tmp_path, HSQC_EA_PULSEPROGRAM)
+    exp = _with_pulseprogram(
+        _experiment(bruker_dir, "hsqc_2d"), tmp_path, HSQC_EA_PULSEPROGRAM
+    )
     exp.acquisition_parameters["acqus"]["AQSEQ"] = 0
     model = acquisition_model(exp)
     assert (model.y_axis, model.z_axis) == ("F1", None)
@@ -774,12 +815,15 @@ def test_acquisition_loop_on_a_real_2d_pulseprogram(bruker_dir: Path, tmp_path: 
 
 def test_mode_symbol_audit_carries_lines_and_dims(bruker_dir: Path, tmp_path: Path) -> None:
     exp = _with_pulseprogram(_experiment(bruker_dir), tmp_path, HNCO_PULSEPROGRAM)
-    # real hncogp3d acquNs: acqu2s (logical F2)=6 (E/A), acqu3s (logical F1)=5
+    # same sequence but the acquisition mode is changed to E/A (contradicting the F2PH # clause
+    # in the pulse program) ⇒ family conflict ⇒ no -neg # consistent with the family (FnMODE=6 =
+    # E/A) ⇒ a definite "do not add"; neither # dimension reminds any more # real hncogp3d
+    # acquNs: acqu2s (logical F2)=6 (E/A), acqu3s (logical F1)=5
     _set_fnmode(exp, "F2", 6)
     _set_fnmode(exp, "F1", 5)
     audit = mode_symbol_audit(exp)
-    # 2026-09-25 second revision: the F2 (E/A) criterion is **definite**: no -neg, so
-    # no reminder; F1 lacks AQSEQ, so y/z cannot be told apart ⇒ a reminder
+    # 2026-09-25 second revision: the F2 (E/A) criterion is **definite**: no -neg, so # no
+    # reminder; F1 lacks AQSEQ, so y/z cannot be told apart ⇒ a reminder
     assert len(audit["lines"]) == 1
     assert audit["lines"][0].startswith("zMODE")
     assert {item["axis"] for item in audit["dims"]} == {"y", "z"}
@@ -788,8 +832,8 @@ def test_mode_symbol_audit_carries_lines_and_dims(bruker_dir: Path, tmp_path: Pa
     assert by_axis["z"]["reason"] == "pathway_not_solved"
     assert by_axis["z"]["quadrature_phase_deg"] == 90.0
     assert by_axis["y"]["reason"] == "f1ea"
-    # the automatic criterion's conclusion is recorded too (so a third-party review
-    # need not guess whether the software added -neg)
+    # the automatic criterion's conclusion is recorded too (so a third-party review # need not
+    # guess whether the software added -neg)
     assert by_axis["y"]["neg_decision"] == "none"
     assert by_axis["y"]["neg_applied"] is False
     assert by_axis["z"]["neg_decision"] == "ask_user"
@@ -807,9 +851,11 @@ def test_canonical_negated_keywords() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# 4. The same text in three places (import warning / conversion log / step report)
+
 # --------------------------------------------------------------------------- #
-def test_review_line_text_is_shared_by_every_reader(bruker_dir: Path, tmp_path: Path) -> None:
+def test_review_line_text_is_shared_by_every_reader(
+    bruker_dir: Path, tmp_path: Path
+) -> None:
     """The sentence written into the fid.com correction list during conversion ==
     ``mode_symbol_audit``'s lines."""
     exp = _with_pulseprogram(_experiment(bruker_dir), tmp_path, HNCO_PULSEPROGRAM)

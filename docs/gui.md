@@ -200,3 +200,9 @@ whole row), copying the originals to `ser.bak` / `nuslist.bak` next to them firs
 give the reconstruction clean input. **If your raw data is read-only, or you cannot accept the
 original being rewritten, make your own copy first** - the `.bak` in the source directory is the one
 to fall back to.
+
+## Viewer controls and spectrum comparison
+
+The viewer groups file/layer selection, plotting, display/slice controls, and peak tools into separate sections. The plot remains visible; the other sections can be collapsed, and peak tools start collapsed. Expanded comparison panes keep equal plot heights while their controls can be collapsed independently. Interface font sizes of 8–18 pt apply immediately; smaller windows provide page scrolling.
+
+Load a comparison spectrum from the comparison menu, then choose overlay mode for two or three compatible 1D spectra or 2D planes. Full view covers the combined ppm range of all spectra, including a wider comparison spectrum; 1D intensity bounds also include every visible trace. Repainting retains the current zoom, while changing spectrum extents restores the full view. Coordinate ticks and cursor ppm readouts cover the wider region. Each spectrum has its own color, contour and sign visibility controls. Auto-fit adjusts a constant translation without modifying spectral arrays or headers. SVG export uses the displayed coordinates, colors and sign visibility.

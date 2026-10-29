@@ -34,21 +34,52 @@ def export_ucsf(
     except OSError as exc:
         return None, tr("Unable to clean old UCSF files, skipping conversion: {p0}", p0=exc)
     if run is None:
-        from backend.runtime import CshRuntime
+        import shlex
+        import shutil
 
-        run = CshRuntime().run
+        from backend.nmrpipe_finder import find_pipe2ucsf_with_shell
+        from backend.runtime import CshRuntime
+        from gui.settings import load_settings
+
+        explicit = str(load_settings().get("pipe2ucsf_path") or "").strip()
+        tool, environment = find_pipe2ucsf_with_shell(explicit)
+        executable = str(tool) if tool is not None else "pipe2ucsf"
+        if environment == "bash":
+            bash = shutil.which("bash")
+            runtime = CshRuntime()
+
+            def _run_in_bash(argv, *, cwd=None, timeout=300, **kwargs):
+                if bash is None:
+                    raise FileNotFoundError("bash not found")
+                return runtime.run(
+                    [bash, "-lic", "exec " + shlex.join(argv)],
+                    cwd=cwd,
+                    timeout=timeout,
+                    **kwargs,
+                )
+
+            run = _run_in_bash
+        else:
+            run = CshRuntime().run
+    else:
+        executable = "pipe2ucsf"
     try:
         result = run(
-            ["pipe2ucsf", str(source), str(target)],
+            [executable, str(source), str(target)],
             cwd=str(source.parent),
             timeout=300,
         )
-    # Tool missing/Execution exceptions are not blocked spectrum generation.
-    except Exception as exc:  # noqa: BLE001 -
+    except Exception as exc:
         return None, tr("pipe2ucsf execution failed, skipping UCSF conversion: {p0}", p0=exc)
-    if getattr(result, "returncode", 1) != 0 or not target.is_file() or target.stat().st_size == 0:
+    if (
+        getattr(result, "returncode", 1) != 0
+        or not target.is_file()
+        or target.stat().st_size == 0
+    ):
         tail = (
-            str(getattr(result, "stderr", "") or getattr(result, "stdout", "")).strip().splitlines()
+            str(getattr(result, "stderr", "") or getattr(result, "stdout", ""))
+            .strip()
+            .splitlines()
         )
         detail = tail[-1] if tail else f"rc={getattr(result, 'returncode', '?')}"
         try:

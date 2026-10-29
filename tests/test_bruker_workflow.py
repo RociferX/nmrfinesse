@@ -32,6 +32,7 @@ def test_patch_compact_2d_nus_aligns_declared_grid(
     exp = read_dataset(bruker_dir / "nus_2d")
     exp.dimensions[1].td = 31 * mult
     exp.acquisition_parameters["acqu2s"].update(TD=31 * mult, NusTD=62 * mult, FnMODE=fnmode)
+
     text = (
         "nusExpand.tcl -mode bruker -sampleCount 31 \\\n"
         " -yT 31 -in ./ser -out ./ser_full -sample ./nuslist\n\n"
@@ -66,6 +67,59 @@ def test_parse_fid_com() -> None:
     assert parsed["decim"] == "32"
 
 
+def test_manual_carrier_choices_are_read_only(bruker_dir: Path) -> None:
+    import copy
+
+    from backend.carrier_choices import carrier_choices
+
+    exp = read_dataset(bruker_dir / "nus_2d")
+    exp.acquisition_parameters["acqus"].update(O1=2820, BF1=600, SFO1=600.00282, TE=298)
+    exp.acquisition_parameters["acqu2s"].update(O1=7080, BF1=60, SFO1=60.00708, O1P=118)
+    original = copy.deepcopy(exp.acquisition_parameters)
+    choices = carrier_choices(exp)
+    assert [row['key'] for row in choices] == ['xCAR', 'yCAR']
+    assert choices[0]['options'][0]['value'] == pytest.approx(4.7)
+    assert choices[1]['options'][0]['value'] == pytest.approx(118)
+    assert len(choices[1]['options']) == 5
+    assert all(o['label'] and o['description'] for row in choices for o in row['options'])
+    assert exp.acquisition_parameters == original
+    exp.acquisition_parameters = {}
+    assert all(not row['options'] for row in carrier_choices(exp))
+
+
+@pytest.mark.parametrize('ndim', [1, 2, 3])
+def test_manual_carrier_choices_keep_axis_identity(ndim: int) -> None:
+    from backend.carrier_choices import carrier_choices
+
+    axes = ['F3', 'F2', 'F1'] if ndim == 3 else ['F2', 'F1'][:ndim]
+    exp = Experiment(dataset_id='manual', source_path=Path('.'), ndim=ndim, dimensions=[
+        Dimension(logical_axis=axis, nucleus='13C', sf=150) for axis in axes
+    ], acquisition_parameters={
+        'acqus': {'O1': 0, 'BF1': 150, 'SFO1': 150},
+        'acqu2s': {'O1': 3000, 'BF1': 150, 'SFO1': 150},
+        'acqu3s': {'O1': 6000, 'BF1': 150, 'SFO1': 150},
+    })
+    choices = carrier_choices(exp)
+    assert [row['key'] for row in choices] == [letter+'CAR' for letter in 'xyz'[:ndim]]
+    assert [row['axis'] for row in choices] == axes
+    assert [row['options'][0]['value'] for row in choices] == [0, 20, 40][:ndim]
+    exp.acquisition_parameters['acqus']['BF1'] = -150
+    exp.acquisition_parameters['acqus']['SFO1'] = -150
+    assert not carrier_choices(exp)[0]['options']
+
+
+def test_manual_carrier_script_edit_preserves_other_parameters() -> None:
+    from backend.carrier_choices import replace_script_carrier, script_carrier_values
+
+    script = '# -xCAR 99\n' + FID_COM + '# -yCAR 999\n'
+    changed = replace_script_carrier(script, 'xCAR', '-1.234e+1')
+    assert changed == script.replace('-xCAR 4.703', '-xCAR -1.234e+1')
+    assert script_carrier_values(changed) == {'xCAR': '-1.234e+1', 'yCAR': '118.500'}
+    for key, value in [('zCAR', '12'), ('xCAR', 'nan'), ('xCAR', '3;echo')]:
+        with pytest.raises(ValueError):
+            replace_script_carrier(script, key, value)
+
+
 def test_expected_values_2d(bruker_dir: Path) -> None:
     exp = read_dataset(bruker_dir / "hsqc_2d")
     values = expected_values(exp)
@@ -73,7 +127,7 @@ def test_expected_values_2d(bruker_dir: Path) -> None:
     assert values["xT"][0] == 1024.0
     assert values["xLAB"][0] == "1H"
     assert values["yN"][0] == 256.0
-    assert values["yMODE"][0] == "States-TPPI"  # FnMODE=5 -> the specific keyword (2026-09-24)
+    assert values["yMODE"][0] == "States-TPPI"
     assert values["decim"][0] == 32.0
     assert values["dspfvs"][0] == 21.0
     assert values["grpdly"][0] == 48.0
@@ -86,7 +140,7 @@ def test_expected_values_3d(bruker_dir: Path) -> None:
     assert values["yN"][0] == 96.0
     assert values["zN"][0] == 128.0
     assert values["yMODE"][0] == "States-TPPI"  # F2=acqu2s FnMODE=5
-    assert values["zMODE"][0] == "States"  # F1=acqu3s FnMODE=4
+    assert values["zMODE"][0] == "States"       # F1=acqu3s FnMODE=4
 
 
 def test_cross_check_finds_diff(bruker_dir: Path) -> None:
@@ -107,7 +161,7 @@ def test_patch_fid_com(tmp_path: Path, bruker_dir: Path) -> None:
     real
     d_015 (1664) and real 2D NUS (1024) and must not be recomputed away.
     """
-    exp, data_dir = _padded_2d(tmp_path)  # TD=1612, physical row 1664, 210 rows
+    exp, data_dir = _padded_2d(tmp_path)
     patched, warnings = patch_fid_com(FID_COM, exp, data_dir=data_dir)
     assert "-xN 1024" in patched
     assert "-xN 1664" not in patched
@@ -133,9 +187,12 @@ def _padded_2d(tmp_path: Path, td: int = 1612, rows: int = 210) -> tuple[Experim
             Dimension(logical_axis="F1", nucleus="15N", td=rows),
         ],
         acquisition_parameters={
-            # real d_015 shape: DTYPA=2 => 8 bytes per sample value (16 bytes per complex point);
-            # the row length counts "sample values" (the -xN convention): 1664 values x 8 B =
-            # 13312 B (a multiple of 1024)
+            # real d_015 shape: DTYPA=2 => 8 bytes per sample value (16 bytes per complex
+            # point); # the row length counts "sample values" (the -xN convention): 1664 values
+            # x 8 B = # 13312 B (a multiple of 1024)
+            # real d_015 shape: DTYPA=2 => 8 bytes per sample value (16 bytes per complex
+            # point); # the row length counts "sample values" (the -xN convention): 1664 values
+            # x 8 B = # 13312 B (a multiple of 1024)
             "acqus": {"DTYPA": 2, "BYTORDA": 0},
             "acqu2s": {"TD": rows, "FnMODE": 5},
         },
@@ -177,8 +234,8 @@ def test_physical_direct_points_handles_eight_byte_samples(tmp_path: Path) -> No
     exp, data_dir = _padded_2d(tmp_path, td=1536, rows=200)
     exp.acquisition_parameters["acqus"]["DTYPE"] = 1
     exp.acquisition_parameters["acqus"].pop("DTYPA", None)
-    # 1536 lies on the 128-value grid => row length 1536 values x 8 B = 12288 B
-    # (a multiple of 1024)
+    # 1536 lies on the 128-value grid => row length 1536 values x 8 B = 12288 B # (a multiple of
+    # 1024)
     (Path(data_dir) / "ser").write_bytes(b"\x00" * (200 * 1536 * 8))
     assert physical_direct_points(exp, data_dir) == 1536
 
@@ -207,8 +264,8 @@ def test_patch_fid_com_keeps_padded_direct_row(tmp_path: Path) -> None:
     )
     patched, warnings = patch_fid_com(text, exp, data_dir=data_dir)
     parsed = parse_fid_com(patched)
-    assert parsed["xN"] == "1664"  # the physical row length, not acqus TD=1612
-    assert parsed["xT"] == "806"  # effective points = TD//2
+    assert parsed["xN"] == "1664"
+    assert parsed["xT"] == "806"
     assert parsed["yN"] == "210"
     assert not any("xN" in w for w in warnings), warnings
 
@@ -250,8 +307,14 @@ def test_apply_fid_com_overrides() -> None:
     """Manual parameter overrides: only existing parameters are replaced, the output name and
     structure stay untouched, unknown keys are reported as skipped.
     """
-    text = "bruk2pipe -in ./ser \\n  -ySW 2834.467 -yCAR 118.500 \\n  -out ./d_001.fid\n"
-    patched, warnings = apply_fid_com_overrides(text, {"ySW": "2800.000", "nope": "1"})
+    text = (
+        "bruk2pipe -in ./ser \\n"
+        "  -ySW 2834.467 -yCAR 118.500 \\n"
+        "  -out ./d_001.fid\n"
+    )
+    patched, warnings = apply_fid_com_overrides(
+        text, {"ySW": "2800.000", "nope": "1"}
+    )
     assert "-ySW 2800.000" in patched
     assert "-yCAR 118.500" in patched
     assert "-out ./d_001.fid" in patched
@@ -345,7 +408,7 @@ def test_patch_fid_com_rewrites_a_stale_indirect_sweep_width(
 
 
 def test_sweep_width_audit_covers_all_axes_with_consistency_ratio(
-    tmp_path: Path, bruker_dir: Path,
+    tmp_path: Path, bruker_dir: Path
 ) -> None:
     """The audit includes every axis, including consistent direct-dimension values.
     """
@@ -361,6 +424,13 @@ def test_sweep_width_audit_covers_all_axes_with_consistency_ratio(
     lines = sweep_width_log_lines(exp)
     assert lines == [indirect["note"]]
     assert "F2" not in lines[0]
+
+
+
+
+
+
+
 
 
 def _or8c_like() -> Experiment:
@@ -437,6 +507,8 @@ def test_carrier_audit_uses_the_acquisition_centre_and_reports_the_delta() -> No
     assert audit["blocks"] == []
     assert audit["notes"] == []
 
+
+
     summary = audit["summary"]
     assert "water-peak" in summary or "水峰" in summary
     assert "\n" not in summary
@@ -448,10 +520,12 @@ def test_carrier_summary_names_the_convention_whichever_one_is_in_use() -> None:
     """Regression coverage: test carrier summary names the convention whichever one is in use."""
     exp = _or8c_like()
 
+
     ok = carrier_audit(exp, {"xCAR": "4.713", "yCAR": "118.000"})
     assert "O1/BF1" in ok["summary"]
     assert "water-peak" not in ok["summary"]
     assert ok["blocks"] == [] and ok["notes"] == []
+
 
     manual = carrier_audit(exp, {"xCAR": "4.700"}, manual_keys={"xCAR"})
     assert "x" in manual["summary"]
@@ -492,11 +566,13 @@ def test_carrier_audit_overrides_a_dimension_off_the_water_convention() -> None:
     auto_gamma_value = gamma_mapped_car(4.754, 600.13282861, 150.9108068, "1H", "13C")
     assert auto_gamma_value is not None and abs(auto_gamma_value - 55.705) < 0.05
     configured = float(f"{auto_gamma_value:.3f}")
-    audit = carrier_audit(experiment, {"xCAR": "4.754", "yCAR": f"{auto_gamma_value:.3f}"})
+    audit = carrier_audit(
+        experiment, {"xCAR": "4.754", "yCAR": f"{auto_gamma_value:.3f}"}
+    )
     assert carrier_overrides(audit)["yCAR"] == "174.000"
     record = audit["dims"][1]
     assert record["status"] == "REFERENCE_OVERRIDE"
-    # AUTO/the script writes exactly the "water peak + gamma ratio" value -- the report has to
+    # AUTO/the script writes exactly the "water peak + gamma ratio" value -- the report has to #
     # be able to point that out
     assert record["configured_source"] == "water_gamma"
     assert record["delta_ppm"] == pytest.approx(configured - 174.0, abs=1e-6)
@@ -553,6 +629,8 @@ def test_carrier_audit_ignores_an_absurd_temperature_for_the_water_note() -> Non
     assert audit["dims"][0]["water_value"] is None
     assert audit["dims"][0]["configured_source"] == "script"
 
+
+
     assert "4.754" not in audit["summary"], audit["summary"]
     assert "\n" not in audit["summary"]
 
@@ -571,7 +649,7 @@ def test_patch_fid_com_keeps_grpdly_when_the_acqus_value_is_negative(
     negative = read_dataset(bruker_dir / "hsqc_2d")
     negative.acquisition_parameters["acqus"]["GRPDLY"] = -1
     patched, warnings = patch_fid_com(text, negative)
-    assert parse_fid_com(patched)["grpdly"] == "68"  # keep the original value
+    assert parse_fid_com(patched)["grpdly"] == "68"
     assert not any("grpdly" in warning for warning in warnings)
 
     positive = read_dataset(bruker_dir / "hsqc_2d")
@@ -598,7 +676,7 @@ def test_patch_fid_com_never_downgrades_auto_echo_antiecho() -> None:
     text = "bruk2pipe -in ./ser\n  -xMODE DQD -yMODE Echo-AntiEcho -out fid\n"
     patched, warnings = patch_fid_com(text, experiment)
     assert parse_fid_com(patched)["yMODE"] == "Echo-AntiEcho"
-    # the assertions use only key names/values, not tr() text (in a full run the language may
+    # the assertions use only key names/values, not tr() text (in a full run the language may #
     # already have been switched to Chinese by another test)
     assert any("yMODE" in warning for warning in warnings)
 
@@ -638,9 +716,12 @@ def test_patch_fid_com_writes_the_acquisition_centre() -> None:
     assert not any("yCAR" in warning for warning in warnings)
 
 
-# ---------------------------------------------------------- acquisition mode (MODE) conflict table
-# Round two 2026-09-24 (table from the maintainer): mode_audit decides per dimension; the
-# direct dimension is always DQD and does not take this table.
+# ---------------------------------------------------------- acquisition mode (MODE) conflict
+# table # Round two 2026-09-24 (table from the maintainer): mode_audit decides per dimension;
+# the # direct dimension is always DQD and does not take this table.
+# ---------------------------------------------------------- acquisition mode (MODE) conflict
+# table # Round two 2026-09-24 (table from the maintainer): mode_audit decides per dimension;
+# the # direct dimension is always DQD and does not take this table.
 
 
 def test_mode_audit_forces_ea_when_fnmode_is_6() -> None:
@@ -725,7 +806,7 @@ def test_mode_audit_leaves_the_direct_dimension_alone() -> None:
     """
     from backend.bruker_workflow import mode_audit
 
-    experiment = _or8c_like()  # acqus carries only TE, no FnMODE
+    experiment = _or8c_like()
     text = "bruk2pipe -in ./ser\n  -xMODE DQD -yMODE Echo-AntiEcho -out fid\n"
     plan = mode_audit(experiment, parse_fid_com(text))
     assert [record["decision"] for record in plan["dims"]] == ["ok", "ok"]
@@ -748,11 +829,12 @@ def test_patch_fid_com_leaves_manually_edited_keys_alone() -> None:
     assert parsed["yMODE"] == "Complex"
     assert parsed["xCAR"] == "4.700"
     # only look at **rewrite** lines (``->``); the "mode/sign not confirmed => no -neg applied"
-    # reminder is unrelated to manual keys
+    # # reminder is unrelated to manual keys
     assert not [w for w in warnings if ("yMODE" in w or "xCAR" in w) and "->" in w]
 
 
 def test_mode_audit_corrects_a_wrong_direct_mode() -> None:
+
     """When the direct dimension is written with another mode it is still corrected to DQD as a
     fallback (same as the old behaviour).
     """
@@ -793,7 +875,9 @@ def test_sweep_width_tolerance_accepts_a_two_decimal_script() -> None:
     assert any("ySW" in w for w in bad_warnings)
 
 
-def test_patch_fid_com_leaves_every_manual_key_alone(tmp_path: Path, bruker_dir: Path) -> None:
+def test_patch_fid_com_leaves_every_manual_key_alone(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """2.4: keys edited by hand are **not** only CAR/MODE -- the generic replacement must not
     rewrite them either, let alone report "corrected".
     """
@@ -803,7 +887,7 @@ def test_patch_fid_com_leaves_every_manual_key_alone(tmp_path: Path, bruker_dir:
     assert "-ySW 1900.000" in patched
     assert not [w for w in warnings if "ySW" in w]
     # without the manual marker it is still corrected from the acqus convention (so this is only
-    # "manual wins")
+    # # "manual wins")
     patched2, warnings2 = patch_fid_com(text, exp)
     assert "-ySW 1824.535" in patched2
     assert any("ySW" in w for w in warnings2)
@@ -819,7 +903,9 @@ def test_row_geometry_audit_respects_manual_keys(tmp_path: Path) -> None:
     assert any("xN" in w for w in auto_warnings), auto_warnings
     assert any("xT" in w for w in auto_warnings), auto_warnings
 
-    patched, manual_warnings = patch_fid_com(text, exp, data_dir=data_dir, manual_keys={"xN", "xT"})
+    patched, manual_warnings = patch_fid_com(
+        text, exp, data_dir=data_dir, manual_keys={"xN", "xT"}
+    )
 
     assert parse_fid_com(patched)["xN"] == "1600"
     assert parse_fid_com(patched)["xT"] == "800"
@@ -827,11 +913,13 @@ def test_row_geometry_audit_respects_manual_keys(tmp_path: Path) -> None:
     assert not [w for w in manual_warnings if "xT" in w], manual_warnings
 
 
-def test_patch_fid_com_keeps_a_verified_row_length(tmp_path: Path, bruker_dir: Path) -> None:
+def test_patch_fid_com_keeps_a_verified_row_length(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """``-xN`` passes verification (>=TD, divides the file, row bytes a multiple of 1024) => kept
     as is, not listed as a correction.
     """
-    exp, data_dir = _padded_2d(tmp_path)  # TD=1612, physical row 1664, 210 rows
+    exp, data_dir = _padded_2d(tmp_path)
     text = (
         "bruk2pipe -in ./ser \\\n"
         "  -xN 1664 -yN 210 -xT 806 -yT 105 -xMODE DQD -yMODE Complex \\\n"
@@ -870,54 +958,3 @@ def test_sample_dtype_prefers_dtype_then_dtypa() -> None:
     # DTYPE takes precedence over DTYPA
     assert sample_dtype({"DTYPE": 0, "DTYPA": 2}) == np.dtype("<i4")
     assert sample_dtype({}) == np.dtype("<i4")
-
-
-def test_manual_carrier_choices_are_read_only(bruker_dir: Path) -> None:
-    import copy
-
-    from backend.carrier_choices import carrier_choices
-
-    exp = read_dataset(bruker_dir / "nus_2d")
-    exp.acquisition_parameters["acqus"].update(O1=2820, BF1=600, SFO1=600.00282, TE=298)
-    exp.acquisition_parameters["acqu2s"].update(O1=7080, BF1=60, SFO1=60.00708, O1P=118)
-    original = copy.deepcopy(exp.acquisition_parameters)
-    choices = carrier_choices(exp)
-    assert [row['key'] for row in choices] == ['xCAR', 'yCAR']
-    assert choices[0]['options'][0]['value'] == pytest.approx(4.7)
-    assert choices[1]['options'][0]['value'] == pytest.approx(118)
-    assert len(choices[1]['options']) == 5
-    assert all(o['label'] and o['description'] for row in choices for o in row['options'])
-    assert exp.acquisition_parameters == original
-    exp.acquisition_parameters = {}
-    assert all(not row['options'] for row in carrier_choices(exp))
-
-@pytest.mark.parametrize('ndim', [1, 2, 3])
-def test_manual_carrier_choices_keep_axis_identity(ndim: int) -> None:
-    from backend.carrier_choices import carrier_choices
-
-    axes = ['F3', 'F2', 'F1'] if ndim == 3 else ['F2', 'F1'][:ndim]
-    exp = Experiment(dataset_id='manual', source_path=Path('.'), ndim=ndim, dimensions=[
-        Dimension(logical_axis=axis, nucleus='13C', sf=150) for axis in axes
-    ], acquisition_parameters={
-        'acqus': {'O1': 0, 'BF1': 150, 'SFO1': 150},
-        'acqu2s': {'O1': 3000, 'BF1': 150, 'SFO1': 150},
-        'acqu3s': {'O1': 6000, 'BF1': 150, 'SFO1': 150},
-    })
-    choices = carrier_choices(exp)
-    assert [row['key'] for row in choices] == [letter+'CAR' for letter in 'xyz'[:ndim]]
-    assert [row['axis'] for row in choices] == axes
-    assert [row['options'][0]['value'] for row in choices] == [0, 20, 40][:ndim]
-    exp.acquisition_parameters['acqus']['BF1'] = -150
-    exp.acquisition_parameters['acqus']['SFO1'] = -150
-    assert not carrier_choices(exp)[0]['options']
-
-def test_manual_carrier_script_edit_preserves_other_parameters() -> None:
-    from backend.carrier_choices import replace_script_carrier, script_carrier_values
-
-    script = '# -xCAR 99\n' + FID_COM + '# -yCAR 999\n'
-    changed = replace_script_carrier(script, 'xCAR', '-1.234e+1')
-    assert changed == script.replace('-xCAR 4.703', '-xCAR -1.234e+1')
-    assert script_carrier_values(changed) == {'xCAR': '-1.234e+1', 'yCAR': '118.500'}
-    for key, value in [('zCAR', '12'), ('xCAR', 'nan'), ('xCAR', '3;echo')]:
-        with pytest.raises(ValueError):
-            replace_script_carrier(script, key, value)

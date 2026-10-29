@@ -100,3 +100,10 @@ the [contributing guide](../CONTRIBUTING.md), [API contract](API_CONTRACT.md),
 
 Use neutral paths and synthetic data in examples. Do not publish credentials, machine-specific
 paths, private datasets, or internal project records.
+
+## GUI regression groups
+
+Run overlay, SVG, 1D and viewer-section tests when changing comparison or layout behavior. The default scripts/vm_test.sh runs the font accessibility tests in a separate Qt process after the main suite; both groups must pass. This avoids restyling closed Qt objects retained by unrelated tests while preserving full test coverage.
+
+The shared suite pins the Chinese catalogue for message assertions. This is a test fixture;
+the public application's default remains English, and i18n tests exercise both languages.

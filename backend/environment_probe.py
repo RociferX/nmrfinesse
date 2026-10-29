@@ -32,13 +32,24 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from backend.nmrpipe_finder import csh_run, find_nmrpipe_bin, find_tool
+from backend.nmrpipe_finder import (
+    csh_run,
+    find_nmrpipe_bin,
+    find_pipe2ucsf,
+    find_tool,
+)
 
 REQUIRED_TOOLS = ("nmrPipe", "bruker")
 
+
+
+
+
 OPTIONAL_TOOLS = ("proj3D.tcl",)
 
+
 _SMILE_PROBE_COMMAND = "nmrPipe -fn SMILE -help"
+
 _SMILE_VERSION_RE = re.compile(r"SMILE\s+Plugin:?\s+Version\s+([^\n*]+)", re.IGNORECASE)
 
 
@@ -90,12 +101,14 @@ def probe_smile_plugin(timeout: float = 20.0) -> SmileStatus:
         return SmileStatus(detail="csh unavailable or timed out")
     lowered = output.lower()
     if "unknown function" in lowered:
+
         return SmileStatus(detail="nmrPipe does not recognise -fn SMILE")
     match = _SMILE_VERSION_RE.search(output)
     if match:
         version = match.group(1).strip().rstrip("*").strip()
         return SmileStatus(available=True, version=version, detail=version)
     if "smile" in lowered:
+
         return SmileStatus(available=True, detail="plugin present")
     return SmileStatus(detail="SMILE plugin not detected")
 
@@ -118,6 +131,7 @@ class EnvironmentReport:
     tools: dict[str, str] = field(default_factory=dict)
     language: str = ""
     smile: SmileStatus = field(default_factory=SmileStatus)
+    pipe2ucsf: str = ""
 
     def path_of(self, name: str) -> str:
         """Return a tool path, or an empty string when it was not found."""
@@ -184,6 +198,7 @@ def probe_environment(explicit_nmrpipe: str = "") -> EnvironmentReport:
     bin_dir = find_nmrpipe_bin(explicit_nmrpipe)
     tools: dict[str, str] = {}
     if bin_dir is not None:
+
         tools["nmrPipe"] = str(bin_dir / "nmrPipe")
     for name in REQUIRED_TOOLS[1:] + OPTIONAL_TOOLS:
         found = find_tool(name, bin_dir)
@@ -192,8 +207,12 @@ def probe_environment(explicit_nmrpipe: str = "") -> EnvironmentReport:
     report = EnvironmentReport(
         nmrpipe_bin=str(bin_dir or ""),
         tools=tools,
+
         smile=probe_smile_plugin() if bin_dir is not None else SmileStatus(),
+        pipe2ucsf=str(find_pipe2ucsf() or ""),
     )
+
+
     try:
         from core.data.nus_reader import set_bruker_executable
 
@@ -258,7 +277,9 @@ def environment_warning(report: EnvironmentReport) -> tuple[str, bool]:
     parts: list[str] = []
     if not report.smile.available:
         parts.append(smile_missing_message())
-    parts.extend(missing_message(n, required=False) for n in report.missing_optional())
+    parts.extend(
+        missing_message(n, required=False) for n in report.missing_optional()
+    )
     return "; ".join(parts), False
 
 
@@ -303,10 +324,14 @@ def apply_to_settings(report: EnvironmentReport) -> dict[str, str]:
         found = report.path_of(tool)
         if found:
             updates[key] = found
+
+
     smile_state = "available" if report.smile.available else "missing"
     if str(settings.get("smile_status") or "") != smile_state:
         updates["smile_status"] = smile_state
         updates["smile_version"] = report.smile.version
+    if not str(settings.get("pipe2ucsf_path") or "").strip() and report.pipe2ucsf:
+        updates["pipe2ucsf_path"] = report.pipe2ucsf
     if not updates:
         return {}
     try:
@@ -326,6 +351,7 @@ def tool_path_from_settings(settings: dict, name: str) -> str:
         "nmrPipe": "nmrpipe_path",
         "bruker": "bruker_path",
         "proj3D.tcl": "proj3d_path",
+        "pipe2ucsf": "pipe2ucsf_path",
     }
     key = mapping.get(name)
     if key is None:
@@ -345,6 +371,9 @@ def resolve_tool(name: str, settings: dict | None = None) -> Path | None:
             path = Path(explicit).expanduser()
             if path.is_file():
                 return path.resolve()
+    if name == "pipe2ucsf":
+        explicit = str(settings.get("pipe2ucsf_path") or "") if settings else ""
+        return find_pipe2ucsf(explicit) or (find_pipe2ucsf() if explicit else None)
     bin_dir = None
     nmrpipe_explicit = ""
     if settings is not None:

@@ -46,8 +46,8 @@ FENCE = re.compile(r"```python\n(.*?)```", re.S)
 SUMMARY_ACCESS = re.compile(r"\.summary\[\s*[\"']([A-Za-z_][A-Za-z0-9_]*)[\"']\s*\]")
 BARE_SUMMARY = re.compile(r"(?<![.\w])summary\[\s*[\"']([A-Za-z_][A-Za-z0-9_]*)[\"']\s*\]")
 
-# Synthetic spectrum geometry: data axis 0 = indirect (15N, 64 points),
-# axis 1 = direct (1H, 128 points)
+# Synthetic spectrum geometry: data axis 0 = indirect (15N, 64 points), # axis 1 = direct (1H,
+# 128 points)
 N15_OBS, N15_SW, N15_CAR, N15_SIZE = 60.8, 2000.0, 118.0, 64
 H1_OBS, H1_SW, H1_CAR, H1_SIZE = 600.0, 6000.0, 4.7, 128
 PEAKS = ((30, 60), (45, 90), (18, 100))
@@ -107,7 +107,8 @@ class _DocBackend:
         path.mkdir(parents=True, exist_ok=True)
         return path
 
-    def convert_to_fid(self, experiment, data_dir, progress=None, params=None, **_kwargs) -> dict:
+    def convert_to_fid(self, experiment, data_dir, progress=None,
+        params=None, **_kwargs) -> dict:
         work = self._work()
         (work / "fid.com").write_text("#!/bin/csh\n", encoding="utf-8")
         fid = work / f"{experiment.dataset_id}.fid"
@@ -154,7 +155,7 @@ def _fenced_python_blocks(text: str) -> list[str]:
 
 def _quickstart_python_block() -> str:
     blocks = _fenced_python_blocks(QUICKSTART.read_text(encoding="utf-8"))
-    assert blocks, "Quickstart guide has no ```python block"
+    assert blocks, "快速上手文档里没有 ```python 代码块"
     return blocks[0]
 
 
@@ -173,7 +174,8 @@ def _documented_summary_keys() -> list[tuple[str, str, bool]]:
     for path in targets:
         text = path.read_text(encoding="utf-8", errors="replace")
         rel = path.relative_to(ROOT).as_posix()
-        statistical = "uncertainty_summary" in text or "position_uncertainty" in text
+        statistical = ("uncertainty_summary" in text
+                       or "position_uncertainty" in text)
         for match in SUMMARY_ACCESS.finditer(text):
             found.append((rel, match.group(1), statistical))
         if statistical:
@@ -182,7 +184,9 @@ def _documented_summary_keys() -> list[tuple[str, str, bool]]:
     return found
 
 
-def _run_documented_python_example(code: str, root: Path, dataset: Path) -> tuple[Any, set[str]]:
+def _run_documented_python_example(
+    code: str, root: Path, dataset: Path
+) -> tuple[Any, set[str]]:
     """Execute a documentation code block (stand-in backend and temporary paths injected);
     returns (result, the summary fields the code block reads)."""
     import nmrfinesse_api
@@ -220,26 +224,30 @@ def _run_documented_python_example(code: str, root: Path, dataset: Path) -> tupl
         monkeypatch.setattr(nmrfinesse_api, "run_parameter_study", parameter_wrapper)
         monkeypatch.setattr(nmrfinesse_api, "run_reference_study", reference_wrapper)
         monkeypatch.setattr(nmrfinesse_api, "run_combination_study", combination_wrapper)
-        exec(compile(code, str(QUICKSTART), "exec"), namespace)  # noqa: S102 - documentation example
+        exec(compile(code, str(QUICKSTART), "exec"), namespace)
     return namespace.get("result"), used
 
 
-def test_external_api_quickstart_example_runs(tmp_path: Path, bruker_dir: Path) -> None:
+def test_external_api_quickstart_example_runs(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """The API quickstart reference and combination examples run verbatim."""
     code = _quickstart_python_block()
     result, used = _run_documented_python_example(
         code, tmp_path / "readme_study", bruker_dir / "hsqc_2d"
     )
-    assert result is not None, "Quickstart example did not produce result"
-    assert used, "Quickstart example does not read any .summary[...] field"
+    assert result is not None, "Quickstart 示例没有产出 result"
+    assert used, "Quickstart 示例里没有任何 .summary[...] 取值,示例可能已失真"
     missing = sorted(used - set(result.summary))
     assert not missing, (
-        f"Quickstart example reads fields missing from StudyResult.summary: {missing};"
+        f"Quickstart 示例读取了 StudyResult.summary 里不存在的字段: {missing};"
         f"实际字段: {sorted(result.summary)}"
     )
 
 
-def test_documented_summary_keys_come_from_the_real_api(tmp_path: Path, bruker_dir: Path) -> None:
+def test_documented_summary_keys_come_from_the_real_api(
+    tmp_path: Path, bruker_dir: Path
+) -> None:
     """Every ``*.summary["field"]`` appearing in the documentation must be a really
     returned field."""
     result, _used = _run_documented_python_example(
@@ -291,11 +299,12 @@ def test_getting_started_synthetic_workflow_runs(tmp_path: Path) -> None:
                     and "quickstart.py" in block), None)
     assert section is not None, "Getting started has no bash block containing both example commands"
     commands = re.findall(r"^python (\S+)([^\n]*)", section, re.M)
-    assert len(commands) == 2, f"Getting started example command count changed: {commands}"
+    assert len(commands) == 2, f"Getting started 示例命令数变了: {commands}"
     out = tmp_path / "example_data" / "hsqc_2d"
     script, tail = commands[0]
     args = shlex.split(tail)
-    args[args.index("--out") + 1] = str(out)
+    out_index = args.index("--out") + 1
+    args[out_index] = str(out)
     done = _run_example(script, args)
     assert done.returncode == 0, f"{script} 失败: {done.stdout[-800:]} {done.stderr[-800:]}"
     assert (out / "acqus").is_file(), "合成数据集没有写出 acqus"
@@ -319,7 +328,8 @@ def test_measure_only_example_runs(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     out = tmp_path / "tables"
-    assert module.main(["--spectrum", str(spectrum), "--peaks", str(peaks), "--out", str(out)]) == 0
+    assert module.main(["--spectrum", str(spectrum), "--peaks", str(peaks),
+                        "--out", str(out)]) == 0
 
     assert (out / "peak_table_parabolic.csv").is_file()
     assert not (out / "peak_table_gaussian.csv").exists()
@@ -341,19 +351,11 @@ def test_study_example_scripts_run(tmp_path: Path, bruker_dir: Path) -> None:
         return real_run(root, dataset, **kwargs)
 
     run_study.run_parameter_study = patched_run
-    assert (
-        run_study.main(
-            [
-                "--study",
-                str(tmp_path / "s1"),
-                "--a",
-                str(bruker_dir / "hsqc_2d"),
-                "--combos",
-                str(combos),
-            ]
-        )
-        == 0
-    )
+    assert run_study.main([
+        "--study", str(tmp_path / "s1"),
+        "--a", str(bruker_dir / "hsqc_2d"),
+        "--combos", str(combos),
+    ]) == 0
 
     step = _load_example("step_by_step")
     real_open = step.open_study
@@ -370,19 +372,11 @@ def test_study_example_scripts_run(tmp_path: Path, bruker_dir: Path) -> None:
 
     step.open_study = patched_open
     step.build_reference = patched_build
-    assert (
-        step.main(
-            [
-                "--study",
-                str(tmp_path / "s2"),
-                "--dataset",
-                str(bruker_dir / "hsqc_2d"),
-                "--combos",
-                str(combos),
-            ]
-        )
-        == 0
-    )
+    assert step.main([
+        "--study", str(tmp_path / "s2"),
+        "--dataset", str(bruker_dir / "hsqc_2d"),
+        "--combos", str(combos),
+    ]) == 0
 
 
 def test_example_scripts_parse_their_documented_flags() -> None:

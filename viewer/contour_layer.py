@@ -24,9 +24,12 @@ from pyqtgraph.Qt import QtCore, QtGui
 
 from ui_support.i18n import tr
 
-# Threshold for using contourpy on large spectra: once the pixel count reaches this value
-# (512x1024) contourpy is used, and smaller spectra go through matplotlib (benchmarked in 0.2.73,
-# which also fixed the crash matplotlib hit on those sizes).
+# Threshold for using contourpy on large spectra: once the pixel count reaches this value #
+# (512x1024) contourpy is used, and smaller spectra go through matplotlib (benchmarked in
+# 0.2.73, # which also fixed the crash matplotlib hit on those sizes).
+# Threshold for using contourpy on large spectra: once the pixel count reaches this value #
+# (512x1024) contourpy is used, and smaller spectra go through matplotlib (benchmarked in
+# 0.2.73, # which also fixed the crash matplotlib hit on those sizes).
 _CONTOURPY_MIN_PIXELS = 512 * 1024
 
 
@@ -46,12 +49,18 @@ class ContourLayer(pg.GraphicsObject):
         super().__init__(parent)
         self._zoom = float(zoom)
         self._pen = pg.mkPen(pen)
-        self._pen_neg = pg.mkPen(neg_pen) if neg_pen is not None else pg.mkPen("#e74c3c", width=1)
+        self._pen_neg = (
+            pg.mkPen(neg_pen)
+            if neg_pen is not None
+            else pg.mkPen("#e74c3c", width=1)
+        )
         self._data: np.ndarray | None = None
         self._levels: np.ndarray | None = None
         self._gen = None
         self._path = QtGui.QPainterPath()
         self._path_neg = QtGui.QPainterPath()
+        self._show_positive = True
+        self._show_negative = True
         self._smooth: np.ndarray | None = None
         self._use_contourpy = False
         self._bounds = QtCore.QRectF()
@@ -61,21 +70,22 @@ class ContourLayer(pg.GraphicsObject):
     def setData(self, data: np.ndarray, levels: np.ndarray) -> None:
         self._data = np.asarray(data, dtype=float)
         if self._data.ndim != 2:
-            raise ValueError(
-                tr(
-                    "Contours only support 2D data (currently {p0} dimension)",
-                    p0=self._data.ndim,
-                )
-            )
+            raise ValueError(tr(
+                "Contours only support 2D data (currently {p0} "
+                "dimension)",
+                p0=self._data.ndim,
+            ))
         self._levels = np.asarray(levels, dtype=float)
         self._smooth = None
         self._use_contourpy = self._data.size >= _CONTOURPY_MIN_PIXELS
         if self._use_contourpy:
-            # Lazy: Avoid loading extensions during the collection phase that change the heap
-            # layout.
             import contourpy
 
-            self._gen = contourpy.contour_generator(z=self._data) if self._data.size else None
+            self._gen = (
+                contourpy.contour_generator(z=self._data)
+                if self._data.size
+                else None
+            )
             self._build_paths()
         else:
             self._gen = None
@@ -102,7 +112,7 @@ class ContourLayer(pg.GraphicsObject):
         self.update()
 
     # ---- matplotlib contour path (small spectrum, starting from 0.2.73 VM, fully verified and
-    # stable) ----.
+    # # stable) ----.
 
     def _rebuild(self) -> None:
         """Full reconstruction: interpolation data + contour path (Xiaopu first time/When changing
@@ -142,9 +152,15 @@ class ContourLayer(pg.GraphicsObject):
         fig = plt.figure()
         try:
             cs = plt.contour(smooth, levels=levels)
-            # View y directly takes the matplotlib row number (data row 0 -> view y=0); with view
-            # invertY(False) (view y increases = screen upward), data row 0 (height ppm) is
-            # displayed at the bottom of the screen.
+            # View y directly takes the matplotlib row number (data row 0 -> view y=0); with
+            # view # invertY(False) (view y increases = screen upward), data row 0 (height ppm)
+            # is # displayed at the bottom of the screen.
+            # View y directly takes the matplotlib row number (data row 0 -> view y=0); with
+            # view # invertY(False) (view y increases = screen upward), data row 0 (height ppm)
+            # is # displayed at the bottom of the screen.
+            # View y directly takes the matplotlib row number (data row 0 -> view y=0); with
+            # view # invertY(False) (view y increases = screen upward), data row 0 (height ppm)
+            # is # displayed at the bottom of the screen.
             for level, segs in zip(cs.levels, cs.allsegs):
                 target = path_neg if level < 0 else path_pos
                 for seg in segs:
@@ -191,11 +207,25 @@ class ContourLayer(pg.GraphicsObject):
     def boundingRect(self) -> QtCore.QRectF:
         return self._bounds
 
+    def vector_paths(self):
+        """Return copies of the contour geometry and pens for vector export."""
+        return tuple((QtGui.QPainterPath(path), QtGui.QPen(pen))
+                     for path, pen, visible in (
+                         (self._path, self._pen, self._show_positive),
+                         (self._path_neg, self._pen_neg, self._show_negative),
+                     ) if visible)
+
+    def set_sign_visibility(self, show_positive: bool, show_negative: bool) -> None:
+        """Change displayed signs without rebuilding contours or changing the source data."""
+        self._show_positive = bool(show_positive)
+        self._show_negative = bool(show_negative)
+        self.update()
+
     def paint(self, painter, *args) -> None:
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
-        if not self._path.isEmpty():
+        if self._show_positive and not self._path.isEmpty():
             painter.setPen(self._pen)
             painter.drawPath(self._path)
-        if not self._path_neg.isEmpty():
+        if self._show_negative and not self._path_neg.isEmpty():
             painter.setPen(self._pen_neg)
             painter.drawPath(self._path_neg)

@@ -6,7 +6,7 @@ manual phase parameter or script PS lines.
 
 from __future__ import annotations
 
-from qtcompat.QtCore import Qt
+from qtcompat.QtCore import QEvent, Qt, QTimer
 from qtcompat.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -38,8 +38,10 @@ class PhasePanel(QWidget):
         outer.setContentsMargins(4, 2, 4, 2)
         outer.setSpacing(2)
 
+
         row = QHBoxLayout()
         row.setSpacing(12)
+
 
         p0_field = QWidget()
         p0_layout = QHBoxLayout(p0_field)
@@ -51,7 +53,6 @@ class PhasePanel(QWidget):
         self.p0_label.setDecimals(0)
         self.p0_label.setSingleStep(1)
         self.p0_label.setValue(0.0)
-        self.p0_label.setFixedWidth(62)
         p0_layout.addWidget(self.p0_label)
         p0_layout.addWidget(QLabel("°"))
         self.p0_label.valueChanged.connect(self._on_p0_spin_changed)
@@ -73,7 +74,6 @@ class PhasePanel(QWidget):
         self.p1_label.setDecimals(0)
         self.p1_label.setSingleStep(1)
         self.p1_label.setValue(0.0)
-        self.p1_label.setFixedWidth(62)
         p1_layout.addWidget(self.p1_label)
         p1_layout.addWidget(QLabel("°"))
         self.p1_label.valueChanged.connect(self._on_p1_spin_changed)
@@ -106,6 +106,21 @@ class PhasePanel(QWidget):
         self.hint_label.setStyleSheet("color: #888;")
         outer.addWidget(self.hint_label)
         self.set_available(False)
+        self._fit_phase_input_widths()
+
+    def changeEvent(self, event) -> None:
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.FontChange and hasattr(self, "p0_label"):
+            QTimer.singleShot(0, self, self._fit_phase_input_widths)
+
+    def _fit_phase_input_widths(self) -> None:
+        if not hasattr(self, "p0_label") or not hasattr(self, "p1_label"):
+            return
+        for spin in (self.p0_label, self.p1_label):
+            text_width = spin.fontMetrics().horizontalAdvance("-180")
+            spin.setMinimumWidth(max(spin.sizeHint().width(), text_width + 32))
+
+
 
     # ------------------------------------------------------------- API
     def values(self) -> tuple[float, float]:
@@ -128,7 +143,10 @@ class PhasePanel(QWidget):
         self.set_available(visible)
 
     def set_available(self, available: bool, hint: str = "") -> None:
-        """Enabled when replica data is available; disabled and prompted for real spectrum, etc."""
+        """
+        Enabled when replica data is available; disabled and prompted for real
+        spectrum, etc.
+        """
         for widget in (
             self.p0_label,
             self.p0_slider,
@@ -141,14 +159,11 @@ class PhasePanel(QWidget):
         self.hint_label.setText(
             ""
             if available
-            else (
-                hint
-                or tr(
-                    "Only display phase modulation (do not change data): Available after viewing "
-                    "one-dimensional spectra or turning on 1D "
-                    "strips",
-                )
-            )
+            else (hint or tr(
+                "Only display phase modulation (do not change data): Available after viewing "
+                "one-dimensional spectra or turning on 1D "
+                "strips",
+            ))
         )
 
     # ------------------------------------------------------------- slots

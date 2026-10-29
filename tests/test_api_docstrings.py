@@ -101,11 +101,12 @@ def test_peak_table_columns_match_the_docs() -> None:
     guide = (ROOT / "docs" / "external-api" / "06-outputs-and-records.md").read_text(
         encoding="utf-8"
     )
-    contract = (ROOT / "docs" / "API_CONTRACT.md").read_text(encoding="utf-8")
+    contract_path = ROOT / "docs" / "API_CONTRACT.md"
+    contract = contract_path.read_text(encoding="utf-8")
 
-    assert (
-        _column_block(guide, "## 6.2 统一峰表字段", "## 6.2 Unified peak table fields") == expected
-    )
+    assert _column_block(
+        guide, "## 6.2 统一峰表字段", "## 6.2 Unified peak table fields"
+    ) == expected
     contract_markers = ("### 11.4 峰表字段", "### 11.4 Peak table field")
     if any(marker in contract for marker in contract_markers):
         assert _column_block(contract, *contract_markers) == expected
@@ -113,5 +114,6 @@ def test_peak_table_columns_match_the_docs() -> None:
         assert f"{len(expected)} 列" in contract or f"{len(expected)} columns" in contract
         assert "external-api/06-outputs-and-records.md" in contract
     assert (
-        f"当前 **{len(expected)} 列**" in guide or f"currently **{len(expected)} columns**" in guide
+        f"当前 **{len(expected)} 列**" in guide
+        or f"currently **{len(expected)} columns**" in guide
     ), "API 使用指南必须写明当前列数"

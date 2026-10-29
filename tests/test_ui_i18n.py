@@ -43,11 +43,14 @@ def _tool() -> Any:
 
 
 @pytest.fixture(autouse=True)
-def _restore_language(monkeypatch: pytest.MonkeyPatch):
+def _restore_language(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     """Reset the language state and the catalogue cache after every test case, so the
     tests cannot pollute each other."""
     saved_language = i18n._language
     saved_resolver = i18n._system_resolver
+    monkeypatch.setattr(
+        'core.app_paths.local_config_path', lambda *a, **k: tmp_path / 'language.local.yaml',
+    )
     for key in (
         "NMRFINESSE_LANG",
         "NMRFINESSE_LANGUAGE",
@@ -59,6 +62,8 @@ def _restore_language(monkeypatch: pytest.MonkeyPatch):
     ):
         monkeypatch.delenv(key, raising=False)
     i18n.reset_cache()
+    i18n.set_system_language_resolver(None)
+    i18n.set_language(None)
     yield
     i18n._language = saved_language
     i18n._system_resolver = saved_resolver
@@ -97,8 +102,8 @@ def test_language_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     assert i18n.get_language() == "zh"
     monkeypatch.delenv("NMRFINESSE_LANG")
     monkeypatch.setenv("LANG", "en_US.UTF-8")
-    # The system locale is not an explicit pin: it ranks below the settings preference
-    # (see the regression test below)
+    # The system locale is not an explicit pin: it ranks below the settings preference # (see
+    # the regression test below)
     assert i18n.language_from_environment() is None
     assert i18n.language_from_locale_environment() == "en"
     i18n.set_system_language_resolver(lambda: None)
@@ -108,8 +113,8 @@ def test_language_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     i18n.set_system_language_resolver(lambda: "zh-CN")
     assert i18n.get_language() == "zh"
     i18n.set_system_language_resolver(lambda: None)
-    # Fall back to **this tree's declared default language** (zh in the private trunk, en
-    # in the public English tree) ⇒ assert the two agree instead of hard-coding zh
+    # Fall back to **this tree's declared default language** (zh in the private trunk, en # in
+    # the public English tree) ⇒ assert the two agree instead of hard-coding zh
     declared = json.loads(
         (Path(i18n.__file__).resolve().parent / "locales" / "default.json").read_text(
             encoding="utf-8"
@@ -127,7 +132,7 @@ def test_explicit_language_wins_over_environment(monkeypatch: pytest.MonkeyPatch
     assert i18n.set_language("en") == "en"
     assert i18n.tr("Determined") == "Determined"
     monkeypatch.delenv("NMRFINESSE_LANG")
-    i18n.set_system_language_resolver(lambda: None)  # drop any resolver left by another test
+    i18n.set_system_language_resolver(lambda: None)
     assert i18n.set_language("de") == i18n.default_language()
 
 
@@ -139,7 +144,7 @@ def test_user_preference_from_config(tmp_path: Path) -> None:
     assert i18n.read_user_preference(config) == "zh"
     config.write_text("language: auto\n", encoding="utf-8")
     assert i18n.read_user_preference(config) is None
-    config.write_text("language: de\n", encoding="utf-8")  # unsupported → follow the system
+    config.write_text("language: de\n", encoding="utf-8")
     assert i18n.read_user_preference(config) is None
     config.write_text("language: [bad yaml\n", encoding="utf-8")
     assert i18n.read_user_preference(config) is None
@@ -161,11 +166,11 @@ def test_user_preference_sits_between_environment_and_system(
     i18n.reset_cache()
     i18n.set_language(None)
     i18n.set_system_language_resolver(lambda: "zh-CN")
-    assert i18n.get_language() == "en"  # the setting beats the system language
+    assert i18n.get_language() == "en"
     monkeypatch.setenv("NMRFINESSE_LANG", "zh")
-    assert i18n.get_language() == "zh"  # the environment variable beats the setting
+    assert i18n.get_language() == "zh"
     monkeypatch.delenv("NMRFINESSE_LANG")
-    assert i18n.set_language("en") == "en"  # an explicit setting wins outright
+    assert i18n.set_language("en") == "en"
     monkeypatch.setenv("NMRFINESSE_LANG", "zh")
     assert i18n.get_language() == "en"
 
@@ -191,9 +196,9 @@ def test_system_locale_does_not_override_the_user_setting(
     i18n.set_language(None)
     i18n.set_system_language_resolver(lambda: "en-US")
     try:
-        assert i18n.get_language() == "zh"  # the setting beats the system locale and QLocale
+        assert i18n.get_language() == "zh"
         monkeypatch.setenv("NMRFINESSE_LANG", "en")
-        assert i18n.get_language() == "en"  # an explicit pin still wins
+        assert i18n.get_language() == "en"
     finally:
         i18n.set_system_language_resolver(None)
         i18n.reset_cache()
@@ -209,5 +214,8 @@ def test_chinese_catalogue_keys_are_registered() -> None:
 
 
 def test_ui_string_snapshot_is_current() -> None:
-    """The tr() strings and the converted-file list must match the snapshot (run --write first)."""
+    """
+    The tr() strings and the converted-file list must match the snapshot (run
+    --write first).
+    """
     assert _tool().check() == 0

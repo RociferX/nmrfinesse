@@ -36,6 +36,7 @@ from qtcompat.QtWidgets import (
     QPushButton,
     QScrollArea,
     QSlider,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -105,14 +106,16 @@ PIPELINE_STEPS: tuple[tuple[str, str, str, tuple[str, ...]], ...] = (
 )
 
 
-VISIBLE_PIPELINE_STEPS = PIPELINE_STEPS
 
+VISIBLE_PIPELINE_STEPS = PIPELINE_STEPS
 
 def _visible_pipeline_steps():
     return VISIBLE_PIPELINE_STEPS
 
-
-STEP_LABEL: dict[str, str] = {step_id: label for step_id, label, _, _ in _visible_pipeline_steps()}
+STEP_LABEL: dict[str, str] = {
+    step_id: label
+    for step_id, label, _, _ in _visible_pipeline_steps()
+}
 
 
 STEP_LOG_SEPARATOR = "-" * 60
@@ -141,6 +144,11 @@ STEP_METHOD: dict[str, str] = {
     "smile": "optimize_smile",
     "peaks": "pick_peaks",
 }
+
+
+
+
+
 
 
 _DIRECT_RANGE_PPM: dict[str, tuple[float, float]] = {
@@ -190,7 +198,8 @@ def validate_ext_range(lo_text: str, hi_text: str, nucleus: str = "") -> str:
     for name, value in ((tr("High end"), lo_f), (tr("Low field end"), hi_f)):
         if value is not None and not (lo_min <= value <= hi_max):
             return tr(
-                "{p0} ppm must be within {p1:g}-{p2:g} ({p3}direct dimension)",
+                "{p0} ppm must be within {p1:g}-{p2:g} ({p3}direct "
+                "dimension)",
                 p0=name,
                 p1=lo_min,
                 p2=hi_max,
@@ -198,7 +207,8 @@ def validate_ext_range(lo_text: str, hi_text: str, nucleus: str = "") -> str:
             )
     if lo_f is not None and hi_f is not None and lo_f <= hi_f:
         return tr(
-            "The high field end ppm must be greater than the low field end ppm (such as 8.5-7.5)",
+            "The high field end ppm must be greater than the low field end ppm (such as "
+            "8.5-7.5)",
         )
     return ""
 
@@ -214,45 +224,55 @@ def _data_nodes(manager: ProjectManager, exp_id: str) -> list:
     return list(getattr(entry, "data", None) or [])
 
 
-def _node_artifacts(manager: ProjectManager, exp_id: str, data_id: str) -> dict[str, Path | None]:
+
+def _node_artifacts(
+    manager: ProjectManager, exp_id: str, data_id: str
+) -> dict[str, Path | None]:
     """The product path of each step of a single data node (schema 1.4 data-level layout)."""
     artifacts: dict[str, Path | None] = {
-        "fid": None,
-        "spectrum": None,
-        "peaks": None,
+        'fid': None,
+        'spectrum': None,
+        'peaks': None,
     }
     data = manager.data(exp_id, data_id)
-    fid_candidate = getattr(data, "fid_path", "") or ""
+    fid_candidate = getattr(data, 'fid_path', '') or ''
     if fid_candidate:
         path = Path(fid_candidate)
         if not path.is_absolute():
             path = manager.root / path
 
         if path.is_file() or path.is_dir():
-            artifacts["fid"] = path
-    if artifacts["fid"] is None:
-        proc = manager.data_dir(exp_id, data_id, "process")
+            artifacts['fid'] = path
+    if artifacts['fid'] is None:
+        proc = manager.data_dir(exp_id, data_id, 'process')
         try:
-            fids = sorted(proc.glob("*.fid"))
+            fids = sorted(proc.glob('*.fid'))
         except OSError:
             fids = []
         if fids:
-            artifacts["fid"] = fids[0]
+            artifacts['fid'] = fids[0]
         else:
-            merged_fid = proc / "merged" / "fid"
+            merged_fid = proc / 'merged' / 'fid'
             if merged_fid.is_dir():
-                artifacts["fid"] = merged_fid
-    artifacts["spectrum"] = find_primary_spectrum(manager, exp_id, data_id)
-    for suffix in (".list", ".csv"):
-        candidate = manager.data_dir(exp_id, data_id, "peaks") / f"{exp_id}-{data_id}{suffix}"
+                artifacts['fid'] = merged_fid
+    artifacts['spectrum'] = find_primary_spectrum(manager, exp_id, data_id)
+    for suffix in ('.list', '.csv'):
+        candidate = (
+            manager.data_dir(exp_id, data_id, 'peaks')
+            / f'{exp_id}-{data_id}{suffix}'
+        )
         if candidate.is_file():
-            artifacts["peaks"] = candidate
+            artifacts['peaks'] = candidate
             break
     return artifacts
 
 
-def _upstream_artifact(step_id: str, artifacts: dict[str, Path | None]) -> Path | None:
-    prev = {"spectrum": "fid", "peaks": "spectrum"}.get(step_id)
+def _upstream_artifact(
+    step_id: str, artifacts: dict[str, Path | None]
+) -> Path | None:
+    prev = {'spectrum': 'fid', 'peaks': 'spectrum'}.get(
+        step_id
+    )
     return artifacts.get(prev) if prev else None
 
 
@@ -273,75 +293,89 @@ def _pipeline_flags() -> bool:
         from gui.settings import load_settings
 
         pipeline = load_settings().get("pipeline") or {}
-    except Exception:  # noqa: BLE001
+    except Exception:
         pipeline = {}
     return bool(pipeline.get("simple_mode", False))
 
 
-def _node_step_statuses(manager: ProjectManager, exp_id: str, node) -> dict[str, str]:
+def _node_step_statuses(
+    manager: ProjectManager, exp_id: str, node
+) -> dict[str, str]:
     """Five-step status of a single data node: product + fingerprint verification (OUTDATED) + pre-
     dependency.
     """
-    data_id = getattr(node, "id", exp_id)
+    data_id = getattr(node, 'id', exp_id)
     artifacts = _node_artifacts(manager, exp_id, data_id)
     state = load_pipeline_state(manager, exp_id, data_id)
     simple_mode = _pipeline_flags()
     statuses: dict[str, str] = {}
     for step_id, _, _, deps in _visible_pipeline_steps():
-        artifact = None if step_id == "smile" else artifacts.get(step_id)
+        artifact = (
+            None if step_id == 'smile' else artifacts.get(step_id)
+        )
         outdated = False
-        if step_id == "smile":
-            entry = state["steps"].get("smile")
+        if step_id == 'smile':
+
+            entry = state['steps'].get('smile')
             done = entry is not None
             if done and not simple_mode:
-                current = input_fingerprint(manager, exp_id, data_id, "smile")
+                current = input_fingerprint(manager, exp_id, data_id, 'smile')
                 if (
                     current is not None
-                    and entry.get("input_hash")
-                    and current != entry["input_hash"]
+                    and entry.get('input_hash')
+                    and current != entry['input_hash']
                 ):
                     outdated = True
         else:
             done = artifact is not None
             if done and not simple_mode:
-                entry = state["steps"].get(step_id)
+                entry = state['steps'].get(step_id)
                 if entry:
-                    current_input = input_fingerprint(manager, exp_id, data_id, step_id)
+                    current_input = input_fingerprint(
+                        manager, exp_id, data_id, step_id
+                    )
                     if (
                         current_input is not None
-                        and entry.get("input_hash")
-                        and current_input != entry["input_hash"]
+                        and entry.get('input_hash')
+                        and current_input != entry['input_hash']
                     ):
                         outdated = True
-                    current_script = script_fingerprint(manager, exp_id, data_id, step_id)
+                    current_script = script_fingerprint(
+                        manager, exp_id, data_id, step_id
+                    )
                     if (
                         current_script is not None
-                        and entry.get("script_hash")
-                        and current_script != entry["script_hash"]
+                        and entry.get('script_hash')
+                        and current_script != entry['script_hash']
                     ):
                         outdated = True
                 else:
+
                     upstream = _upstream_artifact(step_id, artifacts)
-                    if upstream is not None and _mtime_ns(upstream) > _mtime_ns(artifact):
+                    if upstream is not None and _mtime_ns(upstream) > _mtime_ns(
+                        artifact
+                    ):
                         outdated = True
-        failed_run = _last_run_for(manager, exp_id, data_id, _step_refs(step_id))
-        if failed_run is not None and failed_run.status == "failed":
-            statuses[step_id] = "FAILED"
+        failed_run = _last_run_for(
+            manager, exp_id, data_id, _step_refs(step_id)
+        )
+        if failed_run is not None and failed_run.status == 'failed':
+            statuses[step_id] = 'FAILED'
         elif done and not outdated:
-            statuses[step_id] = "SUCCESS"
+            statuses[step_id] = 'SUCCESS'
         elif done:
-            statuses[step_id] = "OUTDATED"
-        elif all(statuses.get(dep) in ("SUCCESS", "OUTDATED") for dep in deps):
-            statuses[step_id] = "READY"
+            statuses[step_id] = 'OUTDATED'
+        elif all(statuses.get(dep) in ('SUCCESS', 'OUTDATED') for dep in deps):
+            statuses[step_id] = 'READY'
         else:
-            statuses[step_id] = "LOCKED"
+            statuses[step_id] = 'LOCKED'
 
     if not simple_mode:
         for step_id, _, _, deps in _visible_pipeline_steps():
-            if statuses.get(step_id) == "SUCCESS" and any(
-                statuses.get(dep) == "OUTDATED" for dep in deps
+            if statuses.get(step_id) == 'SUCCESS' and any(
+                statuses.get(dep) == 'OUTDATED' for dep in deps
             ):
-                statuses[step_id] = "OUTDATED"
+                statuses[step_id] = 'OUTDATED'
     return statuses
 
 
@@ -352,19 +386,19 @@ def compute_step_statuses(manager: ProjectManager, exp_id: str) -> dict[str, str
     """
     nodes = _data_nodes(manager, exp_id)
     if not nodes:
-        return {step_id: "LOCKED" for step_id, _, _, _ in _visible_pipeline_steps()}
+        return {step_id: 'LOCKED' for step_id, _, _, _ in _visible_pipeline_steps()}
     per_node = [_node_step_statuses(manager, exp_id, node) for node in nodes]
     statuses: dict[str, str] = {}
     for step_id, _, _, deps in _visible_pipeline_steps():
         verdicts = [node_status[step_id] for node_status in per_node]
-        if "OUTDATED" in verdicts:
-            statuses[step_id] = "OUTDATED"
-        elif "SUCCESS" in verdicts:
-            statuses[step_id] = "SUCCESS"
-        elif all(statuses.get(dep) in ("SUCCESS", "OUTDATED") for dep in deps):
-            statuses[step_id] = "READY"
+        if 'OUTDATED' in verdicts:
+            statuses[step_id] = 'OUTDATED'
+        elif 'SUCCESS' in verdicts:
+            statuses[step_id] = 'SUCCESS'
+        elif all(statuses.get(dep) in ('SUCCESS', 'OUTDATED') for dep in deps):
+            statuses[step_id] = 'READY'
         else:
-            statuses[step_id] = "LOCKED"
+            statuses[step_id] = 'LOCKED'
     return statuses
 
 
@@ -375,7 +409,9 @@ def compute_data_step_statuses(
     is displayed according to the selected data).
     """
     nodes = _data_nodes(manager, exp_id)
-    node = next((n for n in nodes if getattr(n, "id", "") == data_id), None)
+    node = next(
+        (n for n in nodes if getattr(n, "id", "") == data_id), None
+    )
     if node is None:
         return compute_step_statuses(manager, exp_id)
     return _node_step_statuses(manager, exp_id, node)
@@ -399,6 +435,8 @@ def _outdated_reasons(
             continue
         reason = ""
         for node in nodes:
+
+
             node_data_id = getattr(node, "id", exp_id)
             entry = load_pipeline_state(manager, exp_id, node_data_id)["steps"].get(step_id)
             if entry and entry.get("input_hash"):
@@ -450,7 +488,9 @@ def _step_refs(step_id: str) -> tuple[str, ...]:
     return STEP_RUN_REFS.get(step_id, ())
 
 
-def _last_run_for(manager: ProjectManager, exp_id: str, data_id: str, refs: tuple[str, ...]):
+def _last_run_for(
+    manager: ProjectManager, exp_id: str, data_id: str, refs: tuple[str, ...]
+):
     """The latest run of the data under the specified step refs (strictly data_id attribution).
     0.2.199-patch29hz: The original accepted inputs are missing data_id old records. In multi-
     data experiments, an old failure will be counted on all data heads; the old project products
@@ -473,8 +513,11 @@ def _format_params(params: dict) -> str:
     if isinstance(report, str):
         report_text = report.strip()
     elif isinstance(report, (list, tuple)):
+
         report_text = "\n".join(str(item) for item in report if str(item).strip()).strip()
     if report_text:
+
+
         return report_text
     skip = {"peak_pick_report"}
     parts = [f"{key}={value}" for key, value in sorted(params.items()) if key not in skip]
@@ -510,7 +553,9 @@ def _smile_step_report(params: dict, outputs: dict) -> list[str]:
     return lines
 
 
-def _fid_step_report_lines(manager: ProjectManager, exp_id: str, data_id: str) -> list[str]:
+def _fid_step_report_lines(
+    manager: ProjectManager, exp_id: str, data_id: str
+) -> list[str]:
     """Data-quality report of the Generate-FID step (reads that data's process/ records only).
 
     2026-09-23 (user request): what this step's log reports at its end must also show up in the
@@ -523,11 +568,11 @@ def _fid_step_report_lines(manager: ProjectManager, exp_id: str, data_id: str) -
     try:
         work = manager.data_dir(exp_id, data_id, "process")
         raw = manager.data_dir(exp_id, data_id, "raw")
-    except Exception:  # noqa: BLE001
+    except Exception:
         return [tr("(no data quality report record for this data)")]
     try:
         return fid_step_quality_report(work, [raw])
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return [tr("could not read the data quality report: {p0}", p0=exc)]
 
 
@@ -545,6 +590,8 @@ def _spectrum_param_report(params: dict, spectrum_path: str | None = None) -> st
     )
 
     lines: list[str] = []
+
+
 
     lines.append(tr("◆ processing settings"))
     lines += format_optimization_report({k: v for k, v in params.items() if k != "diagnostics"})
@@ -584,8 +631,11 @@ class _FlowLayout(QLayout):
 
     def takeAt(self, index: int) -> QLayoutItem | None:
         if 0 <= index < len(self._items):
+
             self._breaks = {
-                (mark - 1 if mark > index else mark) for mark in self._breaks if mark != index
+                (mark - 1 if mark > index else mark)
+                for mark in self._breaks
+                if mark != index
             }
             return self._items.pop(index)
         return None
@@ -620,6 +670,7 @@ class _FlowLayout(QLayout):
         y = rect.y() + m.top()
         line_height = 0
         for position, item in enumerate(self._items):
+
             if position in self._breaks and line_height > 0:
                 x = rect.x() + m.left()
                 y += line_height + space
@@ -641,13 +692,22 @@ class _FlowLayout(QLayout):
 
 
 # ---------------------------------------------------------------------------
-
+# --------------------------------------------------------------------------- # #
+# ---------------------------------------------------------------------------
 #
-
-
+# --------------------------------------------------------------------------- # #
+# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------- # #
+# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------- # #
+# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------- # #
 # ---------------------------------------------------------------------------
 
-
+# --------------------------------------------------------------------------- # #
+# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------- # #
+# ---------------------------------------------------------------------------
 _INDIRECT_AXIS_ORDER: dict[int, tuple[str, ...]] = {2: ("F1",), 3: ("F2", "F1")}
 
 
@@ -688,7 +748,9 @@ def _pipeline_statements(lines: list[str]) -> list[list[int]]:
 def _is_ft_line(line: str) -> bool:
     """Is this line a ``| nmrPipe -fn FT`` line (comment lines do not count)."""
     stripped = line.strip()
-    return bool(stripped) and not stripped.startswith("#") and bool(_FT_LINE_TOKEN.search(line))
+    return bool(stripped) and not stripped.startswith("#") and bool(
+        _FT_LINE_TOKEN.search(line)
+    )
 
 
 def _indirect_ft_line_indexes(lines: list[str], ndim: int) -> list[int] | None:
@@ -777,7 +839,9 @@ def _conjugate_ps_line(line: str) -> str | None:
     """
     if not (_PS_P0_TOKEN.search(line) or _PS_P1_TOKEN.search(line)):
         return None
-    new = _PS_P0_TOKEN.sub(lambda m: f"{m.group(1)}{_wrap_p0(-float(m.group(2)))}", line, count=1)
+    new = _PS_P0_TOKEN.sub(
+        lambda m: f"{m.group(1)}{_wrap_p0(-float(m.group(2)))}", line, count=1
+    )
     new = _PS_P1_TOKEN.sub(
         lambda m: f"{m.group(1)}{_format_phase(-float(m.group(2)))}", new, count=1
     )
@@ -859,7 +923,7 @@ def _indirect_only_section(script: str) -> str | None:
     for statement in _pipeline_statements(lines):
         header = lines[statement[0]]
         if "xyz2pipe -in " in header and "nus3d_rc" in header:
-            return "\n".join(lines[statement[0] :]) + "\n"
+            return "\n".join(lines[statement[0]:]) + "\n"
     return None
 
 
@@ -909,12 +973,26 @@ class PipelineStepRow(QWidget):
         header.addSpacing(4)
         text_box = QVBoxLayout()
         title_row = QHBoxLayout()
+        title_row.setSpacing(8)
         self.name_label = QLabel(label)
+        self.name_label.setWordWrap(True)
         self.name_label.setStyleSheet("font-weight: bold;")
         title_row.addWidget(self.name_label)
         title_row.addStretch(1)
         self.status_label = QLabel("")
         title_row.addWidget(self.status_label)
+        self.report_button = QToolButton()
+        self.report_button.setObjectName('ReportToggle')
+        self.report_button.setText(tr('Report'))
+        self.report_button.setAutoRaise(True)
+        self.report_button.setCheckable(True)
+        self.report_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.report_button.setArrowType(Qt.ArrowType.RightArrow)
+        self.report_button.setToolTip(tr(
+            'Show the processing report, parameters and run details for this step.'
+        ))
+        self.report_button.clicked.connect(lambda: self.detail_toggled.emit(self.step_id))
+        title_row.addWidget(self.report_button, 0, Qt.AlignmentFlag.AlignTop)
         text_box.addLayout(title_row)
         self.desc_label = QLabel(description)
         self.desc_label.setStyleSheet(f"color: {TEXT_MUTED};")
@@ -922,6 +1000,7 @@ class PipelineStepRow(QWidget):
         text_box.addWidget(self.desc_label)
         header.addLayout(text_box, 1)
         outer.addLayout(header)
+
 
         button_row = _FlowLayout()
         button_row.setContentsMargins(24, 0, 0, 0)
@@ -938,6 +1017,8 @@ class PipelineStepRow(QWidget):
         self.ext_range_button.setVisible(self.step_id == "spectrum")
         self.ext_range_button.clicked.connect(lambda: self.ext_range_requested.emit(self.step_id))
         button_row.addWidget(self.ext_range_button)
+
+
 
         self.threshold_label = QLabel(tr("threshold (σ)"))
         self.threshold_label.setVisible(self.step_id == "peaks")
@@ -985,6 +1066,8 @@ class PipelineStepRow(QWidget):
         button_row.addWidget(self.threshold_slider)
         button_row.addWidget(self.threshold_spin)
 
+
+
         self.grid_label = QLabel(tr("degree of optimisation"))
         self.grid_label.setVisible(self.step_id == "smile")
         self.grid_combo = QComboBox()
@@ -1003,6 +1086,7 @@ class PipelineStepRow(QWidget):
         fit_combo_width(self.grid_combo)
         button_row.addWidget(self.grid_label)
         button_row.addWidget(self.grid_combo)
+
 
         self.smile_gap = QFrame()
         self.smile_gap.setFrameShape(QFrame.Shape.NoFrame)
@@ -1051,6 +1135,8 @@ class PipelineStepRow(QWidget):
         self.ref_button.setVisible(self.step_id == "peaks")
         self.ref_button.clicked.connect(lambda: self.ref_spectrum_requested.emit(self.step_id))
 
+
+
         if self.step_id == "peaks":
             button_row.add_break()
         button_row.addWidget(self.ref_button)
@@ -1063,6 +1149,10 @@ class PipelineStepRow(QWidget):
         self.clear_ref_button.setToolTip(tr("Clear reference spectrum constraints"))
         self.clear_ref_button.clicked.connect(lambda: self.clear_ref_requested.emit(self.step_id))
         button_row.addWidget(self.clear_ref_button)
+
+
+
+
 
         self.segment_shift_button = QPushButton(tr("Inter-part field drift"))
         self.segment_shift_button.setToolTip(
@@ -1078,9 +1168,13 @@ class PipelineStepRow(QWidget):
         )
         button_row.addWidget(self.segment_shift_button)
         self.run_button = QPushButton(tr("Run"))
+        self.run_button.setObjectName('PrimaryAction')
         self.run_button.setVisible(False)
         self.run_button.clicked.connect(lambda: self.run_requested.emit(self.step_id))
         button_row.addWidget(self.run_button)
+
+
+
 
         self.rerun_group = QFrame()
         self.rerun_group.setObjectName("RerunGroup")
@@ -1113,6 +1207,7 @@ class PipelineStepRow(QWidget):
         self.rerun_final_button.setVisible(False)
         self.rerun_final_button.clicked.connect(self._on_rerun_final_clicked)
 
+
         self.flip_indirect_check = QCheckBox(tr("Indirect (F1)"))
         self.flip_indirect_check.setToolTip(
             tr(
@@ -1123,9 +1218,11 @@ class PipelineStepRow(QWidget):
         self.flip_indirect_check.setVisible(False)
         self.flip_indirect_combo = QComboBox()
 
+
         self.flip_indirect_combo.addItem(tr("Indirect (F2)"), {"ft_neg_f2": True})
         self.flip_indirect_combo.addItem(tr("Indirect (F1)"), {"ft_neg_f1": True})
         self.flip_indirect_combo.addItem(tr("F1 and F2"), {"ft_neg_f1": True, "ft_neg_f2": True})
+
 
         self.flip_indirect_combo.setCurrentIndex(-1)
         self.flip_indirect_combo.setPlaceholderText(tr("no flip"))
@@ -1138,6 +1235,7 @@ class PipelineStepRow(QWidget):
         )
         self.flip_indirect_combo.setVisible(False)
         fit_combo_width(self.flip_indirect_combo)
+
 
         _flip_metrics = self.flip_indirect_combo.fontMetrics()
         self.flip_indirect_combo.setMinimumWidth(
@@ -1164,6 +1262,9 @@ class PipelineStepRow(QWidget):
             lambda: self.show_spectrum_requested.emit(self.step_id)
         )
 
+
+
+
         if self.step_id == "spectrum":
             button_row.add_break()
         button_row.addWidget(self.show_spectrum_button)
@@ -1176,6 +1277,7 @@ class PipelineStepRow(QWidget):
         self.manual_button.setVisible(False)
         self.manual_button.clicked.connect(lambda: self.manual_requested.emit(self.step_id))
         button_row.addWidget(self.manual_button)
+
 
         self.rank1_button = QPushButton(tr("Press Rank1 to rerun"))
         self.rank1_button.setToolTip(
@@ -1198,6 +1300,7 @@ class PipelineStepRow(QWidget):
 
         self.detail_frame = QFrame()
         self.detail_frame.setFrameShape(QFrame.Shape.StyledPanel)
+
 
         self.detail_frame.setStyleSheet(
             f"QFrame {{ background: {SURFACE_ALT}; border: 1px solid {PANEL_BORDER}; "
@@ -1293,6 +1396,7 @@ class PipelineStepRow(QWidget):
             )
         elif status == "SUCCESS":
             if self.step_id == "spectrum":
+
                 self.run_button.setText(tr("re-optimisation"))
                 self.run_button.setToolTip(
                     tr(
@@ -1322,7 +1426,7 @@ class PipelineStepRow(QWidget):
         self.rank1_button.setVisible(status == "SUCCESS" and self.step_id == "smile")
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------ #
     # ------------------------------------------------------------------
     def _set_rerun_widgets_visible(self, visible: bool) -> None:
         """Show/hide "Re-run the final script" and the indirect flip (one unit inside the same
@@ -1402,9 +1506,13 @@ class PipelineStepRow(QWidget):
         flip. The 3D drop-down is a command and does not show the current state, but the flip
         conversion needs that state (see :meth:`_take_flip_sampling`).
         """
-        self._indirect_neg = {str(axis): bool(neg) for axis, neg in (state or {}).items()}
+        self._indirect_neg = {
+            str(axis): bool(neg) for axis, neg in (state or {}).items()
+        }
         if self._flip_ndim < 3:
-            self.flip_indirect_check.setChecked(bool(self._indirect_neg.get("F1", False)))
+            self.flip_indirect_check.setChecked(
+                bool(self._indirect_neg.get("F1", False))
+            )
 
     def _take_flip_sampling(self) -> dict[str, bool]:
         """Current control choice -> sampling overrides (explicitly "should this axis finally
@@ -1439,6 +1547,7 @@ class PipelineStepRow(QWidget):
         self.rerun_final_requested.emit(self.step_id, self._take_flip_sampling())
 
 
+
 def _looks_like_memory_guard(exc: BaseException) -> bool:
     """Is this exception the memory guard's? (two producers, one wording each)"""
     text = str(exc)
@@ -1462,6 +1571,7 @@ class PipelinePanel(QWidget):
     show_spectrum_requested = Signal(str)
     view_log_requested = Signal(str)
     progress_updated = Signal(str)
+    operation_feedback = Signal(str, str)
     batch_summary_requested = Signal(object)
     rank1_run_requested = Signal(str)
 
@@ -1481,17 +1591,24 @@ class PipelinePanel(QWidget):
 
         self._final_ext: dict[tuple[str, str], tuple[str, str, bool]] = {}
 
+
         self._segment_shifts: dict[tuple[str, str], dict[int, float]] = {}
+
+
 
         self._spectrum_report_cache: dict[str, str] = {}
         self._running_targets: dict[tuple[str, str, str], int] = {}
         self._running_targets_lock = threading.Lock()
 
+
+
         self._ref_info: dict[tuple[str, str], dict] = {}
+
 
         self._threshold_by_data: dict[tuple[str, str], float] = {}
 
         self._threshold_custom_by_data: dict[tuple[str, str], bool] = {}
+
 
         self._nus_cache: dict[tuple[str, str], bool] = {}
         self._smile_step_visible = False
@@ -1504,21 +1621,24 @@ class PipelinePanel(QWidget):
         layout.setContentsMargins(10, 8, 10, 8)
         layout.setSpacing(6)
 
-        title_row = QHBoxLayout()
+
+        title_row = QVBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)
         panel_title = QLabel(tr("Processing flow"))
         panel_title.setObjectName("PanelTitle")
         title_row.addWidget(panel_title)
         flow_hint = QLabel(tr("import -> FID -> spectrum -> peak selection"))
         flow_hint.setObjectName("PanelSubtitle")
+        flow_hint.setWordWrap(True)
         title_row.addWidget(flow_hint)
         title_row.addStretch(1)
         layout.addLayout(title_row)
 
         self.context_label = QLabel(tr("project not open"))
         self.context_label.setStyleSheet(
-            f"font-size: 13px; font-weight: bold; color: {TEXT_PRIMARY};"
+            f"font-weight: bold; color: {TEXT_PRIMARY};"
         )
+        self.context_label.setWordWrap(True)
         layout.addWidget(self.context_label)
 
         self.next_label = QLabel("")
@@ -1528,18 +1648,21 @@ class PipelinePanel(QWidget):
         self.batch_progress_label = QLabel("")
         self.batch_progress_label.setVisible(False)
         self.batch_progress_label.setStyleSheet(
-            "color: #16a085; font-weight: bold; padding: 2px 0;"
+            "color: #4fc1ff; background: #252a30; font-weight: bold; padding: 6px;"
         )
         self.batch_progress_label.setWordWrap(True)
         layout.addWidget(self.batch_progress_label)
         self.progress_updated.connect(self._on_progress_updated)
+
+
 
         self.run_finished.connect(self._refresh_after_run)
         self.hint_bubble = QLabel("")
         self.hint_bubble.setVisible(False)
         self.hint_bubble.setWordWrap(True)
         self.hint_bubble.setStyleSheet(
-            "background: #fef9e7; border: 1px solid #f5b041; color: #935116; padding: 4px 8px;"
+            "background: #fef9e7; border: 1px solid #f5b041; "
+            "color: #935116; padding: 4px 8px;"
         )
         layout.addWidget(self.hint_bubble)
 
@@ -1560,16 +1683,27 @@ class PipelinePanel(QWidget):
             steps_box.addWidget(row)
             self._rows[step_id] = row
 
+
         peaks_row = self._rows.get("peaks")
         if peaks_row is not None:
-            peaks_row.threshold_spin.valueChanged.connect(self._store_current_threshold)
-            peaks_row.threshold_spin.editingFinished.connect(self._mark_current_threshold_custom)
-            peaks_row.threshold_slider.sliderReleased.connect(self._mark_current_threshold_custom)
+            peaks_row.threshold_spin.valueChanged.connect(
+                self._store_current_threshold
+            )
+            peaks_row.threshold_spin.editingFinished.connect(
+                self._mark_current_threshold_custom
+            )
+            peaks_row.threshold_slider.sliderReleased.connect(
+                self._mark_current_threshold_custom
+            )
 
         smile_row = self._rows.get("smile")
         if smile_row is not None:
-            smile_row.grid_combo.currentIndexChanged.connect(self._store_smile_grid_size)
-            smile_row.rank_combo.currentIndexChanged.connect(self._store_smile_rank_mode)
+            smile_row.grid_combo.currentIndexChanged.connect(
+                self._store_smile_grid_size
+            )
+            smile_row.rank_combo.currentIndexChanged.connect(
+                self._store_smile_rank_mode
+            )
         steps_box.addStretch(1)
 
         scroll = QScrollArea()
@@ -1585,7 +1719,7 @@ class PipelinePanel(QWidget):
         self.refresh()
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------ #
     # ------------------------------------------------------------------
     def _data_facts(self, exp_id: str, data_id: str) -> dict:
         """Current data fact (ndim / direct dimension nuclide / whether NUS). 0.2.199-patch29hz:
@@ -1598,9 +1732,8 @@ class PipelinePanel(QWidget):
             return {}
         try:
             return dict(getter(exp_id, data_id) or {})
-        except Exception:  # noqa: BLE001
+        except Exception:
             return {}
-
     @property
     def current_data_id(self) -> str:
         """The currently selected sample data id (empty string if not selected)."""
@@ -1637,13 +1770,15 @@ class PipelinePanel(QWidget):
         if row is None:
             return
         ref = (
-            self._ref_info.get((self._current_exp_id, self._current_data_id))
+            self._ref_info.get(
+                (self._current_exp_id, self._current_data_id)
+            )
             if self._current_data_id
             else None
         )
         if ref:
             row.set_ref_text(
-                tr("refer to: {p0} ({p1} peak)", p0=ref["label"], p1=len(ref["peaks"]))
+                tr("refer to: {p0} ({p1} peak)", p0=ref['label'], p1=len(ref['peaks']))
             )
         else:
             row.clear_ref_display()
@@ -1667,7 +1802,7 @@ class PipelinePanel(QWidget):
                 "peaks",
                 self._peaks_ui_state(threshold=float(value), custom=custom),
             )
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
     def _mark_current_threshold_custom(self) -> None:
@@ -1688,9 +1823,11 @@ class PipelinePanel(QWidget):
                 self._current_exp_id,
                 self._current_data_id,
                 "peaks",
-                self._peaks_ui_state(threshold=self._threshold_by_data[key], custom=True),
+                self._peaks_ui_state(
+                    threshold=self._threshold_by_data[key], custom=True
+                ),
             )
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
     def _peaks_ui_state(self, **extra: object) -> dict:
@@ -1699,6 +1836,8 @@ class PipelinePanel(QWidget):
         state: dict = {
             "threshold": float(self._threshold_by_data.get(key, 35.0)),
             "custom": bool(self._threshold_custom_by_data.get(key, False)),
+
+
         }
         state.update(extra)
         return state
@@ -1715,15 +1854,21 @@ class PipelinePanel(QWidget):
             try:
                 from gui.per_data_records import load_ui_state
 
-                peaks_state = load_ui_state(self.manager, exp_id, data_id).get("peaks") or {}
+                peaks_state = (
+                    load_ui_state(self.manager, exp_id, data_id)
+                    .get("peaks")
+                    or {}
+                )
                 raw = peaks_state.get("threshold")
                 custom = bool(peaks_state.get("custom", False))
                 if raw is not None:
                     value = float(raw)
 
-                if not custom and (abs(value - 15.0) < 1e-9 or abs(value - 25.0) < 1e-9):
+                if not custom and (
+                    abs(value - 15.0) < 1e-9 or abs(value - 25.0) < 1e-9
+                ):
                     value = 35.0
-            except Exception:  # noqa: BLE001
+            except Exception:
                 pass
             self._threshold_by_data[key] = value
             self._threshold_custom_by_data[key] = custom
@@ -1746,7 +1891,7 @@ class PipelinePanel(QWidget):
                 "smile",
                 {"grid_size": int(row.grid_combo.currentData() or 4)},
             )
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
     def _store_smile_rank_mode(self, *_args) -> None:
@@ -1764,7 +1909,7 @@ class PipelinePanel(QWidget):
                 "smile",
                 {"rank_mode": str(row.rank_combo.currentData() or "true_peaks")},
             )
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
     def _sync_smile_grid_size(self) -> None:
@@ -1782,23 +1927,23 @@ class PipelinePanel(QWidget):
             from gui.per_data_records import load_ui_state
 
             size = int(
-                (load_ui_state(self.manager, key[0], key[1]).get("smile") or {}).get("grid_size", 4)
+                (load_ui_state(self.manager, key[0], key[1]).get("smile") or {})
+                .get("grid_size", 4)
             )
-        except Exception:  # noqa: BLE001
+        except Exception:
             size = 5
         self._grid_key = key
         try:
             from gui.per_data_records import load_ui_state
 
             mode = str(
-                (load_ui_state(self.manager, key[0], key[1]).get("smile") or {}).get(
-                    "rank_mode", "true_peaks"
-                )
+                (load_ui_state(self.manager, key[0], key[1]).get("smile") or {})
+                .get("rank_mode", "true_peaks")
             )
             r_index = row.rank_combo.findData(mode)
             if r_index >= 0:
                 row.rank_combo.setCurrentIndex(r_index)
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
         index = row.grid_combo.findData(max(2, min(5, size)))
         if index >= 0:
@@ -1837,6 +1982,7 @@ class PipelinePanel(QWidget):
             return False
         return self._data_is_nus(exp_id, data_id) and self._data_ndim(exp_id, data_id) == 2
 
+
     def _data_ndim(self, exp_id: str, data_id: str) -> int:
         """Current data dimension (failure to read will be treated as 2 and will not affect the
         2D/3D main process).
@@ -1858,7 +2004,9 @@ class PipelinePanel(QWidget):
         key = (exp_id, data_id)
         if key not in self._nucleus_cache:
             facts = self._data_facts(exp_id, data_id)
-            self._nucleus_cache[key] = str(facts.get("direct_nucleus", "") or "")
+            self._nucleus_cache[key] = str(
+                facts.get("direct_nucleus", "") or ""
+            )
         return self._nucleus_cache[key]
 
     def _data_axis_nuclei(self, exp_id: str, data_id: str) -> dict[str, str]:
@@ -1882,9 +2030,11 @@ class PipelinePanel(QWidget):
             from viewer.axis_labels import nuclei_from_metadata
 
             payload = json.loads(
-                self.manager.data_metadata_path(exp_id, data_id).read_text(encoding="utf-8")
+                self.manager.data_metadata_path(exp_id, data_id).read_text(
+                    encoding="utf-8"
+                )
             )
-        except Exception:  # noqa: BLE001
+        except Exception:
             return {}
         nuclei = nuclei_from_metadata(payload) or []
         return {
@@ -1955,6 +2105,7 @@ class PipelinePanel(QWidget):
 
         self._update_segment_shift_button()
 
+
         self._set_smile_visible(self._smile_supported(self._current_exp_id, self._current_data_id))
         self._set_peaks_visible(self._data_ndim(self._current_exp_id, self._current_data_id) != 1)
         statuses = self._current_statuses()
@@ -1964,6 +2115,8 @@ class PipelinePanel(QWidget):
             peaks_row.threshold_spin.setValue(
                 self._threshold_for(self._current_exp_id, self._current_data_id)
             )
+
+
 
         outdated_next = next(
             (sid for sid, st in statuses.items() if sid != "smile" and st == "OUTDATED"),
@@ -2006,6 +2159,10 @@ class PipelinePanel(QWidget):
                 self._current_data_id,
                 step_id,
             ) in self._running_targets:
+
+
+
+
                 status = "RUNNING"
             reason = reasons.get(step_id, "") or outdated.get(step_id, "")
             if status == "FAILED":
@@ -2019,7 +2176,13 @@ class PipelinePanel(QWidget):
                     reason = run.message
             self._rows[step_id].set_status(status, reason)
             if step_id == "spectrum":
+
                 self._sync_indirect_flip_control(status)
+
+
+
+
+
 
             if step_id == "fid":
                 manual_visible = status == "SUCCESS"
@@ -2034,7 +2197,7 @@ class PipelinePanel(QWidget):
         self._refresh_expanded_details()
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------ #
     # ------------------------------------------------------------------
     def _on_ext_range_requested(self, step_id: str) -> None:
         """"Direct dimension range" button: Pop up the input dialog box and press the data to save
@@ -2065,7 +2228,7 @@ class PipelinePanel(QWidget):
                 "the window will not appear in the final spectrum,\nthe direct-dimension linear "
                 "phase p1 is renormalised automatically to the window "
                 "width.",
-                p0=nucleus or "unknown",
+                p0=nucleus or 'unknown',
             )
         )
         tip.setWordWrap(True)
@@ -2087,7 +2250,8 @@ class PipelinePanel(QWidget):
         apply_tip.setStyleSheet(f"color: {TEXT_MUTED};")
         form.addRow(apply_tip)
         buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+            QDialogButtonBox.StandardButton.Ok
+            | QDialogButtonBox.StandardButton.Cancel
         )
         buttons.accepted.connect(dialog.accept)
         buttons.rejected.connect(dialog.reject)
@@ -2097,6 +2261,7 @@ class PipelinePanel(QWidget):
         lo = lo_edit.text().strip()
         hi = hi_edit.text().strip()
         apply_opt = apply_check.isChecked()
+
 
         from gui.dialogs import InfoDialog
 
@@ -2114,10 +2279,11 @@ class PipelinePanel(QWidget):
             scope = tr("including optimisation") if apply_opt else tr("final run only")
             self.log_message.emit(
                 tr(
-                    "direct dimension range: {p0} set to {p1}-{p2} ppm ({p3})",
+                    "direct dimension range: {p0} set to {p1}-{p2} ppm "
+                    "({p3})",
                     p0=data_id,
-                    p1=lo or "default",
-                    p2=hi or "default",
+                    p1=lo or 'default',
+                    p2=hi or 'default',
                     p3=scope,
                 )
             )
@@ -2144,14 +2310,13 @@ class PipelinePanel(QWidget):
                 if over[2]
                 else tr("the first pass of reconstruction / phase search keeps the original window")
             )
-            row.set_ext_override(
-                tr(
-                    "direct dimension range {p0}/{p1} · {p2}",
-                    p0=lo,
-                    p1=hi,
-                    p2=scope,
-                )
-            )
+            row.set_ext_override(tr(
+                "direct dimension range {p0}/{p1} · "
+                "{p2}",
+                p0=lo,
+                p1=hi,
+                p2=scope,
+            ))
             row.ext_range_button.setToolTip(
                 tr(
                     "direct-dimension window: {p0}-{p1} ppm (EXT -x1/-xn, {p2})\n{p3}; peaks "
@@ -2169,13 +2334,15 @@ class PipelinePanel(QWidget):
             row.ext_range_button.setToolTip(
                 tr(
                     "Set the direct-dimension extraction window (EXT -x1/-xn). Use default if not "
-                    'set (10.5-6.5 ppm);\n"Apply this range to the optimisation" is on by '
+                    "set (10.5-6.5 ppm);\n\"Apply this range to the optimisation\" is on by "
                     "default and can be turned off to optimise over the default wide 6.5-10.5 "
                     "range",
                 )
             )
 
-    def _spectrum_ext_params(self, data_id: str, *, exp_id: str | None = None) -> dict | None:
+    def _spectrum_ext_params(
+        self, data_id: str, *, exp_id: str | None = None
+    ) -> dict | None:
         """The direct dimension range of a certain data in the current experiment ->
         generate_spectrum params (None). apply_ext_to_opt: enabled by default, the range is also
         used for the optimisation process (first pass reconstruction / phase search and baseline
@@ -2192,6 +2359,7 @@ class PipelinePanel(QWidget):
             ext_params["final_ext_hi"] = over[1]
         return ext_params
 
+
     def _segment_count(self, exp_id: str, data_id: str) -> int:
         """Return the segment count; an ordinary dataset's empty segments list yields zero."""
         try:
@@ -2200,7 +2368,7 @@ class PipelinePanel(QWidget):
                 if self.manager is not None and self.manager.project is not None
                 else None
             )
-        except Exception:  # noqa: BLE001
+        except Exception:
             return 0
         if entry is None:
             return 0
@@ -2244,7 +2412,7 @@ class PipelinePanel(QWidget):
         head = QLabel(
             tr(
                 "Part 1 is the reference and is fixed at 0 Hz. Fill in an offset (Hz) for each of "
-                'the other parts;\n"run" writes PS -rs into that part\'s fid.com and '
+                "the other parts;\n\"run\" writes PS -rs into that part's fid.com and "
                 "re-converts it. Leave blank (or 0) to leave a part untouched.\nThere is no "
                 "automatic detection any more - these values are used exactly as entered.",
             )
@@ -2277,7 +2445,7 @@ class PipelinePanel(QWidget):
                 InfoDialog.show_info(
                     self,
                     tr("Inter-part field drift"),
-                    tr('Part {p0}: "{p1}" is not a number.', p0=index, p1=text),
+                    tr("Part {p0}: \"{p1}\" is not a number.", p0=index, p1=text),
                 )
                 return
             if not math.isfinite(value):
@@ -2312,7 +2480,10 @@ class PipelinePanel(QWidget):
         self._update_segment_shift_button()
 
     def _update_segment_shift_button(self) -> None:
-        """Update the manual inter-segment drift button from segment count and configured shifts."""
+        """
+        Update the manual inter-segment drift button from segment count and
+        configured shifts.
+        """
         row = self._rows.get("fid")
         if row is None:
             return
@@ -2320,14 +2491,16 @@ class PipelinePanel(QWidget):
         row.segment_shift_button.setVisible(parts >= 2)
         if parts < 2:
             return
-        values = self._segment_shifts.get((self._current_exp_id, self._current_data_id)) or {}
+        values = self._segment_shifts.get(
+            (self._current_exp_id, self._current_data_id)
+        ) or {}
         if values:
             row.segment_shift_button.setText(
                 tr("Inter-part field drift ({p0} part(s))", p0=len(values))
             )
             row.segment_shift_button.setToolTip(
                 tr(
-                    'Segmented data: {p0};\n"run" writes PS -rs into each part\'s fid.com. Part 1 '
+                    "Segmented data: {p0};\n\"run\" writes PS -rs into each part's fid.com. Part 1 "
                     "is the reference.",
                     p0=", ".join(
                         tr("part {p0}: {p1} Hz", p0=i, p1=f"{v:+.4f}")
@@ -2340,12 +2513,14 @@ class PipelinePanel(QWidget):
             row.segment_shift_button.setToolTip(
                 tr(
                     "Segmented data only: set a frequency offset (Hz) for parts 2..N (part 1 is "
-                    'the reference); "run" writes PS -rs into each part\'s fid.com according to '
+                    "the reference); \"run\" writes PS -rs into each part's fid.com according to "
                     "these values. There is no automatic detection any more.",
                 )
             )
 
-    def _segment_shift_params(self, data_id: str, *, exp_id: str | None = None) -> dict | None:
+    def _segment_shift_params(
+        self, data_id: str, *, exp_id: str | None = None
+    ) -> dict | None:
         """Return configured segment shifts for generate_fid, or None when absent.
 
         Cover every segment because the backend indexes the list by segment. The reference first
@@ -2362,7 +2537,9 @@ class PipelinePanel(QWidget):
                 shifts[index - 1] = float(value)
         return {"segment_shift_hz": shifts}
 
-    def _final_script_path(self, data_id: str, *, exp_id: str | None = None) -> Path | None:
+    def _final_script_path(
+        self, data_id: str, *, exp_id: str | None = None
+    ) -> Path | None:
         """Locate an existing final-run script (uniform ``_process.com`` / NUS ``_nus.com``).
 
         Returns None when nothing is found (the caller prompts to optimise and generate one
@@ -2391,7 +2568,9 @@ class PipelinePanel(QWidget):
         ndim = self._data_ndim(self._current_exp_id, self._current_data_id)
         row.set_indirect_dimension(ndim)
 
-        row.set_indirect_nuclei(self._data_axis_nuclei(self._current_exp_id, self._current_data_id))
+        row.set_indirect_nuclei(
+            self._data_axis_nuclei(self._current_exp_id, self._current_data_id)
+        )
         if status != "SUCCESS":
             return
         script_path = self._final_script_path(self._current_data_id)
@@ -2404,7 +2583,7 @@ class PipelinePanel(QWidget):
         row.set_indirect_neg_state(indirect_neg_state(content, ndim=ndim))
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------ #
     # ------------------------------------------------------------------
     def run_step(self, step_id: str, data_id: str | None = None) -> None:
         """Run the specified step (data_id specified scope; Defaults to currently selected/first
@@ -2419,7 +2598,9 @@ class PipelinePanel(QWidget):
             peaks_row = self._rows.get("peaks")
             if peaks_row is not None:
                 peaks_row.threshold_spin.setValue(
-                    self._threshold_for(self._current_exp_id, self._current_data_id)
+                    self._threshold_for(
+                        self._current_exp_id, self._current_data_id
+                    )
                 )
         row = self._rows[step_id]
         if not row.run_button.isHidden():
@@ -2432,7 +2613,11 @@ class PipelinePanel(QWidget):
         statuses = self._current_statuses()
 
         next_step = next(
-            (sid for sid, st in statuses.items() if sid != "smile" and st in ("READY", "OUTDATED")),
+            (
+                sid
+                for sid, st in statuses.items()
+                if sid != "smile" and st in ("READY", "OUTDATED")
+            ),
             None,
         )
         if next_step is None:
@@ -2443,7 +2628,8 @@ class PipelinePanel(QWidget):
         row.name_label.setStyleSheet("font-weight: bold; color: #16a085;")
         self.hint_bubble.setText(
             tr(
-                'Sample data has been imported: the next step can be run "{p0}"',
+                "Sample data has been imported: the next step can be run "
+                "\"{p0}\"",
                 p0=STEP_LABEL.get(next_step, next_step),
             )
         )
@@ -2458,7 +2644,9 @@ class PipelinePanel(QWidget):
             row.name_label.setStyleSheet("font-weight: bold;")
 
     @staticmethod
-    def _run_log_scope(exp_id: str, data_id: str, group_id: str = "") -> str:
+    def _run_log_scope(
+        exp_id: str, data_id: str, group_id: str = ""
+    ) -> str:
         """Use group logs for whole-group jobs and dataset logs for independent member jobs."""
         from gui.log_panel import LogPanel
 
@@ -2476,7 +2664,9 @@ class PipelinePanel(QWidget):
         """
         self.refresh()
 
-    def _start_guard_message(self, run_target: tuple[str, str, str], ndim: int) -> str:
+    def _start_guard_message(
+        self, run_target: tuple[str, str, str], ndim: int
+    ) -> str:
         """Return an empty string when runnable; only distinct 2D datasets may process
         concurrently.
         """
@@ -2497,7 +2687,9 @@ class PipelinePanel(QWidget):
             "task to finish"
         )
 
-    def _register_running_target(self, run_target: tuple[str, str, str], ndim: int) -> bool:
+    def _register_running_target(
+        self, run_target: tuple[str, str, str], ndim: int
+    ) -> bool:
         """Register a running target atomically; return False if concurrency state has changed."""
         exp_id, data_id, _step_id = run_target
         with self._running_targets_lock:
@@ -2525,9 +2717,16 @@ class PipelinePanel(QWidget):
             return
         text, _params, failed = self._step_detail(step_id)
         row.set_detail(text, failed=failed)
-        row.detail_frame.setVisible(row.detail_frame.isHidden())
+        expanded = row.detail_frame.isHidden()
+        row.detail_frame.setVisible(expanded)
+        row.report_button.setChecked(expanded)
+        row.report_button.setArrowType(
+            Qt.ArrowType.DownArrow if expanded else Qt.ArrowType.RightArrow
+        )
 
-    def _cached_spectrum_report(self, params: dict, spectrum_path: str) -> str:
+    def _cached_spectrum_report(
+        self, params: dict, spectrum_path: str
+    ) -> str:
         """Generate spectrum parameter report (0.2.199-patch12): According to spectrum file
         fingerprint cache (memory + disk record). spectrum_quality_report_lines will read the
         entire ft3 and evaluate the quality of the full spectrum. Each refresh will be executed
@@ -2536,7 +2735,9 @@ class PipelinePanel(QWidget):
         {spectrum_path}.quality.json, fingerprint = mtime_ns+size+ parameter.
         """
         params_fp = hashlib.sha256(
-            json.dumps(params, sort_keys=True, ensure_ascii=False).encode("utf-8")
+            json.dumps(params, sort_keys=True, ensure_ascii=False).encode(
+                "utf-8"
+            )
         ).hexdigest()[:16]
         try:
             p = Path(spectrum_path)
@@ -2558,13 +2759,18 @@ class PipelinePanel(QWidget):
             try:
                 data = json.loads(rec.read_text(encoding="utf-8"))
 
+
+
+
                 if data.get("fp") == fp and isinstance(data.get("text"), str):
                     self._spectrum_report_cache[key] = data["text"]
                     return data["text"]
             except (OSError, ValueError):
                 pass
 
-        return tr('(No report record; generate a report after re-running "Generate Spectrum")')
+
+
+        return tr("(No report record; generate a report after re-running \"Generate Spectrum\")")
 
     def _step_detail(self, step_id: str) -> tuple[str, dict | None, bool]:
         """Build step details from conclusions and reports rather than internal run/snapshot
@@ -2581,7 +2787,7 @@ class PipelinePanel(QWidget):
         try:
             artifacts = _node_artifacts(self.manager, exp_id, data_id)
             artifact = artifacts.get(step_id)
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
         run = _last_run_for(self.manager, exp_id, data_id, _step_refs(step_id))
         lines.append(tr("Data: {p0}", p0=data_id))
@@ -2615,11 +2821,9 @@ class PipelinePanel(QWidget):
         if run is not None and step_id in ("fid", "spectrum"):
             from workflow.script_audit import script_change_report
 
-            manual_report = "\n".join(
-                script_change_report(
-                    list((run.params or {}).get("manual_script_changes") or []), failed=failed
-                )
-            )
+            manual_report = "\n".join(script_change_report(
+                list((run.params or {}).get("manual_script_changes") or []), failed=failed
+            ))
             if manual_report and manual_report not in "\n".join(lines):
                 lines.append(manual_report)
         if artifact is not None:
@@ -2636,7 +2840,7 @@ class PipelinePanel(QWidget):
                 row.set_detail(text, failed=failed)
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------ #
     # ------------------------------------------------------------------
     def _reference_candidates(self) -> list[tuple[str, str, str]]:
         """There is already a data list of peak tables in the project (display name, exp_id,
@@ -2657,7 +2861,7 @@ class PipelinePanel(QWidget):
                     continue
                 try:
                     peaks_dir = self.manager.data_dir(exp.id, data_id, "peaks")
-                except Exception:  # noqa: BLE001
+                except Exception:
                     continue
                 has = any(
                     (peaks_dir / f"{exp.id}-{data_id}{suffix}").is_file()
@@ -2672,17 +2876,14 @@ class PipelinePanel(QWidget):
                 out.append((name, exp.id, data_id))
         return out
 
+
     def _ref_nuclei_from_spectrum(self, spectrum_path: Path) -> list[str] | None:
         """Get the core name of each axis from the reference spectrum header (F order); fail/core
         agnostic return None.
         """
         symbols = {
-            "H": "1H",
-            "N": "15N",
-            "C": "13C",
-            "F": "19F",
-            "P": "31P",
-            "D": "2H",
+            "H": "1H", "N": "15N", "C": "13C",
+            "F": "19F", "P": "31P", "D": "2H",
         }
         full = {"1H", "2H", "13C", "15N", "19F", "31P", "23Na", "29Si"}
         try:
@@ -2694,7 +2895,7 @@ class PipelinePanel(QWidget):
                 from viewer.spectrum import Spectrum
 
                 spec = Spectrum.load_from_ft2(spectrum_path)
-        except Exception:  # noqa: BLE001
+        except Exception:
             return None
         nuclei: list[str] = []
         for axis in getattr(spec, "axes", []):
@@ -2762,21 +2963,22 @@ class PipelinePanel(QWidget):
             from gui.dialogs import InfoDialog
 
             InfoDialog.show_info(
-                self,
-                tr(
-                    "Reference spectrum",
-                ),
-                tr(
+                self, tr(
+                    "Reference "
+                    "spectrum",
+                ), tr(
                     "There is no data with peak table in the project. Please peak pick some data "
                     "first",
-                ),
+                )
             )
             return
         row = self._rows.get(step_id)
         anchor = row.ref_button if row is not None else self
         menu = QMenu(anchor)
 
-        for name, ref_exp, ref_data in sorted(candidates, key=lambda item: (item[1], item[2])):
+        for name, ref_exp, ref_data in sorted(
+            candidates, key=lambda item: (item[1], item[2])
+        ):
             action = menu.addAction(f"{name}")
             action.setData((ref_exp, ref_data))
         chosen = menu.exec(anchor.mapToGlobal(anchor.rect().bottomLeft()))
@@ -2788,18 +2990,20 @@ class PipelinePanel(QWidget):
             from gui.dialogs import InfoDialog
 
             InfoDialog.show_info(
-                self,
-                tr(
-                    "Reference spectrum",
-                ),
-                tr(
-                    "Unable to load reference peak table: {p0}/{p1}",
+                self, tr(
+                    "Reference "
+                    "spectrum",
+                ), tr(
+                    "Unable to load reference peak table: "
+                    "{p0}/{p1}",
                     p0=ref_exp,
                     p1=ref_data,
-                ),
+                )
             )
             return
-        if info.get("nuclei") is None and any("F1_shift" in p for p in info["peaks"]):
+        if info.get("nuclei") is None and any(
+            "F1_shift" in p for p in info["peaks"]
+        ):
             from gui.dialogs import InfoDialog
 
             InfoDialog.show_info(
@@ -2812,14 +3016,18 @@ class PipelinePanel(QWidget):
                 ),
             )
             return
-        self._ref_info[(self._current_exp_id, self._current_data_id)] = info
+        self._ref_info[
+            (self._current_exp_id, self._current_data_id)
+        ] = info
         self._rows["peaks"].set_ref_text(
-            tr("refer to: {p0} ({p1} peak)", p0=info["label"], p1=len(info["peaks"]))
+            tr("refer to: {p0} ({p1} peak)", p0=info['label'], p1=len(info['peaks']))
         )
 
     def _on_clear_reference(self, step_id: str) -> None:
         """Clear reference spectrum constraints."""
-        self._ref_info.pop((self._current_exp_id, self._current_data_id), None)
+        self._ref_info.pop(
+            (self._current_exp_id, self._current_data_id), None
+        )
         row = self._rows.get("peaks")
         if row is not None:
             row.clear_ref_display()
@@ -2853,6 +3061,7 @@ class PipelinePanel(QWidget):
             )
             return
 
+
         if self._current_data_id:
             try:
                 statuses = compute_data_step_statuses(
@@ -2868,7 +3077,7 @@ class PipelinePanel(QWidget):
                         )
                     )
                     return
-            except Exception:  # noqa: BLE001
+            except Exception:
                 pass
         target_exp_id = self._current_exp_id
         nodes = _data_nodes(self.manager, target_exp_id)
@@ -2899,10 +3108,15 @@ class PipelinePanel(QWidget):
             )
             return
         peak_threshold = (
-            self._threshold_for(target_exp_id, target_data_id) if step_id == "peaks" else 35.0
+            self._threshold_for(target_exp_id, target_data_id)
+            if step_id == "peaks"
+            else 35.0
         )
         peak_ref = self._ref_info.get((target_exp_id, target_data_id))
         self._rows[step_id].set_status("RUNNING")
+        self.operation_feedback.emit(tr('Running {p0}: {p1}/{p2}',
+                                        p0=STEP_LABEL.get(step_id, step_id),
+                                        p1=target_exp_id, p2=target_data_id), 'running')
 
         def worker() -> None:
             run_scope = self._run_log_scope(target_exp_id, target_data_id, "")
@@ -2910,6 +3124,7 @@ class PipelinePanel(QWidget):
                 exp_id = target_exp_id
 
                 self.run_started.emit(exp_id, target_data_id)
+
 
                 self.log_scoped.emit(STEP_LOG_SEPARATOR, run_scope)
                 self.log_scoped.emit(
@@ -2926,11 +3141,17 @@ class PipelinePanel(QWidget):
 
                     kwargs: dict = {"exp_id": exp_id, "data_id": target_data_id}
                     if step_id == "fid":
-                        seg_params = self._segment_shift_params(target_data_id, exp_id=exp_id)
+
+
+                        seg_params = self._segment_shift_params(
+                            target_data_id, exp_id=exp_id
+                        )
                         if seg_params and "params" in inspect.signature(method).parameters:
                             kwargs["params"] = seg_params
                     if step_id == "spectrum":
-                        ext_params = self._spectrum_ext_params(target_data_id, exp_id=exp_id)
+                        ext_params = self._spectrum_ext_params(
+                            target_data_id, exp_id=exp_id
+                        )
                         if ext_params and "params" in inspect.signature(method).parameters:
                             kwargs["params"] = ext_params
                     if step_id == "peaks":
@@ -2950,8 +3171,18 @@ class PipelinePanel(QWidget):
                                 load_settings().get("alignment_tolerance_ppm") or None
                             )
                     if "progress" in inspect.signature(method).parameters:
+
+
                         kwargs["progress"] = lambda msg: self.log_scoped.emit(msg, run_scope)
                     result = method(data_node, **kwargs)
+                    failed_result = (isinstance(result, dict)
+                                     and result.get('status') in ('failed', 'error'))
+                    self.operation_feedback.emit(
+                        tr('{p0}: {p1}/{p2} — {p3}', p0=step_label, p1=target_exp_id,
+                           p2=target_data_id,
+                           p3=tr('Failed') if failed_result else tr('Completed')),
+                        'error' if failed_result else 'success',
+                    )
                     if step_id == "spectrum":
                         self.spectrum_results_changed.emit(target_exp_id, target_data_id)
                     if (
@@ -2959,6 +3190,7 @@ class PipelinePanel(QWidget):
                         and isinstance(result, dict)
                         and result.get("status") == "success"
                     ):
+
                         self.show_spectrum_requested.emit(step_id)
                     message = result if isinstance(result, str) else str(result)
                     if message.strip():
@@ -2970,7 +3202,10 @@ class PipelinePanel(QWidget):
                         else:
                             self.log_scoped.emit(message, run_scope)
                     self.log_scoped.emit(tr("✓ {p0} completed", p0=step_label), run_scope)
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
+                    self.operation_feedback.emit(
+                        tr('{p0} failed: {p1}', p0=step_label, p1=describe_exception(exc)), 'error'
+                    )
                     self.log_scoped.emit(
                         tr(
                             "× {p0} failed: {p1}",
@@ -2981,7 +3216,11 @@ class PipelinePanel(QWidget):
                     )
                     if _looks_like_memory_guard(exc):
                         self.memory_guard_requested.emit(str(exc))
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
+                self.operation_feedback.emit(
+                    tr('{p0} failed: {p1}', p0=STEP_LABEL.get(step_id, step_id),
+                       p1=describe_exception(exc)), 'error'
+                )
                 self.log_scoped.emit(
                     tr("fail {p0}: {p1}", p0=STEP_LABEL.get(step_id, step_id), p1=exc),
                     run_scope,
@@ -2993,12 +3232,15 @@ class PipelinePanel(QWidget):
                 self.run_target_finished.emit(target_exp_id, target_data_id)
                 self.run_finished.emit()
 
+
         from backend.runtime import clear_cancel
 
         clear_cancel()
         threading.Thread(target=worker, daemon=True).start()
 
-    def _on_rerun_final_requested(self, step_id: str, sampling: dict | None = None) -> None:
+    def _on_rerun_final_requested(
+        self, step_id: str, sampling: dict | None = None
+    ) -> None:
         """Edit direct-axis bounds and indirect flips in the existing final script, then rerun it.
 
         Uniform process.com and NUS nus.com already contain optimized phase, window and baseline
@@ -3052,19 +3294,19 @@ class PipelinePanel(QWidget):
                     break
         self._rows[step_id].set_status("RUNNING")
         run_scope = self._run_log_scope(exp_id, data_id)
-        self.log_scoped.emit(
-            tr(
-                "Start re-running the final script (only the direct dimension range / the indirect "
-                "dimension flip is "
-                "updated, the other parameters remain "
-                "unchanged)",
-            ),
-            run_scope,
-        )
+        self.log_scoped.emit(tr(
+            "Start re-running the final script (only the direct dimension range / the indirect "
+            "dimension flip is "
+            "updated, the other parameters remain "
+            "unchanged)",
+        ), run_scope)
 
         def worker() -> None:
             try:
+
                 self.run_started.emit(exp_id, data_id)
+
+
 
                 self.log_scoped.emit(STEP_LOG_SEPARATOR, run_scope)
                 self.log_scoped.emit(
@@ -3081,7 +3323,7 @@ class PipelinePanel(QWidget):
                 if script_path is None:
                     self.log_scoped.emit(
                         tr(
-                            'There is no reusable final script, please execute "re-optimisation" '
+                            "There is no reusable final script, please execute \"re-optimisation\" "
                             "to generate it "
                             "first",
                         ),
@@ -3091,12 +3333,15 @@ class PipelinePanel(QWidget):
                 content = script_path.read_text(encoding="utf-8", errors="replace")
 
                 indirect_section = (
-                    _indirect_only_section(content) if (flips and ndim >= 3) else None
+                    _indirect_only_section(content)
+                    if (flips and ndim >= 3)
+                    else None
                 )
                 if indirect_section is not None:
                     planes_dir = work / "nus3d_rc"
                     if not (planes_dir.is_dir() and any(planes_dir.glob("*.ft1"))):
                         indirect_section = None
+
 
                 ext = self._spectrum_ext_params(data_id, exp_id=exp_id) or {}
                 if ext and indirect_section is None:
@@ -3117,9 +3362,10 @@ class PipelinePanel(QWidget):
                     script_path.write_text(content, encoding="utf-8", newline="\n")
                     self.log_scoped.emit(
                         tr(
-                            "direct dimension range updated: {p0}-{p1} ppm → {p2}",
-                            p0=lo or "default",
-                            p1=hi or "default",
+                            "direct dimension range updated: {p0}-{p1} ppm → "
+                            "{p2}",
+                            p0=lo or 'default',
+                            p1=hi or 'default',
                             p2=script_path.name,
                         ),
                         run_scope,
@@ -3128,18 +3374,26 @@ class PipelinePanel(QWidget):
                     self.log_scoped.emit(
                         tr(
                             "The direct dimension range was not applied: this re-run reuses the "
-                            'retained reconstruction planes — execute "re-optimisation" to apply '
+                            "retained reconstruction planes — execute \"re-optimisation\" to apply "
                             "it",
                         ),
                         run_scope,
                     )
 
                 if flips:
-                    content, applied = flip_indirect_ft_lines(content, ndim=ndim, flips=flips)
+                    content, applied = flip_indirect_ft_lines(
+                        content, ndim=ndim, flips=flips
+                    )
                     if applied:
-                        script_path.write_text(content, encoding="utf-8", newline="\n")
-                        added = sorted(axis for axis, neg in applied.items() if neg)
-                        removed = sorted(axis for axis, neg in applied.items() if not neg)
+                        script_path.write_text(
+                            content, encoding="utf-8", newline="\n"
+                        )
+                        added = sorted(
+                            axis for axis, neg in applied.items() if neg
+                        )
+                        removed = sorted(
+                            axis for axis, neg in applied.items() if not neg
+                        )
                         if added:
                             self.log_scoped.emit(
                                 tr(
@@ -3161,7 +3415,7 @@ class PipelinePanel(QWidget):
                         self.log_scoped.emit(
                             tr(
                                 "The indirect dimension FT line could not be located in the final "
-                                'script; the flip was not applied — execute "re-optimisation" to '
+                                "script; the flip was not applied — execute \"re-optimisation\" to "
                                 "regenerate the script "
                                 "first",
                             ),
@@ -3188,32 +3442,40 @@ class PipelinePanel(QWidget):
                 for w in check_script(content, run_key):
                     self.log_scoped.emit(tr("⚠ script check: {p0}", p0=w), run_scope)
 
+
                 result = self.controller.run_manual_spectrum(
                     data_node,
                     {run_key: content},
                     exp_id=exp_id,
                     data_id=data_id,
-                    progress=lambda line: self.log_scoped.emit(f"[{run_key}] {line}", run_scope),
+                    progress=lambda line: self.log_scoped.emit(
+                        f"[{run_key}] {line}", run_scope
+                    ),
                 )
                 self.log_scoped.emit(
                     tr(
-                        "Re-run the final script to complete {p0}: {p1}",
+                        "Re-run the final script to complete {p0}: "
+                        "{p1}",
                         p0=data_id,
                         p1=result,
-                    ),
-                    run_scope,
+                    ), run_scope
                 )
+
+
+
 
                 try:
                     record_step_success(self.manager, exp_id, data_id, "spectrum")
-                except Exception:  # noqa: BLE001
+                except Exception:
                     pass
+
+
 
                 if ndim >= 3:
                     self._regenerate_3d_projections(exp_id, data_id, run_scope)
 
                 self.spectrum_results_changed.emit(exp_id, data_id)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 self.log_scoped.emit(
                     tr("Re-run the final script failed: {p0}", p0=describe_exception(exc)),
                     run_scope,
@@ -3225,7 +3487,9 @@ class PipelinePanel(QWidget):
 
         threading.Thread(target=worker, daemon=True).start()
 
-    def _regenerate_3d_projections(self, exp_id: str, data_id: str, run_scope: str) -> None:
+    def _regenerate_3d_projections(
+        self, exp_id: str, data_id: str, run_scope: str
+    ) -> None:
         """Regenerate independent 3D projection files after changing the final spectrum.
 
         Skip when the controller lacks the projection interface. Projection failures are logged
@@ -3240,7 +3504,7 @@ class PipelinePanel(QWidget):
                 data_id,
                 progress=lambda line: self.log_scoped.emit(line, run_scope),
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             result = {"error": describe_exception(exc)}
         if not isinstance(result, dict):
             return
@@ -3252,4 +3516,6 @@ class PipelinePanel(QWidget):
             return
         names = ", ".join(sorted(Path(str(path)).name for path in result.values()))
         if names:
-            self.log_scoped.emit(tr("3D projection regenerated: {p0}", p0=names), run_scope)
+            self.log_scoped.emit(
+                tr("3D projection regenerated: {p0}", p0=names), run_scope
+            )

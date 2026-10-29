@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import math
 
-from qtcompat.QtCore import QSignalBlocker, Qt
+from qtcompat.QtCore import QEvent, QSignalBlocker, Qt, QTimer
 from qtcompat.QtWidgets import (
     QComboBox,
     QHBoxLayout,
@@ -57,6 +57,8 @@ class Spectrum3DPanel(QWidget):
         self.slice_slider = QSlider(Qt.Orientation.Horizontal)
         self.slice_slider.setToolTip(tr("Third axis slice position (drag and release to refresh)"))
 
+
+
         self.slice_slider.setMinimumWidth(140)
         self.slice_slider.valueChanged.connect(self._on_slider_value)
         self.slice_slider.sliderReleased.connect(self._emit)
@@ -73,7 +75,6 @@ class Spectrum3DPanel(QWidget):
         self.point_spin.setRange(0, 1)
         self.point_spin.setValue(0)
         self.point_spin.setSingleStep(1)
-        self.point_spin.setFixedWidth(62)
         self.point_spin.valueChanged.connect(self._on_point_spin)
         self.point_spin.setEnabled(False)
         point_layout.addWidget(self.point_spin)
@@ -89,7 +90,6 @@ class Spectrum3DPanel(QWidget):
         self.ppm_spin.setDecimals(3)
         self.ppm_spin.setRange(0.0, 1.0)
         self.ppm_spin.setValue(0.0)
-        self.ppm_spin.setFixedWidth(108)
         self.ppm_spin.valueChanged.connect(self._on_ppm_spin)
         self.ppm_spin.setEnabled(False)
         ppm_layout.addWidget(self.ppm_spin)
@@ -115,16 +115,25 @@ class Spectrum3DPanel(QWidget):
         self._slice_axis = 0
         self._mode = "slice"
         noise = spectrum3d.estimate_noise()
-        self._proj_thresh = 3.0 * noise if noise > 0 else 0.01 * max(spectrum3d.max_intensity, 1.0)
+        self._proj_thresh = (
+            3.0 * noise
+            if noise > 0
+            else 0.01 * max(spectrum3d.max_intensity, 1.0)
+        )
 
         for index, (_, axis) in enumerate(_PLANES):
             remaining = [i for i in range(3) if i != axis]
             name = "-".join(self._spectrum3d.axes[i].label for i in remaining)
             self.plane_combo.setItemText(index, name)
 
+
+
+
         self._fit_plane_combo_width()
 
-        self.plane_combo.setCurrentIndex(_PLANE_INDEX_BY_SLICE_AXIS.get(self._slice_axis, 0))
+        self.plane_combo.setCurrentIndex(
+            _PLANE_INDEX_BY_SLICE_AXIS.get(self._slice_axis, 0)
+        )
         self._update_slider_range()
         self._update_position_controls()
         self._emit()
@@ -143,6 +152,38 @@ class Spectrum3DPanel(QWidget):
 
         self.plane_combo.setMinimumWidth(widest + 48)
 
+    def changeEvent(self, event) -> None:
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.FontChange and hasattr(self, "plane_combo"):
+            QTimer.singleShot(0, self, self._fit_font_widths)
+
+    def _fit_font_widths(self) -> None:
+        if not hasattr(self, "plane_combo"):
+            return
+        self._fit_plane_combo_width()
+        self._fit_position_widths()
+
+    def _fit_position_widths(self) -> None:
+        if not hasattr(self, "point_spin"):
+            return
+        point_text = self.point_spin.textFromValue(self.point_spin.maximum())
+        self.point_spin.setMinimumWidth(
+            max(
+                self.point_spin.sizeHint().width(),
+                self.point_spin.fontMetrics().horizontalAdvance(point_text) + 32,
+            )
+        )
+        decimals = self.ppm_spin.decimals()
+        ppm_width = max(
+            self.ppm_spin.fontMetrics().horizontalAdvance(
+                f"{value:.{decimals}f}"
+            )
+            for value in (self.ppm_spin.minimum(), self.ppm_spin.maximum())
+        )
+        self.ppm_spin.setMinimumWidth(
+            max(self.ppm_spin.sizeHint().width(), ppm_width + 32)
+        )
+
     def clear(self) -> None:
         """Unbind the 3D spectrum and hide the panel."""
         self._spectrum3d = None
@@ -158,7 +199,10 @@ class Spectrum3DPanel(QWidget):
         """Current slice product (2D Spectrum); returns None for unbound 3D spectrum."""
         if self._spectrum3d is None:
             return None
-        spectrum = self._spectrum3d.slice(self._slice_axis, self.slice_slider.value())
+        spectrum = self._spectrum3d.slice(
+            self._slice_axis, self.slice_slider.value()
+        )
+
 
         dims: list[int] = []
         for axis in spectrum.axes:
@@ -167,6 +211,7 @@ class Spectrum3DPanel(QWidget):
                     dims.append(i)
                     break
         spectrum.dim_indices = tuple(dims)
+
 
         try:
             import numpy as np
@@ -177,11 +222,18 @@ class Spectrum3DPanel(QWidget):
             ppm = np.asarray(axis3.ppm, dtype=float)
             diff = np.abs(np.diff(ppm))
             diff = diff[diff > 0]
-            spectrum.slice_step_ppm = float(np.median(diff)) if diff.size else 0.0
+            spectrum.slice_step_ppm = (
+                float(np.median(diff)) if diff.size else 0.0
+            )
 
-            spectrum.slice_ppm_min = float(np.min(ppm)) if ppm.size else None
-            spectrum.slice_ppm_max = float(np.max(ppm)) if ppm.size else None
-        except Exception:  # noqa: BLE001
+
+            spectrum.slice_ppm_min = (
+                float(np.min(ppm)) if ppm.size else None
+            )
+            spectrum.slice_ppm_max = (
+                float(np.max(ppm)) if ppm.size else None
+            )
+        except Exception:
             spectrum.slice_axis = None
             spectrum.slice_ppm = None
             spectrum.slice_step_ppm = None
@@ -194,7 +246,7 @@ class Spectrum3DPanel(QWidget):
         plane = self._plane_name()
         if not base and self._spectrum3d is not None and self._spectrum3d.source:
             base = self._spectrum3d.source.stem
-        return tr("{p0} {p1} slice", p0=base or "3D", p1=plane)
+        return tr("{p0} {p1} slice", p0=base or '3D', p1=plane)
 
     def slice_axis_label(self) -> str:
         """The label of the currently pinned (sliced) axis."""
@@ -203,7 +255,10 @@ class Spectrum3DPanel(QWidget):
         return self._spectrum3d.axes[self._slice_axis].label
 
     def refresh(self) -> None:
-        """Recalculate the product and issue redraw(After dragging the slider/external trigger)."""
+        """
+        Recalculate the product and issue redraw(After dragging the
+        slider/external trigger).
+        """
         self._update_position_controls()
         self._emit()
 
@@ -247,11 +302,14 @@ class Spectrum3DPanel(QWidget):
         self.slice_slider.setValue(axis.size // 2)
         self.slice_slider.setEnabled(True)
 
+
         with QSignalBlocker(self.point_spin), QSignalBlocker(self.ppm_spin):
             self.point_spin.setRange(0, max(0, axis.size - 1))
             self.point_spin.setEnabled(True)
             self.point_label.setText(f"{axis.label} pt" if axis.label else "pt")
-            self.ppm_spin.setRange(float(min(axis.ppm)), float(max(axis.ppm)))
+            self.ppm_spin.setRange(
+                float(min(axis.ppm)), float(max(axis.ppm))
+            )
             self.ppm_spin.setEnabled(True)
             self.ppm_label.setText(f"{axis.label} ppm" if axis.label else "ppm")
 
@@ -281,6 +339,7 @@ class Spectrum3DPanel(QWidget):
             self.point_spin.setValue(value)
             ppm = axis.ppm_at(value) if axis.size else 0.0
             self.ppm_spin.setValue(ppm)
+        self._fit_position_widths()
 
     def _plane_name(self) -> str:
         index = self.plane_combo.currentIndex()

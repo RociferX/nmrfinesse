@@ -55,7 +55,10 @@ and statistical inference belong to downstream analysis. See the [API guide](doc
 - **Automation with records** - GUI, command line and Python API entry points; 2D batch runs;
   scripts and candidate spectra are kept; each run stores the resolved parameters and the
   software/tool versions that produced it.
-- **Viewing** - a standalone 1D/2D/3D spectrum viewer with projections and peak overlays.
+- **Viewing** - a standalone 1D/2D/3D spectrum viewer with projections, peak overlays and
+  collapsible controls. Compare two or three compatible spectra in a shared-coordinate overlay,
+  fit a translation, and export SVG. Full view includes the wider spectrum's range;
+  interface font changes apply immediately. See the [GUI guide](docs/gui.md).
 
 ## Workflow
 

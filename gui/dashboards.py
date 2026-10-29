@@ -32,7 +32,6 @@ from gui.dialogs import InfoDialog
 from gui.file_dialogs import choose_directory
 from qtcompat import Signal
 from ui_support.i18n import tr
-from ui_support.theme import TEXT_MUTED, TEXT_PRIMARY
 
 
 def _active_data_of(exp) -> list:
@@ -68,48 +67,74 @@ class ProjectDashboard(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.manager: ProjectManager | None = None
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
+        root_layout = QVBoxLayout(self)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        self.scroll_area = QScrollArea(self)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.page_content = QWidget()
+        root_layout.addWidget(self.scroll_area)
+        layout = QVBoxLayout(self.page_content)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(6)
+        self.scroll_area.setWidget(self.page_content)
 
         title = QLabel(tr("project"))
-        title.setStyleSheet(f"font-size: 15px; font-weight: bold; color: {TEXT_PRIMARY};")
+        title.setObjectName("PanelTitle")
         layout.addWidget(title)
         self.context_label = QLabel("")
+        self.context_label.setWordWrap(True)
+        self.context_label.setObjectName("PanelSubtitle")
         layout.addWidget(self.context_label)
-        layout.addSpacing(8)
 
         self.stats_label = QLabel("")
-        self.stats_label.setStyleSheet(f"color: {TEXT_PRIMARY};")
+        self.stats_label.setObjectName("MutedText")
         layout.addWidget(self.stats_label)
         self.progress_label = QLabel("")
+        self.progress_label.setObjectName("MutedText")
         layout.addWidget(self.progress_label)
-        layout.addSpacing(10)
 
         recent_title = QLabel(tr("recently run"))
-        recent_title.setStyleSheet("font-weight: bold;")
+        recent_title.setObjectName("SectionTitle")
         layout.addWidget(recent_title)
         self.runs_table = QTableWidget(0, 4)
         self.runs_table.setHorizontalHeaderLabels(
             [tr("run"), tr("process"), tr("state"), tr("time")]
         )
         self.runs_table.horizontalHeader().setStretchLastSection(True)
-        self.runs_table.setMaximumHeight(150)
+        self.runs_table.setMinimumHeight(0)
         layout.addWidget(self.runs_table)
-        layout.addSpacing(10)
+        layout.addSpacing(2)
 
         form = QHBoxLayout()
+        form.setSpacing(6)
         self.title_edit = QLineEdit()
         self.title_edit.setPlaceholderText(tr("experiment title (can be left blank)"))
+        self.title_edit.returnPressed.connect(self._on_create)
         form.addWidget(self.title_edit, 1)
         self.create_button = QPushButton(tr("New experiment"))
+        self.create_button.setObjectName("PrimaryAction")
         self.create_button.clicked.connect(self._on_create)
         form.addWidget(self.create_button)
-        layout.addLayout(form)
+        layout.insertLayout(layout.indexOf(self.context_label) + 1, form)
         layout.addStretch(1)
 
     def set_context(self, manager: ProjectManager) -> None:
         self.manager = manager
         self.refresh()
+
+    def resizeEvent(self, event) -> None:
+        """
+        Keep the compact project overview scrollable when its natural height
+        exceeds the view.
+        """
+        super().resizeEvent(event)
+        content_layout = self.page_content.layout()
+        if content_layout is not None:
+            content_layout.activate()
+            self.page_content.setMinimumHeight(content_layout.sizeHint().height())
 
     def refresh(self) -> None:
         if self.manager is None or self.manager.project is None:
@@ -121,7 +146,8 @@ class ProjectDashboard(QWidget):
         processed = _data_processed(project)
         self.stats_label.setText(
             tr(
-                "experiment: {p0} | sample data: {p1} | Processed: {p2}",
+                "experiment: {p0} | sample data: {p1} | Processed: "
+                "{p2}",
                 p0=exp_count,
                 p1=data_count,
                 p2=processed,
@@ -163,11 +189,13 @@ class ExperimentImportPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.copy_check = QCheckBox(tr("Link raw data to project (read only, copy if necessary)"))
+        self.copy_check.setObjectName("MutedText")
         self.copy_check.setChecked(True)
         layout.addWidget(self.copy_check)
         layout.addSpacing(4)
 
         self.single_group = QGroupBox(tr("single import"))
+        self.single_group.setObjectName("SectionTitle")
         single_layout = QVBoxLayout(self.single_group)
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText(tr("sample data name (optional)"))
@@ -176,11 +204,15 @@ class ExperimentImportPanel(QWidget):
         self.source_edit = QLineEdit()
         self.source_edit.setPlaceholderText(tr("Bruker dataset directory (including acqus)"))
         form.addWidget(self.source_edit, 1)
+        self.source_edit.setMinimumWidth(0)
         browse = QPushButton(tr("Browse..."))
+        browse.setObjectName("SubtleAction")
+        self.browse_button = browse
         browse.clicked.connect(self._browse)
         form.addWidget(browse)
         single_layout.addLayout(form)
         self.import_button = QPushButton(tr("import sample data"))
+        self.import_button.setObjectName("PrimaryAction")
         self.import_button.setEnabled(False)
         self.import_button.clicked.connect(self._on_import)
         single_layout.addWidget(self.import_button)
@@ -190,6 +222,7 @@ class ExperimentImportPanel(QWidget):
         layout.addWidget(self.single_group)
 
         self.segmented_group = QGroupBox(tr("segmented data or repeated experiment overlay import"))
+        self.segmented_group.setObjectName("SectionTitle")
         segmented_layout = QVBoxLayout(self.segmented_group)
         segmented_hint = QLabel(
             tr(
@@ -202,7 +235,7 @@ class ExperimentImportPanel(QWidget):
             )
         )
         segmented_hint.setWordWrap(True)
-        segmented_hint.setStyleSheet(f"color: {TEXT_MUTED};")
+        segmented_hint.setObjectName("MutedText")
         segmented_layout.addWidget(segmented_hint)
         segmented_form = QHBoxLayout()
         self.segmented_source_edit = QLineEdit()
@@ -213,13 +246,17 @@ class ExperimentImportPanel(QWidget):
             )
         )
         segmented_form.addWidget(self.segmented_source_edit, 1)
+        self.segmented_source_edit.setMinimumWidth(0)
         segmented_browse = QPushButton(tr("Browse..."))
+        segmented_browse.setObjectName("SubtleAction")
+        self.segmented_browse_button = segmented_browse
         segmented_browse.clicked.connect(self._on_segmented_browse)
         segmented_form.addWidget(segmented_browse)
         segmented_layout.addLayout(segmented_form)
         self.segmented_import_button = QPushButton(
             tr("segmented/repeated experiment overlay import")
         )
+        self.segmented_import_button.setObjectName("PrimaryAction")
         self.segmented_import_button.setEnabled(False)
         self.segmented_import_button.clicked.connect(self._on_segmented_import)
         segmented_layout.addWidget(self.segmented_import_button)
@@ -231,6 +268,7 @@ class ExperimentImportPanel(QWidget):
         layout.addWidget(self.segmented_group)
 
         self.batch_group = QGroupBox(tr("Batch processing"))
+        self.batch_group.setObjectName("SectionTitle")
         batch_layout = QVBoxLayout(self.batch_group)
         batch_hint = QLabel(
             tr(
@@ -243,10 +281,10 @@ class ExperimentImportPanel(QWidget):
             )
         )
         batch_hint.setWordWrap(True)
-        batch_hint.setStyleSheet(f"color: {TEXT_MUTED};")
+        batch_hint.setObjectName("MutedText")
         batch_layout.addWidget(batch_hint)
         self.batch_list = QListWidget()
-        self.batch_list.setMaximumHeight(110)
+        self.batch_list.setMinimumHeight(0)
         batch_layout.addWidget(self.batch_list)
         self.batch_group_check = QCheckBox(tr("Batch import and group (only supports 2D spectra)"))
         self.batch_group_check.setToolTip(
@@ -260,21 +298,29 @@ class ExperimentImportPanel(QWidget):
         batch_layout.addWidget(self.batch_group_check)
         batch_buttons = QHBoxLayout()
         self.batch_add_button = QPushButton(tr("Add data folder..."))
+        self.batch_add_button.setObjectName("SubtleAction")
         self.batch_add_button.clicked.connect(self._on_batch_add_folder)
         batch_buttons.addWidget(self.batch_add_button)
         self.batch_clear_button = QPushButton(tr("Clear list"))
+        self.batch_clear_button.setObjectName("SubtleAction")
         self.batch_clear_button.clicked.connect(self._on_batch_clear)
         batch_buttons.addWidget(self.batch_clear_button)
+        batch_buttons.addStretch(1)
+        batch_layout.addLayout(batch_buttons)
         self.batch_import_button = QPushButton(tr("Batch import"))
+        self.batch_import_button.setObjectName("PrimaryAction")
         self.batch_import_button.setEnabled(False)
         self.batch_import_button.clicked.connect(self._on_batch_import)
-        batch_buttons.addWidget(self.batch_import_button)
-        batch_layout.addLayout(batch_buttons)
+        batch_layout.addWidget(self.batch_import_button)
         layout.addWidget(self.batch_group)
         layout.addStretch(1)
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------ #
     # ------------------------------------------------------------------
     def browse_single(self) -> None:
         """Select a single Bruker dataset directory."""
@@ -356,6 +402,8 @@ class ExperimentImportPanel(QWidget):
             candidates = [root]
         for cand in candidates:
             if (cand / "acqus").is_file():
+
+
                 if (
                     not (cand / "acqu2s").is_file()
                     or (cand / "acqu3s").is_file()
@@ -389,6 +437,7 @@ class ExperimentImportPanel(QWidget):
                 tr("Please select Bruker dataset directory (including acqus) first"),
             )
             return
+
 
         self.import_options_requested.emit(
             self._exp_id,
@@ -451,28 +500,34 @@ class ExperimentDashboard(QWidget):
         self.scroll_area = QScrollArea(self)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
-        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.scroll_area.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        self.scroll_area.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
         self.page_content = QWidget()
         layout = QVBoxLayout(self.page_content)
-        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(6)
         self.scroll_area.setWidget(self.page_content)
         root_layout.addWidget(self.scroll_area)
 
         title = QLabel(tr("experiment"))
-        title.setStyleSheet(f"font-size: 15px; font-weight: bold; color: {TEXT_PRIMARY};")
+        title.setObjectName("PanelTitle")
         layout.addWidget(title)
         self.context_label = QLabel("")
+        self.context_label.setWordWrap(True)
+        self.context_label.setObjectName("PanelSubtitle")
         layout.addWidget(self.context_label)
-        layout.addSpacing(8)
 
         data_title = QLabel(tr("sample data"))
-        data_title.setStyleSheet("font-weight: bold;")
+        data_title.setObjectName("SectionTitle")
         layout.addWidget(data_title)
         self.data_table = QTableWidget(0, 3)
         self.data_table.setHorizontalHeaderLabels([tr("sample data"), tr("name"), tr("state")])
         self.data_table.horizontalHeader().setStretchLastSection(True)
-        self.data_table.setMaximumHeight(160)
+        self.data_table.setMinimumHeight(0)
 
         self.data_table.setEditTriggers(
             QAbstractItemView.EditTrigger.DoubleClicked
@@ -482,7 +537,8 @@ class ExperimentDashboard(QWidget):
         self.data_table.itemChanged.connect(self._on_data_name_edited)
         self._loading_table = False
         layout.addWidget(self.data_table)
-        layout.addSpacing(10)
+        layout.addSpacing(2)
+
 
         self.import_panel = ExperimentImportPanel(self.page_content)
         self.import_panel.import_options_requested.connect(self.import_options_requested.emit)

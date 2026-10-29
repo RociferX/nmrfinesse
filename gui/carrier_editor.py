@@ -3,8 +3,14 @@ from __future__ import annotations
 
 import math
 
-from qtcompat.QtCore import QEvent, Qt
-from qtcompat.QtWidgets import QComboBox, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from qtcompat.QtCore import QEvent, Qt, QTimer
+from qtcompat.QtWidgets import (
+    QComboBox,
+    QGridLayout,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
+)
 
 from ui_support.i18n import tr
 
@@ -19,9 +25,13 @@ class FidCarrierPanel(QWidget):
         self.descriptions = {}
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        row_layout = QHBoxLayout()
-        row_layout.setSpacing(12)
-        layout.addLayout(row_layout)
+        self._row_layout = QGridLayout()
+        self._row_layout.setContentsMargins(0, 0, 0, 0)
+        self._row_layout.setHorizontalSpacing(12)
+        self._row_layout.setVerticalSpacing(6)
+        layout.addLayout(self._row_layout)
+        self._carrier_boxes = []
+        self._carrier_columns = 0
         self.description = QLabel()
         self.description.setWordWrap(True)
         layout.addWidget(self.description)
@@ -60,13 +70,42 @@ class FidCarrierPanel(QWidget):
                 label += f" · {row['axis']} {row['nucleus']}"
             column.addWidget(QLabel(label))
             column.addWidget(combo)
-            row_layout.addWidget(box, 1)
+            self._carrier_boxes.append(box)
             combo.activated.connect(lambda index, k=key: self._choose(k, index))
             combo.lineEdit().returnPressed.connect(lambda k=key: self._typed(k))
         editor.textChanged.connect(self._sync_from_script)
         if self.combos:
             self._show_description(next(iter(self.combos)))
         self.setVisible(bool(self.combos))
+        self._reflow_carriers()
+
+    def _reflow_carriers(self):
+        if not self._carrier_boxes:
+            return
+        gap = self._row_layout.horizontalSpacing()
+        min_width = max(box.minimumSizeHint().width() for box in self._carrier_boxes)
+        columns = max(1, min(len(self._carrier_boxes), (self.width() + gap) // (min_width + gap)))
+        columns = int(columns)
+        if columns == self._carrier_columns:
+            return
+        self._carrier_columns = columns
+        while self._row_layout.count():
+            item = self._row_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                self._row_layout.removeWidget(widget)
+        for index, box in enumerate(self._carrier_boxes):
+            self._row_layout.addWidget(box, index // columns, index % columns)
+        self.updateGeometry()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._reflow_carriers()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.FontChange and hasattr(self, '_carrier_boxes'):
+            QTimer.singleShot(0, self, self._reflow_carriers)
 
     def _show_description(self, key, text=None):
         if text is not None:

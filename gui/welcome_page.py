@@ -21,16 +21,17 @@ from qtcompat.QtWidgets import (
 
 from qtcompat import Signal
 from ui_support.i18n import tr
-from ui_support.theme import TEXT_PRIMARY, TEXT_SECONDARY
 
 
 class WelcomePage(QWidget):
     """First start/Welcome page when the project is not open."""
 
-    new_project_requested = Signal(str)  # Project name.
-    open_project_requested = Signal(str)  # Project path.
+    new_project_requested = Signal(str)
+    open_project_requested = Signal(str)
 
-    def __init__(self, parent: QWidget | None = None, workspace=None) -> None:
+    def __init__(
+        self, parent: QWidget | None = None, workspace=None
+    ) -> None:
         super().__init__(parent)
         if workspace is None:
             from core.workspace import WorkspaceManager
@@ -39,55 +40,61 @@ class WelcomePage(QWidget):
         self.ws = workspace
         self._name_committing = False
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(32, 32, 32, 32)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(6)
 
         title = QLabel("NMRFinesse")
-        title.setStyleSheet(f"font-size: 28px; font-weight: bold; color: {TEXT_PRIMARY};")
+        title.setObjectName("PanelTitle")
         layout.addWidget(title)
 
-        subtitle = QLabel(
-            tr(
-                "Automated processing, parameter optimisation and quality control platform for "
-                "Bruker "
-                "2D/3D "
-                "NMR",
-            )
-        )
-        subtitle.setStyleSheet(f"color: {TEXT_SECONDARY};")
+        subtitle = QLabel(tr(
+            "Automated processing, parameter optimisation and quality control platform for Bruker "
+            "2D/3D "
+            "NMR",
+        ))
+        subtitle.setObjectName("PanelSubtitle")
+        subtitle.setWordWrap(True)
         layout.addWidget(subtitle)
-        layout.addSpacing(18)
+        layout.addSpacing(4)
 
         self.workspace_label = QLabel("")
-        self.workspace_label.setStyleSheet("font-weight: bold;")
+        self.workspace_label.setWordWrap(True)
+        self.workspace_label.setObjectName("MutedText")
         layout.addWidget(self.workspace_label)
-        layout.addSpacing(10)
+        layout.addSpacing(2)
 
         recent_title = QLabel(tr("recent project"))
-        recent_title.setStyleSheet("font-weight: bold;")
+        recent_title.setObjectName("SectionTitle")
+        self.new_button = QPushButton(tr("New project..."))
+        self.new_button.setObjectName("PrimaryAction")
+        self.new_button.clicked.connect(self._on_new_clicked)
+        layout.addWidget(self.new_button)
+        self._name_prompt = QLabel("")
+        self._name_prompt.setWordWrap(True)
+        self._name_prompt.setVisible(False)
+        layout.addWidget(self._name_prompt)
         layout.addWidget(recent_title)
 
         self.recent_list = QListWidget()
-        self.recent_list.setMinimumHeight(140)
         self.recent_list.itemClicked.connect(self._on_recent_clicked)
         layout.addWidget(self.recent_list, 1)
 
         actions = QHBoxLayout()
-        self.new_button = QPushButton(tr("New project..."))
-        self.new_button.clicked.connect(self._on_new_clicked)
-        actions.addWidget(self.new_button)
         self._name_edit = QLineEdit()
         self._name_edit.setPlaceholderText(tr("Enter project name"))
-        self._name_edit.setMaximumWidth(240)
+        self._name_edit.setObjectName("ProjectNameEdit")
+        self._name_prompt.setBuddy(self._name_edit)
         self._name_edit.setVisible(False)
         self._name_edit.installEventFilter(self)
         self._name_edit.editingFinished.connect(self._commit_name)
         actions.addWidget(self._name_edit)
         self._name_ok_button = QPushButton(tr("Sure"))
+        self._name_ok_button.setObjectName("PrimaryAction")
         self._name_ok_button.setVisible(False)
         self._name_ok_button.clicked.connect(self._commit_name)
         actions.addWidget(self._name_ok_button)
         actions.addStretch(1)
-        layout.addLayout(actions)
+        layout.insertLayout(layout.indexOf(self._name_prompt) + 1, actions)
 
         self._refresh()
 
@@ -104,7 +111,7 @@ class WelcomePage(QWidget):
             self.recent_list.addItem(item)
         if self.recent_list.count() == 0:
             self.recent_list.addItem(
-                tr('(There is no project in the workspace yet, click "New Project" to start)')
+                tr("(There is no project in the workspace yet, click \"New Project\" to start)")
             )
 
     def refresh(self) -> None:
@@ -130,6 +137,10 @@ class WelcomePage(QWidget):
         self._name_edit.selectAll()
         self._name_edit.setVisible(True)
         self._name_ok_button.setVisible(True)
+        self._name_prompt.setText(
+            tr("Enter the project name and press Enter to create, Esc to cancel")
+        )
+        self._name_prompt.setVisible(True)
         self._name_edit.setFocus()
 
     def _commit_name(self) -> None:
@@ -138,16 +149,23 @@ class WelcomePage(QWidget):
         self._name_committing = True
         try:
             name = self._name_edit.text().strip()
+            if not name:
+                self._name_prompt.setText(
+                    tr("Enter the project name and press Enter to create, Esc to cancel")
+                )
+                self._name_prompt.setVisible(True)
+                return
             self._name_edit.setVisible(False)
             self._name_ok_button.setVisible(False)
-            if name:
-                self.new_project_requested.emit(name)
+            self._name_prompt.setVisible(False)
+            self.new_project_requested.emit(name)
         finally:
             self._name_committing = False
 
     def _cancel_name(self) -> None:
         self._name_edit.setVisible(False)
         self._name_ok_button.setVisible(False)
+        self._name_prompt.setVisible(False)
 
     def eventFilter(self, obj, event) -> bool:
         """Esc cancels inline naming (other events are returned to default processing)."""
@@ -162,4 +180,8 @@ class WelcomePage(QWidget):
         return super().eventFilter(obj, event)
 
     def recent_paths(self) -> list[str]:
-        return [str(item.data(0x0100)) for item in self.recent_list if item.data(0x0100)]
+        return [
+            str(item.data(0x0100))
+            for item in self.recent_list
+            if item.data(0x0100)
+        ]

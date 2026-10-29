@@ -32,23 +32,18 @@ def _load_test_categories() -> types.ModuleType:
     spec = importlib.util.spec_from_file_location(
         "nmrfinesse_test_categories", Path(__file__).with_name("categories.py")
     )
-    if spec is None or spec.loader is None:  # pragma: no cover - the file always exists
+    if spec is None or spec.loader is None:
         raise RuntimeError("找不到 tests/categories.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
 
 
-# The rendered interface language must not depend on the machine's locale. The shared suite
-# asserts the Chinese message catalogue (it is the private trunk's language), and this tree ships
-# that catalogue in full (``ui_support/locales/zh.json``), so tests pin ``zh`` as well: the runtime
-# default of this tree stays ``en`` (``ui_support/locales/default.json``) and the English rendering
-# is covered by ``tests/test_ui_i18n.py``, which switches languages explicitly.
-# (2026-09-25 sync note: the previous per-tree default pin made the shared suite fail here on
-# ~280 assertions that quote the Chinese catalogue; making those assertions catalogue-driven is a
-# follow-up, this pin keeps the gate meaningful in the meantime.)
-# The runtime default of this tree (``en``) still comes from ``ui_support/locales/default.json``;
-# only the test language is pinned separately below.
+
+
+
+# The shared suite asserts the Chinese catalogue. Keep this test-only pin while
+# the shipped runtime default remains English; i18n tests cover both languages.
 TREE_DEFAULT_LANGUAGE = default_language()
 os.environ["NMRFINESSE_LANG"] = "zh"
 
@@ -131,8 +126,8 @@ def nmrpipe_fid_template(tmp_path_factory: pytest.TempPathFactory) -> Path:
     data = data + 1j * rng.normal(0.0, 0.02, (specnum, fdsize))
     ng.pipe.write(str(path), dic, data.astype(np.complex64), overwrite=True)
 
-    # The template must really be accepted by the diagnostics parser, otherwise the fixture itself
-    # is wrong (the earlier synthetic approach failed twice)
+    # The template must really be accepted by the diagnostics parser, otherwise the fixture
+    # itself # is wrong (the earlier synthetic approach failed twice)
     from workflow.direct_diagnostics import _read_fid_raw
 
     parsed = _read_fid_raw(path)
@@ -141,6 +136,7 @@ def nmrpipe_fid_template(tmp_path_factory: pytest.TempPathFactory) -> Path:
     assert (got_fdsize, got_specnum) == (fdsize, specnum)
     assert header == 2048, header
     return path
+
 
 
 @pytest.fixture
@@ -245,7 +241,7 @@ def _close_gui_windows_at_session_end() -> None:
     for widget in list(app.topLevelWidgets()):
         try:
             widget.close()
-        except RuntimeError:  # pragma: no cover - already destroyed
+        except RuntimeError:
             pass
     app.processEvents()
     from shiboken6 import getAllValidWrappers

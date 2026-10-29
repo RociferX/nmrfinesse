@@ -30,6 +30,30 @@ def _axis(label: str, size: int = 128, sw: float = 6000.0) -> SpectrumAxis:
     )
 
 
+def test_contour_controls_reflow_without_overlap(qapp: QApplication) -> None:
+    viewer = SpectrumViewer()
+    controls = viewer.contour_controls
+    controls.setParent(None)
+    controls.resize(1000, 190)
+    controls.show()
+    qapp.processEvents()
+    wide = [w.geometry() for w in controls._groups]
+    assert wide[0].right() < wide[1].left() < wide[2].left()
+    assert len({r.top() for r in wide}) == 1
+    assert all(r.height() < 80 for r in wide)
+    controls.resize(340, 230)
+    qapp.processEvents()
+    narrow = [w.geometry() for w in controls._groups]
+    assert narrow[0].bottom() < narrow[1].top()
+    assert narrow[1].bottom() < narrow[2].top()
+    assert all(r.right() < controls.width() for r in narrow)
+    controls.resize(1000, 190)
+    qapp.processEvents()
+    assert controls._groups[0].geometry().right() < controls._groups[1].geometry().left()
+    controls.close()
+    viewer.close()
+
+
 
 
 def _synthetic_spectrum(shape: tuple[int, int] = (128, 256)) -> Spectrum:
@@ -74,7 +98,7 @@ def test_spectrum_axis_ppm_roundtrip() -> None:
     axis = _axis("F2", size=256)
     ppm = axis.ppm
     assert ppm.shape == (256,)
-    assert ppm[0] > ppm[-1]  # ppm decreases with the index
+    assert ppm[0] > ppm[-1]
     for index in (0, 1, 100, 255):
         assert axis.index_at(axis.ppm_at(index)) == index
     # with ORIG defined, the axis end point ppm = ORIG/OBS
@@ -95,7 +119,9 @@ def test_spectrum_axis_index_at_f() -> None:
 
 
 def test_spectrum_axis_fallback_carrier() -> None:
-    axis = SpectrumAxis(label="F1", size=64, sw_hz=3000.0, obs_mhz=150.0, carrier_ppm=118.0)
+    axis = SpectrumAxis(
+        label="F1", size=64, sw_hz=3000.0, obs_mhz=150.0, carrier_ppm=118.0
+    )
     ppm = axis.ppm
     assert ppm[0] > ppm[-1]
     assert abs(ppm[32] - 118.0) < 1e-6
@@ -150,7 +176,7 @@ def test_contour_layer_small_data_uses_paths() -> None:
         neg_pen="#e74c3c",
         zoom=2.0,
     )
-    # small spectra go through matplotlib contours (size shunt; the stable path for the full
+    # small spectra go through matplotlib contours (size shunt; the stable path for the full #
     # VM run, see CHANGELOG 0.2.73)
     assert layer._use_contourpy is False
     assert layer._path.isEmpty() is False
@@ -176,7 +202,7 @@ def test_contour_layer_large_data_uses_contourpy() -> None:
         neg_pen="#e74c3c",
         zoom=2.0,
     )
-    # large spectra go through contourpy real contours (POKY/nmrDraw-style thin line frame,
+    # large spectra go through contourpy real contours (POKY/nmrDraw-style thin line frame, #
     # see CHANGELOG 0.2.75)
     assert layer._use_contourpy is True
     assert layer._path.isEmpty() is False
@@ -198,8 +224,69 @@ def test_viewer_add_spectrum_and_levels(qapp: QApplication) -> None:
     old_count = viewer._level_count
     viewer.count_slider.setValue(old_count + 8)
     assert viewer._level_count == old_count + 8
-    assert len(viewer.layers[0]._levels) == 2 * (old_count + 8)  # symmetric positive/negative
+    assert len(viewer.layers[0]._levels) == 2 * (old_count + 8)
     viewer.reset_view()
+    viewer.close()
+
+
+@pytest.mark.parametrize('hide_positive,hide_negative', [(False, False), (True, False),
+                                                       (False, True), (True, True)])
+def test_contour_sign_switches_control_paint_and_vector_output(
+    qapp, monkeypatch, hide_positive, hide_negative,
+):
+    viewer = SpectrumViewer()
+    spectrum = _synthetic_spectrum()
+    spectrum.data[90, 200] = -20
+    before = spectrum.data.copy()
+    viewer.add_spectrum(spectrum)
+    assert not viewer.hide_positive.isChecked()
+    assert not viewer.hide_negative.isChecked()
+    layer = viewer.layers[0]
+    positive, negative = layer._path, layer._path_neg
+    assert not positive.isEmpty() and not negative.isEmpty()
+    monkeypatch.setattr(layer, 'set_levels', lambda *_: pytest.fail('Sign toggle rebuilt contours'))
+    viewer.hide_positive.setChecked(hide_positive)
+    viewer.hide_negative.setChecked(hide_negative)
+    expected = ([positive] if not hide_positive else []) + ([negative] if not hide_negative else [])
+    assert [path for path, _pen in layer.vector_paths()] == expected
+
+    class Recorder:
+        def __init__(self):
+            self.paths = []
+
+        def setRenderHint(self, *_args):
+            pass
+
+        def setPen(self, *_args):
+            pass
+
+        def drawPath(self, path):
+            self.paths.append(path)
+
+    recorder = Recorder()
+    layer.paint(recorder)
+    assert recorder.paths == expected
+    assert layer._path is positive and layer._path_neg is negative
+    np.testing.assert_array_equal(spectrum.data, before)
+    viewer.close()
+
+
+def test_contour_sign_state_follows_new_planes_and_saved_spectra(qapp):
+    viewer = SpectrumViewer()
+    viewer.add_spectrum(_synthetic_spectrum())
+    viewer.hide_negative.setChecked(True)
+    viewer.save_contour_state('nn-plane')
+    viewer.update_spectrum_data(_synthetic_spectrum())
+    assert len(viewer.layers[0].vector_paths()) == 1
+    viewer.restore_contour_state('new-spectrum')
+    assert len(viewer.layers[0].vector_paths()) == 2
+    viewer.restore_contour_state('nn-plane')
+    assert viewer.hide_negative.isChecked()
+    assert not viewer.hide_positive.isChecked()
+    assert len(viewer.layers[0].vector_paths()) == 1
+    viewer.clear()
+    viewer.add_spectrum(_synthetic_spectrum())
+    assert len(viewer.layers[0].vector_paths()) == 1
     viewer.close()
 
 
@@ -213,7 +300,7 @@ def test_viewer_update_spectrum_data_in_place(qapp: QApplication) -> None:
     second.data = second.data + 1.0
     ok = viewer.update_spectrum_data(second, name="slice 1")
     assert ok is True
-    assert len(viewer.layers) == 1  # updated in situ: no layer added or rebuilt
+    assert len(viewer.layers) == 1
     assert viewer._primary is second
     assert viewer.layer_names == ["slice 1"]
     assert viewer.layer_list.count() == 1
@@ -226,10 +313,10 @@ def test_viewer_update_spectrum_data_falls_back(qapp: QApplication) -> None:
     """0.2.199-patch10: in a multi-layer view the in-situ update falls back to clear+add."""
     viewer = SpectrumViewer()
     viewer.add_spectrum(_synthetic_spectrum())
-    viewer.add_spectrum(_synthetic_spectrum())  # second layer
+    viewer.add_spectrum(_synthetic_spectrum())
     ok = viewer.update_spectrum_data(_synthetic_spectrum())
     assert ok is False
-    assert len(viewer.layers) == 1  # only one remains after clear
+    assert len(viewer.layers) == 1
     viewer.close()
 
 
@@ -266,12 +353,12 @@ def test_viewer_peaks_poky_style(qapp: QApplication) -> None:
     )
     data = viewer.peak_item.data
     assert data["size"].shape == (2,)
-    assert viewer.peak_item.opts["symbol"] == "x"  # Poky style x
-    assert viewer.peak_item.opts["pxMode"] is False  # scales with the spectrum
-    assert viewer._label_overlay.visible_label_count() == 2  # labelled peaks + selected peak
+    assert viewer.peak_item.opts["symbol"] == "x"
+    assert viewer.peak_item.opts["pxMode"] is False
+    assert viewer._label_overlay.visible_label_count() == 2
     viewer.highlight_peak(0)
     assert float(viewer.peak_item.data["size"][0]) == pytest.approx(1.5 * 3.0)
-    assert viewer._flash_item is not None  # 0.2.199-patch29bk: single-point flash localization
+    assert viewer._flash_item is not None
     assert viewer._flash_item.flags() & QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations
     viewer._clear_flash()
     assert viewer._flash_item is None
@@ -309,12 +396,14 @@ def test_viewer_axis_direction_nmrdraw(qapp: QApplication) -> None:
     nx, ny = spectrum.data.shape[1], spectrum.data.shape[0]
     p0 = vb.mapViewToScene(pg.QtCore.QPointF(0, 0))
     p1 = vb.mapViewToScene(pg.QtCore.QPointF(nx - 1, 0))
-    assert p0.x() < p1.x()  # column 0 (high ppm) on the left
-    # view y is the data row: row 0 (high ppm) = view y=0 at the bottom, row ny-1 (low ppm)
-    # at the top
+    # view y is the data row: row 0 (high ppm) = view y=0 at the bottom, row ny-1 (low ppm) # at
+    # the top
+    assert p0.x() < p1.x()
+    # view y is the data row: row 0 (high ppm) = view y=0 at the bottom, row ny-1 (low ppm) # at
+    # the top
     q0 = vb.mapViewToScene(pg.QtCore.QPointF(0, 0))
     q1 = vb.mapViewToScene(pg.QtCore.QPointF(0, ny - 1))
-    assert q0.y() > q1.y()  # row 0 (high ppm) at the bottom, row ny-1 (low ppm) at the top
+    assert q0.y() > q1.y()
     viewer.close()
 
 
@@ -322,9 +411,9 @@ def test_viewer_aspect_ratio(qapp: QApplication) -> None:
     viewer = SpectrumViewer()
     viewer.add_spectrum(_synthetic_spectrum())
     viewer.set_aspect_ratio(2.0)
-    assert viewer.plot.getViewBox().state["aspectLocked"] == 2.0
+    assert viewer.plot.getViewBox().state['aspectLocked'] == 2.0
     viewer.set_aspect_ratio(None)
-    assert viewer.plot.getViewBox().state["aspectLocked"] is False
+    assert viewer.plot.getViewBox().state['aspectLocked'] is False
     viewer.close()
 
 
@@ -332,11 +421,11 @@ def test_viewer_aspect_slider(qapp: QApplication) -> None:
     viewer = SpectrumViewer()
     viewer.add_spectrum(_synthetic_spectrum())
     assert viewer.aspect_slider.value() == 0
-    assert viewer.plot.getViewBox().state["aspectLocked"] is False
+    assert viewer.plot.getViewBox().state['aspectLocked'] is False
     viewer.aspect_slider.setValue(200)
-    assert viewer.plot.getViewBox().state["aspectLocked"] == 2.0
+    assert viewer.plot.getViewBox().state['aspectLocked'] == 2.0
     viewer.aspect_slider.setValue(0)
-    assert viewer.plot.getViewBox().state["aspectLocked"] is False
+    assert viewer.plot.getViewBox().state['aspectLocked'] is False
     viewer.close()
 
 
@@ -362,7 +451,7 @@ def test_viewer_zoom_out_bounded(qapp: QApplication) -> None:
     vb = viewer.plot.getViewBox()
     full = vb.viewRange()
     full_x_span = full[0][1] - full[0][0]
-    # zoom out 20 times through the wheel path (scaleBy): the span and the position must stay
+    # zoom out 20 times through the wheel path (scaleBy): the span and the position must stay #
     # inside the full range
     vb.setRange(xRange=(10, 20), yRange=(10, 20), padding=0)
     for _ in range(20):
@@ -384,7 +473,7 @@ def test_viewer_right_click_disabled(qapp: QApplication) -> None:
     viewer.add_spectrum(_synthetic_spectrum())
     vb = viewer.plot.getViewBox()
     # Check that right-click is disabled (no context menu created yet)
-    assert not hasattr(vb, "menu") or vb.menu is None
+    assert not hasattr(vb, 'menu') or vb.menu is None
     viewer.close()
 
 
@@ -414,6 +503,12 @@ def test_spectrum_window_load_failure(
     window.close()
 
 
+
+
+
+
+
+
 def test_viewer_drag_hold_follow_crosshair(qapp: QApplication) -> None:
     """hold left-button drag: eventFilter MouseMove drives crosshair."""
     from qtcompat.QtCore import QEvent, Qt
@@ -425,19 +520,18 @@ def test_viewer_drag_hold_follow_crosshair(qapp: QApplication) -> None:
     assert viewer._strips_active
     scene = viewer.plot.scene()
 
+
     viewer._mouse_left_pressed = True
     calls: list[str] = []
     viewer._move_crosshair = lambda x, y: calls.append(f"move {x} {y}") or None
     viewer._update_strips = lambda y, x: calls.append(f"strips {y} {x}") or None
 
+
     drag_pos = viewer.plot.getViewBox().mapViewToScene(QPointF(40.0, 60.0))
     drag = QMouseEvent(
         QEvent.Type.MouseMove,
-        drag_pos,
-        drag_pos,
-        drag_pos,
-        Qt.MouseButton.NoButton,
-        Qt.MouseButton.LeftButton,
+        drag_pos, drag_pos, drag_pos,
+        Qt.MouseButton.NoButton, Qt.MouseButton.LeftButton,
         Qt.KeyboardModifier.NoModifier,
     )
     viewer.eventFilter(scene, drag)
@@ -466,11 +560,8 @@ def test_viewer_drag_1d_updates_readout(qapp: QApplication) -> None:
     drag_pos = viewer.plot.getViewBox().mapViewToScene(QPointF(20.0, 0.0))
     drag = QMouseEvent(
         QEvent.Type.MouseMove,
-        drag_pos,
-        drag_pos,
-        drag_pos,
-        Qt.MouseButton.NoButton,
-        Qt.MouseButton.LeftButton,
+        drag_pos, drag_pos, drag_pos,
+        Qt.MouseButton.NoButton, Qt.MouseButton.LeftButton,
         Qt.KeyboardModifier.NoModifier,
     )
     viewer.eventFilter(scene, drag)
@@ -478,7 +569,6 @@ def test_viewer_drag_1d_updates_readout(qapp: QApplication) -> None:
     assert "1H" in text and "ppm" in text
     assert text != "Move mouse to read ppm"
     viewer.close()
-
 
 def test_scene_mouse_event_kind_maps_graphics_types(qapp: QApplication) -> None:
     """0.2.148: pyqtgraph scene drag event types GraphicsSceneMouse* must count as press/move."""
@@ -493,7 +583,6 @@ def test_scene_mouse_event_kind_maps_graphics_types(qapp: QApplication) -> None:
     assert viewer._mouse_event_kind(QEvent.Type.GraphicsSceneMouseRelease) == "release"
     viewer.close()
 
-
 def test_value_spinboxes_roundtrip(qapp: QApplication) -> None:
     """0.2.148: values can be typed and sync both ways with the sliders; the level count is
     rounded automatically."""
@@ -504,7 +593,7 @@ def test_value_spinboxes_roundtrip(qapp: QApplication) -> None:
     assert viewer._level_count == 12
     viewer.aspect_label.setValue(2.0)
     assert viewer.aspect_slider.value() == 200
-    viewer.level_label.setValue(12.5)  # inverting the cubic mapping gives about 50
+    viewer.level_label.setValue(12.5)
     assert 45 <= viewer.level_slider.value() <= 55
     # slider -> input
     viewer.count_slider.setValue(20)
@@ -697,13 +786,16 @@ def test_data_bounds_item_tracks_spectrum(qapp: QApplication) -> None:
     vb = viewer.plot.getViewBox()
     vb.setRange(xRange=(10.0, 60.0), yRange=(5.0, 90.0), padding=0)
     assert item.rect() == rect
-    # the bounding box shares the spectrum's coordinate system: its parent is the ViewBox
+    # the bounding box shares the spectrum's coordinate system: its parent is the ViewBox #
+    # childGroup, so it transforms with zoom/pan (it leaves the viewport after zooming in)
+    # the bounding box shares the spectrum's coordinate system: its parent is the ViewBox #
     # childGroup, so it transforms with zoom/pan (it leaves the viewport after zooming in)
     assert item.parentItem() is vb.childGroup
     # ignoreBounds=True: not in addedItems, so it does not take part in auto-scaling
     assert item in vb.addedItems
-    # 0.2.150: removed ignoreBounds (box now in addedItems)
-    # removed together with the spectrum on clear (it no longer exists)
+        # 0.2.150: removed ignoreBounds (box now in addedItems)
+    # 0.2.150: removed ignoreBounds (box now in addedItems) # removed together with the spectrum
+    # on clear (it no longer exists)
     viewer.clear()
     assert viewer._data_bounds_item is None
     viewer.close()
@@ -717,15 +809,12 @@ def test_slice_point_and_ppm_editable(qapp: QApplication) -> None:
     from viewer.spectrum3d_panel import Spectrum3DPanel
 
     axes = [
-        SpectrumAxis(
-            label="H", size=24, sw_hz=3000.0, obs_mhz=500.0, carrier_ppm=4.7, orig_hz=4.7 * 500.0
-        ),
-        SpectrumAxis(
-            label="N", size=16, sw_hz=1200.0, obs_mhz=50.0, carrier_ppm=118.0, orig_hz=118.0 * 50.0
-        ),
-        SpectrumAxis(
-            label="C", size=12, sw_hz=4000.0, obs_mhz=125.0, carrier_ppm=55.0, orig_hz=55.0 * 125.0
-        ),
+        SpectrumAxis(label="H", size=24, sw_hz=3000.0, obs_mhz=500.0,
+                     carrier_ppm=4.7, orig_hz=4.7 * 500.0),
+        SpectrumAxis(label="N", size=16, sw_hz=1200.0, obs_mhz=50.0,
+                     carrier_ppm=118.0, orig_hz=118.0 * 50.0),
+        SpectrumAxis(label="C", size=12, sw_hz=4000.0, obs_mhz=125.0,
+                     carrier_ppm=55.0, orig_hz=55.0 * 125.0),
     ]
     spec = Spectrum3D(data=np.zeros((24, 16, 12)), axes=axes)
     panel = Spectrum3DPanel()
@@ -761,15 +850,18 @@ def test_slice_point_and_ppm_editable(qapp: QApplication) -> None:
     panel.close()
 
 
+
+
 def test_highlight_pans_view_to_peak(qapp: QApplication) -> None:
-    # 0.2.199-patch29bl: when the selected peak is out of view, pan the view to the centre
-    # (the spectrum edge is clamped into the view)
+    # 0.2.199-patch29bl: when the selected peak is out of view, pan the view to the centre #
+    # (the spectrum edge is clamped into the view) # 0.2.199-patch29bm: a horizontal leader line
+    # from the label to the peak marker, with a # gap; hiding the label hides the line too
     spectrum = _synthetic_spectrum()
     viewer = SpectrumViewer()
     viewer.add_spectrum(spectrum)
     viewer.set_peaks(
         [
-            {"H_shift": spectrum.x_axis.ppm_at(30), "N_shift": spectrum.y_axis.ppm_at(20)},
+            {'H_shift': spectrum.x_axis.ppm_at(30), 'N_shift': spectrum.y_axis.ppm_at(20)},
         ]
     )
     vb = viewer.plot.getViewBox()
@@ -782,28 +874,29 @@ def test_highlight_pans_view_to_peak(qapp: QApplication) -> None:
     viewer.close()
 
 
+
 def test_peak_label_leader_line(qapp: QApplication) -> None:
-    # 0.2.199-patch29bm: a horizontal leader line from the label to the peak marker, with a
-    # gap; hiding the label hides the line too
+    # 0.2.199-patch29bl: when the selected peak is out of view, pan the view to the centre #
+    # (the spectrum edge is clamped into the view) # 0.2.199-patch29bm: a horizontal leader line
+    # from the label to the peak marker, with a # gap; hiding the label hides the line too
     spectrum = _synthetic_spectrum()
     viewer = SpectrumViewer()
     viewer.add_spectrum(spectrum)
     viewer.set_peaks(
         [
             {
-                "H_shift": spectrum.x_axis.ppm_at(30),
-                "N_shift": spectrum.y_axis.ppm_at(20),
-                "label": "G1",
+                'H_shift': spectrum.x_axis.ppm_at(30),
+                'N_shift': spectrum.y_axis.ppm_at(20),
+                'label': 'G1',
             }
         ]
     )
     assert viewer._label_overlay.visible_label_count() == 1
-    viewer.set_peak_labels_visible(False)  # hide Assignment: label and line hide together
+    viewer.set_peak_labels_visible(False)
     assert viewer._label_overlay.visible_label_count() == 0
     viewer.set_peak_labels_visible(True)
     assert viewer._label_overlay.visible_label_count() == 1
     viewer.close()
-
 
 def test_label_positions_magnified_about_center(qapp: QApplication) -> None:
     """0.2.199-patch29cl/patch29cm: assignment = the peak layer magnified 1.25 x about the
@@ -816,14 +909,14 @@ def test_label_positions_magnified_about_center(qapp: QApplication) -> None:
     viewer.set_peaks(
         [
             {
-                "H_shift": spectrum.x_axis.ppm_at(30),
-                "N_shift": spectrum.y_axis.ppm_at(20),
-                "label": "G1",
+                'H_shift': spectrum.x_axis.ppm_at(30),
+                'N_shift': spectrum.y_axis.ppm_at(20),
+                'label': 'G1',
             },
             {
-                "H_shift": spectrum.x_axis.ppm_at(40),
-                "N_shift": spectrum.y_axis.ppm_at(30),
-                "label": "G2",
+                'H_shift': spectrum.x_axis.ppm_at(40),
+                'N_shift': spectrum.y_axis.ppm_at(30),
+                'label': 'G2',
             },
         ]
     )
@@ -834,7 +927,9 @@ def test_label_positions_magnified_about_center(qapp: QApplication) -> None:
     vb = viewer.plot.getViewBox()
     for row, (xi, yi) in enumerate(viewer._peak_data_xy):
         lp = viewer._label_widget_pos(row)
-        pp = viewer.plot.mapFromScene(vb.mapViewToScene(QPointF(float(xi), float(yi))))
+        pp = viewer.plot.mapFromScene(
+            vb.mapViewToScene(QPointF(float(xi), float(yi)))
+        )
         assert lp is not None
         assert abs((lp.x() - cx) - 1.25 * (pp.x() - cx)) < 2.0
         assert abs((lp.y() - cy) - 1.25 * (pp.y() - cy)) < 2.0
@@ -843,7 +938,9 @@ def test_label_positions_magnified_about_center(qapp: QApplication) -> None:
     qapp.processEvents()
     for row, (xi, yi) in enumerate(viewer._peak_data_xy):
         lp = viewer._label_widget_pos(row)
-        pp = viewer.plot.mapFromScene(vb.mapViewToScene(QPointF(float(xi), float(yi))))
+        pp = viewer.plot.mapFromScene(
+            vb.mapViewToScene(QPointF(float(xi), float(yi)))
+        )
         assert lp is not None
         assert abs((lp.x() - cx) - 1.25 * (pp.x() - cx)) < 2.0
         assert abs((lp.y() - cy) - 1.25 * (pp.y() - cy)) < 2.0
@@ -860,19 +957,19 @@ def test_label_drag_updates_position(qapp: QApplication) -> None:
     viewer.set_peaks(
         [
             {
-                "H_shift": spectrum.x_axis.ppm_at(30),
-                "N_shift": spectrum.y_axis.ppm_at(20),
-                "label": "G1",
+                'H_shift': spectrum.x_axis.ppm_at(30),
+                'N_shift': spectrum.y_axis.ppm_at(20),
+                'label': 'G1',
             }
         ]
     )
     qapp.processEvents()
-    assert viewer._label_positions[0] is None  # dynamic 1.25 x by default, nothing stored
+    assert viewer._label_positions[0] is None
     lp = viewer._label_widget_pos(0)
     assert lp is not None
     assert viewer._label_at_widget(lp) == 0
     viewer._move_label(0, QPointF(lp.x() + 40.0, lp.y() + 30.0))
-    assert viewer._label_positions[0] is not None  # the screen ratio is stored after dragging
+    assert viewer._label_positions[0] is not None
     assert viewer._label_widget_pos(0) != lp
     viewer.close()
 
@@ -886,8 +983,8 @@ def test_highlight_flash_only_when_requested(qapp: QApplication) -> None:
     viewer.set_peaks(
         [
             {
-                "H_shift": spectrum.x_axis.ppm_at(30),
-                "N_shift": spectrum.y_axis.ppm_at(20),
+                'H_shift': spectrum.x_axis.ppm_at(30),
+                'N_shift': spectrum.y_axis.ppm_at(20),
             }
         ]
     )
@@ -897,28 +994,4 @@ def test_highlight_flash_only_when_requested(qapp: QApplication) -> None:
     assert viewer._flash_item is not None
     viewer._clear_flash()
     assert viewer._flash_item is None
-    viewer.close()
-
-
-def test_contour_controls_reflow_without_overlap(qapp: QApplication) -> None:
-    viewer = SpectrumViewer()
-    controls = viewer.contour_controls
-    controls.setParent(None)
-    controls.resize(1000, 190)
-    controls.show()
-    qapp.processEvents()
-    wide = [w.geometry() for w in controls._groups]
-    assert wide[0].right() < wide[1].left() < wide[2].left()
-    assert len({r.top() for r in wide}) == 1
-    assert all(r.height() < 80 for r in wide)
-    controls.resize(340, 230)
-    qapp.processEvents()
-    narrow = [w.geometry() for w in controls._groups]
-    assert narrow[0].bottom() < narrow[1].top()
-    assert narrow[1].bottom() < narrow[2].top()
-    assert all(r.right() < controls.width() for r in narrow)
-    controls.resize(1000, 190)
-    qapp.processEvents()
-    assert controls._groups[0].geometry().right() < controls._groups[1].geometry().left()
-    controls.close()
     viewer.close()

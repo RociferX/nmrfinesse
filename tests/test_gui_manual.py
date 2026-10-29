@@ -29,15 +29,21 @@ class SyncThread:
         self._target()
 
 
-def _manager(tmp_path: Path, monkeypatch: pytest.MonkeyPatch | None = None) -> ProjectManager:
+def _manager(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch | None = None
+) -> ProjectManager:
     ws = tmp_path / "ws"
     ws.mkdir(exist_ok=True)
     manager = ProjectManager.create_project(ws / "proj", "demo")
     manager.add_experiment("/data/1", title="HSQC")
     manager.save()
     if monkeypatch is not None:
-        monkeypatch.setattr("gui.main_window.WorkspaceManager", lambda: _TempWorkspace(ws))
-        monkeypatch.setattr("core.workspace.WorkspaceManager", lambda *a, **k: _TempWorkspace(ws))
+        monkeypatch.setattr(
+            "gui.main_window.WorkspaceManager", lambda: _TempWorkspace(ws)
+        )
+        monkeypatch.setattr(
+            "core.workspace.WorkspaceManager", lambda *a, **k: _TempWorkspace(ws)
+        )
     return manager
 
 
@@ -47,7 +53,9 @@ class _TempWorkspace:
 
     def list_projects(self):
         return sorted(
-            p for p in self.root.iterdir() if p.is_dir() and (p / "project.json").is_file()
+            p
+            for p in self.root.iterdir()
+            if p.is_dir() and (p / "project.json").is_file()
         )
 
     def ensure(self):
@@ -75,7 +83,9 @@ class FakeManualController:
         self.calls.append(("manual_scripts", exp_id, data_id, params))
         return dict(self.scripts)
 
-    def run_manual_fid_com(self, data, content, exp_id=None, data_id=None, progress=None) -> str:
+    def run_manual_fid_com(
+        self, data, content, exp_id=None, data_id=None, progress=None
+    ) -> str:
         self.calls.append(("run_manual_fid_com", content))
         return "/tmp/test.fid"
 
@@ -109,6 +119,51 @@ def test_script_editor_dialog_content_and_run_signal(qapp: QApplication) -> None
     dialog.close()
 
 
+def test_fid_carrier_editor_explicit_edits_and_cancel(qapp: QApplication) -> None:
+    from qtcompat.QtCore import Qt
+    from qtcompat.QtTest import QTest
+
+    from backend.carrier_choices import replace_script_carrier, script_carrier_values
+
+    original = 'bruk2pipe -xCAR 4.703 -yCAR 118.500 -xSW 6000\n'
+    dialog = ScriptEditorDialog(
+        None, 'sample', script_name='fid.com', content=original,
+        carrier_choices=[{'key': 'xCAR', 'axis': 'F2', 'nucleus': '1H', 'options': [
+            {'value': 4.7, 'label': 'Acquisition', 'description': 'Use acquisition reference.'}
+        ]}], carrier_read=script_carrier_values, carrier_write=replace_script_carrier,
+    )
+    dialog.show()
+    qapp.processEvents()
+    panel = dialog.carrier_panel
+    combo = panel.combos['xCAR']
+    assert dialog.editor.toPlainText() == original
+    combo.setCurrentIndex(1)
+    combo.activated.emit(1)
+    assert '-xCAR 4.700000' in dialog.editor.toPlainText()
+    assert panel.description.text() == 'xCAR: Use acquisition reference.'
+    assert panel.combos['xCAR'].mapTo(panel, panel.combos['xCAR'].rect().topLeft()).y() == (
+        panel.combos['yCAR'].mapTo(panel, panel.combos['yCAR'].rect().topLeft()).y()
+    )
+    combo.setFocus()
+    combo.setEditText('4.85')
+    QTest.keyClick(combo.lineEdit(), Qt.Key.Key_Return)
+    assert '-xCAR 4.85' in dialog.editor.toPlainText()
+    combo.setEditText('55')
+    QTest.keyClick(combo.lineEdit(), Qt.Key.Key_Escape)
+    assert combo.currentText() == '4.85'
+    combo.setEditText('66')
+    dialog.editor.setFocus()
+    qapp.processEvents()
+    assert combo.currentText() == '4.85'
+    combo.setFocus()
+    combo.setEditText('nan')
+    QTest.keyClick(combo.lineEdit(), Qt.Key.Key_Return)
+    assert '-xCAR 4.85' in dialog.editor.toPlainText()
+    dialog.editor.setPlainText('bruk2pipe -yCAR 120\n')
+    assert not combo.isEnabled()
+    dialog.close()
+
+
 def test_main_window_manual_flows(
     tmp_path: Path, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -130,10 +185,10 @@ def test_main_window_manual_flows(
 
     window._open_manual_dialog("fid")
     assert ("manual_fid_com", "exp_001", "d_001") in controller.calls
-    assert "fid.com" in shown  # 0.2.192: non-modal show, does not exec-lock the main window
+    assert "fid.com" in shown  # reopen the same step for the same data: reuse, do not create anew
 
     window._open_manual_dialog("spectrum")
-    assert ("manual_scripts", "exp_001", "d_001", None) in controller.calls  # open script editor
+    assert ("manual_scripts", "exp_001", "d_001", None) in controller.calls
     assert "process.com" in shown
 
     window._open_manual_dialog("peaks")
@@ -196,7 +251,9 @@ def test_script_run_wires_controller(
         {"process.com": "edited and saved script"},
     ) in controller.calls
     assert controller.script_baselines == [{"process.com": baseline}]
-    assert (tmp_path / "process.com").read_text(encoding="utf-8") == ("edited and saved script")
+    assert (tmp_path / "process.com").read_text(encoding="utf-8") == (
+        "edited and saved script"
+    )
     window.close()
     dialog.close()
 
@@ -204,7 +261,7 @@ def test_script_run_wires_controller(
 def test_standalone_fid_diagnostic_menu_pickers(
     tmp_path: Path, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    "Regression coverage: test standalone fid diagnostic menu pickers."
+    """Regression coverage: test standalone fid diagnostic menu pickers."""
     from qtcompat.QtWidgets import QFileDialog
 
     from ui_support.i18n import tr
@@ -266,7 +323,9 @@ def test_standalone_fid_diagnostic_menu_pickers(
     window.close()
 
 
-def test_script_editor_save_writes_script_file(tmp_path: Path, qapp: QApplication) -> None:
+def test_script_editor_save_writes_script_file(
+    tmp_path: Path, qapp: QApplication
+) -> None:
     """The "Save" button writes the script to the data directory at once and closes (0.2.192)."""
     from qtcompat.QtWidgets import QDialog
 
@@ -282,7 +341,9 @@ def test_script_editor_save_writes_script_file(tmp_path: Path, qapp: QApplicatio
     dialog.close()
 
 
-def test_script_editor_run_saves_emits_and_closes(tmp_path: Path, qapp: QApplication) -> None:
+def test_script_editor_run_saves_emits_and_closes(
+    tmp_path: Path, qapp: QApplication
+) -> None:
     """The "Run" button saves first, emits the content and closes automatically (0.2.192)."""
     dialog = ScriptEditorDialog(
         None, "x", script_name="process.com", content="old", save_dir=tmp_path
@@ -297,7 +358,7 @@ def test_script_editor_run_saves_emits_and_closes(tmp_path: Path, qapp: QApplica
     assert (tmp_path / "process.com").read_text(encoding="utf-8") == (
         "#!/bin/csh\nxyz2pipe -in x.fid\n"
     )
-    assert not dialog.isVisible()  # closes automatically after running
+    assert not dialog.isVisible()
     dialog.close()
 
 
@@ -318,27 +379,32 @@ def test_spectrum_panel_peak_add_edit_delete_save(
     peaks = manager.data_dir("exp_001", "d_001", "peaks")
     peaks.mkdir(parents=True, exist_ok=True)
     (peaks / "exp_001-d_001.list").write_text(
-        "Assignment w1 w2 Data Height Volume\nG1  115.000  8.000  0  100  0\n",
+        "Assignment w1 w2 Data Height Volume\n"
+        "G1  115.000  8.000  0  100  0\n",
         encoding="utf-8",
     )
     controller = ProcessingController(manager)
     panel = SpectrumPanel(manager, controller=controller)
     panel.set_context("exp_001", "d_001")
-    panel._load_peaks(spectra / "exp_001-d_001.ft2")  # 0.2.88: load the peak table explicitly
+    panel._load_peaks(spectra / "exp_001-d_001.ft2")
     assert panel.peak_table.rowCount() == 1
 
-    # 0.2.199-patch29ar: a peak is added through the spectrum click entry (snap then
+    # 0.2.199-patch29ar: a peak is added through the spectrum click entry (snap then #
     # callback), no longer by appending a blank row directly
     panel._on_manual_peak_added({"H_shift": 8.5, "N_shift": 117.0, "label": ""})
     assert panel.peak_table.rowCount() == 2
-    panel.peak_table.item(1, 2).setText("7.5")  # H_shift is column 2, after Assignment
-    panel.peak_table.item(1, 3).setText("118.0")  # N_shift at column 3
+    panel.peak_table.item(1, 2).setText("7.5")
+    panel.peak_table.item(1, 3).setText("118.0")
     panel._on_save_peaks()
 
     list_path = peaks / "exp_001-d_001.list"
     saved = list_path.read_text(encoding="utf-8")
     assert "7.5" in saved and "118.0" in saved
-    runs = [run for run in manager.project.workflow_runs if run.workflow_ref == "manual_peaks"]
+    runs = [
+        run
+        for run in manager.project.workflow_runs
+        if run.workflow_ref == "manual_peaks"
+    ]
     assert runs and runs[-1].status == "success"
     assert len(panel.viewer._peaks) == 2
 
@@ -386,12 +452,13 @@ def test_spectrum_panel_3d_columns_auto(
     peaks = manager.data_dir("exp_001", "d_001", "peaks")
     peaks.mkdir(parents=True, exist_ok=True)
     (peaks / "exp_001-d_001.csv").write_text(
-        "Peak_ID,F1_shift,F2_shift,F3_shift,Intensity,SN,label\n1,118.0,120.0,8.0,90,10,G1\n",
+        "Peak_ID,F1_shift,F2_shift,F3_shift,Intensity,SN,label\n"
+        "1,118.0,120.0,8.0,90,10,G1\n",
         encoding="utf-8",
     )
     panel = SpectrumPanel(manager)
     panel.set_context("exp_001", "d_001")
-    panel._load_peaks(spectra / "exp_001-d_001.ft3")  # 0.2.88: load the peak table explicitly
+    panel._load_peaks(spectra / "exp_001-d_001.ft3")
     assert panel.peak_table.rowCount() == 1
     assert "F1_shift" in panel._peak_keys
     assert panel.peak_table.horizontalHeaderItem(1).text() == "Assignment ✓"
@@ -399,35 +466,41 @@ def test_spectrum_panel_3d_columns_auto(
     panel.close()
 
 
+
 def test_peak_table_assignment_column(tmp_path, qapp, monkeypatch) -> None:
-    # 0.2.199-patch29at: the peak table has an Assignment column (label)
+    # 0.2.199-patch29at: the peak table has an Assignment column (label) # 0.2.199-patch29at:
+    # Select / Add peak / 1D are mutually exclusive # 0.2.199-patch29az: the peak-marker spin
+    # box adjusts the viewer marker size # 0.2.199-patch29ba: automatic and manual peaks are
+    # both deletable -- # the delete button is enabled whenever a peak table exists
     manager = _manager(tmp_path, monkeypatch)
-    spectra = manager.data_dir("exp_001", "d_001", "spectra")
+    spectra = manager.data_dir('exp_001', 'd_001', 'spectra')
     spectra.mkdir(parents=True, exist_ok=True)
-    (spectra / "exp_001-d_001.ft2").write_bytes(b"x")
-    peaks = manager.data_dir("exp_001", "d_001", "peaks")
+    (spectra / 'exp_001-d_001.ft2').write_bytes(b'x')
+    peaks = manager.data_dir('exp_001', 'd_001', 'peaks')
     peaks.mkdir(parents=True, exist_ok=True)
-    (peaks / "exp_001-d_001.list").write_text(
-        "Assignment w1 w2 Data Height Volume\nG1  115.000  8.000  0  100  0\n",
-        encoding="utf-8",
+    (peaks / 'exp_001-d_001.list').write_text(
+        'Assignment w1 w2 Data Height Volume\nG1  115.000  8.000  0  100  0\n',
+        encoding='utf-8',
     )
     panel = SpectrumPanel(manager)
-    panel.set_context("exp_001", "d_001")
-    panel._load_peaks(spectra / "exp_001-d_001.ft2")
-    assert panel.peak_table.horizontalHeaderItem(1).text() == "Assignment ✓"
-    # 0.2.199-patch29cr: item text cleared to avoid overlap; merged value read from the widget
-    assert panel.peak_table.item(0, 1).text() == ""
+    panel.set_context('exp_001', 'd_001')
+    panel._load_peaks(spectra / 'exp_001-d_001.ft2')
+    assert panel.peak_table.horizontalHeaderItem(1).text() == 'Assignment ✓'
+
+    assert panel.peak_table.item(0, 1).text() == ''
     widget0 = panel.peak_table.cellWidget(0, 1)
-    # 2D has two segments; a missing segment is filled with ?
-    assert widget0 is not None and widget0.merged_text() == "G1-?"
+    assert widget0 is not None and widget0.merged_text() == 'G1-?'
     panel.close()
 
 
 def test_peak_modes_mutually_exclusive(tmp_path, qapp, monkeypatch) -> None:
-    # 0.2.199-patch29at: Select / Add peak / 1D are mutually exclusive
+    # 0.2.199-patch29at: the peak table has an Assignment column (label) # 0.2.199-patch29at:
+    # Select / Add peak / 1D are mutually exclusive # 0.2.199-patch29az: the peak-marker spin
+    # box adjusts the viewer marker size # 0.2.199-patch29ba: automatic and manual peaks are
+    # both deletable -- # the delete button is enabled whenever a peak table exists
     manager = _manager(tmp_path, monkeypatch)
     panel = SpectrumPanel(manager)
-    panel.set_context("exp_001", "d_001")
+    panel.set_context('exp_001', 'd_001')
     panel.select_peaks_button.setChecked(True)
     assert not panel.add_peak_button.isChecked()
     assert not panel.viewer.show_1d_button.isChecked()
@@ -441,71 +514,73 @@ def test_peak_modes_mutually_exclusive(tmp_path, qapp, monkeypatch) -> None:
     panel.close()
 
 
+
 def test_peak_size_spin_controls_marker(tmp_path, qapp, monkeypatch) -> None:
-    # 0.2.199-patch29az: the peak-marker spin box adjusts the viewer marker size
+    # 0.2.199-patch29at: the peak table has an Assignment column (label) # 0.2.199-patch29at:
+    # Select / Add peak / 1D are mutually exclusive # 0.2.199-patch29az: the peak-marker spin
+    # box adjusts the viewer marker size # 0.2.199-patch29ba: automatic and manual peaks are
+    # both deletable -- # the delete button is enabled whenever a peak table exists
     manager = _manager(tmp_path, monkeypatch)
     panel = SpectrumPanel(manager)
-    panel.set_context("exp_001", "d_001")
+    panel.set_context('exp_001', 'd_001')
     assert panel.peak_size_spin.isEnabled()
     panel.peak_size_spin.setValue(15.0)
     assert panel.viewer._peak_size == 15.0
     panel.close()
 
 
+
 def test_delete_button_enabled_when_peaks_exist(tmp_path, qapp, monkeypatch) -> None:
-    # 0.2.199-patch29ba: automatic and manual peaks are both deletable --
-    # the delete button is enabled whenever a peak table exists
+    # 0.2.199-patch29at: the peak table has an Assignment column (label) # 0.2.199-patch29at:
+    # Select / Add peak / 1D are mutually exclusive # 0.2.199-patch29az: the peak-marker spin
+    # box adjusts the viewer marker size # 0.2.199-patch29ba: automatic and manual peaks are
+    # both deletable -- # the delete button is enabled whenever a peak table exists
     manager = _manager(tmp_path, monkeypatch)
-    spectra = manager.data_dir("exp_001", "d_001", "spectra")
+    spectra = manager.data_dir('exp_001', 'd_001', 'spectra')
     spectra.mkdir(parents=True, exist_ok=True)
-    (spectra / "exp_001-d_001.ft2").write_bytes(b"x")
-    peaks = manager.data_dir("exp_001", "d_001", "peaks")
+    (spectra / 'exp_001-d_001.ft2').write_bytes(b'x')
+    peaks = manager.data_dir('exp_001', 'd_001', 'peaks')
     peaks.mkdir(parents=True, exist_ok=True)
-    (peaks / "exp_001-d_001.list").write_text(
-        "Assignment w1 w2 Data Height Volume\nG1  115.000  8.000  0  100  0\n",
-        encoding="utf-8",
+    (peaks / 'exp_001-d_001.list').write_text(
+        'Assignment w1 w2 Data Height Volume\nG1  115.000  8.000  0  100  0\n',
+        encoding='utf-8',
     )
     panel = SpectrumPanel(manager)
-    panel.set_context("exp_001", "d_001")
-    assert not panel.delete_peak_button.isEnabled()  # disabled when there is no peak table
-    panel._load_peaks(spectra / "exp_001-d_001.ft2")
-    assert panel.delete_peak_button.isEnabled()  # automatic peaks are deletable
-    panel._on_manual_peak_added({"H_shift": 8.5, "N_shift": 117.0, "label": ""})
-    assert panel.delete_peak_button.isEnabled()  # manual peaks are deletable
+    panel.set_context('exp_001', 'd_001')
+    assert not panel.delete_peak_button.isEnabled()
+    panel._load_peaks(spectra / 'exp_001-d_001.ft2')
+    assert panel.delete_peak_button.isEnabled()
+    panel._on_manual_peak_added({'H_shift': 8.5, 'N_shift': 117.0, 'label': ''})
+    assert panel.delete_peak_button.isEnabled()
     panel.close()
 
 
+
 def test_1d_mode_hides_peak_ui(tmp_path, qapp, monkeypatch) -> None:
-    # 0.2.199-patch29bd: turning 1D on hides the peak toolbar / peak table / peak
-    # info; turning it off restores them
+    # 0.2.199-patch29bd: turning 1D on hides the peak toolbar / peak table / peak # info;
+    # turning it off restores them # 0.2.199-patch29bf: clicking the Assignment column header
+    # toggles the on-spectrum labels
     import numpy as np
 
     from viewer.spectrum import Spectrum, SpectrumAxis
 
     manager = _manager(tmp_path, monkeypatch)
-    spectra = manager.data_dir("exp_001", "d_001", "spectra")
+    spectra = manager.data_dir('exp_001', 'd_001', 'spectra')
     spectra.mkdir(parents=True, exist_ok=True)
-    (spectra / "exp_001-d_001.ft2").write_bytes(b"x")
+    (spectra / 'exp_001-d_001.ft2').write_bytes(b'x')
     panel = SpectrumPanel(manager)
     axis_x = SpectrumAxis(
-        label="H",
-        size=64,
-        sw_hz=6000.0,
-        obs_mhz=600.0,
-        carrier_ppm=4.7,
-        orig_hz=None,
+        label='H', size=64, sw_hz=6000.0, obs_mhz=600.0,
+        carrier_ppm=4.7, orig_hz=None,
     )
     axis_y = SpectrumAxis(
-        label="N",
-        size=64,
-        sw_hz=2189.0,
-        obs_mhz=60.8,
-        carrier_ppm=118.0,
-        orig_hz=None,
+        label='N', size=64, sw_hz=2189.0, obs_mhz=60.8,
+        carrier_ppm=118.0, orig_hz=None,
     )
-    panel.set_context("exp_001", "d_001")
+    panel.set_context('exp_001', 'd_001')
     panel.viewer.add_spectrum(Spectrum(np.zeros((64, 64)), [axis_y, axis_x]))
     panel.refresh()
+    panel.peaks_section.set_expanded(True)
     assert panel.peak_toolbar_widget.isVisibleTo(panel)
     assert panel.peak_table.isVisibleTo(panel)
     panel.viewer.show_1d_button.setChecked(True)
@@ -520,56 +595,54 @@ def test_1d_mode_hides_peak_ui(tmp_path, qapp, monkeypatch) -> None:
     panel.close()
 
 
-def test_box_select_no_flash_table_click_flashes(tmp_path, qapp, monkeypatch) -> None:
+
+def test_box_select_no_flash_table_click_flashes(
+    tmp_path, qapp, monkeypatch
+) -> None:
     """0.2.199-patch29bo: box-select syncing does not flash; only a table click does."""
     import numpy as np
 
     from viewer.spectrum import Spectrum, SpectrumAxis
 
     manager = _manager(tmp_path, monkeypatch)
-    spectra = manager.data_dir("exp_001", "d_001", "spectra")
+    spectra = manager.data_dir('exp_001', 'd_001', 'spectra')
     spectra.mkdir(parents=True, exist_ok=True)
-    (spectra / "exp_001-d_001.ft2").write_bytes(b"x")
-    peaks = manager.data_dir("exp_001", "d_001", "peaks")
+    (spectra / 'exp_001-d_001.ft2').write_bytes(b'x')
+    peaks = manager.data_dir('exp_001', 'd_001', 'peaks')
     peaks.mkdir(parents=True, exist_ok=True)
-    (peaks / "exp_001-d_001.list").write_text(
-        "Assignment w1 w2 Data Height Volume\n"
-        "G1  115.000  8.000  0  100  0\n"
-        "G2  112.000  8.500  0  90  0\n",
-        encoding="utf-8",
+    (peaks / 'exp_001-d_001.list').write_text(
+        'Assignment w1 w2 Data Height Volume\n'
+        'G1  115.000  8.000  0  100  0\n'
+        'G2  112.000  8.500  0  90  0\n',
+        encoding='utf-8',
     )
     panel = SpectrumPanel(manager)
     axis_x = SpectrumAxis(
-        label="H",
-        size=64,
-        sw_hz=6000.0,
-        obs_mhz=600.0,
-        carrier_ppm=4.7,
-        orig_hz=None,
+        label='H', size=64, sw_hz=6000.0, obs_mhz=600.0,
+        carrier_ppm=4.7, orig_hz=None,
     )
     axis_y = SpectrumAxis(
-        label="N",
-        size=64,
-        sw_hz=2189.0,
-        obs_mhz=60.8,
-        carrier_ppm=118.0,
-        orig_hz=None,
+        label='N', size=64, sw_hz=2189.0, obs_mhz=60.8,
+        carrier_ppm=118.0, orig_hz=None,
     )
-    panel.set_context("exp_001", "d_001")
+    panel.set_context('exp_001', 'd_001')
     panel.viewer.add_spectrum(Spectrum(np.zeros((64, 64)), [axis_y, axis_x]))
-    panel._load_peaks(spectra / "exp_001-d_001.ft2")
+    panel._load_peaks(spectra / 'exp_001-d_001.ft2')
     panel.viewer._clear_flash()
     # box select: syncing the peak table multi-selection must not flash
     panel._on_peaks_box_selected([0])
     assert panel.viewer._flash_item is None
-    # peak-table click (programmatic selectRow, equivalent to a user click): flash
+    # peak-table click (programmatic selectRow, equivalent to a user click): flash # first click
+    # selects the row → flash
     panel.peak_table.selectRow(1)
     assert panel.viewer._flash_item is not None
     panel.viewer._clear_flash()
     panel.close()
 
 
-def test_click_already_selected_peak_row_flashes(tmp_path, qapp, monkeypatch) -> None:
+def test_click_already_selected_peak_row_flashes(
+    tmp_path, qapp, monkeypatch
+) -> None:
     """0.2.199-patch29cm: clicking an already selected peak-table row also flashes and
     localizes it (selectionChanged does not fire on a selected row, so cellClicked handles it)."""
     import numpy as np
@@ -577,39 +650,32 @@ def test_click_already_selected_peak_row_flashes(tmp_path, qapp, monkeypatch) ->
     from viewer.spectrum import Spectrum, SpectrumAxis
 
     manager = _manager(tmp_path, monkeypatch)
-    spectra = manager.data_dir("exp_001", "d_001", "spectra")
+    spectra = manager.data_dir('exp_001', 'd_001', 'spectra')
     spectra.mkdir(parents=True, exist_ok=True)
-    (spectra / "exp_001-d_001.ft2").write_bytes(b"x")
-    peaks = manager.data_dir("exp_001", "d_001", "peaks")
+    (spectra / 'exp_001-d_001.ft2').write_bytes(b'x')
+    peaks = manager.data_dir('exp_001', 'd_001', 'peaks')
     peaks.mkdir(parents=True, exist_ok=True)
-    (peaks / "exp_001-d_001.list").write_text(
-        "Assignment w1 w2 Data Height Volume\n"
-        "G1  115.000  8.000  0  100  0\n"
-        "G2  112.000  8.500  0  90  0\n",
-        encoding="utf-8",
+    (peaks / 'exp_001-d_001.list').write_text(
+        'Assignment w1 w2 Data Height Volume\n'
+        'G1  115.000  8.000  0  100  0\n'
+        'G2  112.000  8.500  0  90  0\n',
+        encoding='utf-8',
     )
     panel = SpectrumPanel(manager)
     axis_x = SpectrumAxis(
-        label="H",
-        size=64,
-        sw_hz=6000.0,
-        obs_mhz=600.0,
-        carrier_ppm=4.7,
-        orig_hz=None,
+        label='H', size=64, sw_hz=6000.0, obs_mhz=600.0,
+        carrier_ppm=4.7, orig_hz=None,
     )
     axis_y = SpectrumAxis(
-        label="N",
-        size=64,
-        sw_hz=2189.0,
-        obs_mhz=60.8,
-        carrier_ppm=118.0,
-        orig_hz=None,
+        label='N', size=64, sw_hz=2189.0, obs_mhz=60.8,
+        carrier_ppm=118.0, orig_hz=None,
     )
-    panel.set_context("exp_001", "d_001")
+    panel.set_context('exp_001', 'd_001')
     panel.viewer.add_spectrum(Spectrum(np.zeros((64, 64)), [axis_y, axis_x]))
-    panel._load_peaks(spectra / "exp_001-d_001.ft2")
+    panel._load_peaks(spectra / 'exp_001-d_001.ft2')
     panel.viewer._clear_flash()
-    # first click selects the row → flash
+    # peak-table click (programmatic selectRow, equivalent to a user click): flash # first click
+    # selects the row → flash
     panel.peak_table.selectRow(1)
     assert panel.viewer._flash_item is not None
     panel.viewer._clear_flash()
@@ -620,7 +686,9 @@ def test_click_already_selected_peak_row_flashes(tmp_path, qapp, monkeypatch) ->
     panel.close()
 
 
-def test_edit_assignment_applies_immediately(tmp_path, qapp, monkeypatch) -> None:
+def test_edit_assignment_applies_immediately(
+    tmp_path, qapp, monkeypatch
+) -> None:
     """0.2.199-patch29cp: the Assignment column is a fixed hyphen plus per-segment
     inputs (default ?); edits apply to the on-spectrum labels at once and are
     normalized segment by segment per Poky."""
@@ -629,105 +697,90 @@ def test_edit_assignment_applies_immediately(tmp_path, qapp, monkeypatch) -> Non
     from viewer.spectrum import Spectrum, SpectrumAxis
 
     manager = _manager(tmp_path, monkeypatch)
-    spectra = manager.data_dir("exp_001", "d_001", "spectra")
+    spectra = manager.data_dir('exp_001', 'd_001', 'spectra')
     spectra.mkdir(parents=True, exist_ok=True)
-    (spectra / "exp_001-d_001.ft2").write_bytes(b"x")
-    peaks = manager.data_dir("exp_001", "d_001", "peaks")
+    (spectra / 'exp_001-d_001.ft2').write_bytes(b'x')
+    peaks = manager.data_dir('exp_001', 'd_001', 'peaks')
     peaks.mkdir(parents=True, exist_ok=True)
-    (peaks / "exp_001-d_001.list").write_text(
-        "Assignment w1 w2 Data Height Volume\n"
-        "G1  115.000  8.000  0  100  0\n"
-        "G2  112.000  8.500  0  90  0\n",
-        encoding="utf-8",
+    (peaks / 'exp_001-d_001.list').write_text(
+        'Assignment w1 w2 Data Height Volume\n'
+        'G1  115.000  8.000  0  100  0\n'
+        'G2  112.000  8.500  0  90  0\n',
+        encoding='utf-8',
     )
     panel = SpectrumPanel(manager)
     axis_x = SpectrumAxis(
-        label="H",
-        size=64,
-        sw_hz=6000.0,
-        obs_mhz=600.0,
-        carrier_ppm=4.7,
-        orig_hz=None,
+        label='H', size=64, sw_hz=6000.0, obs_mhz=600.0,
+        carrier_ppm=4.7, orig_hz=None,
     )
     axis_y = SpectrumAxis(
-        label="N",
-        size=64,
-        sw_hz=2189.0,
-        obs_mhz=60.8,
-        carrier_ppm=118.0,
-        orig_hz=None,
+        label='N', size=64, sw_hz=2189.0, obs_mhz=60.8,
+        carrier_ppm=118.0, orig_hz=None,
     )
-    panel.set_context("exp_001", "d_001")
+    panel.set_context('exp_001', 'd_001')
     panel.viewer.add_spectrum(Spectrum(np.zeros((64, 64)), [axis_y, axis_x]))
-    panel._load_peaks(spectra / "exp_001-d_001.ft2")
-    # cell = fixed hyphen + per-segment inputs (2D has two segments; an
-    # unassigned one shows the ? placeholder)
+    panel._load_peaks(spectra / 'exp_001-d_001.ft2')
+    # cell = fixed hyphen + per-segment inputs (2D has two segments; an # unassigned one shows
+    # the ? placeholder)
     widget = panel.peak_table.cellWidget(0, 1)
     assert widget is not None and len(widget.lines) == 2
-    assert widget.lines[0].text() == "G1"  # first segment of the old label kept
-    assert widget.lines[1].text() == ""  # default segment has no real text
-    assert widget.lines[1].placeholderText() == "?"  # placeholder shows ?
-    assert panel.peak_table.item(0, 1).text() == ""  # item text cleared to avoid overlap
-    assert widget.merged_text() == "G1-?"
+    assert widget.lines[0].text() == 'G1'
+    assert widget.lines[1].text() == ''
+    assert widget.lines[1].placeholderText() == '?'
+    assert panel.peak_table.item(0, 1).text() == ''
+    assert widget.merged_text() == 'G1-?'
     # second row: typing into the placeholder box replaces it, no "?5" appended
     w2 = panel.peak_table.cellWidget(1, 1)
-    assert w2 is not None and w2.lines[0].text() == "G2"
-    assert w2.lines[1].text() == "" and w2.lines[1].placeholderText() == "?"
+    assert w2 is not None and w2.lines[0].text() == 'G2'
+    assert w2.lines[1].text() == '' and w2.lines[1].placeholderText() == '?'
     from qtcompat.QtTest import QTest
-
     w2.lines[1].setFocus()
-    QTest.keyClicks(w2.lines[1], "5")
+    QTest.keyClicks(w2.lines[1], '5')
     qapp.processEvents()
-    assert w2.lines[1].text() == "5"  # no "?5" appended
-    assert w2.merged_text() == "G2-5"
-    # first row edit: normalized per segment and applied at once
-    widget.lines[0].setText("g1h")
-    widget.lines[1].setText("g1n")
+    assert w2.lines[1].text() == '5'
+    assert w2.merged_text() == 'G2-5'
+
+    widget.lines[0].setText('g1h')
+    widget.lines[1].setText('g1n')
     qapp.processEvents()
-    assert widget.merged_text() == "G1H-G1N"  # Poky 2D, two segments
-    assert panel.peak_table.item(0, 1).text() == ""  # item text stays cleared
-    assert panel.viewer._peaks[0]["label"] == "G1H-G1N"  # applies at once
+    assert widget.merged_text() == 'G1H-G1N'
+    assert panel.peak_table.item(0, 1).text() == ''
+    assert panel.viewer._peaks[0]['label'] == 'G1H-G1N'
     labels = panel.viewer._label_overlay._collect_labels()
-    assert any(text == "G1H-G1N" for _xi, _yi, text in labels)
+    assert any(text == 'G1H-G1N' for _xi, _yi, text in labels)
     panel.close()
 
 
 def test_assignment_header_toggles_labels(tmp_path, qapp, monkeypatch) -> None:
-    # 0.2.199-patch29bf: clicking the Assignment column header toggles the on-spectrum labels
+    # 0.2.199-patch29bd: turning 1D on hides the peak toolbar / peak table / peak # info;
+    # turning it off restores them # 0.2.199-patch29bf: clicking the Assignment column header
+    # toggles the on-spectrum labels
     import numpy as np
 
     from viewer.spectrum import Spectrum, SpectrumAxis
 
     manager = _manager(tmp_path, monkeypatch)
-    spectra = manager.data_dir("exp_001", "d_001", "spectra")
+    spectra = manager.data_dir('exp_001', 'd_001', 'spectra')
     spectra.mkdir(parents=True, exist_ok=True)
-    (spectra / "exp_001-d_001.ft2").write_bytes(b"x")
-    peaks = manager.data_dir("exp_001", "d_001", "peaks")
+    (spectra / 'exp_001-d_001.ft2').write_bytes(b'x')
+    peaks = manager.data_dir('exp_001', 'd_001', 'peaks')
     peaks.mkdir(parents=True, exist_ok=True)
-    (peaks / "exp_001-d_001.list").write_text(
-        "Assignment w1 w2 Data Height Volume\nG1  115.000  8.000  0  100  0\n",
-        encoding="utf-8",
+    (peaks / 'exp_001-d_001.list').write_text(
+        'Assignment w1 w2 Data Height Volume\nG1  115.000  8.000  0  100  0\n',
+        encoding='utf-8',
     )
     panel = SpectrumPanel(manager)
     axis_x = SpectrumAxis(
-        label="H",
-        size=64,
-        sw_hz=6000.0,
-        obs_mhz=600.0,
-        carrier_ppm=4.7,
-        orig_hz=None,
+        label='H', size=64, sw_hz=6000.0, obs_mhz=600.0,
+        carrier_ppm=4.7, orig_hz=None,
     )
     axis_y = SpectrumAxis(
-        label="N",
-        size=64,
-        sw_hz=2189.0,
-        obs_mhz=60.8,
-        carrier_ppm=118.0,
-        orig_hz=None,
+        label='N', size=64, sw_hz=2189.0, obs_mhz=60.8,
+        carrier_ppm=118.0, orig_hz=None,
     )
-    panel.set_context("exp_001", "d_001")
+    panel.set_context('exp_001', 'd_001')
     panel.viewer.add_spectrum(Spectrum(np.zeros((64, 64)), [axis_y, axis_x]))
-    panel._load_peaks(spectra / "exp_001-d_001.ft2")
+    panel._load_peaks(spectra / 'exp_001-d_001.ft2')
     assert panel.viewer._show_peak_labels
     assert panel.viewer._label_overlay.visible_label_count() == 1
     panel._on_peak_header_clicked(1)
@@ -737,48 +790,3 @@ def test_assignment_header_toggles_labels(tmp_path, qapp, monkeypatch) -> None:
     assert panel.viewer._show_peak_labels
     assert panel.viewer._label_overlay.visible_label_count() == 1
     panel.close()
-
-
-def test_fid_carrier_editor_explicit_edits_and_cancel(qapp: QApplication) -> None:
-    from qtcompat.QtCore import Qt
-    from qtcompat.QtTest import QTest
-
-    from backend.carrier_choices import replace_script_carrier, script_carrier_values
-
-    original = 'bruk2pipe -xCAR 4.703 -yCAR 118.500 -xSW 6000\n'
-    dialog = ScriptEditorDialog(
-        None, 'sample', script_name='fid.com', content=original,
-        carrier_choices=[{'key': 'xCAR', 'axis': 'F2', 'nucleus': '1H', 'options': [
-            {'value': 4.7, 'label': 'Acquisition', 'description': 'Use acquisition reference.'}
-        ]}], carrier_read=script_carrier_values, carrier_write=replace_script_carrier,
-    )
-    dialog.show()
-    qapp.processEvents()
-    panel = dialog.carrier_panel
-    combo = panel.combos['xCAR']
-    assert dialog.editor.toPlainText() == original
-    combo.setCurrentIndex(1)
-    combo.activated.emit(1)
-    assert '-xCAR 4.700000' in dialog.editor.toPlainText()
-    assert panel.description.text() == 'xCAR: Use acquisition reference.'
-    assert panel.combos['xCAR'].mapTo(panel, panel.combos['xCAR'].rect().topLeft()).y() == (
-        panel.combos['yCAR'].mapTo(panel, panel.combos['yCAR'].rect().topLeft()).y()
-    )
-    combo.setFocus()
-    combo.setEditText('4.85')
-    QTest.keyClick(combo.lineEdit(), Qt.Key.Key_Return)
-    assert '-xCAR 4.85' in dialog.editor.toPlainText()
-    combo.setEditText('55')
-    QTest.keyClick(combo.lineEdit(), Qt.Key.Key_Escape)
-    assert combo.currentText() == '4.85'
-    combo.setEditText('66')
-    dialog.editor.setFocus()
-    qapp.processEvents()
-    assert combo.currentText() == '4.85'
-    combo.setFocus()
-    combo.setEditText('nan')
-    QTest.keyClick(combo.lineEdit(), Qt.Key.Key_Return)
-    assert '-xCAR 4.85' in dialog.editor.toPlainText()
-    dialog.editor.setPlainText('bruk2pipe -yCAR 120\n')
-    assert not combo.isEnabled()
-    dialog.close()

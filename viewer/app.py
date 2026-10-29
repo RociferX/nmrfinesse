@@ -6,7 +6,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from qtcompat.QtCore import QEvent, QObject, QTimer
 from qtcompat.QtGui import QAction, QDragEnterEvent, QDropEvent
 from qtcompat.QtWidgets import (
     QDialog,
@@ -57,7 +56,9 @@ class SpectrumWindow(QMainWindow):
     def __init__(self, parent=None, start_dir: str = "") -> None:
         super().__init__(parent)
         self.setWindowTitle(tr("NMRFinesse spectrum viewer"))
-        self.resize(1080, 720)
+        from ui_support.window_layout import available_geometry, initial_window_size
+
+        self.resize(initial_window_size(available_geometry(self)))
         self.start_dir = start_dir
         self.viewer = SpectrumViewer()
         self.setCentralWidget(self.viewer)
@@ -96,35 +97,28 @@ class SpectrumWindow(QMainWindow):
         self._aspect_actions: list[QAction] = []
         for label, ratio in _ASPECT_CHOICES:
             action = QAction(label, self, checkable=True)
-            action.triggered.connect(lambda _checked=False, r=ratio: self._set_aspect(r))
+            action.triggered.connect(
+                lambda _checked=False, r=ratio: self._set_aspect(r)
+            )
             aspect_menu.addAction(action)
             self._aspect_actions.append(action)
-        self._aspect_actions[0].setChecked(True)  # Default free.
+        self._aspect_actions[0].setChecked(True)
 
         peak_menu = self.menuBar().addMenu(tr("&Peaks"))
         self._peak_actions: list[QAction] = []
-        for label, mode in (
-            (
-                tr(
-                    "Select peak",
-                ),
-                "select",
-            ),
-            (
-                tr(
-                    "Add peak",
-                ),
-                "add",
-            ),
-            (
-                tr(
-                    "delete peak",
-                ),
-                "delete",
-            ),
-        ):
+        for label, mode in ((tr(
+            "Select "
+            "peak",
+        ), "select"), (tr(
+            "Add peak",
+        ), "add"), (tr(
+            "delete "
+            "peak",
+        ), "delete")):
             action = QAction(label, self, checkable=True)
-            action.triggered.connect(lambda _checked=False, m=mode: self._set_peak_mode(m))
+            action.triggered.connect(
+                lambda _checked=False, m=mode: self._set_peak_mode(m)
+            )
             peak_menu.addAction(action)
             self._peak_actions.append(action)
         self._peak_actions[0].setChecked(True)
@@ -146,9 +140,14 @@ class SpectrumWindow(QMainWindow):
 
     def load_spectrum(self, path: Path, name: str | None = None) -> bool:
         """Load spectrum (.ft2/.ft3) and display; pop up a window on failure and return False."""
-        # 0.2.199-patch29dh(user):axis sequence/Tags only start with The.ft3 header shall prevail,
-        # and metadata will not be transmitted to the loader nuclear/Label (the software handles
-        # axis rearrangement, and the metadata collection sequence cannot be divulged).
+        # 0.2.199-patch29dh(user):axis sequence/Tags only start with The.ft3 header shall
+        # prevail, # and metadata will not be transmitted to the loader nuclear/Label (the
+        # software handles # axis rearrangement, and the metadata collection sequence cannot be
+        # divulged).
+        # 0.2.199-patch29dh(user):axis sequence/Tags only start with The.ft3 header shall
+        # prevail, # and metadata will not be transmitted to the loader nuclear/Label (the
+        # software handles # axis rearrangement, and the metadata collection sequence cannot be
+        # divulged).
         try:
             if path.suffix.lower() == ".ft3":
                 spectrum3d = Spectrum3D.load_from_ft3(path, lazy=True)
@@ -162,7 +161,7 @@ class SpectrumWindow(QMainWindow):
                 spectrum3d = None
                 spectrum = Spectrum.load_from_ft2(path)
                 spectrum1d = None
-        except Exception as exc:  # noqa: BLE001 - Unified prompts such as file damage.
+        except Exception as exc:
             show_info(self, tr("Open failed"), f"{path}\n{exc}")
             return False
         if spectrum3d is not None:
@@ -219,7 +218,9 @@ class SpectrumWindow(QMainWindow):
         self.recent_menu.clear()
         for path in self._recent:
             action = self.recent_menu.addAction(path)
-            action.triggered.connect(lambda _checked=False, p=path: self.load_spectrum(Path(p)))
+            action.triggered.connect(
+                lambda _checked=False, p=path: self.load_spectrum(Path(p))
+            )
 
     # ------------------------------------------------------------- view
 
@@ -230,26 +231,15 @@ class SpectrumWindow(QMainWindow):
 
     def _set_peak_mode(self, mode: str) -> None:
         self.viewer.set_peak_click_mode(mode)
-        choices = (
-            (
-                tr(
-                    "Select peak",
-                ),
-                "select",
-            ),
-            (
-                tr(
-                    "Add peak",
-                ),
-                "add",
-            ),
-            (
-                tr(
-                    "delete peak",
-                ),
-                "delete",
-            ),
-        )
+        choices = ((tr(
+            "Select "
+            "peak",
+        ), "select"), (tr(
+            "Add peak",
+        ), "add"), (tr(
+            "delete "
+            "peak",
+        ), "delete"))
         for action, (_, m) in zip(self._peak_actions, choices):
             action.setChecked(m == mode)
 
@@ -286,32 +276,9 @@ class SpectrumWindow(QMainWindow):
 
 
 def _install_dialog_centering(app) -> None:
-    """Independent viewer: QDialog is automatically centered on the screen when displayed
-    (consistent with the main application, 0.2.112)."""
-    from qtcompat.QtWidgets import QApplication
+    from ui_support.window_layout import install_dialog_layout
 
-    def _center(dialog: QDialog) -> None:
-        parent = dialog.parentWidget()
-        screen = None
-        if parent is not None and parent.window() is not None:
-            screen = QApplication.screenAt(parent.window().frameGeometry().center())
-        screen = screen or QApplication.primaryScreen()
-        if screen is None:
-            return
-        geo = screen.availableGeometry()
-        dialog.move(
-            geo.left() + max(0, (geo.width() - dialog.width()) // 2),
-            geo.top() + max(0, (geo.height() - dialog.height()) // 2),
-        )
-
-    class _DialogCenterFilter(QObject):
-        def eventFilter(self, obj, event) -> bool:
-            if isinstance(obj, QDialog) and event.type() == QEvent.Type.Show:
-                QTimer.singleShot(0, lambda d=obj: _center(d))
-            return super().eventFilter(obj, event)
-
-    app._dialog_centering_filter = _DialogCenterFilter(app)
-    app.installEventFilter(app._dialog_centering_filter)
+    install_dialog_layout(app)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -321,10 +288,13 @@ def main(argv: list[str] | None = None) -> int:
     args = argv if argv is not None else sys.argv[1:]
     paths = [Path(a) for a in args if Path(a).suffix in (".ft2", ".ft3", ".ft1", ".fid")]
     app = QApplication(sys.argv[:1] + args)
+    from ui_support.typography import apply_interface_font, configured_font_size
+
     _install_dialog_centering(app)
     from ui_support.theme import app_icon, apply_dark_theme
 
     apply_dark_theme(app)
+    apply_interface_font(app, configured_font_size())
     _icon = app_icon()
     if _icon is not None:
         app.setWindowIcon(_icon)

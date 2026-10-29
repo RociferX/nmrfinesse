@@ -7,10 +7,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from qtcompat.QtCore import QEvent, QObject, Qt, QTimer
+from qtcompat.QtCore import Qt
 from qtcompat.QtWidgets import (
     QAbstractItemView,
-    QApplication,
     QCheckBox,
     QComboBox,
     QDialog,
@@ -43,57 +42,40 @@ from gui.notes import (
 )
 from qtcompat import Signal
 from ui_support.i18n import tr
-from ui_support.theme import STATUS_COLORS, TEXT_MUTED, TEXT_PRIMARY
+from ui_support.theme import STATUS_COLORS
 
 
 def _center_on_screen(dialog: QDialog) -> None:
-    """Move the dialog box to the centre of the screen where it is located (all pop-up windows are
-    centered, 0.2.112).
-    """
-    parent = dialog.parentWidget()
-    screen = None
-    if parent is not None:
-        window = parent.window()
-        if window is not None:
-            screen = QApplication.screenAt(window.frameGeometry().center())
-    screen = screen or QApplication.primaryScreen()
-    if screen is None:
-        return
-    geo = screen.availableGeometry()
-    dialog.move(
-        geo.left() + max(0, (geo.width() - dialog.width()) // 2),
-        geo.top() + max(0, (geo.height() - dialog.height()) // 2),
-    )
+    from ui_support.window_layout import place_dialog
 
-
-class _DialogCenteringFilter(QObject):
-    """QDialog is automatically centered on the screen (0.2.112) when displayed."""
-
-    def eventFilter(self, obj, event) -> bool:
-        if isinstance(obj, QDialog) and event.type() == QEvent.Type.Show:
-            QTimer.singleShot(0, lambda d=obj: _center_on_screen(d))
-        return super().eventFilter(obj, event)
+    place_dialog(dialog)
 
 
 def install_dialog_centering(app) -> None:
     """Installs the application-level dialog centering filter (main window/Independent viewer entry
     call).
     """
-    app._dialog_centering_filter = _DialogCenteringFilter(app)
-    app.installEventFilter(app._dialog_centering_filter)
+    from ui_support.window_layout import install_dialog_layout
+
+    install_dialog_layout(app)
+
+
+def _section_title(text: str) -> QLabel:
+    label = QLabel(text)
+    label.setObjectName("SectionTitle")
+    return label
+
+
+def _name_button(button, role: str) -> None:
+    if button is not None:
+        button.setObjectName(role)
 
 
 class InfoDialog(QDialog):
-    """Information dialog box with OK button (replacing QMessageBox.information/critical/about).
-    0.2.199-patch29et: Popup type + show front screen centre -- The move() of ordinary QDialog
-    under native Wayland is ignored by the synthesizer (the pop-up window falls in the upper
-    left corner), and the Popup moves to the xdg_popup positioner and can be reliably centered;
-    click outside to close (small information pop-up window semantics).
-    """
+    """Information dialog with native dialog ownership and an explicit OK action."""
 
     def __init__(self, parent: QWidget | None, title: str, text: str) -> None:
         super().__init__(parent)
-        self.setWindowFlag(Qt.WindowType.Popup)
         self.setWindowTitle(title)
         self.setMinimumWidth(360)
         layout = QVBoxLayout(self)
@@ -101,11 +83,9 @@ class InfoDialog(QDialog):
         message.setWordWrap(True)
         layout.addWidget(message)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+        _name_button(buttons.button(QDialogButtonBox.StandardButton.Ok), "PrimaryAction")
         buttons.accepted.connect(self.accept)
         layout.addWidget(buttons)
-
-        self.adjustSize()
-        _center_on_screen(self)
 
     @staticmethod
     def show_info(parent: QWidget | None, title: str, text: str) -> None:
@@ -127,24 +107,29 @@ class MultiSelectDataDialog(QDialog):
         self.setWindowTitle(title)
         self.setMinimumWidth(420)
         layout = QVBoxLayout(self)
-        hint = QLabel(
-            tr(
-                "Check the sample data to be added to the group (multiple choices are available):",
-            )
-        )
+        hint = QLabel(tr(
+            "Check the sample data to be added to the group (multiple choices are "
+            "available):",
+        ))
+        hint.setObjectName("PanelSubtitle")
         layout.addWidget(hint)
         self._list = QListWidget()
-        self._list.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
+        self._list.setSelectionMode(
+            QAbstractItemView.SelectionMode.MultiSelection
+        )
         for data_id, label in items:
             item = QListWidgetItem(f"{label} ({data_id})")
             item.setData(Qt.ItemDataRole.UserRole, data_id)
             self._list.addItem(item)
         layout.addWidget(self._list)
         buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+            QDialogButtonBox.StandardButton.Ok
+            | QDialogButtonBox.StandardButton.Cancel
         )
         buttons.button(QDialogButtonBox.StandardButton.Ok).setText(tr("Join group"))
         buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(tr("Cancel"))
+        _name_button(buttons.button(QDialogButtonBox.StandardButton.Ok), "PrimaryAction")
+        _name_button(buttons.button(QDialogButtonBox.StandardButton.Cancel), "SubtleAction")
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -170,10 +155,13 @@ class ConfirmDialog(QDialog):
         message.setWordWrap(True)
         layout.addWidget(message)
         buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Yes | QDialogButtonBox.StandardButton.No
+            QDialogButtonBox.StandardButton.Yes
+            | QDialogButtonBox.StandardButton.No
         )
         buttons.button(QDialogButtonBox.StandardButton.Yes).setText(tr("yes"))
         buttons.button(QDialogButtonBox.StandardButton.No).setText(tr("no"))
+        _name_button(buttons.button(QDialogButtonBox.StandardButton.Yes), "PrimaryAction")
+        _name_button(buttons.button(QDialogButtonBox.StandardButton.No), "SubtleAction")
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -196,6 +184,7 @@ class ImportExperimentDialog(QDialog):
         self.setMinimumWidth(520)
         layout = QVBoxLayout(self)
         form = QFormLayout()
+        form.addRow(_section_title(tr("Import details")))
 
         self.source_edit = QLineEdit()
         self.source_edit.textChanged.connect(self._update_segmented_hint)
@@ -226,11 +215,10 @@ class ImportExperimentDialog(QDialog):
         for sample_id, name in samples or []:
             self.sample_combo.addItem(f"{sample_id} {name}".strip(), sample_id)
         form.addRow(tr("Related projects:"), self.sample_combo)
-        self.copy_check = QCheckBox(
-            tr(
-                "Link raw data to project (read-only file link, copy if necessary)",
-            )
-        )
+        self.copy_check = QCheckBox(tr(
+            "Link raw data to project (read-only file link, copy if "
+            "necessary)",
+        ))
         self.copy_check.setChecked(True)
         self.copy_check.setToolTip(
             tr(
@@ -253,7 +241,7 @@ class ImportExperimentDialog(QDialog):
             tr(
                 "Use this for one acquisition split into several segments (segmented NUS / "
                 "averaged repeat experiments); leave it unchecked for an ordinary single data set. "
-                'The separate "segmented data or repeated experiment overlay import" entry does '
+                "The separate \"segmented data or repeated experiment overlay import\" entry does "
                 "the same thing — this box is for when you already have the single-import dialog "
                 "open.",
             )
@@ -263,10 +251,13 @@ class ImportExperimentDialog(QDialog):
         layout.addLayout(form)
 
         buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+            QDialogButtonBox.StandardButton.Ok
+            | QDialogButtonBox.StandardButton.Cancel
         )
         buttons.button(QDialogButtonBox.StandardButton.Ok).setText(tr("import"))
         buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(tr("Cancel"))
+        _name_button(buttons.button(QDialogButtonBox.StandardButton.Ok), "PrimaryAction")
+        _name_button(buttons.button(QDialogButtonBox.StandardButton.Cancel), "SubtleAction")
         buttons.accepted.connect(self._validate_and_accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -298,7 +289,7 @@ class ImportExperimentDialog(QDialog):
                         "if they are independent data sets, import them one by one instead.",
                     )
                 )
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
     def _validate_and_accept(self) -> None:
@@ -314,6 +305,8 @@ class ImportExperimentDialog(QDialog):
             from gui.processing import is_segmented_container
 
             if not is_segmented_container(source_path):
+
+
                 InfoDialog.show_info(
                     self,
                     tr("hint"),
@@ -359,6 +352,7 @@ class NotesDialog(QDialog):
         self.setMinimumWidth(460)
         layout = QVBoxLayout(self)
         hint = QLabel(tr("General information (can be left blank):"))
+        hint.setObjectName("PanelSubtitle")
         layout.addWidget(hint)
         self._edits: dict[str, QLineEdit] = {}
         self._combos: dict[str, QComboBox] = {}
@@ -384,6 +378,7 @@ class NotesDialog(QDialog):
                 combo.setEditable(True)
                 combo.addItem("", "")
                 if kind == "experiment":
+
                     combo.addItems(EXPERIMENT_CATEGORY_OPTIONS)
                 else:
                     self._type_combo = combo
@@ -420,10 +415,13 @@ class NotesDialog(QDialog):
                 form.addRow(f"{label}:", edit)
         layout.addLayout(form)
         buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+            QDialogButtonBox.StandardButton.Ok
+            | QDialogButtonBox.StandardButton.Cancel
         )
         buttons.button(QDialogButtonBox.StandardButton.Ok).setText(tr("Sure"))
         buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(tr("Cancel"))
+        _name_button(buttons.button(QDialogButtonBox.StandardButton.Ok), "PrimaryAction")
+        _name_button(buttons.button(QDialogButtonBox.StandardButton.Cancel), "SubtleAction")
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -438,7 +436,10 @@ class NotesDialog(QDialog):
         return str(combo.currentData() or combo.currentText() or "")
 
     def _on_dimension_changed(self, *_args) -> None:
-        """Sample data annotation: dimension changes -> repopulate data type options by presets."""
+        """
+        Sample data annotation: dimension changes -> repopulate data type
+        options by presets.
+        """
         type_combo = self._type_combo
         if type_combo is None:
             return
@@ -469,7 +470,6 @@ class NotesDialog(QDialog):
                 fields[key] = text
         return fields
 
-
 class ScriptEditorDialog(QDialog):
     """Script editor (a simple text editor that imitates VSCode). Load.com content from
     render_scripts / manual_scripts; save written data to process directory (or fid.com of raw
@@ -487,30 +487,34 @@ class ScriptEditorDialog(QDialog):
         processing. The prompts are different.
         """
         if script_name == "fid.com":
-            return tr(
-                "fid.com converts the raw Bruker data into an NMRPipe fid; the backend "
-                "generates it from the acquisition parameters, so it usually needs no "
-                "changes.\n- Conversion parameters (OBS/CAR/SW and friends) come from the "
-                "Bruker parameters; do not change them casually;\n- To adjust the spectrum "
-                "reference or carrier, edit the CAR entries such as -xCAR/-yCAR;\n- For NUS "
-                "data keep the nuslist handling; do not delete the sampling information;\n- "
-                "The output name is already {data id}.fid (Bruker's default test.fid is\n  "
-                "rewritten automatically by the backend; 3D slices keep test%03d.fid); after "
-                "the run the\n  backend moves it back to process/, so there is no need to move "
-                "or rename it by "
-                "hand.",
+            return (
+                tr(
+                    "fid.com converts the raw Bruker data into an NMRPipe fid; the backend "
+                    "generates it from the acquisition parameters, so it usually needs no "
+                    "changes.\n- Conversion parameters (OBS/CAR/SW and friends) come from the "
+                    "Bruker parameters; do not change them casually;\n- To adjust the spectrum "
+                    "reference or carrier, edit the CAR entries such as -xCAR/-yCAR;\n- For NUS "
+                    "data keep the nuslist handling; do not delete the sampling information;\n- "
+                    "The output name is already {data id}.fid (Bruker's default test.fid is\n  "
+                    "rewritten automatically by the backend; 3D slices keep test%03d.fid); after "
+                    "the run the\n  backend moves it back to process/, so there is no need to move "
+                    "or rename it by "
+                    "hand.",
+                )
             )
-        return tr(
-            "The processing script is generated automatically by the backend from the sampling "
-            "mode and usually needs no changes.\n- Poor baseline (wavy spectrum / spurious "
-            "peaks): append `| nmrPipe -fn POLY -auto` after the FT of that dimension, or "
-            "fine-tune POLY -ord;\n- Poor peak shape or resolution: adjust -off/-end/-pow/-c "
-            "of the SP window function, or increase ZF -size;\n- Poor phase: adjust PS -p0/-p1 "
-            "(auto phasing fills them in; normally leave them alone);\n- The -alt/-neg/-real "
-            "flags of the FT are decided automatically from the sampling mode; if you believe "
-            "the choice is wrong you can edit them: -neg flips the spectrum, -alt shifts it by "
-            "half the spectral "
-            "width.",
+        return (
+            tr(
+                "The processing script is generated automatically by the backend from the sampling "
+                "mode and usually needs no changes.\n- Poor baseline (wavy spectrum / spurious "
+                "peaks): append `| nmrPipe -fn POLY -auto` after the FT of that dimension, or "
+                "fine-tune POLY -ord;\n- Poor peak shape or resolution: adjust -off/-end/-pow/-c "
+                "of the SP window function, or increase ZF -size;\n- Poor phase: adjust PS -p0/-p1 "
+                "(auto phasing fills them in; normally leave them alone);\n- The -alt/-neg/-real "
+                "flags of the FT are decided automatically from the sampling mode; if you believe "
+                "the choice is wrong you can edit them: -neg flips the spectrum, -alt shifts it by "
+                "half the spectral "
+                "width.",
+            )
         )
 
     def __init__(
@@ -526,12 +530,12 @@ class ScriptEditorDialog(QDialog):
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle(tr("script editor - {p0} ({p1})", p0=experiment_label, p1=script_name))
-        self.resize(760, 540)
         self.script_name = script_name
         self.save_dir = save_dir
         layout = QVBoxLayout(self)
         hint = QLabel(self._hint_text(script_name))
         hint.setWordWrap(True)
+        hint.setObjectName("PanelSubtitle")
         layout.addWidget(hint)
         self.editor = QPlainTextEdit()
         self.editor.setPlainText(content)
@@ -549,23 +553,26 @@ class ScriptEditorDialog(QDialog):
             carrier_scroll = QScrollArea()
             carrier_scroll.setWidgetResizable(True)
             carrier_scroll.setFrameShape(QFrame.Shape.NoFrame)
-            carrier_scroll.setMaximumHeight(160)
             carrier_scroll.setWidget(self.carrier_panel)
             layout.addWidget(carrier_scroll)
-            self.resize(900, 640)
         layout.addWidget(self.editor, 1)
         buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+            QDialogButtonBox.StandardButton.Ok
+            | QDialogButtonBox.StandardButton.Cancel
         )
         self.save_btn = buttons.button(QDialogButtonBox.StandardButton.Ok)
         self.save_btn.setText(tr("save"))
+        _name_button(self.save_btn, "SubtleAction")
         buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(tr("Cancel"))
-        self.run_btn = buttons.addButton(tr("run"), QDialogButtonBox.ButtonRole.ActionRole)
-        self.run_btn.setToolTip(
-            tr(
-                "Save the current script to the data directory and run (register WorkflowRun)",
-            )
+        _name_button(buttons.button(QDialogButtonBox.StandardButton.Cancel), "SubtleAction")
+        self.run_btn = buttons.addButton(
+            tr("run"), QDialogButtonBox.ButtonRole.ActionRole
         )
+        _name_button(self.run_btn, "PrimaryAction")
+        self.run_btn.setToolTip(tr(
+            "Save the current script to the data directory and run (register "
+            "WorkflowRun)",
+        ))
         self.run_btn.clicked.connect(self._on_run)
         buttons.accepted.connect(self._on_save)
         buttons.rejected.connect(self.reject)
@@ -621,7 +628,7 @@ class RunHistoryDialog(QDialog):
         project_root: Path | str | None = None,
     ) -> None:
         super().__init__(parent)
-        self.setWindowTitle(tr("run history - {p0}", p0=project_name or "NMRFinesse"))
+        self.setWindowTitle(tr("run history - {p0}", p0=project_name or 'NMRFinesse'))
         self.project_root = Path(project_root) if project_root else None
         self._current_snapshot = ""
         self.resize(720, 480)
@@ -646,7 +653,7 @@ class RunHistoryDialog(QDialog):
 
         self.detail_label = QLabel(tr("Select a row to view details"))
         self.detail_label.setWordWrap(True)
-        self.detail_label.setStyleSheet(f"color: {TEXT_PRIMARY};")
+        self.detail_label.setObjectName("PanelSubtitle")
         layout.addWidget(self.detail_label)
         self.snapshot_button = QPushButton(tr("Open snapshot directory"))
         self.snapshot_button.setEnabled(False)
@@ -684,8 +691,8 @@ class RunHistoryDialog(QDialog):
                 p1=run.status,
                 p2=run.workflow_ref,
                 p3=run.experiment_id,
-                p4=run.message or "-",
-                p5=snapshot or "(none)",
+                p4=run.message or '-',
+                p5=snapshot or '(none)',
                 p6=scripts,
                 p7=outputs,
             )
@@ -699,7 +706,6 @@ class RunHistoryDialog(QDialog):
         from qtcompat.QtGui import QDesktopServices
 
         QDesktopServices.openUrl(QUrl.fromLocalFile(self._current_snapshot))
-
 
 class BatchSummaryDialog(QDialog):
     """Batch processing summary: success/failure list; Double-click the failed item to locate the
@@ -715,7 +721,7 @@ class BatchSummaryDialog(QDialog):
         project_name: str = "",
     ) -> None:
         super().__init__(parent)
-        self.setWindowTitle(tr("Batch processing summary - {p0}", p0=project_name or "NMRFinesse"))
+        self.setWindowTitle(tr("Batch processing summary - {p0}", p0=project_name or 'NMRFinesse'))
         self.resize(520, 380)
         layout = QVBoxLayout(self)
         info = QLabel(str(summary.get("info", "")))
@@ -724,21 +730,23 @@ class BatchSummaryDialog(QDialog):
         self.list_widget = QListWidget()
         layout.addWidget(self.list_widget, 1)
         for item in summary.get("items", []):
-            status = tr("success") if item.get("ok") else tr("fail: ") + str(item.get("error", ""))
+            status = (
+                tr("success")
+                if item.get("ok")
+                else tr("fail: ") + str(item.get("error", ""))
+            )
             list_item = QListWidgetItem(
                 f"{item.get('data_id', '')} {item.get('step', '')} · {status}"
             )
             list_item.setData(Qt.ItemDataRole.UserRole, item.get("data_id", ""))
             self.list_widget.addItem(list_item)
         self.list_widget.itemDoubleClicked.connect(self._on_item_activated)
-        hint = QLabel(
-            tr(
-                "Double-click an entry to locate the corresponding data (failed items) or view the "
-                "status on the "
-                "left",
-            )
-        )
-        hint.setStyleSheet(f"color: {TEXT_MUTED};")
+        hint = QLabel(tr(
+            "Double-click an entry to locate the corresponding data (failed items) or view the "
+            "status on the "
+            "left",
+        ))
+        hint.setObjectName("MutedText")
         layout.addWidget(hint)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         buttons.rejected.connect(self.reject)
@@ -760,7 +768,6 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle(tr("Software settings"))
 
-        self.resize(560, 480)
         self.setMinimumWidth(520)
         from gui.settings import (
             DEFAULTS,
@@ -771,10 +778,16 @@ class SettingsDialog(QDialog):
 
         settings = load_settings()
         layout = QVBoxLayout(self)
+        title = QLabel(tr("Software settings"))
+        title.setObjectName("PanelTitle")
+        layout.addWidget(title)
         form = QFormLayout()
+        form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
+        form.addRow(_section_title(tr("Tool paths")))
         self.nmrpipe_edit = QLineEdit(str(settings.get("nmrpipe_path", "")))
         self.nmrpipe_edit.setPlaceholderText(tr("Not configured (auto-find)"))
         form.addRow(tr("NMRPipe path"), self.nmrpipe_edit)
+
 
         self.bruker_edit = QLineEdit(str(settings.get("bruker_path", "")))
         self.bruker_edit.setPlaceholderText(tr("Not configured (auto-find)"))
@@ -782,11 +795,16 @@ class SettingsDialog(QDialog):
         self.proj3d_edit = QLineEdit(str(settings.get("proj3d_path", "")))
         self.proj3d_edit.setPlaceholderText(tr("Not configured (auto-find)"))
         form.addRow(tr("proj3D.tcl path"), self.proj3d_edit)
+        self.pipe2ucsf_edit = QLineEdit(str(settings.get("pipe2ucsf_path", "")))
+        self.pipe2ucsf_edit.setPlaceholderText(tr("Not configured (auto-find)"))
+        form.addRow(tr("pipe2ucsf path"), self.pipe2ucsf_edit)
+
 
         form.addRow(tr("SMILE plugin"), self._build_smile_status(settings))
 
         self.data_root_edit = QLineEdit(str(settings.get("data_root", "")))
         self.data_root_edit.setPlaceholderText(tr("default: {p0}", p0=Path.home()))
+        form.addRow(_section_title(tr("Interface")))
         data_root_help = tr(
             "Default starting folder when browsing to import data "
             "and no input path has been entered. "
@@ -808,6 +826,7 @@ class SettingsDialog(QDialog):
         data_root_label.setToolTip(data_root_help)
         form.addRow(data_root_label, data_root_widget)
 
+
         self.language_combo = QComboBox()
         for _label, _code in (
             (tr("Follow the system language"), "auto"),
@@ -824,6 +843,19 @@ class SettingsDialog(QDialog):
             )
         )
         form.addRow(tr("Interface language"), self.language_combo)
+        self.font_size_combo = QComboBox()
+        self.font_size_combo.addItem(tr('Automatic (screen size)'), 0)
+        for size in range(8, 19):
+            self.font_size_combo.addItem(f'{size} pt', size)
+        self.font_size_combo.setCurrentIndex(max(0, self.font_size_combo.findData(
+            settings.get('interface_font_size', 0)
+        )))
+        self.font_size_combo.setToolTip(tr(
+            'Automatic uses the available screen space. Manual sizes are limited to 8–18 pt. '
+            'The new size applies when you save.'
+        ))
+        form.addRow(tr('Interface font size'), self.font_size_combo)
+        form.addRow(_section_title(tr("Peak matching")))
         self.linewidth_spins: dict[str, QDoubleSpinBox] = {}
         self.tolerance_spins: dict[str, QDoubleSpinBox] = {}
         for nucleus, default in DEFAULTS["linewidth_hz"].items():
@@ -834,12 +866,18 @@ class SettingsDialog(QDialog):
             form.addRow(tr("{p0} Default line width (Hz)", p0=nucleus), spin)
             self.linewidth_spins[nucleus] = spin
 
-            tol_default = float(DEFAULTS["alignment_tolerance_ppm"].get(nucleus, 0.2))
+
+            tol_default = float(
+                DEFAULTS["alignment_tolerance_ppm"].get(nucleus, 0.2)
+            )
             tol_spin = QDoubleSpinBox()
             tol_spin.setRange(0.001, 2.0)
             tol_spin.setDecimals(3)
             tol_spin.setValue(
-                float((settings.get("alignment_tolerance_ppm") or {}).get(nucleus, tol_default))
+                float(
+                    (settings.get("alignment_tolerance_ppm") or {})
+                    .get(nucleus, tol_default)
+                )
             )
             tol_spin.setToolTip(
                 tr(
@@ -850,9 +888,9 @@ class SettingsDialog(QDialog):
             )
             form.addRow(tr("{p0} alignment tolerance (ppm)", p0=nucleus), tol_spin)
             self.tolerance_spins[nucleus] = tol_spin
+        form.addRow(_section_title(tr("SMILE")))
 
         from backend.config import smile_thread_limit
-
         sm_limit = smile_thread_limit()
         self.smile_thread_spin = QSpinBox()
         self.smile_thread_spin.setRange(1, max(1, sm_limit))
@@ -870,13 +908,6 @@ class SettingsDialog(QDialog):
             )
         )
         form.addRow(tr("SMILE Number of threads"), self.smile_thread_spin)
-        form_widget = QWidget()
-        form_widget.setLayout(form)
-        self.settings_scroll = QScrollArea()
-        self.settings_scroll.setWidgetResizable(True)
-        self.settings_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.settings_scroll.setWidget(form_widget)
-        layout.addWidget(self.settings_scroll, 1)
         pipeline = settings.get("pipeline") or {}
         self.simple_mode_check = QCheckBox(
             tr("Simple mode (just press the previous step product file to determine the status)")
@@ -886,32 +917,47 @@ class SettingsDialog(QDialog):
                 "When on, the Pipeline only checks whether the output files exist "
                 "(.fid/.ft2/.ft3/.list/report); it no longer compares input or script "
                 "fingerprints, and it does not show "
-                '"stale"',
+                "\"stale\"",
             )
         )
-        self.simple_mode_check.setChecked(bool(pipeline.get("simple_mode", False)))
+        self.simple_mode_check.setChecked(
+            bool(pipeline.get("simple_mode", False))
+        )
 
         self.simple_mode_check.setVisible(not is_appimage())
-        layout.addWidget(self.simple_mode_check)
+        form.addRow(self.simple_mode_check)
+        form_widget = QWidget()
+        form_widget.setLayout(form)
+        self.settings_scroll = QScrollArea()
+        self.settings_scroll.setWidgetResizable(True)
+        self.settings_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.settings_scroll.setWidget(form_widget)
+        layout.addWidget(self.settings_scroll, 1)
         if is_appimage():
-            dest = str(Path.home() / ".config" / "NMRFinesse" / SETTINGS_FILENAME)
+            dest = str(
+                Path.home() / ".config" / "NMRFinesse" / SETTINGS_FILENAME
+            )
         else:
             dest = "nmrfinesse_data/config/" + SETTINGS_FILENAME
         hint = QLabel(
             tr(
-                "save to {p0}, it will take effect after restarting; the default value will be "
-                "displayed when not "
-                "configured",
+                'Settings are saved to {p0}. Font size applies when saved; '
+                'restart to change the interface language.',
                 p0=dest,
             )
         )
         hint.setWordWrap(True)
-        hint.setStyleSheet(f"color: {TEXT_MUTED};")
+        hint.setObjectName("MutedText")
         layout.addWidget(hint)
         buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+            QDialogButtonBox.StandardButton.Ok
+            | QDialogButtonBox.StandardButton.Cancel
         )
+        _name_button(buttons.button(QDialogButtonBox.StandardButton.Ok), "PrimaryAction")
+        _name_button(buttons.button(QDialogButtonBox.StandardButton.Cancel), "SubtleAction")
         buttons.accepted.connect(self._on_accept)
+        buttons.button(QDialogButtonBox.StandardButton.Ok).setText(tr('save'))
+        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(tr('Cancel'))
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
@@ -927,7 +973,8 @@ class SettingsDialog(QDialog):
             text = tr("Available ({p0})", p0=version) if version else tr("Available")
         elif status == "missing":
             text = tr(
-                "Not detected (SMILE is an NMRPipe plugin; install it to enable NUS reconstruction)"
+                "Not detected (SMILE is an NMRPipe plugin; install it to enable NUS "
+                "reconstruction)"
             )
         else:
             text = tr("Not checked yet")
@@ -957,15 +1004,19 @@ class SettingsDialog(QDialog):
 
         settings = {
             "language": str(self.language_combo.currentData() or "auto"),
+            'interface_font_size': self.font_size_combo.currentData(),
             "nmrpipe_path": self.nmrpipe_edit.text().strip(),
             "bruker_path": self.bruker_edit.text().strip(),
             "proj3d_path": self.proj3d_edit.text().strip(),
+            "pipe2ucsf_path": self.pipe2ucsf_edit.text().strip(),
             "data_root": self.data_root_edit.text().strip(),
             "linewidth_hz": {
-                nucleus: spin.value() for nucleus, spin in self.linewidth_spins.items()
+                nucleus: spin.value()
+                for nucleus, spin in self.linewidth_spins.items()
             },
             "alignment_tolerance_ppm": {
-                nucleus: spin.value() for nucleus, spin in self.tolerance_spins.items()
+                nucleus: spin.value()
+                for nucleus, spin in self.tolerance_spins.items()
             },
             "pipeline": {
                 "simple_mode": self.simple_mode_check.isChecked(),

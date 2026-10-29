@@ -11,9 +11,10 @@ from __future__ import annotations
 import threading
 from pathlib import Path
 
-from qtcompat.QtCore import QItemSelectionModel, QSignalBlocker, Qt, QTimer
+from qtcompat.QtCore import QEvent, QItemSelectionModel, QSignalBlocker, Qt, QTimer
 from qtcompat.QtWidgets import (
     QAbstractItemView,
+    QBoxLayout,
     QDoubleSpinBox,
     QFileDialog,
     QHBoxLayout,
@@ -23,6 +24,7 @@ from qtcompat.QtWidgets import (
     QMenu,
     QProgressBar,
     QPushButton,
+    QSizePolicy,
     QSplitter,
     QTableWidget,
     QTableWidgetItem,
@@ -33,6 +35,7 @@ from qtcompat.QtWidgets import (
 from core.project import ProjectManager
 from core.user_errors import describe_exception
 from gui.dialogs import InfoDialog
+from gui.overlay_comparison import OverlayComparison
 from gui.peaks_io import (
     export_peaks_poky,
     import_peaks_poky,
@@ -41,6 +44,7 @@ from gui.peaks_io import (
 )
 from gui.processing import ProcessingController
 from qtcompat import Signal
+from ui_support.collapsible import CollapsibleSection
 from ui_support.i18n import tr
 from ui_support.theme import TEXT_MUTED
 from viewer.spectrum3d_panel import Spectrum3DPanel
@@ -125,11 +129,13 @@ class _AssignmentCell(QWidget):
             if i:
                 dash = QLabel("-")
                 dash.setStyleSheet("color: #c8c8c8; background: transparent;")
-                dash.setFixedWidth(10)
+                dash.setMinimumWidth(dash.fontMetrics().horizontalAdvance("-") + 4)
                 lay.addWidget(dash)
             le = QLineEdit()
             le.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            le.setFixedWidth(38)
+            segment_width = le.fontMetrics().horizontalAdvance("G1CA") + 14
+            le.setMinimumWidth(segment_width)
+            le.setMaximumWidth(segment_width + le.fontMetrics().horizontalAdvance("WW"))
             le.setMaxLength(12)
 
             if segs[i] in ("", "?"):
@@ -137,7 +143,8 @@ class _AssignmentCell(QWidget):
             else:
                 le.setText(segs[i])
             le.setStyleSheet(
-                "QLineEdit { color: #e8e8e8; } QLineEdit::placeholder { color: #8a8a8a; }"
+                "QLineEdit { color: #e8e8e8; } "
+                "QLineEdit::placeholder { color: #8a8a8a; }"
             )
             self.lines.append(le)
             lay.addWidget(le)
@@ -147,11 +154,26 @@ class _AssignmentCell(QWidget):
     def _on_text_changed(self, *_args) -> None:
         self.edited.emit(self.row)
 
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.FontChange and hasattr(self, 'lines'):
+            QTimer.singleShot(0, self, self._fit_segment_widths)
+
+    def _fit_segment_widths(self):
+        for line in self.lines:
+            metrics = line.fontMetrics()
+            width = metrics.horizontalAdvance('G1CA') + 14
+            line.setMinimumWidth(width)
+            line.setMaximumWidth(width + metrics.horizontalAdvance('WW'))
+
     def merged_text(self) -> str:
         """The label of the current merged segments (poky normalisation segment by segment, empty
         segment -> ?).
         """
-        segs = [normalize_poky_label((le.text() or "").strip(), ndim=1) or "?" for le in self.lines]
+        segs = [
+            normalize_poky_label((le.text() or "").strip(), ndim=1) or "?"
+            for le in self.lines
+        ]
         return "-".join(segs)
 
 
@@ -166,11 +188,13 @@ class SpectrumPanel(QWidget):
     _ft2_ready = Signal(int, object, object)
     _ft2_failed = Signal(int, object, str)
 
+
     plane_loaded = Signal(int, int)
     _plane_ready = Signal(int, int, int, int)  # (token, index, ready, total)
     _plane_stream_done = Signal(int)  # token
 
     expand_requested = Signal(bool)
+
 
     _ASYNC_FT3_MIN_BYTES = 32 * 1024 * 1024
     _ASYNC_FT2_MIN_BYTES = 8 * 1024 * 1024
@@ -192,6 +216,7 @@ class SpectrumPanel(QWidget):
         self._applying_label_format = False
         self._viewer3d_state: dict[tuple[str, str], int] = {}
 
+
         self._display_states: dict[tuple[str, str], dict] = {}
         self._restoring_display_state = False
         self._peak_keys: tuple[str, ...] = (
@@ -202,14 +227,18 @@ class SpectrumPanel(QWidget):
             "SN",
         )
 
+
         self._stream_thread = None
         self._stream_cancel = None
         self._stream_token = 0
         self._stream_axis = -1
 
+
         self._stream_key: tuple[object, int] | None = None
         self._planes_ready = 0
         self._planes_total = 0
+
+
 
         self._ft3_load_token = 0
         self._autoload_timer = QTimer(self)
@@ -218,6 +247,7 @@ class SpectrumPanel(QWidget):
         self._ft2_lock = threading.Lock()
         self._ft2_pending = None
         self._ft2_worker_active = False
+
 
         self.setObjectName("PanelCard")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
@@ -240,8 +270,11 @@ class SpectrumPanel(QWidget):
         self._ft2_failed.connect(self._on_ft2_failed)
         self._spectrum3d_panel.slice_changed.connect(self._render_3d_view)
         self._spectrum3d_panel.slice_changed.connect(self._ensure_plane_stream)
-        self._spectrum3d_panel.plane_combo.currentIndexChanged.connect(self._save_3d_state)
+        self._spectrum3d_panel.plane_combo.currentIndexChanged.connect(
+            self._save_3d_state
+        )
         self.viewer.add_control_panel(self._spectrum3d_panel)
+
 
         self.loading_indicator = QWidget()
         self.loading_indicator.setObjectName("SpectrumLoadingIndicator")
@@ -253,8 +286,15 @@ class SpectrumPanel(QWidget):
         indicator_row.addWidget(self.loading_label)
         self.loading_progress = QProgressBar()
         self.loading_progress.setTextVisible(True)
-        self.loading_progress.setFixedHeight(14)
-        self.loading_progress.setFixedWidth(180)
+        self.loading_progress.setMinimumHeight(
+            self.loading_progress.fontMetrics().height() + 8
+        )
+        self.loading_progress.setMinimumWidth(
+            max(
+                self.loading_progress.sizeHint().width(),
+                self.loading_progress.fontMetrics().horizontalAdvance("1000 / 1000") + 24,
+            )
+        )
         indicator_row.addWidget(self.loading_progress)
         indicator_row.addStretch(1)
         self.loading_indicator.setVisible(False)
@@ -264,11 +304,9 @@ class SpectrumPanel(QWidget):
         self.file_list = QListWidget()
         self.file_list.setAutoFillBackground(False)
         self.viewer.layer_list.setAutoFillBackground(False)
-        self.file_list.setMaximumWidth(190)
         self.file_list.itemClicked.connect(self._on_file_clicked)
 
         self.peak_toolbar = QHBoxLayout()
-
         self.peak_toolbar.setSpacing(12)
         self.peak_toolbar.addWidget(self.viewer.show_peaks_checkbox)
 
@@ -302,11 +340,10 @@ class SpectrumPanel(QWidget):
         self.peak_toolbar2.setSpacing(12)
         self.delete_peak_button = QPushButton("Delete selected")
         self.delete_peak_button.setEnabled(False)
-        self.delete_peak_button.setToolTip(
-            tr(
-                "Delete the selected rows from the peak table (automatic and manual peaks alike)",
-            )
-        )
+        self.delete_peak_button.setToolTip(tr(
+            "Delete the selected rows from the peak table (automatic and manual peaks "
+            "alike)",
+        ))
         self.delete_peak_button.clicked.connect(self._on_delete_peak)
         self.peak_toolbar2.addWidget(self.delete_peak_button)
         self.import_poky_button = QPushButton("Import peaks")
@@ -334,11 +371,10 @@ class SpectrumPanel(QWidget):
         self.peak_toolbar2.addWidget(self.export_poky_button)
         self.save_peaks_button = QPushButton("Save peaks")
         self.save_peaks_button.setEnabled(False)
-        self.save_peaks_button.setToolTip(
-            tr(
-                "Write peak table back to data/peaks/<exp>-<data>.list and register",
-            )
-        )
+        self.save_peaks_button.setToolTip(tr(
+            "Write peak table back to data/peaks/<exp>-<data>.list and "
+            "register",
+        ))
         self.save_peaks_button.clicked.connect(self._on_save_peaks)
         self.peak_toolbar2.addWidget(self.save_peaks_button)
 
@@ -348,38 +384,55 @@ class SpectrumPanel(QWidget):
         self.peak_size_spin.setSingleStep(0.5)
         self.peak_size_spin.setDecimals(1)
         self.peak_size_spin.setValue(1.5)
-        self.peak_size_spin.setToolTip(
-            tr(
-                "Marker size (data coordinate units, scaled with spectrum)",
-            )
-        )
+        self.peak_size_spin.setToolTip(tr(
+            "Marker size (data coordinate units, scaled with "
+            "spectrum)",
+        ))
         self.peak_size_spin.setEnabled(False)
         self.peak_size_spin.valueChanged.connect(self.viewer.set_peak_size)
 
-        self.viewer.level_slider.valueChanged.connect(self._save_display_state)
+
+        self.viewer.level_slider.valueChanged.connect(
+            self._save_display_state
+        )
         self.viewer.level_label.valueChanged.connect(self._save_display_state)
-        self.viewer.count_slider.valueChanged.connect(self._save_display_state)
-        self.viewer.aspect_slider.valueChanged.connect(self._save_display_state)
+        self.viewer.hide_positive.toggled.connect(self._save_display_state)
+        self.viewer.hide_negative.toggled.connect(self._save_display_state)
+        self.viewer.count_slider.valueChanged.connect(
+            self._save_display_state
+        )
+        self.viewer.aspect_slider.valueChanged.connect(
+            self._save_display_state
+        )
         self.peak_size_spin.valueChanged.connect(self._save_display_state)
         self.peak_toolbar.addWidget(self.peak_size_label)
         self.peak_toolbar.addWidget(self.peak_size_spin)
         self.peak_toolbar.addStretch(1)
 
         self.peak_table = QTableWidget(0, 5)
-        self.peak_table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.peak_table.setSelectionMode(
+            QAbstractItemView.SelectionMode.ExtendedSelection
+        )
         self.peak_table.setHorizontalHeaderLabels(list(self._peak_keys))
         self.peak_table.horizontalHeader().setStretchLastSection(True)
-        self.peak_table.setMaximumHeight(150)
+        self.peak_table.setMaximumHeight(
+            max(150, self.peak_table.fontMetrics().height() * 6 + 32)
+        )
 
         self._syncing_table_selection = False
         self.peak_table.itemSelectionChanged.connect(self._on_peak_row_selected)
 
+
         self.peak_table.cellClicked.connect(self._on_peak_cell_clicked)
         self.peak_table.itemChanged.connect(self._on_peak_cell_edited)
 
-        self.peak_table.horizontalHeader().sectionClicked.connect(self._on_peak_header_clicked)
+        self.peak_table.horizontalHeader().sectionClicked.connect(
+            self._on_peak_header_clicked
+        )
 
-        self.peak_table.verticalScrollBar().valueChanged.connect(self._ensure_assignment_widgets)
+        self.peak_table.verticalScrollBar().valueChanged.connect(
+            self._ensure_assignment_widgets
+        )
         self._peaks: list[dict] = []
         self._current_spectrum: Path | None = None
         self._viewer_1d_active = False
@@ -395,9 +448,15 @@ class SpectrumPanel(QWidget):
         self.placeholder.setWordWrap(True)
         self.placeholder.setStyleSheet(f"color: {TEXT_MUTED};")
 
+
+
+
         self.lists_row_widget = QWidget()
 
-        self.lists_row_widget.setMaximumHeight(110)
+        self.lists_row_widget.setMaximumHeight(
+            140 + max(0, self.fontMetrics().height() - 17) * 6
+        )
+
 
         lists_column = QVBoxLayout(self.lists_row_widget)
         lists_column.setContentsMargins(0, 0, 0, 0)
@@ -409,14 +468,17 @@ class SpectrumPanel(QWidget):
         self.lists_row.setSpacing(16)
         files_box = QVBoxLayout()
         files_box.setSpacing(2)
-        files_box.addWidget(QLabel("Files"))
+        files_box.addWidget(QLabel(tr("Files")))
         files_box.addWidget(self.file_list, 1)
         layers_box = QVBoxLayout()
         layers_box.setSpacing(2)
-        layers_box.addWidget(QLabel("Layers"))
+        layers_box.addWidget(QLabel(tr("Layers")))
         layers_box.addWidget(self.viewer.layer_list, 1)
         self.lists_row.addLayout(files_box, 1)
         self.lists_row.addLayout(layers_box, 1)
+        self._file_buttons = QHBoxLayout()
+        self._file_buttons.setSpacing(6)
+        lists_column.addLayout(self._file_buttons)
 
         self.expand_button = QPushButton(tr("enlarge"))
         self.expand_button.setCheckable(True)
@@ -429,7 +491,7 @@ class SpectrumPanel(QWidget):
         )
         self.expand_button.toggled.connect(self._on_expand_toggled)
 
-        self.lists_row.addWidget(self.expand_button)
+        self._file_buttons.addWidget(self.expand_button)
         self.compare_menu = QMenu(self)
         self.compare_menu.aboutToShow.connect(self._refresh_compare_menu)
         self.compare_menu.triggered.connect(self._on_compare_action)
@@ -442,9 +504,11 @@ class SpectrumPanel(QWidget):
             )
         )
         self.compare_button.setVisible(False)
-        self.lists_row.addWidget(self.compare_button)
+        self._file_buttons.addWidget(self.compare_button)
 
         self.file_menu = QMenu(self)
+
+
 
         self.open_current_action = self.file_menu.addAction(
             tr("Open the current data spectrum"), self._on_menu_open_current_spectrum
@@ -459,9 +523,11 @@ class SpectrumPanel(QWidget):
         self.help_menu.addAction(tr("Operating Instructions"), self._on_menu_show_help)
         self.help_button = QPushButton(tr("help"))
         self.help_button.setMenu(self.help_menu)
-        self.lists_row.addWidget(self.file_button)
-        self.lists_row.addWidget(self.help_button)
-        self.lists_row.addSpacing(12)
+        self._file_buttons.addWidget(self.file_button)
+        self._file_buttons.addWidget(self.help_button)
+        self._file_buttons.addSpacing(0)
+
+
 
         self._expanded = False
         self._expand_splitter: QSplitter | None = None
@@ -476,6 +542,20 @@ class SpectrumPanel(QWidget):
         self._compare_column: QWidget | None = None
         self._current_column: QWidget | None = None
         self._comparison_active = False
+        self._extra_compare_viewer = None
+        self._extra_compare_3d = None
+        self._extra_compare_spectrum = None
+        self._extra_compare_column = None
+        self._overlay_column = None
+        self._overlay_slice_homes = []
+        self.overlay = OverlayComparison(self)
+        self.overlay.hide()
+        self.overlay.controls.setParent(self)
+        self.overlay.controls.hide()
+        self.overlay.changed.connect(self._update_overlay_mode)
+        self._overlay_refresh = QTimer(self)
+        self._overlay_refresh.setSingleShot(True)
+        self._overlay_refresh.timeout.connect(self._refresh_overlay_spectra)
         self._comparison_layout_timer = QTimer(self)
         self._comparison_layout_timer.setSingleShot(True)
         self._comparison_layout_timer.timeout.connect(self._align_comparison_plot_height)
@@ -483,29 +563,41 @@ class SpectrumPanel(QWidget):
             lambda *_args: self._align_comparison_plot_height(self.viewer.view_splitter.sizes()[0])
         )
         self._panel_splitter = QSplitter(Qt.Orientation.Vertical)
-        self._panel_splitter.addWidget(self.lists_row_widget)
+        self.files_section = CollapsibleSection(tr('Files and layers'))
+        files_body = QVBoxLayout(self.files_section.body)
+        files_body.setContentsMargins(0, 0, 0, 0)
+        files_body.addWidget(self.lists_row_widget)
+        self._panel_splitter.addWidget(self.files_section)
         self._panel_splitter.addWidget(self.viewer)
         self.peak_toolbar_widget = QWidget()
 
-        self.peak_toolbar_widget.setMinimumHeight(68)
-        self.peak_toolbar_widget.setMaximumHeight(90)
         _peak_rows = QVBoxLayout(self.peak_toolbar_widget)
         _peak_rows.setContentsMargins(0, 0, 0, 0)
         _peak_rows.setSpacing(4)
         _peak_rows.addLayout(self.peak_toolbar)
         _peak_rows.addLayout(self.peak_toolbar2)
-        self._panel_splitter.addWidget(self.peak_toolbar_widget)
-        self._panel_splitter.addWidget(self.peak_table)
+        self.peaks_section = CollapsibleSection(tr('Peaks'), expanded=False)
+        peaks_body = QVBoxLayout(self.peaks_section.body)
+        peaks_body.setContentsMargins(0, 0, 0, 0)
+        peaks_body.setSpacing(4)
+        peaks_body.addWidget(self.peak_toolbar_widget)
+        peaks_body.addWidget(self.peak_table)
+        self._panel_splitter.addWidget(self.peaks_section)
         self._panel_splitter.setStretchFactor(0, 0)
         self._panel_splitter.setStretchFactor(1, 1)
         self._panel_splitter.setStretchFactor(2, 0)
-        self._panel_splitter.setStretchFactor(3, 0)
-        self._panel_splitter.setSizes([90, 420, 76, 150])
+        self._section_heights = None
+        for section in (self.files_section, self.peaks_section):
+            section.geometry_changed.connect(self._fit_section_heights)
+        self.viewer.controls_section.geometry_changed.connect(
+            lambda: self._comparison_layout_timer.start(0) if self._comparison_active else None
+        )
+        self._panel_splitter.setSizes([140, 650, self.peaks_section.natural_height()])
         self.viewer.peak_clicked.connect(self._on_viewer_peak_clicked)
         self.viewer.manual_peak_requested.connect(self._on_manual_peak_added)
         self.viewer.peaks_box_selected.connect(self._on_peaks_box_selected)
         self.viewer.show_1d_button.toggled.connect(self._on_viewer_1d_toggled)
-        self.file_list.setMaximumWidth(16777215)
+        self.file_list.setMinimumWidth(0)
         layout.addWidget(self._panel_splitter)
         self.refresh()
 
@@ -520,7 +612,10 @@ class SpectrumPanel(QWidget):
 
     @property
     def planes_ready(self) -> int:
-        """Return the number of immediately available planes along the selected 3D slicing axis."""
+        """
+        Return the number of immediately available planes along the selected 3D
+        slicing axis.
+        """
         return int(self._planes_ready)
 
     @property
@@ -534,7 +629,9 @@ class SpectrumPanel(QWidget):
         thread = self._stream_thread
         return bool(thread is not None and thread.is_alive())
 
-    def set_context(self, exp_id: str, data_id: str = "", *, auto_load_delay_ms: int = 0) -> None:
+    def set_context(
+        self, exp_id: str, data_id: str = "", *, auto_load_delay_ms: int = 0
+    ) -> None:
         changed = (exp_id or "", data_id or "") != (
             self._current_exp_id,
             self._current_data_id,
@@ -565,6 +662,7 @@ class SpectrumPanel(QWidget):
         )
         self.peak_table.setVisible(show)
         self.peak_toolbar_widget.setVisible(show)
+        self.peaks_section.setVisible(show)
         self.viewer.peak_label.setVisible(show)
 
     def _display_key(self) -> tuple[str, str]:
@@ -584,6 +682,8 @@ class SpectrumPanel(QWidget):
                 "level_count": int(self.viewer.count_slider.value()),
                 "aspect": int(self.viewer.aspect_slider.value()),
                 "peak_size": float(self.peak_size_spin.value()),
+                "hide_positive": self.viewer.hide_positive.isChecked(),
+                "hide_negative": self.viewer.hide_negative.isChecked(),
             }
 
             from gui.per_data_records import update_ui_state
@@ -595,7 +695,7 @@ class SpectrumPanel(QWidget):
                 "spectrum",
                 dict(self._display_states[key]),
             )
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
     def _restore_display_state(self) -> None:
@@ -615,6 +715,8 @@ class SpectrumPanel(QWidget):
                 "level_count": 8,
                 "aspect": 0,
                 "peak_size": 1.5,
+                "hide_positive": False,
+                "hide_negative": False,
             }
 
             try:
@@ -622,8 +724,7 @@ class SpectrumPanel(QWidget):
 
                 file_state = (
                     load_ui_state(
-                        self.manager,
-                        self._current_exp_id,
+                        self.manager, self._current_exp_id,
                         self._current_data_id,
                     ).get("spectrum")
                     or {}
@@ -631,23 +732,35 @@ class SpectrumPanel(QWidget):
                 for field in defaults:
                     if file_state.get(field) is not None:
                         defaults[field] = file_state[field]
-            except Exception:  # noqa: BLE001
+            except Exception:
                 pass
             state = defaults
             self._display_states[key] = dict(state)
         self._restoring_display_state = True
         try:
-            self.viewer.level_slider.setValue(int(state.get("level_slider", 31)))
+            self.viewer.level_slider.setValue(
+                int(state.get("level_slider", 31))
+            )
             if state.get("level_percent") is not None:
                 self.viewer.set_contour_start(float(state["level_percent"]))
             else:
                 value = max(1, min(100, int(state.get("level_slider", 31))))
                 self.viewer.set_contour_start((value / 100.0) ** 3 * 100.0)
-            self.viewer.count_slider.setValue(int(state.get("level_count", 8)))
-            self.viewer.aspect_slider.setValue(int(state.get("aspect", 0)))
+            self.viewer.count_slider.setValue(
+                int(state.get("level_count", 8))
+            )
+            self.viewer.aspect_slider.setValue(
+                int(state.get("aspect", 0))
+            )
             self.viewer.refresh_levels()
-            self.peak_size_spin.setValue(float(state.get("peak_size", 1.5)))
-        except Exception:  # noqa: BLE001
+            self.viewer.set_contour_signs(
+                hide_positive=bool(state.get("hide_positive", False)),
+                hide_negative=bool(state.get("hide_negative", False)),
+            )
+            self.peak_size_spin.setValue(
+                float(state.get("peak_size", 1.5))
+            )
+        except Exception:
             pass
         finally:
             self._restoring_display_state = False
@@ -684,6 +797,7 @@ class SpectrumPanel(QWidget):
             self.file_list.setVisible(False)
             self.peak_table.setVisible(False)
             self.peak_toolbar_widget.setVisible(False)
+            self.peaks_section.hide()
             self._spectrum3d_panel.setVisible(False)
             return
         paths = self._spectrum_paths()
@@ -691,6 +805,7 @@ class SpectrumPanel(QWidget):
             self.file_list.addItem(path.name)
         self.file_list.setVisible(bool(paths))
         self._sync_peak_ui_visibility()
+        self._fit_accessibility_controls()
         self.export_poky_button.setEnabled(False)
         self.save_peaks_button.setEnabled(False)
         if not paths:
@@ -698,11 +813,8 @@ class SpectrumPanel(QWidget):
             return
         if self._current_spectrum is not None and self._current_spectrum not in paths:
             self._clear_current_spectrum()
-        if (
-            has_context
-            and (reload_current or self._current_spectrum is None)
-            and not self._autoload_timer.isActive()
-        ):
+        if (has_context and (reload_current or self._current_spectrum is None)
+                and not self._autoload_timer.isActive()):
             self.load_current_spectrum()
 
     def load_current_spectrum(self) -> bool:
@@ -712,7 +824,9 @@ class SpectrumPanel(QWidget):
         paths = self._spectrum_paths()
         if not paths:
             return False
-        main = [p for p in paths if not self._is_projection_name(p.name)] or paths
+        main = [
+            p for p in paths if not self._is_projection_name(p.name)
+        ] or paths
 
         first = next((p for p in main if p.suffix.lower() == ".ft3"), main[0])
         if self._current_data_id:
@@ -753,9 +867,10 @@ class SpectrumPanel(QWidget):
             for ext in ("ft1", "ft2", "ft3"):
                 try:
                     files.extend(spectra_dir.glob(f"*.{ext}"))
-                except OSError:  # noqa: PERF203
+                except OSError:
                     continue
         return sorted(set(files))
+
 
     def open_spectrum(self, path: Path, name: str | None = None) -> bool:
         """Load spectrum into the viewer; return False on failure (no pop-up window, prompt
@@ -764,14 +879,19 @@ class SpectrumPanel(QWidget):
         switching;.ft2 takes the two-dimensional overlay.
         """
 
+
+
+
         self._autoload_timer.stop()
         self._ft3_load_token += 1
         self._stop_plane_stream()
         self._hide_loading_indicator()
 
-        self._projection_active = path.suffix.lower() == ".ft2" and self._is_projection_name(
-            path.name
+        self._projection_active = (
+            path.suffix.lower() == ".ft2"
+            and self._is_projection_name(path.name)
         )
+
 
         try:
             if path.suffix.lower() == ".ft3":
@@ -779,27 +899,36 @@ class SpectrumPanel(QWidget):
 
                 size = path.stat().st_size if path.is_file() else 0
                 if size >= self._ASYNC_FT3_MIN_BYTES:
+
                     self._current_spectrum = path
                     self.status_message.emit(
                         tr(
-                            "Loading 3D spectrum in the background: {p0} ({p1} MB)",
+                            "Loading 3D spectrum in the background: {p0} ({p1} "
+                            "MB)",
                             p0=path.name,
                             p1=size // (1024 * 1024),
                         )
                     )
 
-                    self._show_loading_indicator(tr("Loading 3D spectrum: {p0}", p0=path.name))
+
+                    self._show_loading_indicator(
+                        tr("Loading 3D spectrum: {p0}", p0=path.name)
+                    )
                     self._load_ft3_async(path)
                     return True
                 self._current_spectrum = path
-                self._display_3d_spectrum(Spectrum3D.load_from_ft3(path, lazy=True))
+                self._display_3d_spectrum(
+                    Spectrum3D.load_from_ft3(path, lazy=True)
+                )
                 return True
             if path.suffix.lower() == ".ft1":
                 from viewer.spectrum import Spectrum1D
 
                 self._current_spectrum = path
                 self._spectrum3d_panel.clear()
-                self.viewer.add_spectrum(Spectrum1D.load_from_ft1(path), name=name or path.stem)
+                self.viewer.add_spectrum(
+                    Spectrum1D.load_from_ft1(path), name=name or path.stem
+                )
                 self._viewer_1d_active = True
                 self._sync_peak_ui_visibility()
                 self._restore_display_state()
@@ -809,7 +938,9 @@ class SpectrumPanel(QWidget):
 
                 self._current_spectrum = path
                 self._spectrum3d_panel.clear()
-                self.viewer.add_spectrum(Spectrum1D.load_from_fid(path), name=path.stem)
+                self.viewer.add_spectrum(
+                    Spectrum1D.load_from_fid(path), name=path.stem
+                )
                 self._viewer_1d_active = True
                 self._sync_peak_ui_visibility()
                 self._restore_display_state()
@@ -830,7 +961,7 @@ class SpectrumPanel(QWidget):
                     self._load_ft2_async(path)
                     return True
                 spectrum = Spectrum.load_from_ft2(path)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             self.log_message.emit(
                 tr(
                     "2D spectrum loading failed {p0}: {p1}",
@@ -852,6 +983,8 @@ class SpectrumPanel(QWidget):
         self._viewer_1d_active = False
         self._restore_display_state()
         self._sync_peak_ui_visibility()
+        if self._comparison_active:
+            self._overlay_refresh.start(0)
 
     def _load_ft2_async(self, path: Path) -> None:
         """Read large 2D results serially: at most one active read and one pending latest
@@ -880,7 +1013,7 @@ class SpectrumPanel(QWidget):
                 try:
                     spectrum = Spectrum.load_from_ft2(target)
                     spectrum.plane_max = spectrum.max_intensity
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     if request_token == self._ft3_load_token:
                         self._ft2_failed.emit(request_token, target, describe_exception(exc))
                 else:
@@ -901,6 +1034,7 @@ class SpectrumPanel(QWidget):
             return
         self._clear_current_spectrum()
         self.log_message.emit(tr("2D spectrum loading failed {p0}: {p1}", p0=path.name, p1=message))
+
 
     def open_with_peaks(self, path: Path, name: str | None = None) -> bool:
         """Open spectrum and load its peak table (for the main window to call to avoid external
@@ -936,7 +1070,7 @@ class SpectrumPanel(QWidget):
                 spectrum3d.estimate_noise()
                 spectrum3d.slice(slice_axis, spectrum3d.axes[slice_axis].size // 2)
                 self._ft3_ready.emit(token, path, spectrum3d)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 self._ft3_failed.emit(token, path, describe_exception(exc))
 
         threading.Thread(target=worker, daemon=True).start()
@@ -965,6 +1099,8 @@ class SpectrumPanel(QWidget):
         self._render_3d_view()
         self._restore_display_state()
         if entering_3d:
+
+
             self.viewer.reset_view()
 
         self._ensure_plane_stream()
@@ -979,12 +1115,15 @@ class SpectrumPanel(QWidget):
         self._hide_loading_indicator()
         self.status_message.emit(tr("3D spectrum loading failed: {p0}", p0=message))
 
+
         self.log_message.emit(tr("3D spectrum loading failed {p0}: {p1}", p0=path.name, p1=message))
 
     # ------------------------------------------------------------------
 
     # ------------------------------------------------------------------
-    def _show_loading_indicator(self, text: str = "", ready: int = 0, total: int = 0) -> None:
+    def _show_loading_indicator(
+        self, text: str = "", ready: int = 0, total: int = 0
+    ) -> None:
         """Show the indicator above the spectrum; total <= 0 uses indeterminate progress."""
         self.loading_label.setText(text)
         if total > 0:
@@ -1000,7 +1139,8 @@ class SpectrumPanel(QWidget):
         """Reserve the loading indicator's row above the spectrum rather than letting the idle
         height cap squeeze it out.
         """
-        self.lists_row_widget.setMaximumHeight(132)
+        font_delta = max(0, self.fontMetrics().height() - 17)
+        self.lists_row_widget.setMaximumHeight(132 + font_delta * 6)
         self.loading_indicator.setVisible(True)
 
     def _update_loading_progress(self, ready: int, total: int) -> None:
@@ -1008,7 +1148,9 @@ class SpectrumPanel(QWidget):
         self.loading_progress.setRange(0, max(1, int(total)))
         self.loading_progress.setValue(min(int(ready), int(total)))
         self.loading_progress.setFormat("%v / %m")
-        self.loading_label.setText(tr("Loading planes: {p0} / {p1}", p0=int(ready), p1=int(total)))
+        self.loading_label.setText(
+            tr("Loading planes: {p0} / {p1}", p0=int(ready), p1=int(total))
+        )
         self._reveal_loading_indicator()
 
     def _hide_loading_indicator(self) -> None:
@@ -1017,7 +1159,8 @@ class SpectrumPanel(QWidget):
         self.loading_progress.setRange(0, 1)
         self.loading_progress.setValue(0)
         self.loading_label.setText("")
-        self.lists_row_widget.setMaximumHeight(110)
+        font_delta = max(0, self.fontMetrics().height() - 17)
+        self.lists_row_widget.setMaximumHeight(110 + font_delta * 6)
 
     def _ensure_plane_stream(self) -> None:
         """Start plane streaming for the selected axis only when the 3D spectrum is lazy.
@@ -1049,11 +1192,13 @@ class SpectrumPanel(QWidget):
 
         def worker() -> None:
             try:
-                self._stream_planes(spectrum3d, axis_idx, token, cancel.is_set)
-            except Exception:  # noqa: BLE001
+                self._stream_planes(
+                    spectrum3d, axis_idx, token, cancel.is_set
+                )
+            except Exception:
                 try:
                     self._plane_stream_done.emit(token)
-                except RuntimeError:  # pragma: no cover
+                except RuntimeError:
                     pass
 
         thread = threading.Thread(target=worker, daemon=True)
@@ -1071,7 +1216,9 @@ class SpectrumPanel(QWidget):
 
         self._stream_token += 1
 
-    def _stream_planes(self, spectrum3d, axis_idx: int, token: int, is_cancelled) -> None:
+    def _stream_planes(
+        self, spectrum3d, axis_idx: int, token: int, is_cancelled
+    ) -> None:
         """Read plane blocks in the background and emit each plane to the main thread.
 
         When slicing the file-contiguous dimension, plane_block_size amortizes a full-file
@@ -1091,18 +1238,24 @@ class SpectrumPanel(QWidget):
                 if is_cancelled():
                     return
                 count = min(block, length - offset)
-                planes = spectrum3d.read_planes(axis_idx, start + offset, count)
+                planes = spectrum3d.read_planes(
+                    axis_idx, start + offset, count
+                )
                 if not planes:
                     break
                 for step, _plane in enumerate(planes):
                     if is_cancelled():
                         return
                     ready += 1
-                    self._plane_ready.emit(token, start + offset + step, ready, total)
+                    self._plane_ready.emit(
+                        token, start + offset + step, ready, total
+                    )
                 offset += len(planes)
         self._plane_stream_done.emit(token)
 
-    def _on_plane_ready(self, token: int, index: int, ready: int, total: int) -> None:
+    def _on_plane_ready(
+        self, token: int, index: int, ready: int, total: int
+    ) -> None:
         """Handle a plane on the main thread, update progress and broadcast it unless the stream is
         stale.
         """
@@ -1140,12 +1293,8 @@ class SpectrumPanel(QWidget):
         if not axes3 or len(axes3) != 3:
             return None
         symbols = {
-            "H": "1H",
-            "N": "15N",
-            "C": "13C",
-            "F": "19F",
-            "P": "31P",
-            "D": "2H",
+            "H": "1H", "N": "15N", "C": "13C",
+            "F": "19F", "P": "31P", "D": "2H",
         }
         full = {"1H", "2H", "13C", "15N", "19F", "31P", "23Na", "29Si"}
         nuclei: list[str] = []
@@ -1165,7 +1314,9 @@ class SpectrumPanel(QWidget):
         """
         from viewer.axis_labels import nuclei_from_metadata
 
-        if self._manager is None or not (self._current_exp_id and self._current_data_id):
+        if self._manager is None or not (
+            self._current_exp_id and self._current_data_id
+        ):
             return None
         try:
             meta_path = self._manager.data_metadata_path(
@@ -1206,7 +1357,7 @@ class SpectrumPanel(QWidget):
             return True
         data_id = self._current_data_id or ""
         if data_id and name.startswith(f"{data_id}_") and name.endswith(".ft2"):
-            body = name[len(data_id) + 1 : -4]
+            body = name[len(data_id) + 1:-4]
             if "-" in body:
                 return True
         return False
@@ -1244,9 +1395,11 @@ class SpectrumPanel(QWidget):
         nuclei = self._axis_nuclei(3) or []
         a = b = None
 
+
+
         logical_mapped = False
         if data_id and name.startswith(f"{data_id}_") and name.endswith(".ft2"):
-            body = name[len(data_id) + 1 : -4]
+            body = name[len(data_id) + 1:-4]
             if "-" in body:
                 parts = body.split("-", 1)
                 a, b = parts[0], parts[1]
@@ -1259,6 +1412,7 @@ class SpectrumPanel(QWidget):
                 b = nuclei[remaining[0]]
                 logical_mapped = True
             else:
+
                 m2 = _re.search(r"_proj_([A-Za-z0-9]{2,6})\.ft2$", name)
                 if m2 and len(nuclei) == 3:
                     body = m2.group(1)
@@ -1267,6 +1421,7 @@ class SpectrumPanel(QWidget):
                     if len(match) == 2 and all(match):
                         a, b = match[0], match[1]
                 else:
+
                     try:
                         return Spectrum.load_from_ft2(str(path))
                     except Exception:  # noqa: BLE001
@@ -1291,6 +1446,8 @@ class SpectrumPanel(QWidget):
         s3d = self._spectrum3d_panel.spectrum3d
         s3d_axes = list(getattr(s3d, "axes", []) or []) if s3d is not None else []
 
+
+
         if len(s3d_axes) != 3:
             from viewer.spectrum import Spectrum3D  # noqa: PLC0415
 
@@ -1304,16 +1461,19 @@ class SpectrumPanel(QWidget):
                     continue
                 try:
                     s3d_axes = list(Spectrum3D.load_from_ft3(ft3, lazy=True).axes or [])
-                except Exception:  # noqa: BLE001
+                except Exception:
                     s3d_axes = []
                 if len(s3d_axes) == 3:
                     break
+
+
 
         labels3 = None
         if len(nuclei) == 3:
             from viewer.axis_labels import axis_labels_from_nuclei as _alfn
 
             labels3 = _alfn(nuclei)
+
 
             if (
                 len({_base_norm(n) for n in nuclei}) < len(nuclei)
@@ -1323,8 +1483,13 @@ class SpectrumPanel(QWidget):
                 labels3 = ("Ny", "Nx", str(labels3[2]))
         x_params = y_params = None
 
+
+
         if len(s3d_axes) == 3:
             sym_a, sym_b = nucleus_symbol(a), nucleus_symbol(b)
+
+
+
 
             s3d_syms = [str(ax.label) for ax in s3d_axes]
             for i, sym in enumerate(s3d_syms):
@@ -1339,6 +1504,7 @@ class SpectrumPanel(QWidget):
                     if _base_norm(str(ax.label)) == nb and y_params is None:
                         y_params = s3d_axes[i]
         if x_params is None or y_params is None:
+
             x_params = _Sn(
                 label=nucleus_symbol(a),
                 size=int(data.shape[1]),
@@ -1367,6 +1533,8 @@ class SpectrumPanel(QWidget):
             x_label = str(labels3[remaining[1]])
             y_label = str(labels3[remaining[0]])
         elif same_nucleus:
+
+
             from viewer.axis_labels import nucleus_symbol as _nsym
 
             sx, sy = _nsym(a), _nsym(b)
@@ -1374,6 +1542,7 @@ class SpectrumPanel(QWidget):
             y_label = sy if sy[-1:].upper() in ("X", "Y", "Z") else sy + "y"
         else:
             x_label, y_label = nucleus_symbol(a), nucleus_symbol(b)
+
 
         if logical_mapped and labels3 is not None:
             _remaining = [i for i in range(3) if i != fixed_axis]
@@ -1407,7 +1576,9 @@ class SpectrumPanel(QWidget):
         )
         spectrum = Spectrum(data, [y_axis, x_axis], source=path)
         if fixed_axis >= 0:
-            spectrum.dim_indices = tuple(i for i in range(3) if i != fixed_axis)
+            spectrum.dim_indices = tuple(
+                i for i in range(3) if i != fixed_axis
+            )
         return spectrum
 
     def _load_3d_projections(self) -> dict[int, object]:
@@ -1447,6 +1618,7 @@ class SpectrumPanel(QWidget):
                     proj[fixed] = spec
         return proj
 
+
     def _render_3d_view(self) -> None:
         """Press 3D Panel current plane/slice/Projection renders 2D view and rehangs peak
         markers.
@@ -1456,13 +1628,15 @@ class SpectrumPanel(QWidget):
             return
         base = self._current_spectrum.stem if self._current_spectrum else "3D"
 
+
         self.viewer.update_spectrum_data(
             spectrum,
             name=self._spectrum3d_panel.current_name(base),
         )
+        if self._comparison_active:
+            self._overlay_refresh.start(0)
         if self._peaks:
             self.viewer.set_peaks(self._peaks)
-
     def _save_3d_state(self, *_args) -> None:
         """Remember the 3D viewing plane of the current sample data (0.2.133 slice mode only)."""
         if self._current_data_id:
@@ -1481,7 +1655,7 @@ class SpectrumPanel(QWidget):
         self._load_peaks(paths[0])
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------ #
     # ------------------------------------------------------------------
     def _peak_file_path(self, spectrum_path: Path) -> Path | None:
         """Peak table file:.list takes priority (peak table is list), and the old CSV is compatible
@@ -1507,12 +1681,17 @@ class SpectrumPanel(QWidget):
     def _load_peaks(self, spectrum_path: Path) -> None:
         self._clear_peaks()
         if self._projection_active:
+
             return
         peak_path = self._peak_file_path(spectrum_path)
         if peak_path is None:
             return
         if peak_path.suffix.lower() == ".list":
-            peaks = import_peaks_poky(peak_path, nuclei=self._current_3d_nuclei())
+
+
+            peaks = import_peaks_poky(
+                peak_path, nuclei=self._current_3d_nuclei()
+            )
         else:
             peaks = load_peaks(peak_path)
         if not peaks:
@@ -1528,30 +1707,39 @@ class SpectrumPanel(QWidget):
 
     def _set_peak_columns(self, is_3d: bool) -> None:
 
+
         keys: list[str]
         header_map: dict[str, str] = {}
         if is_3d:
             s3d = self._spectrum3d_panel.spectrum3d
             axes3 = getattr(s3d, "axes", None)
             nuclei3 = self._current_3d_nuclei()
-            if axes3 and len(axes3) == 3 and nuclei3 and set(nuclei3) == {"15N", "13C", "1H"}:
+            if (
+                axes3
+                and len(axes3) == 3
+                and nuclei3
+                and set(nuclei3) == {"15N", "13C", "1H"}
+            ):
                 order = [nuclei3.index(n) for n in ("15N", "13C", "1H")]
                 keys = (
-                    ["Peak_ID", "label"] + [f"F{i + 1}_shift" for i in order] + ["Intensity", "SN"]
+                    ["Peak_ID", "label"]
+                    + [f"F{i + 1}_shift" for i in order]
+                    + ["Intensity", "SN"]
                 )
-                header_map = {f"F{i + 1}_shift": f"{axes3[i].label}_shift" for i in order}
+                header_map = {
+                    f"F{i + 1}_shift": f"{axes3[i].label}_shift"
+                    for i in order
+                }
             else:
                 keys = [
-                    "Peak_ID",
-                    "label",
-                    "F1_shift",
-                    "F2_shift",
-                    "F3_shift",
-                    "Intensity",
-                    "SN",
+                    "Peak_ID", "label", "F1_shift", "F2_shift", "F3_shift",
+                    "Intensity", "SN",
                 ]
                 if axes3 and len(axes3) == 3:
-                    header_map = {f"F{i + 1}_shift": f"{axes3[i].label}_shift" for i in range(3)}
+                    header_map = {
+                        f"F{i + 1}_shift": f"{axes3[i].label}_shift"
+                        for i in range(3)
+                    }
         else:
             keys = ["Peak_ID", "label", "H_shift", "N_shift", "Intensity", "SN"]
         tuple_keys = tuple(keys)
@@ -1560,9 +1748,14 @@ class SpectrumPanel(QWidget):
         self._peak_keys = tuple_keys
         self.peak_table.setColumnCount(len(tuple_keys))
 
+
         self.peak_table.setHorizontalHeaderLabels(
             [
-                ("Assignment ✓" if self.viewer.peak_labels_visible else "Assignment ✗")
+                (
+                    "Assignment ✓"
+                    if self.viewer.peak_labels_visible
+                    else "Assignment ✗"
+                )
                 if k == "label"
                 else header_map.get(k, k)
                 for k in tuple_keys
@@ -1592,6 +1785,7 @@ class SpectrumPanel(QWidget):
             has = table.cellWidget(row, label_col) is not None
             in_view = first <= row <= last
             if has and not in_view:
+
                 table.setCellWidget(row, label_col, None)
                 item = table.item(row, label_col)
                 if item is not None:
@@ -1632,13 +1826,19 @@ class SpectrumPanel(QWidget):
                         text = _peak_snr_text(peak)
                     else:
                         text = str(peak.get(key, ""))
-                    self.peak_table.setItem(row, col, QTableWidgetItem(text))
+                    self.peak_table.setItem(
+                        row, col, QTableWidgetItem(text)
+                    )
+
+
+
 
                 self.peak_table.item(row, 0).setData(0x0100, dict(peak))
             self.peak_table.setColumnWidth(label_col, 142 if is_3d else 94)
         finally:
             self._loading_peaks = False
         self._ensure_assignment_widgets()
+        self._fit_accessibility_controls()
 
     def _table_peaks(self) -> list[dict]:
         """Read the current contents of the table back into a peak dict list (the unedited line is
@@ -1654,6 +1854,7 @@ class SpectrumPanel(QWidget):
                     peak.update(stored)
             for col, key in enumerate(self._peak_keys):
                 if key == "label":
+
                     widget = self.peak_table.cellWidget(row, col)
                     if widget is not None and hasattr(widget, "merged_text"):
                         peak[key] = widget.merged_text()
@@ -1671,9 +1872,13 @@ class SpectrumPanel(QWidget):
         selected (0.2.199-patch29ba).
         """
         has_context = bool(
-            self.manager.project is not None and self._current_exp_id and self._current_data_id
+            self.manager.project is not None
+            and self._current_exp_id
+            and self._current_data_id
         )
-        self.delete_peak_button.setEnabled(has_context and self.peak_table.rowCount() > 0)
+        self.delete_peak_button.setEnabled(
+            has_context and self.peak_table.rowCount() > 0
+        )
 
     def _sync_peaks_in_memory(self) -> None:
         """Synchronize memory _peaks after table editing (do not rebuild viewer immediately to
@@ -1703,7 +1908,9 @@ class SpectrumPanel(QWidget):
         """
         if self._loading_peaks or self._applying_label_format:
             return
-        widget = self.peak_table.cellWidget(row, self._peak_keys.index("label"))
+        widget = self.peak_table.cellWidget(
+            row, self._peak_keys.index("label")
+        )
         if widget is None or not hasattr(widget, "merged_text"):
             return
         label = widget.merged_text()
@@ -1773,7 +1980,9 @@ class SpectrumPanel(QWidget):
         """
         if not (self.manager.project is not None and self._current_exp_id):
             return
-        next_id = max((int(p.get("Peak_ID", 0) or 0) for p in self._peaks), default=0) + 1
+        next_id = (
+            max((int(p.get("Peak_ID", 0) or 0) for p in self._peaks), default=0) + 1
+        )
         peak["Peak_ID"] = next_id
         self._peaks.append(peak)
         self._populate_peak_table()
@@ -1796,7 +2005,9 @@ class SpectrumPanel(QWidget):
         finally:
             self._loading_peaks = False
 
-        self._peaks = [peak for i, peak in enumerate(self._peaks) if i not in remove]
+        self._peaks = [
+            peak for i, peak in enumerate(self._peaks) if i not in remove
+        ]
         self.viewer.set_peaks(self._peaks)
         self.save_peaks_button.setEnabled(bool(self._peaks))
         self._update_delete_button()
@@ -1806,36 +2017,38 @@ class SpectrumPanel(QWidget):
             return
         start = str(Path.home())
         try:
-            start = str(self.manager.data_dir(self._current_exp_id, self._current_data_id, "peaks"))
+            start = str(
+                self.manager.data_dir(
+                    self._current_exp_id, self._current_data_id, "peaks"
+                )
+            )
         except Exception:  # noqa: BLE001
             pass
         path, _ = QFileDialog.getOpenFileName(
-            self,
-            tr(
-                "import Poky peak table",
-            ),
-            start,
-            tr(
-                "Poky peak table (*.list);; all files (*)",
-            ),
+            self, tr(
+                "import Poky peak "
+                "table",
+            ), start, tr(
+                "Poky peak table (*.list);; all files "
+                "(*)",
+            )
         )
         if not path:
             return
         try:
-            peaks = import_peaks_poky(path, nuclei=self._current_3d_nuclei())
+            peaks = import_peaks_poky(
+                path, nuclei=self._current_3d_nuclei()
+            )
         except Exception as exc:  # noqa: BLE001
             InfoDialog.show_info(self, tr("import failed"), str(exc))
             return
         if not peaks:
-            InfoDialog.show_info(
-                self,
-                tr(
-                    "import results",
-                ),
-                tr(
-                    "There are no parsable peak lines in the file",
-                ),
-            )
+            InfoDialog.show_info(self, tr(
+                "import results",
+            ), tr(
+                "There are no parsable peak lines in the "
+                "file",
+            ))
             return
         self._peaks = self._assign_peak_ids(peaks)
         self._populate_peak_table()
@@ -1845,12 +2058,13 @@ class SpectrumPanel(QWidget):
         self.save_peaks_button.setEnabled(True)
         self._update_delete_button()
 
+
         InfoDialog.show_info(
             self.import_poky_button,
             tr("import completed"),
             tr(
                 "The current peak table association was replaced with the Poky peak table ({p0} "
-                'peak(s));\n(click "Save peak table" to write back to the .list '
+                "peak(s));\n(click \"Save peak table\" to write back to the .list "
                 "file)",
                 p0=len(peaks),
             ),
@@ -1876,23 +2090,20 @@ class SpectrumPanel(QWidget):
                 data_id=self._current_data_id,
                 nuclei=self._current_3d_nuclei(),
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             InfoDialog.show_info(self, tr("save failed"), describe_exception(exc))
             return
         self._peaks = peaks
         self.viewer.set_peaks(peaks)
         self.save_peaks_button.setEnabled(True)
         self.peaks_saved.emit()
-        InfoDialog.show_info(
-            self,
-            tr(
-                "save completed",
-            ),
-            tr(
-                "peak table has been written:\n{p0}",
-                p0=list_path,
-            ),
-        )
+        InfoDialog.show_info(self, tr(
+            "save completed",
+        ), tr(
+            "peak table has been "
+            "written:\n{p0}",
+            p0=list_path,
+        ))
 
     def _export_peaks_poky(self) -> None:
         """Export the current peak table as Poky.list; disabled when there is no peak
@@ -1903,32 +2114,31 @@ class SpectrumPanel(QWidget):
         default = None
         try:
             default = (
-                self.manager.data_dir(self._current_exp_id, self._current_data_id, "peaks")
+                self.manager.data_dir(
+                    self._current_exp_id, self._current_data_id, "peaks"
+                )
                 / f"{self._current_exp_id}-{self._current_data_id}.list"
             )
         except Exception:  # noqa: BLE001
             default = None
         start = str(default.parent) if default is not None else str(Path.home())
         path, _ = QFileDialog.getSaveFileName(
-            self,
-            tr("export Poky peak table"),
-            str(default) if default else start,
+            self, tr("export Poky peak table"), str(default) if default else start,
             tr("Poky peak table (*.list);; all files (*)"),
         )
         if not path:
             return
         try:
-            export_peaks_poky(path, self._peaks, nuclei=self._current_3d_nuclei())
-            InfoDialog.show_info(
-                self,
-                tr(
-                    "export completed",
-                ),
-                tr(
-                    "Poky peak table exported: {p0}",
-                    p0=path,
-                ),
+            export_peaks_poky(
+                path, self._peaks, nuclei=self._current_3d_nuclei()
             )
+            InfoDialog.show_info(self, tr(
+                "export completed",
+            ), tr(
+                "Poky peak table exported: "
+                "{p0}",
+                p0=path,
+            ))
         except Exception as exc:  # noqa: BLE001
             InfoDialog.show_info(self, tr("export failed"), str(exc))
 
@@ -1956,22 +2166,25 @@ class SpectrumPanel(QWidget):
         )
 
         try:
+
             from gui.settings import load_settings
 
-            settings_tol = load_settings().get("alignment_tolerance_ppm") or None
+            settings_tol = (
+                load_settings().get("alignment_tolerance_ppm") or None
+            )
             ref_path = Path(ref_path)
             ref_rows = import_peaks_poky(ref_path)
             if not ref_rows:
-                InfoDialog.show_info(
-                    self,
-                    tr(
-                        "Alignment export failed",
-                    ),
-                    tr(
-                        "Reference peak file is empty or cannot be parsed",
-                    ),
-                )
+                InfoDialog.show_info(self, tr(
+                    "Alignment export "
+                    "failed",
+                ), tr(
+                    "Reference peak file is empty or cannot be "
+                    "parsed",
+                ))
                 return
+
+
 
             ref_nuclei_ref = None
             if ref_rows and "F1_shift" in ref_rows[0]:
@@ -1986,7 +2199,9 @@ class SpectrumPanel(QWidget):
                 tol_ppm=settings_tol,
             )
             if result["status"] == "no_common":
-                InfoDialog.show_info(self, tr("Alignment export failed"), result["message"])
+                InfoDialog.show_info(
+                    self, tr("Alignment export failed"), result["message"]
+                )
                 return
             if result["status"] == "low":
                 InfoDialog.show_info(
@@ -2005,13 +2220,19 @@ class SpectrumPanel(QWidget):
             default = None
             try:
                 default = (
-                    self.manager.data_dir(self._current_exp_id, self._current_data_id, "peaks")
+                    self.manager.data_dir(
+                        self._current_exp_id, self._current_data_id, "peaks"
+                    )
                     / f"{self._current_exp_id}-{self._current_data_id}"
                     "_refaligned.list"
                 )
             except Exception:  # noqa: BLE001
                 default = None
-            start = str(default.parent) if default is not None else str(Path.home())
+            start = (
+                str(default.parent)
+                if default is not None
+                else str(Path.home())
+            )
             path, _ = QFileDialog.getSaveFileName(
                 self,
                 tr("export Poky peak table after alignment"),
@@ -2027,7 +2248,9 @@ class SpectrumPanel(QWidget):
                 cur_path = None
                 if self._current_spectrum:
                     try:
-                        cur_path = self._peak_file_path(Path(self._current_spectrum))
+                        cur_path = self._peak_file_path(
+                            Path(self._current_spectrum)
+                        )
                     except Exception:
                         cur_path = None
                 cur_name = (
@@ -2053,16 +2276,17 @@ class SpectrumPanel(QWidget):
                 )
                 fig_lines.append(tr("Alignment check chart (PNG): {p0}", p0=fig_path))
                 fig_lines.append(
-                    tr("Alignment check chart (SVG): {p0}", p0=fig_path.with_suffix(".svg"))
+                    tr("Alignment check chart (SVG): {p0}", p0=fig_path.with_suffix('.svg'))
                 )
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 fig_lines.append(tr("Alignment check map generation failed: {p0}", p0=exc))
             msg = (
                 tr("Exported peak table after alignment: ")
                 + str(path)
                 + "\n"
                 + tr(
-                    "(alignment rate {p0:.0%}, shift {p1})",
+                    "(alignment rate {p0:.0%}, shift "
+                    "{p1})",
                     p0=result["ratio"],
                     p1=result["shift"],
                 )
@@ -2127,15 +2351,12 @@ class SpectrumPanel(QWidget):
             InfoDialog.show_info(self, tr("hint"), tr("No data is currently selected"))
             return
         if not self.load_current_spectrum():
-            InfoDialog.show_info(
-                self,
-                tr(
-                    "hint",
-                ),
-                tr(
-                    "The current data has not generated spectrum yet",
-                ),
-            )
+            InfoDialog.show_info(self, tr(
+                "hint",
+            ), tr(
+                "The current data has not generated spectrum "
+                "yet",
+            ))
 
     def _on_menu_open_spectrum(self) -> None:
         """File menu: Open any spectrum file to the current viewer (independent viewer entry)."""
@@ -2161,6 +2382,7 @@ class SpectrumPanel(QWidget):
         """Clear the display and invalidate in-flight loads so old data cannot refill a new
         context.
         """
+        self._deactivate_comparison()
         self._autoload_timer.stop()
         self._ft3_load_token += 1
         with self._ft2_lock:
@@ -2208,7 +2430,9 @@ class SpectrumPanel(QWidget):
                 if getattr(data, "trashed", False):
                     continue
                 data_title = data.title or data.id
-                spectra_dir = self.manager.data_dir(experiment.id, data.id, "spectra")
+                spectra_dir = self.manager.data_dir(
+                    experiment.id, data.id, "spectra"
+                )
                 for suffix in ("ft1", "ft2", "ft3"):
                     try:
                         paths = spectra_dir.glob(f"*.{suffix}")
@@ -2216,18 +2440,47 @@ class SpectrumPanel(QWidget):
                             if self._is_projection_name(path.name) or path == current:
                                 continue
                             label = f"{exp_title} / {data_title} / {path.name}"
-                            candidates.append((label, experiment.id, data.id, path))
+                            candidates.append(
+                                (label, experiment.id, data.id, path)
+                            )
                     except OSError:
                         continue
         return sorted(candidates, key=lambda item: item[0].casefold())
 
+    def _spectrum_tooltip(self, path: Path) -> str:
+        source = tr('Not recorded')
+        project = self.manager.project
+        if project is not None:
+            for experiment in project.experiments:
+                for data in experiment.data or []:
+                    folder = self.manager.data_dir(experiment.id, data.id, 'spectra')
+                    if path.parent == folder:
+                        source = data.source or (str(self.manager.root / data.raw_dir)
+                                                 if data.raw_dir else tr('Not recorded'))
+                        if data.segments:
+                            source += '\n' + '\n'.join(data.segments)
+                        return tr('Spectrum: {p0}\nOriginal data: {p1}\nSpectrum file: {p2}',
+                                  p0=path.name, p1=source, p2=path)
+        return tr('Spectrum: {p0}\nOriginal data: {p1}\nSpectrum file: {p2}',
+                  p0=path.name, p1=source, p2=path)
+
     def _refresh_compare_menu(self) -> None:
         """Rebuild comparison choices from current project results before opening the menu."""
         self.compare_menu.clear()
+        self.compare_menu.setToolTipsVisible(True)
         if self._comparison_active:
             close_action = self.compare_menu.addAction(tr("Close comparison"))
             close_action.setData("__close__")
+            if self._extra_compare_spectrum is not None:
+                remove = self.compare_menu.addAction(tr('Remove third spectrum'))
+                remove.setData('__remove_third__')
             self.compare_menu.addSeparator()
+        load_action = self.compare_menu.addAction(tr('Load spectrum...'))
+        load_action.setData('__load__')
+        load_action.setToolTip(tr(
+            'Load an external NMRPipe spectrum to compare with the current spectrum.'
+        ))
+        self.compare_menu.addSeparator()
         candidates = self._comparison_candidates()
         if not candidates:
             empty = self.compare_menu.addAction(tr("No other result spectra"))
@@ -2236,25 +2489,243 @@ class SpectrumPanel(QWidget):
         for label, exp_id, data_id, path in candidates:
             action = self.compare_menu.addAction(label)
             action.setData((exp_id, data_id, str(path)))
+            action.setToolTip(self._spectrum_tooltip(path))
+            if self._comparison_active and self._extra_compare_spectrum is None:
+                third = self.compare_menu.addAction(tr('Add third: {p0}', p0=label))
+                third.setData(('__third__', data_id, str(path)))
+                third.setToolTip(self._spectrum_tooltip(path))
+                third.setEnabled(path != self._compare_spectrum)
 
     def _on_compare_action(self, action) -> None:
         payload = action.data()
+        if payload == '__load__':
+            self._load_external_comparison()
+            return
         if payload == "__close__":
             self._deactivate_comparison()
+            return
+        if payload == '__remove_third__':
+            self._remove_third_comparison()
             return
         if not payload or len(payload) != 3:
             return
         _exp_id, _data_id, path_text = payload
         path = Path(path_text)
+        if _exp_id == '__third__':
+            self._add_third_comparison(path)
+            return
         if self._load_compare_spectrum(path):
             self._activate_comparison(path)
+
+    def _load_external_comparison(self) -> None:
+        path, _filter = QFileDialog.getOpenFileName(
+            self, tr('Load spectrum...'),
+            str(self._current_spectrum.parent) if self._current_spectrum else '',
+            tr('NMRPipe spectrum (*.ft2 *.ft3 *.ft1 *.fid);; all files (*)'),
+        )
+        if not path:
+            return
+        target = Path(path)
+        if self._load_compare_spectrum(target):
+            self._activate_comparison(target)
+        elif self._comparison_active:
+            self._deactivate_comparison()
+
+    def _add_third_comparison(self, path):
+        if not self._comparison_active or self._extra_compare_viewer is not None:
+            return
+        if path == self._compare_spectrum or path == self._current_spectrum:
+            return
+        viewer = SpectrumViewer()
+        panel = Spectrum3DPanel()
+        panel.hide()
+        viewer.add_control_panel(panel)
+        try:
+            if path.suffix.lower() == '.ft3':
+                from viewer.spectrum import Spectrum3D
+
+                panel.set_spectrum3d(Spectrum3D.load_from_ft3(path, lazy=True))
+                panel.show()
+                spectrum = panel.current_spectrum()
+            elif path.suffix.lower() == '.ft1':
+                from viewer.spectrum import Spectrum1D
+
+                spectrum = Spectrum1D.load_from_ft1(path)
+            else:
+                from viewer.spectrum import Spectrum
+
+                spectrum = Spectrum.load_from_ft2(path)
+            if spectrum is None:
+                raise ValueError(tr('Select a plane for the third spectrum.'))
+            viewer.add_spectrum(spectrum, name=path.stem)
+        except (ValueError, OSError) as exc:
+            viewer.deleteLater()
+            self.log_message.emit(describe_exception(exc))
+            return
+        self._extra_compare_viewer = viewer
+        self._extra_compare_3d = panel
+        self._extra_compare_spectrum = path
+        panel.slice_changed.connect(self._render_extra_compare)
+        viewer.controls_section.geometry_changed.connect(
+            lambda: self._comparison_layout_timer.start(0) if self._comparison_active else None
+        )
+        viewer.view_splitter.splitterMoved.connect(
+            lambda *_: self._comparison_layout_timer.start(0)
+        )
+        self._extra_compare_column = self._comparison_column(path.name, viewer)
+        self._expand_splitter.insertWidget(2, self._extra_compare_column)
+        self._expand_splitter.setStretchFactor(2, 1)
+        self._expand_splitter.setStretchFactor(3, 0)
+        if self.overlay.toggle.isChecked():
+            self._set_default_overlay_width()
+        else:
+            self._expand_splitter.setSizes([450, 450, 450, 400])
+        self._refresh_overlay_spectra()
+        self._comparison_layout_timer.start(0)
+
+    def _remove_third_comparison(self, refresh=True):
+        if self._extra_compare_column is None:
+            return
+        self._restore_overlay_slice_panels()
+        self._extra_compare_column.setParent(None)
+        self._extra_compare_column.deleteLater()
+        self._extra_compare_column = None
+        self._extra_compare_viewer = None
+        self._extra_compare_3d = None
+        self._extra_compare_spectrum = None
+        if refresh:
+            self._refresh_overlay_spectra()
+            self._comparison_layout_timer.start(0)
+
+    def _render_extra_compare(self):
+        if self._extra_compare_3d is None:
+            return
+        spectrum = self._extra_compare_3d.current_spectrum()
+        if spectrum is not None:
+            self._extra_compare_viewer.update_spectrum_data(
+                spectrum,
+                name=self._extra_compare_3d.current_name(self._extra_compare_spectrum.stem),
+            )
+            self._overlay_refresh.start(0)
+
+    def _comparison_viewers(self):
+        return [viewer for viewer in (self.viewer, self._compare_viewer,
+                                      self._extra_compare_viewer) if viewer is not None]
+
+    def _refresh_overlay_spectra(self):
+        if not self._comparison_active:
+            return
+        viewers = self._comparison_viewers()
+        spectra = [viewer.displayed_spectrum for viewer in viewers]
+        if any(spectrum is None for spectrum in spectra):
+            return
+        paths = [self._current_spectrum, self._compare_spectrum, self._extra_compare_spectrum]
+        names = [f'{i + 1} · {path.name if path else tr("Current spectrum")}'
+                 for i, path in enumerate(paths[:len(viewers)])]
+        tooltips = [self._spectrum_tooltip(path) for path in paths[:len(viewers)]]
+        settings = [(viewer.level_label.value(), viewer.count_label.value(),
+                     viewer.hide_positive.isChecked(), viewer.hide_negative.isChecked())
+                    for viewer in viewers]
+        self.overlay.export_directory = self.manager.data_dir(
+            self._current_exp_id, self._current_data_id, 'figures'
+        )
+        self.overlay.set_spectra(spectra, names, tooltips, settings)
+        if self.overlay.toggle.isChecked():
+            self._update_overlay_mode()
+        else:
+            for index, viewer in enumerate(viewers):
+                viewer.set_spectrum_color(self.overlay.colors[index])
+
+    def _update_overlay_mode(self):
+        if not self._comparison_active or self._expand_splitter is None:
+            return
+        for index, viewer in enumerate(self._comparison_viewers()):
+            viewer.set_spectrum_color(self.overlay.colors[index])
+        enabled = self.overlay.toggle.isChecked()
+        entering = enabled and self._overlay_column is None
+        leaving = not enabled and self._overlay_column is not None
+        for viewer, controls in zip(self._comparison_viewers(), self.overlay.spectrum_controls):
+            if entering:
+                controls.hide_positive.setChecked(viewer.hide_positive.isChecked())
+                controls.hide_negative.setChecked(viewer.hide_negative.isChecked())
+            elif leaving:
+                viewer.hide_positive.setChecked(controls.hide_positive.isChecked())
+                viewer.hide_negative.setChecked(controls.hide_negative.isChecked())
+        self._set_overlay_compact(enabled)
+        if enabled:
+            try:
+                self.overlay.render()
+            except ValueError as exc:
+                self.overlay.toggle.setChecked(False)
+                self.overlay.status.setText(str(exc))
+                return
+            if self._overlay_column is None:
+                self._overlay_column = self._comparison_column(tr('Overlay'), self.overlay.viewer)
+                self._expand_splitter.insertWidget(0, self._overlay_column)
+            self._overlay_column.show()
+            panels = [self._spectrum3d_panel, self._compare_3d_panel, self._extra_compare_3d]
+            for index, (viewer, panel) in enumerate(zip(self._comparison_viewers(), panels)):
+                if (panel is not None and not panel.isHidden()
+                        and all(panel is not p for p, _v in self._overlay_slice_homes)):
+                    self._overlay_slice_homes.append((panel, viewer))
+                    self.overlay.slice_layout.addWidget(panel)
+                    panel.setToolTip(self.overlay.names[index])
+                    panel.show()
+        elif self._overlay_column is not None:
+            self._restore_overlay_slice_panels()
+            self.overlay.viewer.setParent(self.overlay)
+            self.overlay.viewer.hide()
+            self._overlay_column.setParent(None)
+            self._overlay_column.deleteLater()
+            self._overlay_column = None
+        for column in (self._compare_column, self._current_column, self._extra_compare_column):
+            if column is not None:
+                column.setVisible(not enabled)
+        if enabled:
+            self.overlay.viewer.show()
+            if entering:
+                self._expand_splitter.setStretchFactor(0, 1)
+                self._expand_splitter.setStretchFactor(self._expand_splitter.count() - 1, 0)
+                self._set_default_overlay_width()
+                QTimer.singleShot(0, self._set_default_overlay_width)
+        elif leaving:
+            self._expand_splitter.setSizes([500] * len(self._comparison_viewers()) + [380])
+            self._comparison_layout_timer.start(0)
+
+    def _set_default_overlay_width(self):
+        if self._expand_splitter is not None and self.overlay.toggle.isChecked():
+            total = max(self._expand_splitter.width(), 1000)
+            self._expand_splitter.setSizes(
+                [total - 380] + [0] * len(self._comparison_viewers()) + [380]
+            )
+
+    def _set_overlay_compact(self, enabled):
+        # Keep the same peak actions usable in a narrow overlay sidebar.
+        direction = QBoxLayout.Direction
+        for row in (self.peak_toolbar, self.peak_toolbar2):
+            row.setDirection(direction.TopToBottom if enabled else direction.LeftToRight)
+            row.setSpacing(4 if enabled else 12)
+        self.peak_toolbar_widget.layout().setDirection(
+            direction.LeftToRight if enabled else direction.TopToBottom
+        )
+        self.peak_toolbar_widget.setMaximumHeight(16777215)
+
+    def _restore_overlay_slice_panels(self):
+        for panel, viewer in self._overlay_slice_homes:
+            viewer.add_control_panel(panel)
+        self._overlay_slice_homes.clear()
 
     def _ensure_compare_viewer(self) -> SpectrumViewer:
         if self._compare_viewer is None:
             self._compare_viewer = SpectrumViewer()
+            self._compare_viewer.controls_section.geometry_changed.connect(
+                lambda: self._comparison_layout_timer.start(0) if self._comparison_active else None
+            )
             self._compare_3d_panel = Spectrum3DPanel()
             self._compare_3d_panel.setVisible(False)
-            self._compare_3d_panel.slice_changed.connect(self._render_compare_3d_view)
+            self._compare_3d_panel.slice_changed.connect(
+                self._render_compare_3d_view
+            )
             self._compare_viewer.add_control_panel(self._compare_3d_panel)
             self._compare_viewer.view_splitter.splitterMoved.connect(
                 lambda *_args: self._align_comparison_plot_height(
@@ -2265,8 +2736,52 @@ class SpectrumPanel(QWidget):
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
+        self._fit_accessibility_controls()
         if getattr(self, "_comparison_active", False):
+
             self._comparison_layout_timer.start(0)
+
+    def changeEvent(self, event) -> None:
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.FontChange and hasattr(self, 'peak_toolbar_widget'):
+            QTimer.singleShot(0, self, self._fit_accessibility_controls)
+
+    def _fit_accessibility_controls(self) -> None:
+        """Keep labels and action rows sized for the active UI font and width."""
+        font_height = self.fontMetrics().height()
+        for listing in (self.file_list, self.viewer.layer_list):
+            row_height = max(font_height + 4, listing.sizeHintForRow(0))
+            height = max(1, min(3, listing.count())) * row_height + 2 * listing.frameWidth()
+            if listing.height() != height:
+                listing.setFixedHeight(height)
+        if self.loading_indicator.isVisible():
+            self.lists_row_widget.setMaximumHeight(
+                132 + max(0, font_height - 17) * 6
+            )
+        else:
+            self.lists_row_widget.setMaximumHeight(
+                140 + max(0, font_height - 17) * 6
+            )
+        row_height = max(font_height + 6, self.peak_table.rowHeight(0))
+        self.peak_table.setMaximumHeight(
+            self.peak_table.horizontalHeader().sizeHint().height()
+            + max(2, min(6, self.peak_table.rowCount())) * row_height
+            + 2 * self.peak_table.frameWidth()
+        )
+        self.peak_toolbar_widget.setMinimumHeight(0)
+        self._fit_section_heights()
+
+    def _fit_section_heights(self) -> None:
+        if self._expanded:
+            return
+        heights = (self.files_section.natural_height(),
+                   0 if self.peaks_section.isHidden() else self.peaks_section.natural_height())
+        if self._section_heights == heights:
+            return
+        self._section_heights = heights
+        total = sum(self._panel_splitter.sizes())
+        if total > 0:
+            self._panel_splitter.setSizes([heights[0], max(1, total - sum(heights)), heights[1]])
 
     def _align_comparison_plot_height(self, height: int | None = None) -> None:
         """Match plot heights using the left plot, while reserving each control area's minimum
@@ -2274,27 +2789,38 @@ class SpectrumPanel(QWidget):
         """
         if not self._comparison_active or self._compare_viewer is None:
             return
-        viewers = (self._compare_viewer, self.viewer)
-        totals = [sum(viewer.view_splitter.sizes()) for viewer in viewers]
-        if min(totals) <= 0:
+        if self.overlay.toggle.isChecked():
             return
-        if height is None:
-            height = self._compare_viewer.view_splitter.sizes()[0]
-        limit = min(
-            total
-            - max(
-                viewer.controls_layout.parentWidget().minimumSizeHint().height(),
-                viewer.controls_layout.parentWidget().minimumHeight(),
-            )
-            for viewer, total in zip(viewers, totals)
-        )
-        height = max(1, min(height, limit))
-        for viewer, total in zip(viewers, totals):
+        viewers = [self._compare_viewer, self.viewer]
+        if self._extra_compare_viewer is not None:
+            viewers.append(self._extra_compare_viewer)
+        available, controls_heights = [], []
+        for viewer in viewers:
+            column = viewer.parentWidget()
+            heading = getattr(column, '_viewer_heading', None)
+            if heading is None or column.height() <= 0:
+                return
+            margins = column.layout().contentsMargins()
+            heading_height = heading.heightForWidth(column.width())
+            available.append(column.height() - margins.top() - margins.bottom()
+                             - max(heading.sizeHint().height(), heading_height)
+                             - column.layout().spacing())
+            controls_heights.append(max(viewer.controls_section.natural_height(),
+                                        viewer.controls_section.minimumSizeHint().height()))
+        limit = min(total - controls - viewer.view_splitter.handleWidth()
+                    for viewer, total, controls in zip(viewers, available, controls_heights))
+        minimum = max(viewer.plot_area.minimumSizeHint().height() for viewer in viewers)
+        height = max(minimum, limit if height is None else min(height, limit))
+        for viewer, controls in zip(viewers, controls_heights):
+            viewer.setMaximumHeight(height + controls + viewer.view_splitter.handleWidth())
             with QSignalBlocker(viewer.view_splitter):
-                viewer.view_splitter.setSizes([height, total - height])
+                viewer.view_splitter.setSizes([height, controls])
 
     def _load_compare_spectrum(self, path: Path) -> bool:
-        """Load the left comparison spectrum read-only into its independent viewer and controls."""
+        """
+        Load the left comparison spectrum read-only into its independent viewer
+        and controls.
+        """
         viewer = self._ensure_compare_viewer()
         panel3d = self._compare_3d_panel
         assert panel3d is not None
@@ -2305,7 +2831,9 @@ class SpectrumPanel(QWidget):
             if suffix == ".ft1":
                 from viewer.spectrum import Spectrum1D
 
-                viewer.add_spectrum(Spectrum1D.load_from_ft1(path), name=path.stem)
+                viewer.add_spectrum(
+                    Spectrum1D.load_from_ft1(path), name=path.stem
+                )
             elif suffix == ".ft3":
                 from viewer.spectrum import Spectrum3D
 
@@ -2319,7 +2847,7 @@ class SpectrumPanel(QWidget):
                 viewer.add_spectrum(Spectrum.load_from_ft2(path), name=path.stem)
             self._compare_spectrum = path
             return True
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             viewer.clear()
             panel3d.clear()
             self._compare_spectrum = None
@@ -2345,6 +2873,7 @@ class SpectrumPanel(QWidget):
             spectrum,
             name=panel3d.current_name(base),
         )
+        self._overlay_refresh.start(0)
 
     @staticmethod
     def _comparison_column(title: str, viewer: SpectrumViewer) -> QWidget:
@@ -2353,9 +2882,13 @@ class SpectrumPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
         label = QLabel(title)
+        label.setSizePolicy(label.sizePolicy().horizontalPolicy(),
+                            QSizePolicy.Policy.Maximum)
+        column._viewer_heading = label
         label.setObjectName("PanelTitle")
         layout.addWidget(label, 0)
         layout.addWidget(viewer, 1)
+        layout.addStretch(0)
         return column
 
     def _activate_comparison(self, path: Path) -> None:
@@ -2368,6 +2901,7 @@ class SpectrumPanel(QWidget):
                 if label is not None:
                     label.setText(path.name)
             self._comparison_layout_timer.start(0)
+            self._refresh_overlay_spectra()
             return
         viewer = self.viewer
         compare_viewer = self._ensure_compare_viewer()
@@ -2405,14 +2939,24 @@ class SpectrumPanel(QWidget):
         width = max(self.width(), 1200)
         utility_width = max(320, min(width // 4, 480))
         spectrum_width = max(360, (width - utility_width) // 2)
-        self._expand_splitter.setSizes([spectrum_width, spectrum_width, utility_width])
+        self._expand_splitter.setSizes(
+            [spectrum_width, spectrum_width, utility_width]
+        )
         self._comparison_active = True
+        utility.layout().insertWidget(1, self.overlay.controls, 0)
+        self.overlay.controls.show()
+        self._refresh_overlay_spectra()
         self._comparison_layout_timer.start(0)
 
     def _deactivate_comparison(self) -> None:
         """Restore the original expanded layout without sharing the two viewers' control state."""
         if not self._comparison_active:
             return
+        if self.overlay.toggle.isChecked():
+            self.overlay.toggle.setChecked(False)
+        self._remove_third_comparison(refresh=False)
+        self.overlay.controls.hide()
+        self.overlay.generation += 1
         self._comparison_layout_timer.stop()
         viewer = self.viewer
         compare_viewer = self._compare_viewer
@@ -2420,13 +2964,20 @@ class SpectrumPanel(QWidget):
         utility = self._expand_controls
         plot_area = self._expand_plot_area
         controls_widget = self._expand_viewer_controls
-        if splitter is None or utility is None or plot_area is None or controls_widget is None:
+        if (
+            splitter is None
+            or utility is None
+            or plot_area is None
+            or controls_widget is None
+        ):
             self._comparison_active = False
             return
 
         viewer.setParent(None)
+        viewer.setMaximumHeight(16777215)
         if compare_viewer is not None:
             compare_viewer.setParent(None)
+            compare_viewer.setMaximumHeight(16777215)
             compare_viewer.setVisible(False)
         utility.setParent(None)
         plot_area.setParent(None)
@@ -2470,23 +3021,21 @@ class SpectrumPanel(QWidget):
         self._collapsed_sizes = list(self._panel_splitter.sizes())
         self._view_splitter_sizes = list(viewer.view_splitter.sizes())
         plot_area = viewer.plot_area
-        controls_widget = viewer.controls_layout.parentWidget()
+        controls_widget = viewer.controls_section
+
 
         plot_area.setParent(None)
         controls_widget.setParent(None)
         self._expand_plot_area = plot_area
         self._expand_viewer_controls = controls_widget
-
-        self._peak_table_max = self.peak_table.maximumHeight()
-        self.peak_table.setMaximumHeight(16777215)
         controls = QWidget()
         col = QVBoxLayout(controls)
         col.setContentsMargins(0, 0, 0, 0)
         col.setSpacing(4)
-        col.addWidget(self.lists_row_widget, 0)
+        col.addWidget(self.files_section, 0)
         col.addWidget(controls_widget, 0)
-        col.addWidget(self.peak_toolbar_widget, 0)
-        col.addWidget(self.peak_table, 1)
+        col.addWidget(self.peaks_section, 0)
+        col.addStretch(1)
         self._expand_controls = controls
         hsplit = QSplitter(Qt.Orientation.Horizontal)
         hsplit.addWidget(plot_area)
@@ -2497,6 +3046,9 @@ class SpectrumPanel(QWidget):
         hsplit.setSizes([max(400, self.width() - right_w), right_w])
         self._expand_splitter = hsplit
         outer.replaceWidget(self._panel_splitter, hsplit)
+
+
+
 
         _hsplit_index = outer.indexOf(hsplit)
         if _hsplit_index >= 0:
@@ -2528,12 +3080,9 @@ class SpectrumPanel(QWidget):
             viewer.view_splitter.setSizes(self._view_splitter_sizes)
         self._expand_plot_area = None
         self._expand_viewer_controls = None
-        if getattr(self, "_peak_table_max", None) is not None:
-            self.peak_table.setMaximumHeight(self._peak_table_max)
-        self._panel_splitter.addWidget(self.lists_row_widget)
+        self._panel_splitter.addWidget(self.files_section)
         self._panel_splitter.addWidget(viewer)
-        self._panel_splitter.addWidget(self.peak_toolbar_widget)
-        self._panel_splitter.addWidget(self.peak_table)
+        self._panel_splitter.addWidget(self.peaks_section)
         if self._collapsed_sizes:
             self._panel_splitter.setSizes(self._collapsed_sizes)
         viewer.setVisible(True)
@@ -2551,7 +3100,9 @@ class SpectrumPanel(QWidget):
         self.viewer.set_peak_labels_visible(new_state)
         header_item = self.peak_table.horizontalHeaderItem(1)
         if header_item is not None:
-            header_item.setText("Assignment ✓" if new_state else "Assignment ✗")
+            header_item.setText(
+                "Assignment ✓" if new_state else "Assignment ✗"
+            )
 
     def _jump_3d_slice_to_peak(self, row: int) -> None:
         """3D peak table point peak: Jump the slice to the section corresponding to the fixed axis
@@ -2615,6 +3166,7 @@ class SpectrumPanel(QWidget):
             return
         row = rows[0].row()
         if 0 <= row < len(self._peaks):
+
             self._jump_3d_slice_to_peak(row)
             self.viewer.highlight_peak(row)
 
@@ -2626,5 +3178,6 @@ class SpectrumPanel(QWidget):
         if self._syncing_table_selection:
             return
         if 0 <= row < len(self._peaks):
+
             self._jump_3d_slice_to_peak(row)
             self.viewer.highlight_peak(row)

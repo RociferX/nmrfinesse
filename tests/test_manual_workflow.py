@@ -24,7 +24,19 @@ def _manager(bruker_dir: Path, tmp_path: Path) -> ProjectManager:
     return manager
 
 
-def test_manual_scripts_renders_default_when_no_existing(bruker_dir: Path, tmp_path: Path) -> None:
+def test_manual_carrier_choices_read_registered_raw(bruker_dir: Path, tmp_path: Path) -> None:
+    from workflow.manual import manual_carrier_choices
+
+    manager = _manager(bruker_dir / 'hnca_3d', tmp_path)
+    choices = manual_carrier_choices(manager, 'exp_001', 'd_001')
+    assert [(row['key'], row['axis']) for row in choices] == [
+        ('xCAR', 'F3'), ('yCAR', 'F2'), ('zCAR', 'F1')
+    ]
+
+
+def test_manual_scripts_renders_default_when_no_existing(
+    bruker_dir: Path, tmp_path: Path
+) -> None:
     """With no script in process/, the default process.com (uniform 2D) is rendered; fid must be
     ready first (0.2.163-patch14: no next step before the prerequisite completes)."""
     manager = _manager(bruker_dir / "hsqc_2d", tmp_path)
@@ -36,15 +48,21 @@ def test_manual_scripts_renders_default_when_no_existing(bruker_dir: Path, tmp_p
     assert "nmrPipe" in scripts["process.com"]
 
 
-def test_manual_scripts_prefers_existing(bruker_dir: Path, tmp_path: Path) -> None:
+def test_manual_scripts_prefers_existing(
+    bruker_dir: Path, tmp_path: Path
+) -> None:
     """Already auto-run (process/ has a same-named script): show the existing script directly,
     no re-render."""
     manager = _manager(bruker_dir / "hsqc_2d", tmp_path)
     work = manager.data_dir("exp_001", "d_001", "process")
     work.mkdir(parents=True, exist_ok=True)
-    (work / "d_001_process.com").write_text("# EXISTING auto script\n", encoding="utf-8")
+    (work / "d_001_process.com").write_text(
+        "# EXISTING auto script\n", encoding="utf-8"
+    )
     scripts = manual_scripts(manager, "exp_001", "d_001")
-    assert scripts == {"d_001_process.com": "# EXISTING auto script\n"}
+    assert scripts == {
+        "d_001_process.com": "# EXISTING auto script\n"
+    }
     assert "process.com" not in scripts
 
 
@@ -61,17 +79,19 @@ def test_manual_scripts_nus_renders_latest_and_prefers_existing(
     assert list(scripts) == ["nus.com"]
     content = scripts["nus.com"]
     assert "nmrPipe -fn SMILE -nDim 3" in content
-    assert "-xApod" not in content  # Windowing remains in step3
-    assert "-xP0 0 -xP1 0" in content  # F2 has an explicit default zero phase
-    assert "-yP0 0 -yP1 0" in content  # F1 has an explicit default zero phase
-    assert "-xAlt" in content  # F2=States-TPPI(5), consistent with step3 FT -alt
-    assert "-xNeg" not in content  # handedness undecidable (no pulse program) -> no negation
-    assert "-maxIter 1500" in content  # 4/6144 rate -> lowest tier (maxIter follows it)
-    assert "-sampleCount 4" in content  # manual mode fills in the real nuslist row count
+    assert "-xApod" not in content
+    assert "-xP0 0 -xP1 0" in content
+    assert "-yP0 0 -yP1 0" in content
+    assert "-xAlt" in content
+    assert "-xNeg" not in content
+    assert "-maxIter 1500" in content
+    assert "-sampleCount 4" in content
 
     work = manager.data_dir("exp_001", "d_001", "process")
     work.mkdir(parents=True, exist_ok=True)
-    (work / "d_001_nus.com").write_text("# EXISTING nus script\n", encoding="utf-8")
+    (work / "d_001_nus.com").write_text(
+        "# EXISTING nus script\n", encoding="utf-8"
+    )
     scripts = manual_scripts(manager, "exp_001", "d_001")
     assert list(scripts) == ["d_001_nus.com"]
     assert "# EXISTING nus script" in scripts["d_001_nus.com"]
@@ -80,7 +100,7 @@ def test_manual_scripts_nus_renders_latest_and_prefers_existing(
 def test_manual_nus_uses_schedule_named_by_acqus(
     bruker_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    "Regression coverage: test manual nus uses schedule named by acqus."
+    """Regression coverage: test manual nus uses schedule named by acqus."""
     import shutil
 
     src = tmp_path / "named_nus"
@@ -99,9 +119,9 @@ def test_manual_nus_uses_schedule_named_by_acqus(
     monkeypatch.setattr("workflow.manual.CshRuntime", lambda: runtime)
     run_manual_spectrum(manager, "exp_001", "d_001", scripts)
 
-    assert (work / "nuslist").read_text(encoding="utf-8") == (src / "CANH").read_text(
-        encoding="utf-8"
-    )
+    assert (work / "nuslist").read_text(encoding="utf-8") == (
+        src / "CANH"
+    ).read_text(encoding="utf-8")
 
 
 class FakeRuntime:
@@ -138,11 +158,17 @@ def test_run_manual_spectrum_uses_first_script_key(
     )
     assert runtime.calls[0][0] == ["csh", "d_001_process.com"]
     assert Path(result).is_file()
-    runs = [run for run in manager.project.workflow_runs if run.workflow_ref == "manual_process"]
+    runs = [
+        run
+        for run in manager.project.workflow_runs
+        if run.workflow_ref == "manual_process"
+    ]
     assert runs and runs[-1].status == "success"
 
 
-def test_run_manual_spectrum_empty_scripts_raises(bruker_dir: Path, tmp_path: Path) -> None:
+def test_run_manual_spectrum_empty_scripts_raises(
+    bruker_dir: Path, tmp_path: Path
+) -> None:
     """An empty script dict gives an explicit error instead of failing silently."""
     manager = _manager(bruker_dir / "hsqc_2d", tmp_path)
     with pytest.raises(ManualRunError, match="缺少处理脚本"):
@@ -161,13 +187,10 @@ def test_script_parameter_audit_handles_negative_values_flags_and_insertions() -
     edited = edited.replace("-fn FT -auto", "-fn FT -auto -neg | nmrPipe -fn POLY -ord 3")
     audit = script_changes("process.com", edited, baseline, "original")
     changes = audit["changes"]
-    assert any(
-        c["parameter"] == "-p0" and c["before"] == "-90.0" and c["after"] == "-80.5"
-        for c in changes
-    )
-    assert any(
-        c["parameter"] == "-di" and c["before"] is True and c["after"] is None for c in changes
-    )
+    assert any(c["parameter"] == "-p0" and c["before"] == "-90.0"
+               and c["after"] == "-80.5" for c in changes)
+    assert any(c["parameter"] == "-di" and c["before"] is True
+               and c["after"] is None for c in changes)
     assert any(c["parameter"] == "-neg" and c["after"] is True for c in changes)
     assert any(c["parameter"] == "command" and "POLY" in c["after"] for c in changes)
     cosmetic = baseline.replace("# note", "# changed note").replace("-p0 ", "-p0    ")
@@ -191,22 +214,21 @@ def test_manual_script_audit_persists_params_and_actual_script(
     (work / "process.com").write_text(edited, encoding="utf-8")
     runtime = FakeRuntime(Path("d_001.ft2"))
     if failed:
-        monkeypatch.setattr(
-            runtime, "run", lambda *a, **k: SimpleNamespace(returncode=1, stderr="runtime failed")
-        )
+        monkeypatch.setattr(runtime, "run", lambda *a, **k:
+                            SimpleNamespace(returncode=1, stderr="runtime failed"))
     monkeypatch.setattr("workflow.manual.CshRuntime", lambda: runtime)
     monkeypatch.setattr("workflow.manual._run_quality_check", lambda *a: None)
-    monkeypatch.setattr(
-        "workflow.optimization_report.spectrum_quality_report_lines",
-        lambda *a, **k: ["quality marker"],
-    )
+    monkeypatch.setattr("workflow.optimization_report.spectrum_quality_report_lines",
+                        lambda *a, **k: ["quality marker"])
     logs = []
     kwargs = {"script_baselines": {"process.com": baseline}, "progress": logs.append}
     if failed:
         with pytest.raises(ManualRunError, match="runtime failed"):
             run_manual_spectrum(manager, "exp_001", "d_001", {"process.com": edited}, **kwargs)
     else:
-        result = run_manual_spectrum(manager, "exp_001", "d_001", {"process.com": edited}, **kwargs)
+        result = run_manual_spectrum(
+            manager, "exp_001", "d_001", {"process.com": edited}, **kwargs
+        )
     run = manager.project.workflow_runs[-1]
     assert run.status == ("failed" if failed else "success")
     audit = run.params["manual_script_changes"][0]
@@ -231,26 +253,13 @@ def test_previous_script_only_uses_same_data_successful_snapshot(tmp_path: Path)
     exp = manager.create_experiment("HSQC")
     d1 = manager.import_data(exp.id, "/fake/1")
     d2 = manager.import_data(exp.id, "/fake/2")
-    for data, status, text in [
-        (d1, "success", "old"),
-        (d2, "success", "other"),
-        (d1, "failed", "failed"),
-    ]:
+    for data, status, text in [(d1, "success", "old"), (d2, "success", "other"),
+                               (d1, "failed", "failed")]:
         run = manager.start_run(exp.id, workflow_ref="manual_process", inputs={"data_id": data.id})
         manager.finish_run(run.run_id, status)
         manager.snapshot_run(run.run_id, {"process.com": text})
     assert previous_script(manager, exp.id, d1.id, "process.com", ("manual_process",)) == "old"
     assert previous_script(manager, exp.id, d1.id, "unknown.com", ("manual_process",)) is None
-    assert (
-        previous_script(manager, exp.id, d1.id, "../../project.json", ("manual_process",)) is None
-    )
-
-
-def test_manual_carrier_choices_read_registered_raw(bruker_dir: Path, tmp_path: Path) -> None:
-    from workflow.manual import manual_carrier_choices
-
-    manager = _manager(bruker_dir / 'hnca_3d', tmp_path)
-    choices = manual_carrier_choices(manager, 'exp_001', 'd_001')
-    assert [(row['key'], row['axis']) for row in choices] == [
-        ('xCAR', 'F3'), ('yCAR', 'F2'), ('zCAR', 'F1')
-    ]
+    assert previous_script(
+        manager, exp.id, d1.id, "../../project.json", ("manual_process",)
+    ) is None

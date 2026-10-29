@@ -12,8 +12,8 @@ from pathlib import Path
 
 from qtcompat.QtCore import Qt
 from qtcompat.QtWidgets import (
+    QBoxLayout,
     QGridLayout,
-    QHBoxLayout,
     QLabel,
     QPushButton,
     QScrollArea,
@@ -68,23 +68,35 @@ class CenterPanel(QWidget):
         self.pipeline = PipelinePanel(manager, controller)
         self.pipeline.log_message.connect(self.log_message.emit)
         self.pipeline.log_scoped.connect(self.log_scoped.emit)
-        self.pipeline.memory_guard_requested.connect(self.memory_guard_requested.emit)
+        self.pipeline.memory_guard_requested.connect(
+            self.memory_guard_requested.emit
+        )
         self.pipeline.manual_open_requested.connect(self.manual_open_requested.emit)
 
         self.project_page = ProjectDashboard()
-        self.project_page.create_experiment_requested.connect(self.create_experiment_requested.emit)
+        self.project_page.create_experiment_requested.connect(
+            self.create_experiment_requested.emit
+        )
 
         self.experiment_page = ExperimentDashboard()
-        self.experiment_page.data_rename_requested.connect(self.data_rename_requested.emit)
-        self.experiment_page.import_options_requested.connect(self.import_options_requested.emit)
-        self.experiment_page.batch_import_requested.connect(self.batch_import_requested.emit)
+        self.experiment_page.data_rename_requested.connect(
+            self.data_rename_requested.emit
+        )
+        self.experiment_page.import_options_requested.connect(
+            self.import_options_requested.emit
+        )
+        self.experiment_page.batch_import_requested.connect(
+            self.batch_import_requested.emit
+        )
         self.experiment_page.segmented_import_requested.connect(
             self.segmented_import_requested.emit
         )
 
         self.group_page = GroupBatchPanel()
         self.group_page.log_message.connect(self.log_message.emit)
-        self.group_page.run_group_batch_requested.connect(self.group_run_requested.emit)
+        self.group_page.run_group_batch_requested.connect(
+            self.group_run_requested.emit
+        )
         self.group_page.summary_requested.connect(self._on_group_summary)
 
         self.stack = QStackedWidget()
@@ -94,40 +106,71 @@ class CenterPanel(QWidget):
         self.stack.addWidget(self.pipeline)  # index 3: Data / folder
         self.stack.addWidget(self.group_page)
 
-        self.notes_header = QHBoxLayout()
+
+        self.notes_header = QVBoxLayout()
+        self.selection_guide_label = QLabel()
+        self.selection_guide_label.setObjectName("SelectionGuide")
+        self.selection_guide_label.setWordWrap(True)
+        self.notes_header.addWidget(self.selection_guide_label)
         self.notes_label = QLabel("")
         self.notes_label.setWordWrap(True)
-        self.notes_label.setStyleSheet(
-            "background: #1e1e1e; border: 1px solid #3c3c3c; color: #ffffff; padding: 4px 8px;"
-        )
-        self.notes_header.addWidget(self.notes_label, 1)
+        self.notes_label.setObjectName("MutedText")
 
         self.group_notes_scroll = QScrollArea()
         self.group_notes_scroll.setWidgetResizable(True)
-        self.group_notes_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.group_notes_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.group_notes_scroll.setStyleSheet(
-            "background: #1e1e1e; border: 1px solid #3c3c3c; color: #ffffff;"
+        self.group_notes_scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        self.group_notes_scroll.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
         )
         self.group_notes_scroll.setVisible(False)
         self.notes_header.addWidget(self.group_notes_scroll, 1)
         self.edit_notes_button = QPushButton(tr("Editor's note"))
+        self.edit_notes_button.setObjectName("SubtleAction")
         self.edit_notes_button.setToolTip(
             tr("Add or edit the note for the current project, experiment type or sample data")
         )
         self.edit_notes_button.clicked.connect(self._on_edit_notes)
-        self.notes_header.addWidget(self.edit_notes_button)
+        self.notes_area = QWidget()
+        self._notes_actions_layout = QBoxLayout(QBoxLayout.Direction.LeftToRight)
+        self._notes_actions_layout.setContentsMargins(0, 0, 0, 0)
+        self._notes_actions_layout.setSpacing(4)
+        self._notes_actions_layout.addWidget(self.notes_label, 1)
+        self._notes_actions_layout.addWidget(self.edit_notes_button, 0, Qt.AlignmentFlag.AlignRight)
+        self.notes_area.setLayout(self._notes_actions_layout)
+        self.notes_area.setVisible(False)
+        self.notes_header.insertWidget(1, self.notes_area)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(self.notes_header)
-        layout.addWidget(self.stack)
+        layout.addWidget(self.stack, 1)
+        self._update_selection_guide('workspace')
+        self._update_notes('workspace', '', '')
+
+    def resizeEvent(self, event) -> None:
+        """Move the notes editor below the notes in narrow columns."""
+        super().resizeEvent(event)
+        direction = (
+            QBoxLayout.Direction.LeftToRight
+            if self.width() >= 520
+            else QBoxLayout.Direction.TopToBottom
+        )
+        if self._notes_actions_layout.direction() != direction:
+            self._notes_actions_layout.setDirection(direction)
+        self._notes_actions_layout.setAlignment(
+            self.edit_notes_button, Qt.AlignmentFlag.AlignRight
+        )
 
     # ------------------------------------------------------------------
-    def set_selection(self, kind: str, exp_id: str, data_id: str = "", group_id: str = "") -> None:
+    def set_selection(
+        self, kind: str, exp_id: str, data_id: str = "", group_id: str = ""
+    ) -> None:
         """Press the tree selection level to switch to the middle page and refresh the top comment
         bar.
         """
+        self._update_selection_guide(kind)
         self._update_notes(kind, exp_id, data_id, group_id)
         if kind == "workspace":
             self.stack.setCurrentIndex(0)
@@ -149,6 +192,22 @@ class CenterPanel(QWidget):
             self.stack.setCurrentIndex(3)
             self.pipeline.set_selection(kind, exp_id, data_id)
 
+    def _update_selection_guide(self, kind: str) -> None:
+        """Show a short action hint for the selected tree level."""
+        guide = {
+            "workspace": (tr("Workspace"), tr("Create or open projects")),
+            "project": (tr("Project"), tr("Create experiments")),
+            "experiment": (tr("Experiment"), tr("Import sample data")),
+            "group": (tr("Group"), tr("Process group data in batches")),
+        }
+        if kind in ("data", "folder"):
+            level, purpose = tr("Data"), tr("Process sample data")
+        else:
+            level, purpose = guide.get(
+                kind, (tr("Workspace"), tr("Create or open projects"))
+            )
+        self.selection_guide_label.setText(f"{level}  ·  {purpose}")
+
     # ------------------------------------------------------------------
     def set_manager(self, manager) -> None:
         """Binding/renew ProjectManager (called by the main window when switching projects)."""
@@ -158,21 +217,26 @@ class CenterPanel(QWidget):
         """Refresh the comments page (public packaging: _update_notes)."""
         self._update_notes(*args, **kwargs)
 
-    def _update_notes(self, kind: str, exp_id: str, data_id: str = "", group_id: str = "") -> None:
+    def _update_notes(
+        self, kind: str, exp_id: str, data_id: str = "", group_id: str = ""
+    ) -> None:
         """Display the project/experiment type/sample data/Data group annotation according to the
         selected level (the top of the middle area).
         """
         from gui.notes import data_note, experiment_note, sample_note
 
-        self._notes_kind = (
-            kind if kind in ("project", "experiment", "data", "folder", "group") else ""
-        )
+        self._notes_kind = kind if kind in (
+            "project", "experiment", "data", "folder", "group"
+        ) else ""
         self._notes_exp_id = exp_id
         self._notes_data_id = data_id if kind in ("data", "folder") else ""
         self._notes_group_id = group_id if kind == "group" else ""
         show = bool(self._notes_kind)
 
+
+
         self.notes_label.setVisible(show and kind != "group")
+        self.notes_area.setVisible(show and kind != "group")
         self.group_notes_scroll.setVisible(False)
         self.edit_notes_button.setVisible(show and kind != "group")
         if not show or kind == "group":
@@ -206,6 +270,7 @@ class CenterPanel(QWidget):
                     source_line = tr("Source path: {p0}", p0=source_path)
                     text = f"{text}\n{source_line}" if text else source_line
             except (AttributeError, OSError, RuntimeError, ValueError):
+
                 pass
         self.notes_label.setText(
             tr("Note:\n{p0}", p0=text) if text else tr("Note: (not filled in)")
@@ -227,7 +292,11 @@ class CenterPanel(QWidget):
         member_ids = (group.data_ids or []) if group is not None else []
         cols_data: list[tuple[str, str, dict]] = []
         for data_id in member_ids:
-            d = next((x for x in exp.data if x.id == data_id), None) if exp is not None else None
+            d = (
+                next((x for x in exp.data if x.id == data_id), None)
+                if exp is not None
+                else None
+            )
             label_text = (d.title or f"Data {data_id}") if d else f"Data {data_id}"
             cols_data.append(
                 (
@@ -251,30 +320,24 @@ class CenterPanel(QWidget):
         grid.setSpacing(2)
 
         head0 = QLabel(tr("data"))
-        head0.setStyleSheet(
-            "font-weight: bold; color: #f0f0f0; border: none; background: transparent;"
-        )
+        head0.setObjectName("SectionTitle")
         grid.addWidget(head0, 0, 0)
         for ci, (data_id, label_text, _f) in enumerate(cols_data, start=1):
             head = QLabel(f"◆ {label_text}\n({data_id})")
             head.setWordWrap(True)
-            head.setStyleSheet(
-                "font-weight: bold; color: #f0f0f0; border: none; background: transparent;"
-            )
+            head.setObjectName("SectionTitle")
             grid.addWidget(head, 0, ci)
 
         for ri, key in enumerate(row_keys, start=1):
             fname = QLabel(display.get(key, key))
-            fname.setStyleSheet(
-                "font-weight: bold; color: #f0f0f0; border: none; background: transparent;"
-            )
+            fname.setObjectName("SectionTitle")
             grid.addWidget(fname, ri, 0)
             for ci, (_di, _lb, fields) in enumerate(cols_data, start=1):
                 val = fields.get(key)
                 val_lb = QLabel(str(val) if val not in (None, "") else "—")
                 val_lb.setWordWrap(True)
-                val_lb.setFixedWidth(190)
-                val_lb.setStyleSheet("color: #ffffff; border: none; background: transparent;")
+                val_lb.setMinimumWidth(0)
+                val_lb.setObjectName("MutedText")
                 grid.addWidget(val_lb, ri, ci)
         grid.setColumnStretch(0, 0)
         grid.setColumnStretch(len(cols_data) + 1, 0)
@@ -298,7 +361,8 @@ class CenterPanel(QWidget):
             if item.get("skipped"):
                 emit_log(
                     tr(
-                        "  Skipped {p0}: {p1}",
+                        "  Skipped {p0}: "
+                        "{p1}",
                         p0=data_id,
                         p1=item.get("error", ""),
                     )
@@ -306,7 +370,8 @@ class CenterPanel(QWidget):
             elif item.get("failed"):
                 emit_log(
                     tr(
-                        "  Failed {p0}: {p1}",
+                        "  Failed {p0}: "
+                        "{p1}",
                         p0=data_id,
                         p1=item.get("error", ""),
                     )
@@ -314,7 +379,8 @@ class CenterPanel(QWidget):
             elif item.get("cancelled"):
                 emit_log(
                     tr(
-                        "  Cancelled {p0}: {p1}",
+                        "  Cancelled {p0}: "
+                        "{p1}",
                         p0=data_id,
                         p1=item.get("error", ""),
                     )
@@ -322,7 +388,8 @@ class CenterPanel(QWidget):
             elif item.get("ok"):
                 emit_log(
                     tr(
-                        "  Done {p0}: {p1}",
+                        "  Done {p0}: "
+                        "{p1}",
                         p0=data_id,
                         p1=item.get("message", ""),
                     )
@@ -330,7 +397,8 @@ class CenterPanel(QWidget):
             else:
                 emit_log(
                     tr(
-                        "  Failed {p0}: {p1}",
+                        "  Failed {p0}: "
+                        "{p1}",
                         p0=data_id,
                         p1=item.get("error", ""),
                     )
@@ -341,7 +409,9 @@ class CenterPanel(QWidget):
         """Click "Edit Comment": Send an edit request (the main window opens the comment dialog
         box).
         """
-        self.edit_notes_requested.emit(self._notes_kind, self._notes_exp_id, self._notes_data_id)
+        self.edit_notes_requested.emit(
+            self._notes_kind, self._notes_exp_id, self._notes_data_id
+        )
 
     def refresh(self) -> None:
         self.welcome_page.refresh()
@@ -354,7 +424,8 @@ class CenterPanel(QWidget):
     def _exp_group_context(self) -> bool:
         """Whether you are currently staying on the data group page (for refresh)."""
         return bool(
-            self.stack.currentWidget() is self.group_page and self.group_page.current_group_id
+            self.stack.currentWidget() is self.group_page
+            and self.group_page.current_group_id
         )
 
     def run_step(self, step_id: str, data_id: str | None = None) -> None:

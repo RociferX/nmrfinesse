@@ -78,7 +78,7 @@ def fit_combo_width(combo: QComboBox, extra: int = 18) -> None:
             QStyle.SubControl.SC_ComboBoxArrow,
             combo,
         ).width()
-    except Exception:  # noqa: BLE001 - If it is not available, use the default arrow width.
+    except Exception:
         pass
     width = text_width + arrow + max(0, int(extra))
     if width > combo.minimumWidth():
@@ -158,14 +158,18 @@ def apply_dark_theme(app: QApplication) -> None:
             f' image: url("{_down}"); width: 12px; height: 12px; }}\n'
         )
     app.setStyleSheet(
+        # i18n: keep - CSS comments are not interface messages.
         """
         QToolTip { color: #e8e8e8; background-color: #2d2d30;
                    border: 1px solid #3c3c3c; }
-        QMenuBar { background-color: #1e1e1e; color: #e8e8e8; }
-        QMenuBar::item:selected { background-color: #0e639c; }
+        QMenuBar { background-color: #1e1e1e; color: #e8e8e8; padding: 2px; }
+        QMenuBar::item { padding: 4px 8px; border-radius: 4px; }
+        QMenuBar::item:selected { background-color: #293746; }
         QMenu { background-color: #252526; color: #e8e8e8;
                 border: 1px solid #3c3c3c; }
-        QMenu::item:selected { background-color: #0e639c; }
+        QMenu::item { padding: 6px 22px 6px 12px; }
+        QMenu::item:selected { background-color: #244663; }
+        QMenu::separator { height: 1px; background: #39424e; margin: 5px 8px; }
         QStatusBar { background-color: #1e1e1e; color: #e8e8e8; }
         QTreeView, QListView, QTableView, QTableWidget, QTreeWidget {
             background-color: #252526; color: #e8e8e8;
@@ -177,19 +181,25 @@ def apply_dark_theme(app: QApplication) -> None:
         QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QPlainTextEdit,
         QTextEdit, QDateEdit, QTimeEdit {
             background-color: #1e1e1e; color: #e8e8e8;
-            border: 1px solid #3c3c3c; }
-        /* 0.2.199-patch29at: dark spinbox arrow buttons so white arrows stay visible */
+            border: 1px solid #3c3c3c; border-radius: 4px; }
+        /* Dark spinbox buttons keep their white arrows visible. */
         QSpinBox::up-button, QDoubleSpinBox::up-button,
         QSpinBox::down-button, QDoubleSpinBox::down-button {
             background-color: #3c3c3c; border: none; width: 16px; }
         QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover,
         QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {
             background-color: #4a4a4a; }
-        QPushButton { background-color: #3c3c3c; color: #e8e8e8;
-                      border: 1px solid #555555; padding: 5px 10px;
+        QPushButton { background-color: #2b313a; color: #e8e8e8;
+                      border: 1px solid #424b58; padding: 5px 10px;
                       border-radius: 4px; }
-        QPushButton:hover { background-color: #4a4a4a; }
+        QPushButton:hover { background-color: #354150; border-color: #5a718b; }
         QPushButton:disabled { color: #6e6e6e; }
+        QPushButton#PrimaryAction { background-color: #12669e; border: 1px solid #3286be;
+                                   color: white; font-weight: bold; padding: 6px 12px; }
+        QPushButton#PrimaryAction:hover { background-color: #197bb7; }
+        QPushButton#PrimaryAction:pressed { background-color: #094771; }
+        QPushButton#PrimaryAction:disabled { background-color: #303840; color: #909090;
+                                           border-color: #555555; }
         QTabWidget::pane { border: 1px solid #3c3c3c; }
         QTabBar::tab { background-color: #252526; color: #e8e8e8;
                        padding: 4px 8px; }
@@ -202,8 +212,9 @@ def apply_dark_theme(app: QApplication) -> None:
         QScrollBar { background-color: #252526; }
         QScrollBar::handle { background-color: #3c3c3c; }
         QLabel { color: #e8e8e8; }
-        /* 0.2.199-patch29cc: a custom QSS border clips the title, so leave margin-top */
-        QGroupBox { border: 1px solid #3c3c3c; margin-top: 18px;
+        /* Leave room above custom group borders for the title. */
+        QGroupBox { border: 1px solid #3c3c3c; margin-top: 1.4em;
+                    border-radius: 5px; padding-top: 5px;
                     color: #e8e8e8; }
         QGroupBox::title { subcontrol-origin: margin;
                            subcontrol-position: top left;
@@ -215,32 +226,32 @@ def apply_dark_theme(app: QApplication) -> None:
         QCheckBox, QRadioButton { color: #e8e8e8; }
         QListWidget { background-color: #252526; color: #e8e8e8; }
         QStackedWidget { background-color: #1e1e1e; }
-        /* 0.2.199-patch29hz-rev2: section cards and titles */
+        /* Section cards and headings. */
         QWidget#PanelCard { background-color: #202124;
                             border: 1px solid #33363b;
                             border-radius: 6px; }
-        QLabel#PanelTitle { font-size: 13px; font-weight: bold;
+        QLabel#PanelTitle { font-weight: bold;
                             color: #e8e8e8; }
-        QLabel#PanelSubtitle { font-size: 11px; color: #b0b0b0; }
-        /* step rows: bottom hairline separator + hover highlight */
+        QLabel#PanelSubtitle { color: #b0b0b0; }
+        /* Step rows: bottom separators and hover highlighting. */
         QWidget#StepRow { border-bottom: 1px solid #2d2d30; }
         QWidget#StepRow:hover { background-color: #26282b; }
-        /* unified selected / hover states */
+        /* Consistent selection and hover states. */
         QTreeView::item:selected, QListView::item:selected,
         QTableView::item:selected, QTableWidget::item:selected {
             background-color: #0e639c; color: #ffffff; }
         QTreeView::item:hover, QListView::item:hover,
         QTableView::item:hover, QTableWidget::item:hover {
             background-color: #2a2d2e; }
-        /* input focus */
+        /* Input focus. */
         QLineEdit:focus, QComboBox:focus, QSpinBox:focus,
         QDoubleSpinBox:focus, QPlainTextEdit:focus, QTextEdit:focus {
             border: 1px solid #0e639c; }
-        /* button states */
+        /* Button states. */
         QPushButton:pressed { background-color: #2f2f2f; }
         QPushButton:checked { background-color: #0e639c;
                               border-color: #1177bb; }
-        /* scrollbars: slim and rounded, so they do not steal the eye */
+        /* Slim rounded scrollbars. */
         QScrollBar:vertical { background: transparent; width: 10px;
                               margin: 2px 0 2px 0; }
         QScrollBar:horizontal { background: transparent; height: 10px;
@@ -254,10 +265,39 @@ def apply_dark_theme(app: QApplication) -> None:
         QScrollBar::add-page, QScrollBar::sub-page {
             background: transparent; }
         QToolTip { padding: 4px 6px; border-radius: 4px; }
-        /* 0.2.199-patch29hz-rev2 (option A): inside a section always use the card
-           background, so that the tree / pipeline / log / spectrum each stay one
-           block instead of being cut into mismatched tiles by the child widgets
-           (scroll area / text boxes / lists). */
+        QPushButton#SubtleAction, QToolButton {
+            background: transparent; border: 1px solid transparent;
+            color: #b7c5d6; padding: 3px 7px; border-radius: 4px; }
+        QPushButton#SubtleAction:hover, QToolButton:hover {
+            color: #e8f1ff; background: #2c3744; border-color: #40566b; }
+        QPushButton#SubtleAction:checked, QPushButton#PrimaryAction:checked {
+            background: #224d6a; color: #e3f2ff; border-color: #7abbe3; }
+        QToolButton#ReportToggle { color: #80b7df; padding: 2px 5px; }
+        QToolButton#ReportToggle:checked { background: #233c50; color: #b5dbf6; }
+        QPushButton:focus, QToolButton:focus { border-color: #4a9fd5; }
+        QLabel#SectionTitle { color: #d4dce7; font-weight: bold; padding: 5px 0 2px; }
+        QLabel#MutedText, QLabel#TreeSelectionHint { color: #9faab8; }
+        QLabel#SelectionGuide { color: #c6d9ea; background: #252e39;
+            border: none; border-left: 3px solid #447fa9; padding: 6px 10px; }
+        QPushButton#ViewerSectionHeader {
+            background: #35332b; border: none; border-left: 3px solid #cfab68;
+            border-radius: 4px; padding: 0; }
+        QPushButton#ViewerSectionHeader:checked {
+            background: #283746; border-left-color: #4a9fd5; }
+        QPushButton#ViewerSectionHeader:hover { background: #364452; }
+        QLabel#ViewerSectionArrow, QLabel#ViewerSectionTitle, QLabel#ViewerSectionState {
+            background: transparent; border: none; color: #dbe6f2; font-weight: bold; }
+        QLabel#ViewerSectionState { color: #c1cfde; }
+        QLabel#ViewerPlotHeader {
+            color: #dbe6f2; background: #283746; border-left: 3px solid #4a9fd5;
+            padding: 4px 8px; font-weight: bold; }
+        QTabBar::tab { border-bottom: 2px solid transparent; padding: 6px 12px; }
+        QTabBar::tab:selected { background: #283746; border-bottom-color: #4a9fd5; }
+        QSlider::groove:horizontal { height: 3px; background: #3b444e; }
+        QSlider::sub-page:horizontal { background: #337eb1; }
+        QSlider::handle:horizontal { background: #8fbfdf; border: 1px solid #477fa6;
+            width: 12px; margin: -5px 0; border-radius: 6px; }
+        /* Use the card background throughout each section so content widgets do not fragment it. */
         QWidget#PanelCard QTreeWidget, QWidget#PanelCard QTableWidget,
         QWidget#PanelCard QListWidget, QWidget#PanelCard QPlainTextEdit,
         QWidget#PanelCard QTextEdit, QWidget#PanelCard QStackedWidget,

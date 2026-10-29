@@ -13,6 +13,7 @@ from pathlib import Path
 
 from core.app_paths import local_config_path
 from ui_support.i18n import USER_CHOICES, USER_CONFIG_KEY, normalize_language
+from ui_support.typography import normalize_font_size
 
 SETTINGS_FILENAME = "nmrfinesse.local.yaml"
 
@@ -23,17 +24,27 @@ def is_appimage() -> bool:
 
 
 DEFAULTS: dict = {
+
     "nmrpipe_path": "",
+
+
     "bruker_path": "",
     "proj3d_path": "",
+    "pipe2ucsf_path": "",
+
+
     "smile_status": "",
     "smile_version": "",
+
     "environment_warning_dismissed": False,
     "linewidth_hz": {"1H": 8, "15N": 15, "13C": 20},
     "data_root": "",
     "alignment_tolerance_ppm": {"1H": 0.02, "15N": 0.2, "13C": 0.2},
     "guide": {"first_import_hint_shown": False},
+
     "language": "auto",
+
+    "interface_font_size": 0,
     "pipeline": {"simple_mode": False},
     "smile": {"nthread": 2},
 }
@@ -90,8 +101,12 @@ def load_settings() -> dict:
     """
     raw = _read_raw()
     backend = raw.get("backend") if isinstance(raw.get("backend"), dict) else {}
-    nmrpipe = backend.get("nmrpipe") if isinstance(backend.get("nmrpipe"), dict) else {}
-    processing = raw.get("processing") if isinstance(raw.get("processing"), dict) else {}
+    nmrpipe = (
+        backend.get("nmrpipe") if isinstance(backend.get("nmrpipe"), dict) else {}
+    )
+    processing = (
+        raw.get("processing") if isinstance(raw.get("processing"), dict) else {}
+    )
 
     nmrpipe_value = nmrpipe.get("path") or nmrpipe.get("nmrpipe_bin")
     if not nmrpipe_value:
@@ -104,8 +119,13 @@ def load_settings() -> dict:
         "nmrpipe_path": str(nmrpipe_value or ""),
         "bruker_path": str(raw.get("bruker_path", DEFAULTS["bruker_path"]) or ""),
         "proj3d_path": str(raw.get("proj3d_path", DEFAULTS["proj3d_path"]) or ""),
-        "smile_status": str(raw.get("smile_status", DEFAULTS["smile_status"]) or ""),
-        "smile_version": str(raw.get("smile_version", DEFAULTS["smile_version"]) or ""),
+        "pipe2ucsf_path": str(raw.get("pipe2ucsf_path", "") or ""),
+        "smile_status": str(
+            raw.get("smile_status", DEFAULTS["smile_status"]) or ""
+        ),
+        "smile_version": str(
+            raw.get("smile_version", DEFAULTS["smile_version"]) or ""
+        ),
         "environment_warning_dismissed": bool(
             raw.get(
                 "environment_warning_dismissed",
@@ -133,6 +153,9 @@ def load_settings() -> dict:
             )
         },
         USER_CONFIG_KEY: _language_value(raw.get(USER_CONFIG_KEY)),
+        "interface_font_size": normalize_font_size(
+            raw.get("interface_font_size", DEFAULTS["interface_font_size"])
+        ),
         "smile": {
             "nthread": _safe_nthread(
                 (raw.get("smile") or {}).get("nthread", 2)
@@ -147,15 +170,19 @@ def _merged_view(settings: dict) -> dict:
     current = load_settings()
     merged = dict(current)
 
+
     for key in (
         "nmrpipe_path",
         "bruker_path",
         "proj3d_path",
+        "pipe2ucsf_path",
+
         "smile_status",
         "smile_version",
         "environment_warning_dismissed",
         "data_root",
         USER_CONFIG_KEY,
+        "interface_font_size",
     ):
         if key in settings:
             merged[key] = settings[key]
@@ -199,19 +226,29 @@ def save_settings(settings: dict) -> Path:
         "alignment_tolerance_ppm",
         "guide",
         "pipeline",
+
         "bruker_path",
         "proj3d_path",
+        "pipe2ucsf_path",
+
         "smile_status",
         "smile_version",
         "environment_warning_dismissed",
     ):
         raw[key] = merged[key]
     raw[USER_CONFIG_KEY] = _language_value(merged.get(USER_CONFIG_KEY))
+    raw["interface_font_size"] = normalize_font_size(
+        merged.get("interface_font_size")
+    )
+
+
 
     from core.project.manager import atomic_write_text
 
     path = _settings_path()
-    atomic_write_text(path, yaml.safe_dump(raw, allow_unicode=True, sort_keys=False))
+    atomic_write_text(
+        path, yaml.safe_dump(raw, allow_unicode=True, sort_keys=False)
+    )
 
     from ui_support.i18n import reload_user_preference
 

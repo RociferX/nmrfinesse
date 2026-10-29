@@ -16,7 +16,6 @@ from qtcompat.QtWidgets import (
     QComboBox,
     QGridLayout,
     QGroupBox,
-    QHBoxLayout,
     QLabel,
     QLineEdit,
     QPushButton,
@@ -28,9 +27,6 @@ from qtcompat.QtWidgets import (
 from qtcompat import Signal
 from ui_support.i18n import tr
 from ui_support.theme import (
-    TEXT_MUTED,
-    TEXT_PRIMARY,
-    TEXT_SECONDARY,
     fit_combo_width,
 )
 
@@ -48,7 +44,7 @@ class GroupBatchPanel(QWidget):
     log_message = Signal(str)
     run_group_batch_requested = Signal(str, str, list, str, dict)
     # (exp_id, group_id, steps, reference_data_id)
-    summary_requested = Signal(dict)  # Batch summary (information + data-by-data results).
+    summary_requested = Signal(dict)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -56,54 +52,61 @@ class GroupBatchPanel(QWidget):
         self._exp_id = ""
         self._group_id = ""
 
-        # 0.2.199-patch29hd: The whole page can be scrolled up and down -- member/Contextual
+        # 0.2.199-patch29hd: The whole page can be scrolled up and down -- member/Contextual #
         # annotation content is no longer squashed when it is long.
         self._scroll = QScrollArea(self)
         self._scroll.setWidgetResizable(True)
-        self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self._scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self._scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        self._scroll.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
         self._content = QWidget()
         self._scroll.setWidget(self._content)
         _outer = QVBoxLayout(self)
         _outer.setContentsMargins(0, 0, 0, 0)
         _outer.addWidget(self._scroll)
         layout = QVBoxLayout(self._content)
-        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(6)
 
         title = QLabel(tr("data group batch processing"))
-        title.setStyleSheet(f"font-size: 15px; font-weight: bold; color: {TEXT_PRIMARY};")
+        title.setObjectName("PanelTitle")
         layout.addWidget(title)
 
         self.context_label = QLabel("")
         self.context_label.setWordWrap(True)
-        self.context_label.setStyleSheet(f"color: {TEXT_SECONDARY};")
+        self.context_label.setObjectName("PanelSubtitle")
         layout.addWidget(self.context_label)
 
         self.member_label = QLabel("")
         self.member_label.setWordWrap(True)
-        self.member_label.setStyleSheet(f"color: {TEXT_SECONDARY};")
+        self.member_label.setObjectName("MutedText")
         layout.addWidget(self.member_label)
         # 0.2.199-patch29gw: Data annotation within the group (field x data grid), placed above
-        # "Process by reference data".
+        # # "Process by reference data".
         self.notes_label = QLabel(tr("In-group data annotation"))
-        self.notes_label.setStyleSheet(f"font-weight: bold; color: {TEXT_PRIMARY};")
+        self.notes_label.setObjectName("SectionTitle")
         self.notes_label.setVisible(False)
         layout.addWidget(self.notes_label)
         self.notes_scroll = QScrollArea()
         self.notes_scroll.setWidgetResizable(True)
-        self.notes_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.notes_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.notes_scroll.setStyleSheet(
-            "background: #1e1e1e; color: #ffffff; border: 1px solid #3c3c3c;"
+        self.notes_scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
         )
-        self.notes_scroll.setMaximumHeight(200)
+        self.notes_scroll.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
         self.notes_scroll.setVisible(False)
         layout.addWidget(self.notes_scroll)
-        layout.addSpacing(6)
 
         # ---- Mode A: Process the entire group according to reference data ----.
         ref_box = QGroupBox(tr("Process entire group by reference data"))
+        ref_box.setObjectName("SectionTitle")
         ref_layout = QVBoxLayout(ref_box)
+        ref_layout.setContentsMargins(8, 10, 8, 8)
+        ref_layout.setSpacing(6)
         ref_hint = QLabel(
             tr(
                 "Pick a data set of this experiment that already has a spectrum; its processing "
@@ -113,27 +116,28 @@ class GroupBatchPanel(QWidget):
             )
         )
         ref_hint.setWordWrap(True)
-        ref_hint.setStyleSheet(f"color: {TEXT_MUTED};")
+        ref_hint.setObjectName("MutedText")
         ref_layout.addWidget(ref_hint)
 
-        row1 = QHBoxLayout()
+        row1 = QVBoxLayout()
         row1.addWidget(QLabel(tr("Reference data:")))
         self.reference_combo = QComboBox()
-        self.reference_combo.setMinimumWidth(240)
+        self.reference_combo.setMinimumWidth(0)
         row1.addWidget(self.reference_combo, 1)
         ref_layout.addLayout(row1)
 
-        row2 = QHBoxLayout()
+        row2 = QVBoxLayout()
         row2.addWidget(QLabel(tr("Processed to:")))
         self.stop_combo = QComboBox()
         for _value, label in STOP_STEP_OPTIONS:
             self.stop_combo.addItem(label)
-        fit_combo_width(self.stop_combo)  # Fix ellipses (0.2.199-patch29hz-fix 14).
+        fit_combo_width(self.stop_combo)
         row2.addWidget(self.stop_combo)
         row2.addStretch(1)
         ref_layout.addLayout(row2)
 
         self.run_ref_button = QPushButton(tr("Process entire group by reference data"))
+        self.run_ref_button.setObjectName("PrimaryAction")
         self.run_ref_button.setEnabled(False)
         self.run_ref_button.clicked.connect(self._on_run_reference)
         ref_layout.addWidget(self.run_ref_button)
@@ -141,7 +145,10 @@ class GroupBatchPanel(QWidget):
 
         # ---- Mode B: optimise the data within the group in sequence ----.
         opt_box = QGroupBox(tr("optimise the data within the group in turn"))
+        opt_box.setObjectName("SectionTitle")
         opt_layout = QVBoxLayout(opt_box)
+        opt_layout.setContentsMargins(8, 10, 8, 8)
+        opt_layout.setSpacing(6)
         opt_hint = QLabel(
             tr(
                 "Runs the automatic pipeline (FID -> spectrum -> peak picking) for every data set "
@@ -150,43 +157,53 @@ class GroupBatchPanel(QWidget):
             )
         )
         opt_hint.setWordWrap(True)
-        opt_hint.setStyleSheet(f"color: {TEXT_MUTED};")
+        opt_hint.setObjectName("MutedText")
         opt_layout.addWidget(opt_hint)
-        # Process to a certain step.
-        opt_row = QHBoxLayout()
+
+        opt_row = QVBoxLayout()
         opt_row.addWidget(QLabel(tr("Processed to:")))
         self.opt_stop_combo = QComboBox()
         for _value, _label in STOP_STEP_OPTIONS:
             self.opt_stop_combo.addItem(_label)
-        fit_combo_width(self.opt_stop_combo)  # Fix ellipses (0.2.199-patch29hz-fix 14).
+        fit_combo_width(self.opt_stop_combo)
         opt_row.addWidget(self.opt_stop_combo)
         opt_row.addStretch(1)
         opt_layout.addLayout(opt_row)
         # Direct dimension range setting (displayed when processing to spectrum/peaks).
         self.ext_group = QGroupBox(tr("direct dimension range setting"))
-        ext_row = QHBoxLayout(self.ext_group)
+        self.ext_group.setObjectName("SectionTitle")
+        ext_row = QGridLayout(self.ext_group)
+        ext_row.setContentsMargins(8, 10, 8, 8)
         self.ext_enable = QCheckBox(tr("Specify range"))
-        ext_row.addWidget(self.ext_enable)
-        ext_row.addWidget(QLabel(tr("Lower limit(ppm):")))
+        ext_row.addWidget(self.ext_enable, 0, 0, 1, 2)
+        ext_row.addWidget(QLabel(tr("Lower limit(ppm):")), 1, 0)
         self.ext_lo_edit = QLineEdit("10.5")
-        ext_row.addWidget(self.ext_lo_edit)
-        ext_row.addWidget(QLabel(tr("Upper limit(ppm):")))
+        self.ext_lo_edit.setMinimumWidth(0)
+        ext_row.addWidget(self.ext_lo_edit, 1, 1)
+        ext_row.addWidget(QLabel(tr("Upper limit(ppm):")), 2, 0)
         self.ext_hi_edit = QLineEdit("6.5")
-        ext_row.addWidget(self.ext_hi_edit)
+        self.ext_hi_edit.setMinimumWidth(0)
+        ext_row.addWidget(self.ext_hi_edit, 2, 1)
         opt_layout.addWidget(self.ext_group)
         # Peak picking threshold setting (displayed when peaks are processed).
         self.thresh_group = QGroupBox(tr("Peak picking threshold setting"))
-        thr_row = QHBoxLayout(self.thresh_group)
+        self.thresh_group.setObjectName("SectionTitle")
+        thr_row = QVBoxLayout(self.thresh_group)
+        thr_row.setContentsMargins(8, 10, 8, 8)
         thr_row.addWidget(QLabel(tr("Noise threshold (σ):")))
         self.thresh_edit = QLineEdit("")
+        self.thresh_edit.setMinimumWidth(0)
         self.thresh_edit.setPlaceholderText(tr("Leave blank to use default"))
         thr_row.addWidget(self.thresh_edit)
         opt_layout.addWidget(self.thresh_group)
-        self.opt_stop_combo.currentIndexChanged.connect(self._on_opt_stop_changed)
-        # 0.2.199-patch29gp: Initially press the default cut-off step (generate FID)Hidden
+        self.opt_stop_combo.currentIndexChanged.connect(
+            self._on_opt_stop_changed
+        )
+        # 0.2.199-patch29gp: Initially press the default cut-off step (generate FID)Hidden #
         # range/Threshold setting.
         self._on_opt_stop_changed()
         self.run_optimize_button = QPushButton(tr("optimise the data within the group in turn"))
+        self.run_optimize_button.setObjectName("PrimaryAction")
         self.run_optimize_button.setEnabled(False)
         self.run_optimize_button.clicked.connect(self._on_run_optimize)
         opt_layout.addWidget(self.run_optimize_button)
@@ -194,13 +211,15 @@ class GroupBatchPanel(QWidget):
 
         self.progress_label = QLabel("")
         self.progress_label.setWordWrap(True)
-        self.progress_label.setStyleSheet(f"color: {TEXT_PRIMARY};")
+        self.progress_label.setObjectName("MutedText")
         self.progress_label.setVisible(False)
         layout.addWidget(self.progress_label)
         layout.addStretch(1)
 
     # ------------------------------------------------------------------
-    def set_context(self, manager, exp_id: str, group_id: str) -> None:
+    def set_context(
+        self, manager, exp_id: str, group_id: str
+    ) -> None:
         """Bind project context and refresh group information/Reference data drop-down."""
         self._manager = manager
         self._exp_id = exp_id
@@ -223,7 +242,7 @@ class GroupBatchPanel(QWidget):
         group = manager.group(exp_id, group_id) if exp is not None else None
         if group is None:
             return
-        member_ids = group.data_ids or []
+        member_ids = (group.data_ids or [])
         if not member_ids:
             return
         cols_data: list[tuple[str, str, dict]] = []
@@ -245,29 +264,23 @@ class GroupBatchPanel(QWidget):
         grid.setContentsMargins(6, 4, 6, 4)
         grid.setSpacing(2)
         head0 = QLabel(tr("data"))
-        head0.setStyleSheet(
-            "font-weight: bold; color: #f0f0f0; border: none; background: transparent;"
-        )
+        head0.setObjectName("SectionTitle")
         grid.addWidget(head0, 0, 0)
         for ci, (_data_id, label_text, _f) in enumerate(cols_data, start=1):
             head = QLabel(f"◆ {label_text}")
             head.setWordWrap(True)
-            head.setStyleSheet(
-                "font-weight: bold; color: #f0f0f0; border: none; background: transparent;"
-            )
+            head.setObjectName("SectionTitle")
             grid.addWidget(head, 0, ci)
         for ri, key in enumerate(row_keys, start=1):
             fname = QLabel(display.get(key, key))
-            fname.setStyleSheet(
-                "font-weight: bold; color: #f0f0f0; border: none; background: transparent;"
-            )
+            fname.setObjectName("SectionTitle")
             grid.addWidget(fname, ri, 0)
             for ci, (_di, _lb, fields) in enumerate(cols_data, start=1):
                 val = fields.get(key)
                 val_lb = QLabel(str(val) if val not in (None, "") else "—")
                 val_lb.setWordWrap(True)
-                val_lb.setFixedWidth(190)
-                val_lb.setStyleSheet("color: #ffffff; border: none; background: transparent;")
+                val_lb.setMinimumWidth(0)
+                val_lb.setObjectName("MutedText")
                 grid.addWidget(val_lb, ri, ci)
         grid.setColumnStretch(0, 0)
         grid.setColumnStretch(len(cols_data) + 1, 0)
@@ -288,20 +301,26 @@ class GroupBatchPanel(QWidget):
             self.run_optimize_button.setEnabled(False)
             return
         title = group.title or f"Group {group_id}"
-        self.context_label.setText(
-            tr(
-                "experiment: {p0} · Group: {p1}",
-                p0=exp.title or exp_id,
-                p1=title,
-            )
+        self.context_label.setText(tr(
+            "experiment: {p0} · Group: "
+            "{p1}",
+            p0=exp.title or exp_id,
+            p1=title,
+        ))
+        members = [
+            d
+            for d in exp.data
+            if d.id in (group.data_ids or [])
+        ]
+        names = "、".join(
+            f"{d.title or 'Data ' + d.id}" for d in members
         )
-        members = [d for d in exp.data if d.id in (group.data_ids or [])]
-        names = ",".join(f"{d.title or 'Data ' + d.id}" for d in members)
         self.member_label.setText(
             tr(
-                "Data within the group ({p0} indivual): {p1}",
+                "Data within the group ({p0} indivual): "
+                "{p1}",
                 p0=len(members),
-                p1=names or "(empty group)",
+                p1=names or '(empty group)',
             )
         )
         self.run_optimize_button.setEnabled(bool(members))
@@ -337,7 +356,9 @@ class GroupBatchPanel(QWidget):
             self.log_message.emit(tr("Please select reference data first"))
             return
         steps = self._stop_steps()
-        self.run_group_batch_requested.emit(self._exp_id, self._group_id, steps, ref_id, {})
+        self.run_group_batch_requested.emit(
+            self._exp_id, self._group_id, steps, ref_id, {}
+        )
 
     def _opt_steps(self) -> list[str]:
         """The cut-off steps of the optimisation mode (prefixed by fid) are followed in turn."""

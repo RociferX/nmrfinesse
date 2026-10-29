@@ -27,6 +27,8 @@ __all__ = ["CATEGORIES", "CATEGORY_MARKERS", "category_of"]
 
 #: filename → category (single source of truth)
 CATEGORIES: dict[str, str] = {
+    "test_overlay_svg_export.py": "regression",
+    "test_spectrum_overlay.py": "regression",
     "test_peak_sign_weights.py": "regression",
     "test_current_brand.py": "regression",
     "test_window_sampling.py": "regression",
@@ -153,6 +155,11 @@ CATEGORIES: dict[str, str] = {
     "test_smile_scan_script_split.py": "unit",
     "test_smile_scan_workflow.py": "integration",
     "test_ui_i18n.py": "regression",
+    "test_ui_typography.py": "integration",
+    "test_dashboard_accessibility.py": "integration",
+    "test_viewer_accessibility.py": "integration",
+    "test_viewer_sections.py": "integration",
+    "test_window_accessibility.py": "integration",
     "test_test_categories.py": "regression",
     "test_smoke.py": "unit",
     "test_stepwise.py": "integration",
@@ -185,5 +192,5 @@ CATEGORY_MARKERS: dict[str, str] = {
 
 
 def category_of(filename: str) -> str:
-    'Category for a filename; unregistered files conservatively default to ``integration``.'
+    """Category for a filename; unregistered files conservatively default to ``integration``."""
     return CATEGORIES.get(filename, "integration")

@@ -11,6 +11,7 @@ Note: the NMRPipe executable is the case-sensitive ``nmrPipe``.
 
 from __future__ import annotations
 
+import shlex
 import shutil
 import subprocess
 from pathlib import Path
@@ -38,6 +39,98 @@ def _csh_which(name: str) -> str | None:
         if "/" in line and "not found" not in line and "no " not in line.lower():
             return line
     return None
+
+
+def _bash_which(name: str) -> str | None:
+    """Find a tool in interactive login bash when csh is unavailable."""
+    shell = shutil.which("bash")
+    if shell is None:
+        return None
+    try:
+        marker = "__NMRFINESSE_TOOL_PATH__="
+        proc = subprocess.run(
+            [shell, "-lic", f"printf '\\n{marker}%s\\n' \"$(command -v {name})\""],
+            capture_output=True,
+            text=True,
+            errors="replace",
+            timeout=15,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if proc.returncode != 0:
+        return None
+    for line in reversed(proc.stdout.splitlines()):
+        if line.startswith(marker):
+            return line.removeprefix(marker).strip() or None
+    return None
+
+
+def find_pipe2ucsf_with_shell(
+    explicit: str = "",
+) -> tuple[Path | None, str | None]:
+    """Find pipe2ucsf and return its configured, csh, or bash environment."""
+    if explicit:
+        path = Path(explicit).expanduser()
+        if path.is_dir():
+            path = path / "pipe2ucsf"
+        if path.is_file():
+            resolved = path.resolve()
+            csh_path = _csh_which("pipe2ucsf")
+            if csh_path and Path(csh_path).expanduser().resolve() == resolved:
+                return resolved, "csh"
+            bash_path = _bash_which("pipe2ucsf")
+            if bash_path and Path(bash_path).expanduser().resolve() == resolved:
+                return resolved, "bash"
+            return resolved, "configured"
+    found = _csh_which("pipe2ucsf")
+    if found:
+        path = Path(found).expanduser()
+        if path.is_file():
+            return path.resolve(), "csh"
+    found = _bash_which("pipe2ucsf")
+    if found:
+        path = Path(found).expanduser()
+        if path.is_file():
+            return path.resolve(), "bash"
+    return None, None
+
+
+def find_pipe2ucsf(explicit: str = "") -> Path | None:
+    """Find pipe2ucsf using explicit settings, then csh, then login bash."""
+    return find_pipe2ucsf_with_shell(explicit)[0]
+
+
+def bash_environment_csh_command(directory: str, csh: str) -> list[str] | None:
+    """Build a temporary bash-login → interactive-csh bridge for GUI terminals.
+
+    Only PATH and NMRPipe's plugin registration variables are explicitly carried
+    across. The interactive csh then reads its normal rc file, whose values take
+    precedence. No parent-process environment or rc file is changed.
+    """
+    bash = shutil.which("bash")
+    if not bash:
+        return None
+    csh_script = (
+        "if (-e ~/.cshrc) source ~/.cshrc; "
+        'if (! $?NMR_PLUGIN_EXE && "$NMRFINESSE_BASH_PLUGIN_EXE" != "") '
+        'setenv NMR_PLUGIN_EXE "$NMRFINESSE_BASH_PLUGIN_EXE"; '
+        'if (! $?NMR_PLUGIN_FN && "$NMRFINESSE_BASH_PLUGIN_FN" != "") '
+        'setenv NMR_PLUGIN_FN "$NMRFINESSE_BASH_PLUGIN_FN"; '
+        'if ($?NMRFINESSE_BASH_PATH) setenv PATH "${PATH}:$NMRFINESSE_BASH_PATH"; '
+        "unsetenv NMRFINESSE_BASH_PATH; "
+        "unsetenv NMRFINESSE_BASH_PLUGIN_EXE; "
+        "unsetenv NMRFINESSE_BASH_PLUGIN_FN; "
+        f"exec {shlex.quote(csh)} -if"
+    )
+    script = (
+        f"cd {shlex.quote(directory)} && exec env PATH=\"$PATH\" "
+        'NMRFINESSE_BASH_PATH="$PATH" '
+        'NMRFINESSE_BASH_PLUGIN_EXE="${NMR_PLUGIN_EXE-}" '
+        'NMRFINESSE_BASH_PLUGIN_FN="${NMR_PLUGIN_FN-}" '
+        f"{shlex.quote(csh)} -f -c {shlex.quote(csh_script)}"
+    )
+    return [bash, "-lic", script]
 
 
 def find_nmrpipe_bin(explicit: str = "") -> Path | None:

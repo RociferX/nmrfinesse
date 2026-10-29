@@ -64,3 +64,9 @@ original dimension indices on slices so peak coordinates remain associated with 
 The standalone viewer entry is `viewer/app.py`; it uses the same spectrum objects, panel, and
 viewer widget. For user-facing behavior, see the [GUI guide](../gui.md); for the shared data and
 processing map, see [architecture](../architecture.md).
+
+## Viewer sections and overlay range
+
+CollapsibleSection owns each complete control section, so expanding and restoring the viewer preserves section state and the 3D control host. FontChange invalidates size-dependent layout; existing application styles are reapplied after a font update.
+
+OverlayComparison uses the union of transformed spectral bounds for Full view. Each render rebuilds the ViewBox full-range basis before restoring an unchanged view. The render signature includes the axes of every spectrum, so replacement with a wider spectrum resets the view. Overlay tick generation and cursor readouts extrapolate the fixed reference axis linearly; 1D traces use automatic ppm ticks and visible-trace intensity bounds. Reference selection and fitting semantics are independent of these display bounds.

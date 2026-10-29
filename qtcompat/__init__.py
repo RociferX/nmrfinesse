@@ -49,6 +49,7 @@ __all__ = [
     "QtCore",
     "QtGui",
     "QtTest",
+    "QtSvg",
     "QtWidgets",
 ]
 
@@ -63,7 +64,7 @@ BINDING_MODULE: Final[str] = "PySide6"
 PYQTGRAPH_ENV_VAR: Final[str] = "PYQTGRAPH_QT_LIB"
 
 #: Submodules that must be available.
-_SUBMODULES: Final[tuple[str, ...]] = ("QtCore", "QtGui", "QtWidgets", "QtTest")
+_SUBMODULES: Final[tuple[str, ...]] = ("QtCore", "QtGui", "QtWidgets", "QtTest", "QtSvg")
 
 
 def _import_binding():
@@ -125,6 +126,7 @@ QtCore = _submodule("QtCore")
 QtGui = _submodule("QtGui")
 QtWidgets = _submodule("QtWidgets")
 QtTest = _submodule("QtTest")
+QtSvg = _submodule("QtSvg")
 
 
 def _factory(name: str):

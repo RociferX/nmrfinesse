@@ -36,6 +36,21 @@ if [ ! -x "$PYTHON" ]; then
   echo "interpreter not executable: $PYTHON (set NMRFINESSE_TEST_PYTHON)" >&2
   exit 127
 fi
+if [ "$#" -eq 0 ]; then
+  FONT_TESTS=(tests/test_window_accessibility.py tests/test_ui_typography.py
+              tests/test_viewer_accessibility.py)
+  IGNORE_FONT=()
+  for name in "${FONT_TESTS[@]}"; do IGNORE_FONT+=("--ignore=$name"); done
+  result=0
+  run_id="${BASE##*/}"
+  "$PYTHON" -m pytest -o addopts='' -p no:cacheprovider -q --tb=short \
+    --basetemp="$BASE/main" "${IGNORE_FONT[@]}" \
+    --junitxml="$ART/$run_id-main.xml" || result=$?
+  "$PYTHON" -m pytest -o addopts='' -p no:cacheprovider -q --tb=short \
+    --basetemp="$BASE/font" "${FONT_TESTS[@]}" \
+    --junitxml="$ART/$run_id-font.xml" || result=$?
+  exit "$result"
+fi
 "$PYTHON" -m pytest \
   -o addopts='' -p no:cacheprovider \
   --basetemp="$BASE" -q --tb=no "$@"

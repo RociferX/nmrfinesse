@@ -54,7 +54,7 @@ class LogPanel(QWidget):
         title.setObjectName("PanelTitle")
         header.addWidget(title)
         self.scope_label = QLabel("")
-        self.scope_label.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 11px;")
+        self.scope_label.setStyleSheet(f"color: {TEXT_MUTED};")
         header.addWidget(self.scope_label)
         header.addStretch(1)
         self.clear_button = QPushButton(tr("Clear"))
@@ -81,7 +81,10 @@ class LogPanel(QWidget):
         self._manager = None
 
     def set_manager(self, manager) -> None:
-        """Bind the current ProjectManager (rebound by the main window when switching projects)."""
+        """
+        Bind the current ProjectManager (rebound by the main window when
+        switching projects).
+        """
         self._manager = manager
 
     def _record_path(self, key: str):

@@ -75,7 +75,10 @@ jobs:
       - name: Import check
         run: python -c "import core, nmrfinesse_api, gui, viewer, backend, workflow; print('imports ok')"
       - name: Tests
-        run: python -m pytest -q --basetemp="$RUNNER_TEMP/pytest"
+        env:
+          NMRFINESSE_TEST_ROOT: ${{ github.workspace }}
+          NMRFINESSE_TEST_ARTIFACTS: ${{ runner.temp }}/nmrfinesse-tests
+        run: NMRFINESSE_TEST_PYTHON="$(command -v python)" bash scripts/vm_test.sh
 
   release-readiness:
     name: release readiness
