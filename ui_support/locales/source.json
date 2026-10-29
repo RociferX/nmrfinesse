@@ -54,7 +54,7 @@
       "gui/center_panel.py:363"
     ],
     "  skipped/failed: {p0} - {p1}": [
-      "gui/main_window.py:826"
+      "gui/main_window.py:827"
     ],
     "  {p0} [command {p1}] {p2}: {p3} → {p4}": [
       "workflow/script_audit.py:177"
@@ -75,35 +75,35 @@
       "gui/dialogs.py:677"
     ],
     " - skipped (type/condition mismatch):": [
-      "gui/main_window.py:1151"
+      "gui/main_window.py:1152"
     ],
     " ... ({p0} in total)": [
       "nmrfinesse_api/localization_targets.py:1293",
       "nmrfinesse_api/peaks.py:1036"
     ],
     " Autofill comments: {p0}": [
-      "gui/main_window.py:856"
+      "gui/main_window.py:857"
     ],
     " Raw data quality:": [
-      "gui/main_window.py:858"
+      "gui/main_window.py:859"
     ],
     " [Group {p0}: {p1} data]": [
       "gui/pipeline_panel.py:2102"
     ],
     " fail: {p0} → {p1}": [
-      "gui/main_window.py:886"
+      "gui/main_window.py:887"
     ],
     " hint: {p0}": [
-      "gui/main_window.py:1328"
+      "gui/main_window.py:1329"
     ],
     " import completion: {p0} → {p1}": [
-      "gui/main_window.py:838"
+      "gui/main_window.py:839"
     ],
     " import failed: {p0} ({p1})": [
-      "gui/main_window.py:865"
+      "gui/main_window.py:866"
     ],
     " import in: {p0} → {p1}": [
-      "gui/main_window.py:824"
+      "gui/main_window.py:825"
     ],
     " pass": [
       "gui/raw_quality.py:181"
@@ -112,7 +112,7 @@
       "gui/raw_quality.py:179"
     ],
     " · Stopped,{p0} unprocessed": [
-      "gui/main_window.py:1149"
+      "gui/main_window.py:1150"
     ],
     " ⚠ {p0} issue(s) detected {p1}": [
       "workflow/direct_diagnostics.py:1864"
@@ -148,7 +148,7 @@
       "workflow/pick_peaks.py:1123"
     ],
     "(Independent entrance) ==": [
-      "gui/main_window.py:1609"
+      "gui/main_window.py:1610"
     ],
     "(Memory directory creation failed)": [
       "workflow/stepwise.py:398"
@@ -182,7 +182,7 @@
       "nmrfinesse_api/localization_targets.py:435"
     ],
     "(common {p0})": [
-      "gui/main_window.py:1147"
+      "gui/main_window.py:1148"
     ],
     "(mapping form)": [
       "nmrfinesse_api/localization_targets.py:756"
@@ -204,7 +204,7 @@
       "workflow/direct_diagnostics.py:1862"
     ],
     "(null)": [
-      "gui/main_window.py:1060"
+      "gui/main_window.py:1061"
     ],
     "(peak_id given by the caller)": [
       "nmrfinesse_api/localization_targets.py:176"
@@ -241,7 +241,7 @@
       "workflow/pick_peaks.py:1098"
     ],
     ", reference data {p0}": [
-      "gui/main_window.py:1062"
+      "gui/main_window.py:1063"
     ],
     "--carrier-ppm cannot be combined with --rebuild-peak-tables": [
       "nmrfinesse_api/cli.py:230"
@@ -386,7 +386,7 @@
       "core/experiment/acquisition_encoding.py:265"
     ],
     "About NMRFinesse": [
-      "gui/main_window.py:1494"
+      "gui/main_window.py:1495"
     ],
     "Acquisition centre: O1/BF1": [
       "backend/carrier_choices.py:96"
@@ -450,17 +450,17 @@
       "gui/pipeline_panel.py:2142"
     ],
     "Already imported": [
-      "gui/main_window.py:2504",
-      "gui/main_window.py:1083",
+      "gui/main_window.py:2505",
+      "gui/main_window.py:1084",
       "gui/project_tree.py:900"
     ],
     "Already peak picking": [
-      "gui/main_window.py:2507",
-      "gui/main_window.py:1086",
+      "gui/main_window.py:2508",
+      "gui/main_window.py:1087",
       "gui/project_tree.py:880"
     ],
     "Analyzed": [
-      "gui/main_window.py:2508"
+      "gui/main_window.py:2509"
     ],
     "Apply direct dimension phase (recon plane rotation)": [
       "backend/nmrpipe_backend.py:3750"
@@ -488,7 +488,7 @@
       "gui/overlay_comparison.py:581"
     ],
     "Autofill comments: {p0}": [
-      "gui/main_window.py:1333"
+      "gui/main_window.py:1334"
     ],
     "Automated processing, parameter optimisation and quality control platform for Bruker 2D/3D NMR": [
       "gui/welcome_page.py:50"
@@ -555,10 +555,10 @@
       "gui/dashboards.py:289"
     ],
     "Batch import completed: experiment {p0} Group {p1}, common {p2} sample data": [
-      "gui/main_window.py:889"
+      "gui/main_window.py:890"
     ],
     "Batch import summary: Total {p0} data, success {p1} failure {p2} indivual": [
-      "gui/main_window.py:874"
+      "gui/main_window.py:875"
     ],
     "Batch only supports {p0}D spectra, so {p1}D data are skipped (see the capability boundary in docs/manager/architecture.md)": [
       "workflow/batch.py:433"
@@ -567,13 +567,13 @@
       "gui/dashboards.py:270"
     ],
     "Batch processing run...": [
-      "gui/main_window.py:1075"
+      "gui/main_window.py:1076"
     ],
     "Batch processing summary - {p0}": [
       "gui/dialogs.py:724"
     ],
     "Batch processing: {p0}": [
-      "gui/main_window.py:1076"
+      "gui/main_window.py:1077"
     ],
     "Blue": [
       "gui/overlay_svg_export.py:298"
@@ -620,7 +620,7 @@
       "gui/dialogs.py:960"
     ],
     "Canceled": [
-      "gui/main_window.py:1095"
+      "gui/main_window.py:1096"
     ],
     "Cancelled (interrupted); unfinished workflows are not recorded as successful.": [
       "nmrfinesse_api/cli.py:794"
@@ -691,7 +691,7 @@
       "backend/runtime.py:446"
     ],
     "Comment": [
-      "gui/main_window.py:2381"
+      "gui/main_window.py:2382"
     ],
     "Comments (optional):": [
       "gui/dialogs.py:211"
@@ -781,7 +781,7 @@
       "gui/project_tree.py:1205"
     ],
     "Create a new project or open a project to start working": [
-      "gui/main_window.py:2686"
+      "gui/main_window.py:2687"
     ],
     "Create experiments": [
       "gui/center_panel.py:199"
@@ -791,7 +791,7 @@
       "gui/center_panel.py:207"
     ],
     "Creating project: {p0}": [
-      "gui/main_window.py:643"
+      "gui/main_window.py:644"
     ],
     "Current script": [
       "gui/carrier_editor.py:54"
@@ -804,7 +804,7 @@
       "gui/spectrum_panel.py:2625"
     ],
     "Current task has been stopped ({p0} Process tree, clean up the residue {p1} item(s); cancellation of the memory computation was requested, exiting shortly)": [
-      "gui/main_window.py:2644"
+      "gui/main_window.py:2645"
     ],
     "Current value read from the script editor. Choose a reference to see its explanation.": [
       "gui/carrier_editor.py:181"
@@ -823,7 +823,7 @@
       "workflow/batch.py:127"
     ],
     "Data group {p0} batch finished: {p1} ok, {p2} failed, {p3:.1f}s": [
-      "gui/main_window.py:1137"
+      "gui/main_window.py:1138"
     ],
     "Data has been moved to trash: {p0}/{p1}": [
       "core/project/manager.py:439",
@@ -845,8 +845,8 @@
       "workflow/direct_diagnostics.py:558"
     ],
     "Data quality inspection": [
-      "gui/main_window.py:1590",
-      "gui/main_window.py:1608"
+      "gui/main_window.py:1591",
+      "gui/main_window.py:1609"
     ],
     "Data quality inspection...": [
       "gui/main_window.py:323"
@@ -856,10 +856,10 @@
       "gui/notes.py:38"
     ],
     "Data type check: {p0} (confidence {p1:.2f}); please verify the data type is correct (it can be edited in the sample-data comment)": [
-      "gui/main_window.py:1419"
+      "gui/main_window.py:1420"
     ],
     "Data type updated by user selection: {p0}": [
-      "gui/main_window.py:2409"
+      "gui/main_window.py:2410"
     ],
     "Data within the group ({p0} indivual): {p1}": [
       "gui/group_panel.py:319"
@@ -871,7 +871,7 @@
       "gui/dialogs.py:808"
     ],
     "Delete sample data failed": [
-      "gui/main_window.py:2299"
+      "gui/main_window.py:2300"
     ],
     "Delete the selected rows from the peak table (automatic and manual peaks alike)": [
       "gui/spectrum_panel.py:343"
@@ -883,7 +883,7 @@
       "gui/overlay_comparison.py:139"
     ],
     "Detection failed: {p0}": [
-      "gui/main_window.py:1631"
+      "gui/main_window.py:1632"
     ],
     "Detection only: FID files and processing records were not modified.": [
       "workflow/direct_diagnostics.py:460"
@@ -936,13 +936,13 @@
       "backend/nmrpipe_backend.py:3686"
     ],
     "Do you want to continue running anyway?": [
-      "gui/main_window.py:1960"
+      "gui/main_window.py:1961"
     ],
     "Double-click an entry to locate the corresponding data (failed items) or view the status on the left": [
       "gui/dialogs.py:744"
     ],
     "Drag and drop import: {p0} data directory": [
-      "gui/main_window.py:1732"
+      "gui/main_window.py:1733"
     ],
     "Each axis range must have two different values.": [
       "gui/overlay_svg_export.py:97"
@@ -986,7 +986,7 @@
       "gui/project_tree.py:54"
     ],
     "Experiment created: {p0}": [
-      "gui/main_window.py:2330"
+      "gui/main_window.py:2331"
     ],
     "Experiment type": [
       "gui/notes.py:26"
@@ -1031,10 +1031,10 @@
       "workflow/field_drift.py:1252"
     ],
     "FID (*.fid);; All files (*)": [
-      "gui/main_window.py:1552"
+      "gui/main_window.py:1553"
     ],
     "FID Ready": [
-      "gui/main_window.py:2505"
+      "gui/main_window.py:2506"
     ],
     "FID data points": [
       "viewer/spectrum.py:1201"
@@ -1067,23 +1067,23 @@
       "backend/script_generator.py:1655"
     ],
     "Failed": [
-      "gui/main_window.py:1091",
+      "gui/main_window.py:1092",
       "gui/pipeline_panel.py:128",
       "gui/pipeline_panel.py:2798",
       "gui/pipeline_panel.py:3183",
       "gui/project_tree.py:874"
     ],
     "Failed to create new experiment": [
-      "gui/main_window.py:2326"
+      "gui/main_window.py:2327"
     ],
     "Failed to join {p0}: {p1}": [
-      "gui/main_window.py:956"
+      "gui/main_window.py:957"
     ],
     "Failed to load script": [
-      "gui/main_window.py:1857"
+      "gui/main_window.py:1858"
     ],
     "Failed to open project": [
-      "gui/main_window.py:691"
+      "gui/main_window.py:692"
     ],
     "Field-drift screening: the apparent direct-dimension peak-position change between the early and late non-empty traces is about {p0:.1f} points ({p1:.1f} linewidths), acceptable but should be monitored (no re-acquisition required)": [
       "workflow/direct_diagnostics.py:1140"
@@ -1195,7 +1195,7 @@
       "gui/pipeline_panel.py:76"
     ],
     "Generated FID": [
-      "gui/main_window.py:1084",
+      "gui/main_window.py:1085",
       "gui/project_tree.py:885",
       "gui/project_tree.py:897"
     ],
@@ -1256,22 +1256,22 @@
       "workflow/import_workflow.py:563"
     ],
     "Import failed: {p0}": [
-      "gui/main_window.py:1302"
+      "gui/main_window.py:1303"
     ],
     "Import is not supported": [
-      "gui/main_window.py:1306"
+      "gui/main_window.py:1307"
     ],
     "Import sample data": [
       "gui/center_panel.py:200"
     ],
     "Imported {p0} data sets. Select a data item in the left tree to generate FID.": [
-      "gui/main_window.py:904"
+      "gui/main_window.py:905"
     ],
     "Imported {p0}: select it in the left tree → Generate FID.": [
-      "gui/main_window.py:1394"
+      "gui/main_window.py:1395"
     ],
     "Importing data: {p0}": [
-      "gui/main_window.py:1193"
+      "gui/main_window.py:1194"
     ],
     "In phase optimisation: {p0} Replica preview (direct dimension has been determined)": [
       "workflow/phase_routes.py:839"
@@ -1542,17 +1542,17 @@
       "gui/overlay_comparison.py:160"
     ],
     "Manual entry for this step is not currently supported: {p0}": [
-      "gui/main_window.py:1776"
+      "gui/main_window.py:1777"
     ],
     "Manual peak table editing ({p0} peak)": [
       "gui/processing.py:657"
     ],
     "Manual processing": [
-      "gui/main_window.py:1774"
+      "gui/main_window.py:1775"
     ],
     "Manual run failed: {p0}": [
-      "gui/main_window.py:2005",
-      "gui/main_window.py:2008"
+      "gui/main_window.py:2006",
+      "gui/main_window.py:2009"
     ],
     "Mark size": [
       "gui/spectrum_panel.py:381"
@@ -1643,7 +1643,7 @@
       "backend/nmrpipe_backend.py:4439"
     ],
     "NMRFinesse - welcome": [
-      "gui/main_window.py:2684"
+      "gui/main_window.py:2685"
     ],
     "NMRFinesse parameter-combination runner (command line, no GUI)": [
       "nmrfinesse_api/cli.py:565"
@@ -1662,10 +1662,10 @@
       "gui/tutorial.py:70"
     ],
     "NMRFinesse: an automated processing, parameter-optimisation and quality-control platform for Bruker 2D/3D NMR.\nFour columns: project tree / processing pipeline / task log / spectrum viewer.\n\nAxis-order convention (internally everything is organised in the logical order F1/F2/F3):\n- 2D: F1 = indirect dimension, F2 = direct dimension; 3D: F1 = first indirect, F2 = second indirect, F3 = direct dimension.\n- NMRPipe stores 3D files in the standard order (F2,F1,F3); loading transposes them into the logical order\n  (the \"axis reorder\" log line reports exactly this and is normal behaviour).\n- Dimensions of the same nucleus (e.g. 2D 1H-1H, HNN with two 15N) are told apart by an x/y/z subscript\n  following the priority \"direct > acqu2 > acqu3\" (e.g. Nx = the N of the HSQC, Ny = the sequential N).": [
-      "gui/main_window.py:1495"
+      "gui/main_window.py:1496"
     ],
     "NMRPipe (*.ft2 *.ft3 *.fdf);; All files (*)": [
-      "gui/main_window.py:1571"
+      "gui/main_window.py:1572"
     ],
     "NMRPipe macro(SP/ZF/FT/PS)": [
       "backend/script_generator.py:1768"
@@ -1734,8 +1734,8 @@
       "gui/main_window.py:301"
     ],
     "New project failed": [
-      "gui/main_window.py:648",
-      "gui/main_window.py:652"
+      "gui/main_window.py:649",
+      "gui/main_window.py:653"
     ],
     "New project...": [
       "gui/main_window.py:289",
@@ -1751,7 +1751,7 @@
       "core/experiment/sampling_detector.py:463"
     ],
     "No available terminal program found": [
-      "gui/main_window.py:2470"
+      "gui/main_window.py:2471"
     ],
     "No conversion record for a multi-part dataset; converting again so the inter-part field drift is checked": [
       "backend/nmrpipe_backend.py:3126"
@@ -1951,9 +1951,9 @@
       "viewer/app.py:74"
     ],
     "Opened: {p0}": [
-      "gui/main_window.py:696",
-      "gui/main_window.py:2488",
-      "gui/main_window.py:2451",
+      "gui/main_window.py:697",
+      "gui/main_window.py:2489",
+      "gui/main_window.py:2452",
       "gui/spectrum_panel.py:2377"
     ],
     "Operating Instructions": [
@@ -1978,7 +1978,7 @@
       "gui/pipeline_panel.py:2147"
     ],
     "Out of memory": [
-      "gui/main_window.py:1671"
+      "gui/main_window.py:1672"
     ],
     "Out of memory: Unable to load {p0} Replica preview{p1},free memory or use a smaller data set": [
       "workflow/phase_routes.py:298"
@@ -2083,16 +2083,16 @@
       "gui/dialogs.py:840"
     ],
     "Please create or open a project first": [
-      "gui/main_window.py:733",
-      "gui/main_window.py:2214",
-      "gui/main_window.py:2312",
-      "gui/main_window.py:2335"
+      "gui/main_window.py:734",
+      "gui/main_window.py:2215",
+      "gui/main_window.py:2313",
+      "gui/main_window.py:2336"
     ],
     "Please enter a number (ppm), or leave it blank to use the default": [
       "gui/pipeline_panel.py:195"
     ],
     "Please generate FID first": [
-      "gui/main_window.py:1854"
+      "gui/main_window.py:1855"
     ],
     "Please select Bruker dataset directory": [
       "gui/dialogs.py:298"
@@ -2101,7 +2101,7 @@
       "gui/dashboards.py:437"
     ],
     "Please select an experiment on the left first": [
-      "gui/main_window.py:1740"
+      "gui/main_window.py:1741"
     ],
     "Please select reference data first": [
       "gui/group_panel.py:356"
@@ -2119,7 +2119,7 @@
       "gui/dashboards.py:480"
     ],
     "Please select the segmented/duplicate experiment container directory": [
-      "gui/main_window.py:739"
+      "gui/main_window.py:740"
     ],
     "Plot aspect": [
       "gui/overlay_comparison.py:193"
@@ -2161,7 +2161,7 @@
       "gui/pipeline_panel.py:1282"
     ],
     "Press Rank1 to rerun the final script and start: {p0}/{p1}": [
-      "gui/main_window.py:2078"
+      "gui/main_window.py:2079"
     ],
     "Press Rank1 to rerun the script: {p0}": [
       "gui/processing.py:934"
@@ -2183,7 +2183,7 @@
       "gui/center_panel.py:204"
     ],
     "Processed": [
-      "gui/main_window.py:2506"
+      "gui/main_window.py:2507"
     ],
     "Processed Complete; click to force reprocessing (downstream steps will be marked as expired)": [
       "gui/pipeline_panel.py:1414"
@@ -2209,15 +2209,15 @@
       "backend/script_generator.py:1605"
     ],
     "Processing: {p0}/{p1}": [
-      "gui/main_window.py:2028",
-      "gui/main_window.py:2077"
+      "gui/main_window.py:2029",
+      "gui/main_window.py:2078"
     ],
     "Project": [
       "gui/center_panel.py:199",
       "gui/project_tree.py:53"
     ],
     "Project created: {p0}": [
-      "gui/main_window.py:666"
+      "gui/main_window.py:667"
     ],
     "Project is not loaded and cannot be processed in batches": [
       "workflow/batch.py:340"
@@ -2253,7 +2253,7 @@
       "workflow/optimization_report.py:206"
     ],
     "Quality warning: {p0}": [
-      "gui/main_window.py:1372"
+      "gui/main_window.py:1373"
     ],
     "R0001... (reference-table row order; only in the reference table)": [
       "nmrfinesse_api/records.py:346"
@@ -2268,15 +2268,15 @@
       "gui/processing.py:970"
     ],
     "Rank1 rerun completed: {p0}": [
-      "gui/main_window.py:2093",
-      "gui/main_window.py:2095"
+      "gui/main_window.py:2094",
+      "gui/main_window.py:2096"
     ],
     "Rank1 rerun failed (rc={p0}), not generated {p1}": [
       "gui/processing.py:939"
     ],
     "Rank1 rerun failed: {p0}": [
-      "gui/main_window.py:2099",
-      "gui/main_window.py:2101",
+      "gui/main_window.py:2100",
+      "gui/main_window.py:2102",
       "gui/processing.py:997"
     ],
     "Rank1 script not found, please run SMILE optimisation first": [
@@ -2298,7 +2298,7 @@
       "gui/raw_quality.py:96"
     ],
     "Raw data quality:": [
-      "gui/main_window.py:1337"
+      "gui/main_window.py:1338"
     ],
     "Raw signal-to-noise ratio too low ({p0:.1f})": [
       "gui/raw_quality.py:164"
@@ -2370,7 +2370,7 @@
       "gui/pipeline_panel.py:3011"
     ],
     "Registered": [
-      "gui/main_window.py:2509"
+      "gui/main_window.py:2510"
     ],
     "Related projects:": [
       "gui/dialogs.py:217"
@@ -2582,20 +2582,20 @@
       "gui/spectrum_panel.py:2157"
     ],
     "Select fid file": [
-      "gui/main_window.py:1551"
+      "gui/main_window.py:1552"
     ],
     "Select fid folder": [
-      "gui/main_window.py:1558"
+      "gui/main_window.py:1559"
     ],
     "Select peak": [
       "viewer/app.py:109",
       "viewer/app.py:234"
     ],
     "Select project directory": [
-      "gui/main_window.py:669"
+      "gui/main_window.py:670"
     ],
     "Select spectrum file": [
-      "gui/main_window.py:1570"
+      "gui/main_window.py:1571"
     ],
     "Select the data directory": [
       "gui/dialogs.py:998"
@@ -2619,7 +2619,7 @@
       "gui/dialogs.py:943"
     ],
     "Settings saved": [
-      "gui/main_window.py:1645"
+      "gui/main_window.py:1646"
     ],
     "Shared coordinate aspect; zero uses a free aspect.": [
       "gui/overlay_comparison.py:198"
@@ -2637,7 +2637,7 @@
       "gui/dialogs.py:393"
     ],
     "Skipped": [
-      "gui/main_window.py:1093"
+      "gui/main_window.py:1094"
     ],
     "Slice index out of bounds: No. {p0} dimension index={p1} (size={p2})": [
       "viewer/spectrum.py:1018",
@@ -2685,7 +2685,7 @@
       "gui/processing.py:411"
     ],
     "Spectrum has been generated": [
-      "gui/main_window.py:1085",
+      "gui/main_window.py:1086",
       "gui/project_tree.py:882",
       "gui/project_tree.py:895"
     ],
@@ -2706,7 +2706,7 @@
       "backend/nmrpipe_backend.py:1899"
     ],
     "Start batch import: {p0} directory -> experiment {p1}": [
-      "gui/main_window.py:779"
+      "gui/main_window.py:780"
     ],
     "Start converting fid": [
       "backend/nmrpipe_backend.py:1175",
@@ -2714,11 +2714,11 @@
       "backend/nmrpipe_backend.py:912"
     ],
     "Start data group {p0} Batch processing: {p1}{p2}": [
-      "gui/main_window.py:1066"
+      "gui/main_window.py:1067"
     ],
     "Start manual run: {p0} (data {p1})": [
-      "gui/main_window.py:1967",
-      "gui/main_window.py:1970"
+      "gui/main_window.py:1968",
+      "gui/main_window.py:1971"
     ],
     "Start phase optimisation (1D)": [
       "backend/nmrpipe_backend.py:972"
@@ -2736,7 +2736,7 @@
       "gui/log_panel.py:63"
     ],
     "Success": [
-      "gui/main_window.py:1096"
+      "gui/main_window.py:1097"
     ],
     "Sure": [
       "gui/dialogs.py:421",
@@ -2777,7 +2777,7 @@
       "workflow/batch.py:382"
     ],
     "The batch import part failed:\n": [
-      "gui/main_window.py:799"
+      "gui/main_window.py:800"
     ],
     "The carrier frequency difference is large ({p0:.1f} vs {p1:.1f})": [
       "workflow/batch.py:277"
@@ -2868,7 +2868,7 @@
       "gui/dialogs.py:506"
     ],
     "The project has been moved to the system trash and can be restored from trash": [
-      "gui/main_window.py:2204"
+      "gui/main_window.py:2205"
     ],
     "The reference peak table is 3D and the nucleus name cannot be determined (no reference spectrum is loaded), the constraint will not take effect": [
       "gui/pipeline_panel.py:3012"
@@ -2893,7 +2893,7 @@
       "gui/dialogs.py:313"
     ],
     "The selected directory is not a segmented/repeat-experiment container (it needs at least 2 subdirectories that each hold an acqus data segment; non-data subdirectories were ignored; it is normal for the container itself to have no acqus)": [
-      "gui/main_window.py:750"
+      "gui/main_window.py:751"
     ],
     "The source directory is already in the project, skip copying (refer to the original path): {p0}": [
       "workflow/import_workflow.py:399"
@@ -2926,7 +2926,7 @@
       "gui/pipeline_panel.py:461"
     ],
     "There are currently no tasks running (cancellation of memory calculations has been requested)": [
-      "gui/main_window.py:2653"
+      "gui/main_window.py:2654"
     ],
     "There are no parsable peak lines in the file": [
       "gui/spectrum_panel.py:2050"
@@ -2944,7 +2944,7 @@
       "gui/pipeline_panel.py:3325"
     ],
     "There is no spectrum file for this sample data yet": [
-      "gui/main_window.py:2061"
+      "gui/main_window.py:2062"
     ],
     "There is no ungrouped sample data under experiment": [
       "gui/project_tree.py:1122"
@@ -2968,7 +2968,7 @@
       "gui/processing.py:67"
     ],
     "This experiment does not have sample data yet, please import sample data first": [
-      "gui/main_window.py:1753"
+      "gui/main_window.py:1754"
     ],
     "This software only executes processing and writes spectra, peak tables and processing records (provenance + QC). CSP, robustness, statistical analysis, significance testing and scientific conclusions are out of scope; downstream analysis does that from the unified peak table.": [
       "nmrfinesse_api/records.py:53"
@@ -2977,7 +2977,7 @@
       "gui/dialogs.py:201"
     ],
     "To add/delete/edit peak table, please operate the peak table on the spectrum panel on the right, and save it as a Poky.list file": [
-      "gui/main_window.py:1767"
+      "gui/main_window.py:1768"
     ],
     "Too few consistent peak pairs were found for fitting.": [
       "viewer/spectrum_overlay.py:149"
@@ -3004,16 +3004,16 @@
       "backend/nmrpipe_backend.py:2308"
     ],
     "Unable to get fid.com: {p0}": [
-      "gui/main_window.py:1806"
+      "gui/main_window.py:1807"
     ],
     "Unable to load reference peak table: {p0}/{p1}": [
       "gui/pipeline_panel.py:2996"
     ],
     "Unable to open spectrum file (format not supported or file damaged): {p0}": [
-      "gui/main_window.py:2456"
+      "gui/main_window.py:2457"
     ],
     "Unable to open spectrum: {p0}": [
-      "gui/main_window.py:2454"
+      "gui/main_window.py:2455"
     ],
     "Unable to render and process script (not supported in acquisition mode): {p0}": [
       "workflow/manual.py:455"
@@ -3451,7 +3451,7 @@
       "gui/group_panel.py:74"
     ],
     "data group does not exist: {p0}": [
-      "gui/main_window.py:937"
+      "gui/main_window.py:938"
     ],
     "data group does not exist: {p0}/{p1}": [
       "core/project/manager.py:703",
@@ -3461,19 +3461,19 @@
       "core/project/manager.py:784"
     ],
     "data group {p0} Without member data, batch processing cannot be performed": [
-      "gui/main_window.py:1054"
+      "gui/main_window.py:1055"
     ],
     "data group {p0} deleted (member restores single data)": [
-      "gui/main_window.py:1004"
+      "gui/main_window.py:1005"
     ],
     "data group {p0} deleted, together with {p1} data moved to trash": [
-      "gui/main_window.py:1032"
+      "gui/main_window.py:1033"
     ],
     "data group {p0} in experiment {p1} There is no data in": [
       "workflow/batch.py:98"
     ],
     "data group {p0} renamed to {p1}": [
-      "gui/main_window.py:977"
+      "gui/main_window.py:978"
     ],
     "data part {p0} ({p1}) conversion failed": [
       "backend/nmrpipe_backend.py:4368"
@@ -3487,13 +3487,13 @@
       "backend/nmrpipe_backend.py:4437"
     ],
     "data {p0} It is a 3D spectrum. Batch only supports 2D for now and has not been added to the data group": [
-      "gui/main_window.py:945"
+      "gui/main_window.py:946"
     ],
     "data {p0} Joined data group {p1}": [
-      "gui/main_window.py:954"
+      "gui/main_window.py:955"
     ],
     "data {p0} Moved out of data group {p1}": [
-      "gui/main_window.py:968"
+      "gui/main_window.py:969"
     ],
     "dataset already registered: {p0}": [
       "nmrfinesse_api/session.py:191"
@@ -3529,27 +3529,27 @@
       "gui/pipeline_panel.py:1071"
     ],
     "delete data group": [
-      "gui/main_window.py:991"
+      "gui/main_window.py:992"
     ],
     "delete data group (including data)": [
-      "gui/main_window.py:1018"
-    ],
-    "delete data group {p0}?In the group {p1} data set(s) will be moved to the trash together with the group (recoverable).": [
       "gui/main_window.py:1019"
     ],
+    "delete data group {p0}?In the group {p1} data set(s) will be moved to the trash together with the group (recoverable).": [
+      "gui/main_window.py:1020"
+    ],
     "delete data group {p0}?In the group {p1} data set(s) will be restored as individual data sets (the data themselves are not deleted).": [
-      "gui/main_window.py:992"
+      "gui/main_window.py:993"
     ],
     "delete experiment": [
       "gui/main_window.py:303",
-      "gui/main_window.py:1468",
+      "gui/main_window.py:1469",
       "gui/project_tree.py:1225"
     ],
     "delete experiment failed": [
-      "gui/main_window.py:1487"
+      "gui/main_window.py:1488"
     ],
     "delete experiment {p0} and its output files?\nIt will be moved to the system trash and can be restored.\n(the WorkflowRun audit trail is kept)": [
-      "gui/main_window.py:1469"
+      "gui/main_window.py:1470"
     ],
     "delete group (including data)...": [
       "gui/project_tree.py:1245"
@@ -3562,24 +3562,24 @@
       "viewer/app.py:239"
     ],
     "delete project": [
-      "gui/main_window.py:2171",
-      "gui/main_window.py:2188"
+      "gui/main_window.py:2172",
+      "gui/main_window.py:2189"
     ],
     "delete project failed": [
-      "gui/main_window.py:2197"
+      "gui/main_window.py:2198"
     ],
     "delete project {p0} and all of its sample data and outputs?\nThe project will be moved to the system trash and can be restored (the audit history is kept)\npath: {p1}": [
-      "gui/main_window.py:2172"
+      "gui/main_window.py:2173"
     ],
     "delete project...": [
       "gui/project_tree.py:1214"
     ],
     "delete sample data": [
-      "gui/main_window.py:2280",
+      "gui/main_window.py:2281",
       "gui/project_tree.py:1286"
     ],
     "delete sample data {p0} and its output files?\nIt will be moved to the system trash and can be restored.\n(the WorkflowRun audit trail is kept)": [
-      "gui/main_window.py:2281"
+      "gui/main_window.py:2282"
     ],
     "detected {p0} cluster(s) of isolated peaks": [
       "core/qc/spectrum_quality.py:334"
@@ -3820,7 +3820,7 @@
       "workflow/pick_peaks.py:711"
     ],
     "edit{p0}": [
-      "gui/main_window.py:2389"
+      "gui/main_window.py:2390"
     ],
     "empty array: nothing to evaluate": [
       "core/qc/spectrum_quality.py:174"
@@ -3848,7 +3848,7 @@
       "core/project/manager.py:839"
     ],
     "experiment notes": [
-      "gui/main_window.py:2379"
+      "gui/main_window.py:2380"
     ],
     "experiment title": [
       "nmrfinesse_api/cli.py:602"
@@ -3870,10 +3870,10 @@
       "gui/log_panel.py:187"
     ],
     "experiment {p0} Moved to system trash (can be restored from trash)": [
-      "gui/main_window.py:1481"
+      "gui/main_window.py:1482"
     ],
     "experiment {p0}: Double-click to view the spectrum file, and the pipeline in the middle displays the processing steps": [
-      "gui/main_window.py:2495"
+      "gui/main_window.py:2496"
     ],
     "experiment: {p0} | sample data: {p1} | Processed: {p2}": [
       "gui/dashboards.py:148"
@@ -3946,7 +3946,7 @@
       "workflow/manual.py:294"
     ],
     "fid.com run completed: {p0}": [
-      "gui/main_window.py:1989"
+      "gui/main_window.py:1990"
     ],
     "final run only": [
       "gui/pipeline_panel.py:2279",
@@ -4018,15 +4018,15 @@
       "gui/dialogs.py:298",
       "gui/dialogs.py:302",
       "gui/dialogs.py:312",
-      "gui/main_window.py:733",
-      "gui/main_window.py:737",
-      "gui/main_window.py:1738",
-      "gui/main_window.py:1751",
-      "gui/main_window.py:2059",
-      "gui/main_window.py:2214",
-      "gui/main_window.py:2312",
-      "gui/main_window.py:2335",
-      "gui/main_window.py:2470",
+      "gui/main_window.py:734",
+      "gui/main_window.py:738",
+      "gui/main_window.py:1739",
+      "gui/main_window.py:1752",
+      "gui/main_window.py:2060",
+      "gui/main_window.py:2215",
+      "gui/main_window.py:2313",
+      "gui/main_window.py:2336",
+      "gui/main_window.py:2471",
       "gui/spectrum_panel.py:2080",
       "gui/spectrum_panel.py:2083",
       "gui/spectrum_panel.py:2353",
@@ -4064,18 +4064,18 @@
       "gui/spectrum_panel.py:2066"
     ],
     "import completed (prompt)": [
-      "gui/main_window.py:1382"
+      "gui/main_window.py:1383"
     ],
     "import completion: {p0}/{p1} ({p2} document, {p3} bytes, run {p4})": [
-      "gui/main_window.py:1317"
+      "gui/main_window.py:1318"
     ],
     "import failed": [
-      "gui/main_window.py:1309",
-      "gui/main_window.py:1715",
+      "gui/main_window.py:1310",
+      "gui/main_window.py:1716",
       "gui/spectrum_panel.py:2045"
     ],
     "import failed: {p0}": [
-      "gui/main_window.py:1308"
+      "gui/main_window.py:1309"
     ],
     "import failed: {p0}: {p1}": [
       "nmrfinesse_api/session.py:528"
@@ -4084,7 +4084,7 @@
       "nmrfinesse_api/session.py:535"
     ],
     "import rejected: {p0}": [
-      "gui/main_window.py:1305"
+      "gui/main_window.py:1306"
     ],
     "import results": [
       "gui/spectrum_panel.py:2048"
@@ -4408,7 +4408,7 @@
       "gui/project_tree.py:317"
     ],
     "ongoing{p0}: {p1}": [
-      "gui/main_window.py:1598"
+      "gui/main_window.py:1599"
     ],
     "only 1 subdirectory holds data files ({p0}); a segmented import needs at least 2; these subdirectories look independent: {p1}": [
       "core/data/bruker_reader.py:665"
@@ -4558,7 +4558,7 @@
       "nmrfinesse_api/reference.py:1016"
     ],
     "peak table edit": [
-      "gui/main_window.py:1766"
+      "gui/main_window.py:1767"
     ],
     "peak table has been written:\n{p0}": [
       "gui/spectrum_panel.py:2104"
@@ -4567,7 +4567,7 @@
       "gui/processing.py:660"
     ],
     "peak table saved and registered manual_peaks run": [
-      "gui/main_window.py:2127"
+      "gui/main_window.py:2128"
     ],
     "peak table: {p0} ({p1} peaks)": [
       "workflow/pick_peaks.py:776"
@@ -4582,7 +4582,7 @@
       "nmrfinesse_api/localization_targets.py:479"
     ],
     "perform the \"Generate FID\" step first": [
-      "gui/main_window.py:1848"
+      "gui/main_window.py:1849"
     ],
     "phase": [
       "workflow/optimization_report.py:239"
@@ -4674,14 +4674,14 @@
       "gui/dashboards.py:84"
     ],
     "project comments": [
-      "gui/main_window.py:2378"
+      "gui/main_window.py:2379"
     ],
     "project does not exist: {p0}": [
       "core/workspace.py:98",
       "core/workspace.py:114"
     ],
     "project has been renamed to {p0}": [
-      "gui/main_window.py:2164"
+      "gui/main_window.py:2165"
     ],
     "project is not loaded, cannot import experiment": [
       "workflow/import_workflow.py:615",
@@ -4700,17 +4700,17 @@
       "core/project/manager.py:992",
       "core/project/manager.py:1103",
       "core/project/manager.py:1111",
-      "gui/main_window.py:1239",
+      "gui/main_window.py:1240",
       "gui/per_data_records.py:29"
     ],
     "project not open": [
-      "gui/main_window.py:456",
-      "gui/main_window.py:2515",
+      "gui/main_window.py:457",
+      "gui/main_window.py:2516",
       "gui/pipeline_panel.py:1637",
       "gui/pipeline_panel.py:2065"
     ],
     "project saved": [
-      "gui/main_window.py:684"
+      "gui/main_window.py:685"
     ],
     "project.json has an invalid structure: {p0}": [
       "core/project/manager.py:185"
@@ -4800,24 +4800,24 @@
       "core/audit/qc_audit.py:71"
     ],
     "rename data failed": [
-      "gui/main_window.py:2268",
-      "gui/main_window.py:2260"
+      "gui/main_window.py:2269",
+      "gui/main_window.py:2261"
     ],
     "rename experiment...": [
       "gui/main_window.py:302"
     ],
     "rename failed": [
-      "gui/main_window.py:1455"
+      "gui/main_window.py:1456"
     ],
     "rename group...": [
       "gui/project_tree.py:1234"
     ],
     "rename project": [
-      "gui/main_window.py:2145"
+      "gui/main_window.py:2146"
     ],
     "rename project failed": [
-      "gui/main_window.py:2160",
-      "gui/main_window.py:2157"
+      "gui/main_window.py:2161",
+      "gui/main_window.py:2158"
     ],
     "rename project...": [
       "gui/project_tree.py:1210"
@@ -4854,7 +4854,7 @@
       "gui/pipeline_panel.py:1421"
     ],
     "run cancelled (script check warning)": [
-      "gui/main_window.py:1963"
+      "gui/main_window.py:1964"
     ],
     "run current step": [
       "gui/pipeline_panel.py:1423"
@@ -4888,7 +4888,7 @@
       "gui/dashboards.py:528"
     ],
     "sample data annotation": [
-      "gui/main_window.py:2380"
+      "gui/main_window.py:2381"
     ],
     "sample data annotation (optional, can also be edited in the upper middle after import)": [
       "gui/dialogs.py:206"
@@ -4897,7 +4897,7 @@
       "gui/dashboards.py:201"
     ],
     "sample data {p0} Moved to system trash (can be restored from trash)": [
-      "gui/main_window.py:2293"
+      "gui/main_window.py:2294"
     ],
     "sample does not exist: {p0}": [
       "core/project/manager.py:407",
@@ -4923,8 +4923,8 @@
       "gui/spectrum_panel.py:2102"
     ],
     "save failed": [
-      "gui/main_window.py:682",
-      "gui/main_window.py:2413",
+      "gui/main_window.py:683",
+      "gui/main_window.py:2414",
       "gui/spectrum_panel.py:2096"
     ],
     "save failed: {p0}": [
@@ -4934,7 +4934,7 @@
       "gui/main_window.py:291"
     ],
     "saved{p0}": [
-      "gui/main_window.py:2416"
+      "gui/main_window.py:2417"
     ],
     "scan run mode: full-sampling reconstruction (net true-peak wording; peak count and quality score come from the final spectrum)": [
       "backend/nmrpipe_backend.py:2591"
@@ -4946,7 +4946,7 @@
       "backend/nmrpipe_backend.py:2487"
     ],
     "script check found warning": [
-      "gui/main_window.py:1952"
+      "gui/main_window.py:1953"
     ],
     "script diff (reference -> this workflow): {p0} lines; ": [
       "nmrfinesse_api/sweep.py:2205"
@@ -4991,7 +4991,7 @@
     ],
     "segmented/repeated experiment overlay import": [
       "gui/dashboards.py:257",
-      "gui/main_window.py:749"
+      "gui/main_window.py:750"
     ],
     "segmented=True requires a list of at least 2 dataset directories": [
       "nmrfinesse_api/session.py:408",
@@ -5087,7 +5087,7 @@
       "workflow/pick_peaks.py:843"
     ],
     "spectrum quality assessment": [
-      "gui/main_window.py:1593"
+      "gui/main_window.py:1594"
     ],
     "spectrum quality assessment...": [
       "gui/main_window.py:342"
@@ -5565,13 +5565,13 @@
       "gui/project_tree.py:704"
     ],
     "{p0} ({p1} data)": [
-      "gui/main_window.py:2534"
+      "gui/main_window.py:2535"
     ],
     "{p0} -- No data selected": [
       "gui/pipeline_panel.py:2077"
     ],
     "{p0} Check before run and find {p1} Questions:\n": [
-      "gui/main_window.py:1953"
+      "gui/main_window.py:1954"
     ],
     "{p0} Completed, skip": [
       "workflow/batch.py:452"
@@ -5650,7 +5650,7 @@
       "gui/pipeline_panel.py:200"
     ],
     "{p0} run complete: {p1}": [
-      "gui/main_window.py:2001"
+      "gui/main_window.py:2002"
     ],
     "{p0} run failed: {p1}": [
       "workflow/manual.py:603"
@@ -5846,16 +5846,16 @@
       "nmrfinesse_api/sweep.py:912"
     ],
     "{p0}Currently only project is closed and directory is retained": [
-      "gui/main_window.py:2190"
+      "gui/main_window.py:2191"
     ],
     "{p0}Currently only the name of project.json is updated": [
-      "gui/main_window.py:2147"
+      "gui/main_window.py:2148"
     ],
     "{p0}D/{p1} combinations are not supported": [
       "nmrfinesse_api/sweep.py:1869"
     ],
     "{p0}Finish: {p1}": [
-      "gui/main_window.py:1627"
+      "gui/main_window.py:1628"
     ],
     "{p0}MODE ({p1}): FT -neg was applied automatically; check that this indirect dimension's direction is correct - if it is not, choose the indirect-dimension flip after running the spectrum generation and run the script again": [
       "core/experiment/pulse_pathways.py:1086"
@@ -5886,7 +5886,7 @@
       "backend/bruker_workflow.py:273"
     ],
     "── {p0} run log (most recent)──": [
-      "gui/main_window.py:1524"
+      "gui/main_window.py:1525"
     ],
     "▶ {p0} — {p1}": [
       "gui/pipeline_panel.py:3131"
@@ -5990,7 +5990,7 @@
       "backend/nmrpipe_backend.py:4987"
     ],
     "⚠ script check: {p0}": [
-      "gui/main_window.py:1949",
+      "gui/main_window.py:1950",
       "gui/pipeline_panel.py:3443"
     ],
     "⚠ the {p0}/ser layout cannot be determined from the sampling parameters (direct-dimension TD={p1}, {p2} bytes per point; redundancy count inconsistent or word size unknown); falling back to cleaning the generated FID, not handled automatically": [

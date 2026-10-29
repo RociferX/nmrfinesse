@@ -284,3 +284,36 @@ def test_running_and_result_feedback_are_visible_and_keep_log_scope(
     assert not window.feedback_progress.isVisible()
     assert window.log_panel._current_scope == scope
     window.close()
+
+
+@pytest.mark.parametrize('size', [8, 12, 18])
+def test_maximized_scrollbars_stay_inside_desktop_edge(
+    qapp, tmp_path, monkeypatch, original_font, size,
+):
+    from gui.main_window import MainWindow
+    from tests.test_gui_layout import _manager_with_experiment
+    from ui_support.typography import apply_interface_font
+
+    apply_interface_font(qapp, size)
+    monkeypatch.setattr(MainWindow, '_resolve_environment_on_startup', lambda *_: None)
+    window = MainWindow(manager=_manager_with_experiment(tmp_path, monkeypatch))
+    window.showMaximized()
+    QTest.qWait(20)
+    scroll = window.workspace_scroll
+    scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+    scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+    qapp.processEvents()
+    vertical = scroll.verticalScrollBar()
+    horizontal = scroll.horizontalScrollBar()
+    assert vertical.isVisible()
+    assert horizontal.isVisible()
+    right = vertical.mapTo(window, QPoint(vertical.width(), 0)).x()
+    bottom = horizontal.mapTo(window, QPoint(0, horizontal.height())).y()
+    assert window.width() - right >= 20
+    assert window.height() - bottom >= 20
+    for bar in (vertical, horizontal):
+        bar.setValue(bar.maximum())
+        assert bar.value() == bar.maximum()
+    window.close()
+    window.deleteLater()
+    qapp.processEvents()

@@ -451,7 +451,8 @@ class MainWindow(QMainWindow):
 
         central = QWidget()
         central_layout = QVBoxLayout(central)
-        central_layout.setContentsMargins(0, 0, 0, 0)
+        # Keep scrollbar drags inside the desktop, away from VM edge detection.
+        central_layout.setContentsMargins(0, 0, 20, 20)
         central_layout.setSpacing(0)
         self.context_bar = _HeaderLabel(tr("project not open"))
         self.context_bar.setStyleSheet(
