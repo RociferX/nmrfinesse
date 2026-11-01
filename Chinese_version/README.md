@@ -10,24 +10,23 @@ NMRFinesse读取Bruker数据集，识别实验类型与采样方式，规划处�
 数据检查、自动与人工处理、参数优化、质量控制、选峰和查看在同一工作流中完成，
 实际采用的参数、脚本、告警和输出与结果一同留档，便于复现和核查。
 
-**软件版本：1.0.10 · Python/CLI API：1.1.5 · 目标平台：Linux**
+**软件版本：1.0.11 · Python/CLI API：1.1.5 · 目标平台：Linux**
 
 **Linux桌面用户最简单的使用方式是AppImage。**
-下载[1.0.10 AppImage](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.10/NMRFinesse-1.0.10-x86_64.AppImage)
-及[校验文件](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.10/SHA256SUMS-v1.0.10.txt)，
+下载[1.0.11 AppImage](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.11/NMRFinesse-1.0.11-x86_64.AppImage)
+及[校验文件](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.11/SHA256SUMS-v1.0.11.txt)，
 按[安装步骤](#安装)校验、赋予执行权限并启动，无需自行配置Python或Qt。
 真实谱图处理仍需单独安装NMRPipe，NUS重构还需要SMILE。
 
 桌面程序可通过AppImage或源码安装使用，Python/CLI API通过源码或Python包安装提供。
-API **v1.1.5**保留**38列**峰表契约，并记录参考窗评分诊断，包括共用代表迹线与参考峰；
-二进制的`BUILD_INFO.txt`记录版本、源码修订与依赖。
+API **v1.1.5**输出**38列**峰表；二进制的`BUILD_INFO.txt`记录版本、源码修订与依赖。
 
 作者：**李宣锋（Xuanfeng Li），中国科学技术大学**。
 源码许可：[Apache-2.0](../LICENSE)，署名见[NOTICE](../NOTICE)。
-仓库：[RociferX/NMRFinesse](https://github.com/RociferX/nmrfinesse)。
+仓库：[RociferX/nmrfinesse](https://github.com/RociferX/nmrfinesse)。
 
 > **语言：**这是[英文项目首页](../README.md)的中文文档版，公开代码的注释为英文。
-> 同一份程序支持中英文，默认跟随系统语言；单次运行可设置`NMRFinesse_LANG=en|zh`，
+> 同一份程序支持中英文，默认跟随系统语言；单次运行可设置`NMRFINESSE_LANG=en|zh`，
 > 也可在「设置 → 软件设置 → 界面语言」中长期指定。
 
 桌面程序与不依赖Qt的Python/CLI API使用同一处理后端。API可生成参考、执行显式参数组合或网格，
@@ -45,9 +44,7 @@ API **v1.1.5**保留**38列**峰表契约，并记录参考窗评分诊断，包
 - **峰分析** —— 自动选峰,使用三点抛物线估算亚格点位置;峰表按 POKY 风格导入导出。
 - **带留档的自动化** —— GUI、命令行与 Python API 三种入口;2D批量运行;保留脚本与候选谱;
   每次运行都存下解析后的参数,以及产生它的软件/工具版本。
-- **查看** —— 独立的1D/2D/3D谱图查看器，支持投影、峰位叠加和可折叠控制区。
-  两张或三张兼容谱可在共同坐标下重叠、拟合平移并导出SVG；完整视图覆盖宽谱范围，
-  界面字号保存后立即应用。详见[GUI指南](docs/gui.md)。
+- **查看** —— 独立的 1D/2D/3D 谱图查看器,支持投影与峰位叠加。
 
 ## 工作流
 
@@ -104,8 +101,8 @@ core:项目模型、数据读取、实验判定、规划、处理原语、优化
 | [`examples/`](../examples/README.md) | 可运行的合成数据集与走查脚本 |
 | [`packaging/`](../packaging/README.md) | AppImage 构建素材与发布验收要求 |
 | [`scripts/`](../scripts/README.md) | 独立命令行工具与校验脚本 |
-| [`docs/`](docs/README.md) | 中文文档索引(英文原文在 [`docs/`](../docs/README.md)) |
-| [`.github/`](../.github/) | CI 工作流与 issue/PR 模板 |
+| [`docs/`](docs/README.md) | 中文文档索引(英文原文在 [`docs/`](docs/README.md)) |
+| [`.github/`](../.github) | CI 工作流与 issue/PR 模板 |
 
 依赖是单向的:`gui/` 与 `viewer/` 在最上层,然后是 `workflow/`,再是 `backend/`,
 `core/` 在底层。[`tests/test_ownership.py`](../tests/test_ownership.py) 与
@@ -128,13 +125,13 @@ NMRFinesse 不会替你分发、下载或安装 NMRPipe/SMILE。它在运行时�
 
 ### Linux AppImage：最简单的桌面使用方式
 
-从[1.0.10发行页](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.10)下载
-`NMRFinesse-1.0.10-x86_64.AppImage`与`SHA256SUMS-v1.0.10.txt`，然后运行：
+从[1.0.11发行页](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.11)下载
+`NMRFinesse-1.0.11-x86_64.AppImage`与`SHA256SUMS-v1.0.11.txt`，然后运行：
 
 ```bash
-sha256sum -c SHA256SUMS-v1.0.10.txt
-chmod +x NMRFinesse-1.0.10-x86_64.AppImage
-./NMRFinesse-1.0.10-x86_64.AppImage
+sha256sum -c SHA256SUMS-v1.0.11.txt
+chmod +x NMRFinesse-1.0.11-x86_64.AppImage
+./NMRFinesse-1.0.11-x86_64.AppImage
 ```
 
 AppImage包含Python、Qt和桌面程序，无需自行创建Python环境或安装Python依赖；
@@ -248,9 +245,7 @@ for run in result.runs:
 显式多段导入通过`segmented=True`开启；参考证据缺失或不兼容时需用`force=True`重建。
 
 API单独版本化，当前为**v1.1.5**。跨版本比较前可检查`compat_manifest()`；
-参考构建可保存每条件的`optimization_scores.csv`评分记录，并支持显式候选池；传入池中评分最高且有效的候选用于生成参考。
-窗评分把逐迹检测、分峰、对称和旁瓣因子的乘积中位数乘以连续分辨率因子`width_ratio^-2`，
-有效但较宽的候选仍保留非零分辨率分，且峰表仍为38列。详见[API指南](docs/external-api/README.md)、
+统一峰表为38列。详见[API指南](docs/external-api/README.md)、
 [Python参考](docs/python-api.md)及[输出与记录](docs/external-api/06-outputs-and-records.md)。
 
 ## Example workflow(示例工作流)
@@ -302,7 +297,7 @@ python examples/quickstart.py ./example_data/hsqc_2d
 
 ## 文档
 
-- [中文文档索引](docs/README.md)(英文原文见 [docs/](../docs/README.md))
+- [中文文档索引](docs/README.md)(英文原文见 [docs/](docs/README.md))
 - [快速开始](docs/getting-started.md) | [安装](docs/installation.md)
 - [GUI 指南](docs/gui.md) | [命令行参考](docs/cli.md) | [Python API](docs/python-api.md)
 - [处理模型](docs/processing-model.md) | [QC 体系](docs/qc-system.md) | [选峰](docs/peak-picking.md) | [批量处理](docs/batch-processing.md)
@@ -375,7 +370,7 @@ CI运行仓库配置的检查。模拟测试通过说明被覆盖的软件行为
 
 实际含义:
 
-- **从源码使用 NMRFinesse**:Apache-2.0,包括专利授权、保留署名声明的要求,以及再分发修改过的
+- **从源码使用 nmrfinesse**:Apache-2.0,包括专利授权、保留署名声明的要求,以及再分发修改过的
   文件时说明改动的要求;
 - **AppImage**:再分发前核对该二进制随附的声明和许可要求;
 - 第三方组件各自保留其许可;见 [THIRD_PARTY.md](../THIRD_PARTY.md),

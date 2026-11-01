@@ -51,7 +51,7 @@ def test_tree_level_names_use_language_and_current_font(qapp, tmp_path, language
         opt.font = panel.tree.font()
         opt.fontMetrics = panel.tree.fontMetrics()
         hint = delegate.sizeHint(opt, index)
-        assert hint.height() >= panel.fontMetrics().height()
+        assert hint.height() >= panel.tree.fontMetrics().height()
         # Exercise actual painting with the themed/current font, including selection.
         panel.tree.setCurrentItem(item)
         assert not panel.grab().isNull()

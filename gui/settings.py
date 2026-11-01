@@ -19,7 +19,7 @@ SETTINGS_FILENAME = "nmrfinesse.local.yaml"
 
 
 def is_appimage() -> bool:
-    """Whether to run on AppImage/Freeze packaging environment."""
+    'Whether to run on AppImage/Freeze packaging environment.'
     return bool(os.environ.get("APPIMAGE")) or bool(getattr(sys, "frozen", False))
 
 
@@ -39,6 +39,7 @@ DEFAULTS: dict = {
     "environment_warning_dismissed": False,
     "linewidth_hz": {"1H": 8, "15N": 15, "13C": 20},
     "data_root": "",
+    "spectrum_directory": "",
     "alignment_tolerance_ppm": {"1H": 0.02, "15N": 0.2, "13C": 0.2},
     "guide": {"first_import_hint_shown": False},
 
@@ -51,7 +52,7 @@ DEFAULTS: dict = {
 
 
 def _settings_path() -> Path:
-    """GUI Local overlay file shared with Backend."""
+    'GUI Local overlay file shared with Backend.'
     return local_config_path(SETTINGS_FILENAME, packaged=is_appimage())
 
 
@@ -134,6 +135,7 @@ def load_settings() -> dict:
         ),
         "linewidth_hz": _map_view(linewidth, DEFAULTS["linewidth_hz"]),
         "data_root": str(raw.get("data_root", DEFAULTS["data_root"]) or ""),
+        "spectrum_directory": str(raw.get("spectrum_directory", "") or ""),
         "alignment_tolerance_ppm": _map_view(
             raw.get("alignment_tolerance_ppm"),
             DEFAULTS["alignment_tolerance_ppm"],
@@ -181,6 +183,7 @@ def _merged_view(settings: dict) -> dict:
         "smile_version",
         "environment_warning_dismissed",
         "data_root",
+        "spectrum_directory",
         USER_CONFIG_KEY,
         "interface_font_size",
     ):
@@ -223,6 +226,7 @@ def save_settings(settings: dict) -> Path:
     raw["smile"] = smile
     for key in (
         "data_root",
+        "spectrum_directory",
         "alignment_tolerance_ppm",
         "guide",
         "pipeline",
@@ -257,7 +261,7 @@ def save_settings(settings: dict) -> Path:
 
 
 def data_root_path() -> Path:
-    """Data directory; fallback to user's main directory when empty or invalid."""
+    "Data directory; fallback to user's main directory when empty or invalid."
     value = str(load_settings().get("data_root") or "").strip()
     if value:
         path = Path(value).expanduser()
@@ -269,7 +273,44 @@ def data_root_path() -> Path:
 __all__ = [
     "DEFAULTS",
     "data_root_path",
+    "find_spectrum_directory",
+    "spectrum_directory_path",
     "is_appimage",
     "load_settings",
     "save_settings",
 ]
+
+
+def find_spectrum_directory() -> Path | None:
+    """Find an existing POKY/Sparky spectra folder in the user's working area."""
+    candidates = []
+    for name in ("POKYHOME", "SPARKYHOME"):
+        value = os.environ.get(name, "").strip()
+        if value:
+            root = Path(value).expanduser()
+            candidates.extend([root / "Spectra", root / "UCSF"])
+    # POKY records a manually selected working area here, even when it is
+    # outside the user's home or the application's installation directory.
+    try:
+        config = (Path.home() / ".poky.cfg").read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        config = ""
+    for line in config.splitlines():
+        fields = line.split(None, 1)
+        if len(fields) == 2 and fields[0] == "!POKY_HOMEDIRECTORY":
+            root = Path(os.path.expandvars(fields[1].strip().strip('"'))).expanduser()
+            candidates.extend([root / "Spectra", root / "UCSF"])
+    for name in ("Poky", "POKY", "poky", "Sparky", "sparky"):
+        root = Path.home() / name
+        candidates.extend([root / "Spectra", root / "UCSF"])
+    return next((path for path in candidates if path.is_dir()), None)
+
+
+def spectrum_directory_path() -> Path:
+    """Use the manual export location, otherwise discover an existing spectra folder."""
+    configured = str(load_settings().get("spectrum_directory") or "").strip()
+    if configured:
+        path = Path(configured).expanduser()
+        if path.is_dir():
+            return path
+    return find_spectrum_directory() or Path.home()

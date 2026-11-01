@@ -1,4 +1,4 @@
-"""Poky peak-table association replacement test (import replaces it; save writes .list)."""
+'Poky peak-table association replacement test (import replaces it; save writes .list).'
 
 from __future__ import annotations
 
@@ -25,18 +25,21 @@ def _manager_with_peaks(tmp_path: Path):
     peaks = manager.data_dir(exp_id, data_id, "peaks")
     peaks.mkdir(parents=True, exist_ok=True)
     (peaks / f"{exp_id}-{data_id}.csv").write_text(
-        "Peak_ID,H_shift,N_shift,Intensity,SN,label\n1,8.0,115.0,100,20,OLD\n",
+        "Peak_ID,H_shift,N_shift,Intensity,SN,label\n"
+        "1,8.0,115.0,100,20,OLD\n",
         encoding="utf-8",
     )
     manager.save()
     return manager, exp_id, data_id
 
 
+@pytest.mark.parametrize("indirect_nucleus", ["15N", "13C"])
 def test_import_poky_replaces_association_then_save_writes_list(
-    tmp_path: Path, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, qapp: QApplication, monkeypatch: pytest.MonkeyPatch, indirect_nucleus,
 ) -> None:
     """Poky import only replaces the peak table association (no file overwrite); when saving, the
-    .list peak file is written."""
+    .list peak file is written.
+    """
     manager, exp_id, data_id = _manager_with_peaks(tmp_path)
     list_file = tmp_path / "new.list"
     list_file.write_text(
@@ -56,30 +59,232 @@ def test_import_poky_replaces_association_then_save_writes_list(
     )
     panel = SpectrumPanel(manager)
     panel.set_context(exp_id, data_id)
+    panel._autoload_timer.stop()
+    import time
 
-    # Import: replace the association, do not overwrite the old CSV
+    from tests.test_viewer import _synthetic_spectrum
+
+    spectrum = _synthetic_spectrum()
+    from dataclasses import replace
+
+    spectrum.axes = [replace(spectrum.axes[0], label=indirect_nucleus),
+                     replace(spectrum.axes[1], label="1H")]
+    panel.viewer.add_spectrum(spectrum)
+    panel._peaks = [
+        {"Peak_ID": 1, "H_shift": 8.0, "N_shift": 115.0, "label": "OLD",
+         "Intensity": 12345.678912345, "SN": 24.123456789},
+        {"Peak_ID": 2, "H_shift": 7.3, "N_shift": 117.0, "label": ""},
+    ]
+    panel._populate_peak_table()
+
+
     panel._on_import_poky()
-    old_csv = manager.data_dir(exp_id, data_id, "peaks") / f"{exp_id}-{data_id}.csv"
+    for _ in range(500):
+        qapp.processEvents()
+        time.sleep(0.01)
+        if panel._alignment_progress is None:
+            break
+    assert panel._alignment_progress is None
+    assert panel._display_alignment == pytest.approx({0: 3.0, 1: 0.2}), shown
+    old_csv = (
+        manager.data_dir(exp_id, data_id, "peaks") / f"{exp_id}-{data_id}.csv"
+    )
     assert "OLD" in old_csv.read_text(encoding="utf-8")
-    assert any("替换当前峰表关联" in text for text in shown)
+    assert panel._picked_backup_path.is_file()
+    assert panel.peak_source_combo.count() == 2
     assert panel.peak_table.rowCount() == 2
+    from workflow.peak_snapshot import load_peak_snapshot
 
-    # Save: write the Poky .list peak file and register a manual_peaks run
+    snapshot = load_peak_snapshot(panel._picked_backup_path)
+    assert snapshot[0]["label"] == "OLD-?"
+    assert snapshot[0]["SN"] == 24.123456789
+    assert snapshot[0]["Intensity"] == 12345.678912345
+    panel.peak_source_combo.setCurrentIndex(0)
+    assert panel._table_peaks()[0]["label"] == "OLD-?"
+    assert panel.viewer._peaks_aligned is False
+    assert panel.viewer._peak_native_xy(panel._peaks[0]) == (8., 115.)
+    label_col = panel._peak_keys.index("label")
+    panel.peak_table.cellWidget(0, label_col).lines[0].setText("G9H")
+    panel.peak_source_combo.setCurrentIndex(1)
+    assert panel.viewer._peaks_aligned is True
+    assert panel._table_peaks()[0]["label"].startswith("G1")
+    panel.peak_table.cellWidget(0, label_col).lines[0].setText("A5H")
+    panel.peak_source_combo.setCurrentIndex(0)
+    assert panel._table_peaks()[0]["label"].startswith("G9H")
+    panel.peak_source_combo.setCurrentIndex(1)
+    assert panel._table_peaks()[0]["label"].startswith("A5H")
+    panel.peak_table.cellWidget(0, label_col).lines[0].setText("G1")
+
+
     panel._on_save_peaks()
-    list_path = manager.data_dir(exp_id, data_id, "peaks") / f"{exp_id}-{data_id}.list"
+    list_path = (
+        manager.data_dir(exp_id, data_id, "peaks") / f"{exp_id}-{data_id}.list"
+    )
     assert list_path.is_file()
     content = list_path.read_text(encoding="utf-8")
     assert "G1" in content and "A2" in content and "OLD" not in content
-    runs = [r for r in manager.project.workflow_runs if r.workflow_ref == "manual_peaks"]
+    runs = [
+        r
+        for r in manager.project.workflow_runs
+        if r.workflow_ref == "manual_peaks"
+    ]
     assert len(runs) == 1 and runs[0].status == "success"
     assert runs[0].outputs["peaks"] == str(list_path)
+    panel.close()
+
+
+def test_csv_restores_picks_without_picking_or_alignment(tmp_path, qapp, monkeypatch):
+    from workflow.peak_snapshot import save_peak_snapshot
+
+    manager, exp_id, data_id = _manager_with_peaks(tmp_path)
+    snapshot = save_peak_snapshot(tmp_path / "picked.csv", [
+        {"Peak_ID": 8, "H_shift": 8.123456789, "N_shift": 115.456789,
+         "Intensity": -2345.6789, "SN": 42.123456789, "label": "G1H-G1N"},
+    ])
+    panel = SpectrumPanel(manager)
+    panel.set_context(exp_id, data_id)
+    panel._autoload_timer.stop()
+    panel._clear_peaks()
+    panel._display_alignment = {0: .5, 1: .12}
+    panel.viewer.set_display_ppm_shifts(panel._display_alignment)
+    monkeypatch.setattr("qtcompat.QtWidgets.QFileDialog.getOpenFileName",
+                        lambda *a, **kw: (str(snapshot), ""))
+    monkeypatch.setattr("gui.spectrum_panel.InfoDialog.show_info",
+                        lambda *a: pytest.fail(str(a)))
+    monkeypatch.setattr(panel.controller, "estimate_display_alignment",
+                        lambda *a, **kw: pytest.fail("CSV restore must not fit a shift"))
+    panel._on_import_poky()
+    assert panel._display_alignment == panel.viewer._display_ppm_shifts == {}
+    row = panel._table_peaks()[0]
+    assert row["label"] == "G1H-G1N"
+    assert float(row["H_shift"]) == 8.123456789
+    assert row["SN"] == 42.123456789
+    assert row["Peak_ID"] == "8"
+    assert panel._active_peak_source == "picked"
+    assert panel._alignment_progress is None
+    assert panel.save_peaks_button.isEnabled()
+    panel.close()
+
+
+def test_list_import_stops_if_picked_csv_backup_fails(tmp_path, qapp, monkeypatch):
+    from dataclasses import replace
+
+    from tests.test_viewer import _synthetic_spectrum
+
+    manager, exp_id, data_id = _manager_with_peaks(tmp_path)
+    panel = SpectrumPanel(manager)
+    panel.set_context(exp_id, data_id)
+    panel._autoload_timer.stop()
+    spectrum = _synthetic_spectrum()
+    spectrum.axes = [replace(spectrum.axes[0], label='15N'),
+                     replace(spectrum.axes[1], label='1H')]
+    panel.viewer.add_spectrum(spectrum)
+    panel._peaks = [{'Peak_ID': 1, 'H_shift': 8., 'N_shift': 115., 'label': 'G1H-G1N'}]
+    panel._populate_peak_table()
+    reference = tmp_path / 'ref.list'
+    reference.write_text('Assignment w1 w2\nA2H-A2N 115.5 8.12\n')
+    monkeypatch.setattr('qtcompat.QtWidgets.QFileDialog.getOpenFileName',
+                        lambda *a, **kw: (str(reference), ''))
+    messages = []
+    monkeypatch.setattr('gui.spectrum_panel.InfoDialog.show_info',
+                        lambda _p, _t, text: messages.append(text))
+
+    def fail_backup(*_args):
+        raise OSError('snapshot disk unavailable')
+
+    monkeypatch.setattr(panel.controller, 'backup_picked_peaks', fail_backup)
+    monkeypatch.setattr(panel, '_start_peak_alignment',
+                        lambda *a: pytest.fail('Must retain picks if backup fails'))
+    panel._on_import_poky()
+    assert messages == ['snapshot disk unavailable']
+    assert panel._table_peaks()[0]['label'] == 'G1H-G1N'
+    assert panel._imported_peaks is None
+    assert panel._display_alignment == {}
+    panel.close()
+
+
+def test_list_import_prompts_for_picks_after_choosing_file(tmp_path, qapp, monkeypatch):
+    manager, exp_id, data_id = _manager_with_peaks(tmp_path)
+    panel = SpectrumPanel(manager)
+    panel.set_context(exp_id, data_id)
+    panel._autoload_timer.stop()
+    panel._clear_peaks()
+    shown = []
+    monkeypatch.setattr("gui.spectrum_panel.InfoDialog.show_info",
+                        lambda parent, title, text: shown.append(text))
+    monkeypatch.setattr("qtcompat.QtWidgets.QFileDialog.getOpenFileName",
+                        lambda *a, **kw: (str(tmp_path / "reference.list"), ""))
+    panel._on_import_poky()
+    from ui_support.i18n import tr
+
+    assert shown == [tr("Please pick peaks in the current spectrum first")]
+    assert panel._alignment_progress is None
+    panel.close()
+
+
+def test_repeat_import_uses_native_pick_and_failed_import_preserves_state(
+    tmp_path, qapp, monkeypatch,
+):
+    import time
+    from copy import deepcopy
+    from dataclasses import replace
+
+    from tests.test_viewer import _synthetic_spectrum
+
+    manager, exp_id, data_id = _manager_with_peaks(tmp_path)
+    panel = SpectrumPanel(manager)
+    panel.set_context(exp_id, data_id)
+    panel._autoload_timer.stop()
+    spec = _synthetic_spectrum()
+    spec.axes = [replace(spec.axes[0], label='15N'), replace(spec.axes[1], label='1H')]
+    panel.viewer.add_spectrum(spec)
+    picked = [{'H_shift': h, 'N_shift': n, 'Peak_ID': i}
+              for i, (h, n) in enumerate([(8., 115.), (7.3, 117.), (9.1, 110.)], 1)]
+    panel._peaks = deepcopy(picked)
+    panel._populate_peak_table()
+    path = tmp_path / 'reference.list'
+    monkeypatch.setattr('qtcompat.QtWidgets.QFileDialog.getOpenFileName',
+                        lambda *_a, **_k: (str(path), ''))
+    messages = []
+    monkeypatch.setattr('gui.spectrum_panel.InfoDialog.show_info',
+                        lambda _p, _t, text: messages.append(text))
+
+    def run_import():
+        panel._on_import_poky()
+        for _ in range(1000):
+            qapp.processEvents()
+            time.sleep(.005)
+            if panel._alignment_progress is None:
+                break
+        assert panel._alignment_progress is None
+
+    for dh, dn in [(.12, -.5), (-.08, .75)]:
+        lines = ['Assignment w1 w2'] + [
+            f'G{i}H-G{i}N {p["N_shift"]+dn:.3f} {p["H_shift"]+dh:.3f}'
+            for i, p in enumerate(picked, 1)]
+        path.write_text('\n'.join(lines)+'\n', encoding='utf-8')
+        run_import()
+        assert panel._display_alignment == pytest.approx({0: dn, 1: dh})
+    before = deepcopy(panel._peaks), dict(panel._display_alignment)
+
+    def fail(*_a, **_k):
+        raise ValueError('alignment test failure')
+
+    monkeypatch.setattr(panel.controller, 'estimate_display_alignment', fail)
+    run_import()
+    assert messages[-1] == 'alignment test failure'
+    assert (panel._peaks, panel._display_alignment) == before
+    token = panel._alignment_token
+    panel._clear_peaks()
+    panel._finish_peak_import(token, [], None, None)
+    assert panel._peaks == [] and panel._display_alignment == {}
     panel.close()
 
 
 def test_projection_file_hides_peak_ui(
     tmp_path: Path, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """0.2.199-patch29db: projection file hides peak UI, no peak association/operations."""
+    '0.2.199-patch29db: projection file hides peak UI, no peak association/operations.'
     import numpy as np
 
     from viewer.spectrum import Spectrum, SpectrumAxis
@@ -106,17 +311,19 @@ def test_projection_file_hides_peak_ui(
     assert panel.peak_table.rowCount() == 0
     assert panel.peak_table.isVisible() is False
     assert panel.peak_toolbar_widget.isVisible() is False
-    # _load_peaks (the caller's unified entry) also remains empty under a projection and is not
-    # associated with the peak table
+
     panel._load_peaks(proj)
     assert panel._peaks == []
     assert panel.peak_table.rowCount() == 0
     panel.close()
 
 
-def test_peak_table_lazy_assignment_widgets(tmp_path: Path, qapp: QApplication) -> None:
+def test_peak_table_lazy_assignment_widgets(
+    tmp_path: Path, qapp: QApplication
+) -> None:
     """0.2.199-patch29dc: Assignment editors are created on demand; peak tables with thousands of
-    rows no longer stall."""
+    rows no longer stall.
+    """
     manager, exp_id, data_id = _manager_with_peaks(tmp_path)
     peaks = [
         {
@@ -139,18 +346,20 @@ def test_peak_table_lazy_assignment_widgets(tmp_path: Path, qapp: QApplication) 
         for row in range(panel.peak_table.rowCount())
         if panel.peak_table.cellWidget(row, label_col) is not None
     )
-    # Widgets are created only for visible rows +/- a buffer, far fewer than the row count
+
     assert widget_count <= 60
     table_peaks = panel._table_peaks()
-    # Visible rows (with widgets): label is normalized by segment (2D two segments -> G1-?);
-    # rows outside the viewport (no widget) fall back to the raw label in the item text
+
+
     assert table_peaks[0]["label"] == "G1-?"
     assert table_peaks[-1]["label"] == "G120"
     panel.close()
 
 
-def test_3d_peak_table_columns_use_nucleus_names(tmp_path: Path, qapp: QApplication) -> None:
-    """0.2.199-patch29df: 3D peak-table columns show nucleus names (F1_shift -> N/H/C)."""
+def test_3d_peak_table_columns_use_nucleus_names(
+    tmp_path: Path, qapp: QApplication
+) -> None:
+    '0.2.199-patch29df: 3D peak-table columns show nucleus names (F1_shift -> N/H/C).'
     import json
 
     manager, exp_id, data_id = _manager_with_peaks(tmp_path)
@@ -172,8 +381,8 @@ def test_3d_peak_table_columns_use_nucleus_names(tmp_path: Path, qapp: QApplicat
     )
     panel = SpectrumPanel(manager)
     panel.set_context(exp_id, data_id)
-    # 0.2.199-patch29dj: column names come from the loaded 3D spectrum's axis labels (no more
-    # metadata fallback); bind a synthetic N,H,C 3D spectrum first, then fill the peak table
+
+
     import numpy as np
 
     from viewer.spectrum import Spectrum3D, SpectrumAxis
@@ -203,8 +412,7 @@ def test_3d_peak_table_columns_use_nucleus_names(tmp_path: Path, qapp: QApplicat
         panel.peak_table.horizontalHeaderItem(i).text()
         for i in range(panel.peak_table.columnCount())
     ]
-    # 0.2.199-patch29dk: peak table column order matches the external .list convention
-    # (w1=15N/w2=13C/w3=1H)
+
     shift_cols = [h for h in headers if h.endswith("_shift")]
     assert shift_cols == ["N_shift", "C_shift", "H_shift"]
     assert "F1_shift" not in headers and "F2_shift" not in headers
@@ -212,7 +420,7 @@ def test_3d_peak_table_columns_use_nucleus_names(tmp_path: Path, qapp: QApplicat
 
 
 def _manager_for_snr(tmp_path: Path, name: str, peak_text: str, suffix: str):
-    "Regression coverage:  manager for snr."
+    'Regression coverage:  manager for snr.'
     manager = ProjectManager.create_project(tmp_path / name, "demo")
     entry = manager.create_experiment("HSQC")
     data = manager.import_data(entry.id, "/fake/1")
@@ -229,8 +437,10 @@ def _manager_for_snr(tmp_path: Path, name: str, peak_text: str, suffix: str):
     return manager, exp_id, data_id, spectrum, peak_path
 
 
-def test_peak_table_sn_column_shows_snr(tmp_path: Path, qapp: QApplication) -> None:
-    "Regression coverage: test peak table sn column shows snr."
+def test_peak_table_sn_column_shows_snr(
+    tmp_path: Path, qapp: QApplication
+) -> None:
+    'Regression coverage: test peak table sn column shows snr.'
     manager, exp_id, data_id, spectrum, _peak_path = _manager_for_snr(
         tmp_path,
         "proj_snr",
@@ -253,12 +463,15 @@ def test_peak_table_sn_column_shows_snr(tmp_path: Path, qapp: QApplication) -> N
     panel.close()
 
 
-def test_peak_table_sn_column_accepts_legacy_sn_column(tmp_path: Path, qapp: QApplication) -> None:
-    "Regression coverage: test peak table sn column accepts legacy sn column."
+def test_peak_table_sn_column_accepts_legacy_sn_column(
+    tmp_path: Path, qapp: QApplication
+) -> None:
+    'Regression coverage: test peak table sn column accepts legacy sn column.'
     manager, exp_id, data_id, spectrum, _peak_path = _manager_for_snr(
         tmp_path,
         "proj_sn",
-        "Peak_ID,H_shift,N_shift,Intensity,SN,label\n1,8.0,115.0,100,3,OLD\n",
+        "Peak_ID,H_shift,N_shift,Intensity,SN,label\n"
+        "1,8.0,115.0,100,3,OLD\n",
         ".csv",
     )
     panel = SpectrumPanel(manager)
@@ -269,12 +482,15 @@ def test_peak_table_sn_column_accepts_legacy_sn_column(tmp_path: Path, qapp: QAp
     panel.close()
 
 
-def test_peak_table_sn_column_empty_for_poky_list(tmp_path: Path, qapp: QApplication) -> None:
-    "Regression coverage: test peak table sn column empty for poky list."
+def test_peak_table_sn_column_empty_for_poky_list(
+    tmp_path: Path, qapp: QApplication
+) -> None:
+    'Regression coverage: test peak table sn column empty for poky list.'
     manager, exp_id, data_id, spectrum, _peak_path = _manager_for_snr(
         tmp_path,
         "proj_list_sn",
-        "Assignment w1 w2 Data Height Volume\nG1 118.0 8.2 0 100.0 100.0\n",
+        "Assignment w1 w2 Data Height Volume\n"
+        "G1 118.0 8.2 0 100.0 100.0\n",
         ".list",
     )
     panel = SpectrumPanel(manager)
@@ -284,6 +500,8 @@ def test_peak_table_sn_column_empty_for_poky_list(tmp_path: Path, qapp: QApplica
     sn_col = panel._peak_keys.index("SN")
     assert panel.peak_table.item(0, sn_col).text() == ""
     panel.close()
+
+
 
 
 def test_peak_columns_fit_values_and_assignment_editors(tmp_path, qapp):
@@ -385,12 +603,15 @@ def test_peak_export_stays_enabled_after_refresh_and_tracks_manual_rows(tmp_path
 @pytest.mark.parametrize('ndim', [2, 3])
 @pytest.mark.parametrize('aligned', [False, True])
 def test_gui_export_only_assignment_and_coordinates(tmp_path, qapp, monkeypatch, ndim, aligned):
+    import time
+
     from core.peaks import export_peaks_poky
     from gui.spectrum_panel import SpectrumPanel
 
     manager, exp_id, data_id = _manager_with_peaks(tmp_path)
     panel = SpectrumPanel(manager)
     panel.set_context(exp_id, data_id)
+    panel._autoload_timer.stop()
     nuclei = ['15N', '13C', '1H'] if ndim == 3 else None
     monkeypatch.setattr(panel, '_current_3d_nuclei', lambda: nuclei)
     shifts = ({'N_shift':118., 'H_shift':8.2} if ndim == 2 else
@@ -400,7 +621,13 @@ def test_gui_export_only_assignment_and_coordinates(tmp_path, qapp, monkeypatch,
     panel._peaks = [peak]
     panel._populate_peak_table()
     reference = tmp_path / 'reference.list'
-    export_peaks_poky(reference, [peak], ndim, nuclei=nuclei)
+    ref_peak = dict(peak)
+    if aligned:
+        if ndim == 2:
+            ref_peak.update(H_shift=8.325, N_shift=118.5)
+        else:
+            ref_peak.update(F1_shift=118.5, F2_shift=44.25, F3_shift=8.325)
+    export_peaks_poky(reference, [ref_peak], ndim, nuclei=nuclei)
     out = tmp_path / 'export.list'
     monkeypatch.setattr('qtcompat.QtWidgets.QFileDialog.getOpenFileName',
                         lambda *_a, **_k: (str(reference), ''))
@@ -410,13 +637,23 @@ def test_gui_export_only_assignment_and_coordinates(tmp_path, qapp, monkeypatch,
     monkeypatch.setattr('workflow.peak_align.alignment_figure', lambda *_a, **_k: None)
     if aligned:
         panel._export_peaks_aligned()
+        for _ in range(1000):
+            qapp.processEvents()
+            time.sleep(.01)
+            if panel._alignment_progress is None:
+                break
+        assert panel._alignment_progress is None
     else:
         panel._export_peaks_poky()
     lines = out.read_text('utf8').splitlines()
     assert lines[0].split() == ['Assignment'] + [f'w{i+1}' for i in range(ndim)]
     assert len(lines[1].split()) == ndim + 1
-    assert lines[1].split()[1:] == (['118.000', '8.200'] if ndim == 2 else
-                                   ['118.000', '45.000', '8.200'])
+    expected = ((['118.500', '8.325'] if ndim == 2 else ['118.500', '44.250', '8.325'])
+                if aligned else
+                (['118.000', '8.200'] if ndim == 2 else ['118.000', '45.000', '8.200']))
+    assert lines[1].split()[1:] == expected
+    assert panel._display_alignment == {}
+    assert panel._peaks[0]['H_shift' if ndim == 2 else 'F3_shift'] == 8.2
     assert panel._peaks[0]['Intensity'] == 123456.
     assert panel._peaks[0]['SN'] == 42.5
     panel.close()

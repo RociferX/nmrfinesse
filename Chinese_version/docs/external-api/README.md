@@ -1,6 +1,6 @@
 # nmrfinesse_api 使用指南（API 1.1.5）
 
-`nmrfinesse_api`是软件**1.0.10**中不依赖Qt的Python/CLI接口，导入Bruker数据，逐条件建立并冻结独立参考谱/峰表，
+`nmrfinesse_api`是软件**1.0.11**中不依赖Qt的Python/CLI接口，导入Bruker数据，逐条件建立并冻结独立参考谱/峰表，
 运行显式参数组合，逐谱独立检测并写入三点抛物线峰表、来源及QC记录。
 
 条件默认使用单个原始目录，`segmented=True`允许至少两个目录的有序列表。
@@ -10,11 +10,6 @@
 统一峰表**38列**，保留完整F1/F2/F3坐标、核名与等效线宽。
 峰ID属于单张谱，组合`reference_peak_id`留空；跨谱匹配、指认及统计推断由下游实现。
 `compat_manifest()`保存代码/契约指纹及受影响步骤。
-
-参考窗与基线优化诊断保存在每条件`optimization_scores.csv`中，共53列；窗分项包括逐迹四因子原始分、
-连续分辨率因子及其宽度比和参考FWHM，基线行保留原始指标与0–100分项。所有候选共用参考峰及代表迹线，
-分辨率按`width_ratio^-2`连续计分，不设硬宽度门槛。评分附件与38列峰表是独立契约；字段与缓存行为见
-[输出与记录](06-outputs-and-records.md)。
 
 ## 检查与证据
 
@@ -35,7 +30,7 @@
 | [集成](08-integration-guide.md) | 读取产物与下游接口 |
 | [支持范围与执行边界](09-limitations-and-roadmap.md) | NUS、参数校验、续跑与FID复用 |
 | [故障排查](10-troubleshooting.md) | 错误、warnings与恢复 |
-| [示例](examples/) | 可执行API走查 |
+| [示例](examples) | 可执行API走查 |
 
 ## 安装与运行
 
@@ -51,7 +46,7 @@ python -m nmrfinesse_api --help
 ```python
 from nmrfinesse_api import run_reference_study, run_combination_study
 
-# 参考模式:参考谱 + 脚本 + 一张抛物线参考峰表(选峰阈值在这里定,之后锁定)
+# 参考模式:参考谱 + 脚本 + 一张参考峰表(选峰阈值在这里定,之后锁定)
 run_reference_study(
     "~/studies/hsqc_params",
     datasets={"A": "~/data/apo", "B": "~/data/holo"},

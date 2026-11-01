@@ -23,11 +23,11 @@ from typing import Any
 
 #: declared behaviour level (see the module doc; meaning matches nmrfinesse_api.compat)
 DECLARATION: dict[str, Any] = {'schema': 'nmrfinesse_api.compat.declaration.v1',
- 'digest': '24ff6f3f4cf197b4973bbe31c3c13ec9397f1ab96a5b8d71c0dd43034fb9f192',
- 'token_digest': '8a20e3edaf921c7e71f37c351177bea8571aa8c33398be4c9ff6b7b70459018c',
+ 'digest': '79e8cc93ac9d0c67504da321a1cf1a92c70af50bb26f0abfc8e5f0f08a9916b3',
+ 'token_digest': 'd9d64014a86fb92699531edc8bc37b2599305559fbd629f3f1e5f13070b967a4',
  'compat_level': 'additive',
  'affected': [],
- 'updated': '2026-10-29',
+ 'updated': '2026-11-01',
  'note': 'Add coordinate-only peak export; retain internal metrics and detection '
          'numerics.',
  'golden': {'name': 'conformance_v1',

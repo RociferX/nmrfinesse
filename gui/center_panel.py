@@ -10,13 +10,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from qtcompat.QtCore import Qt
+from qtcompat.QtCore import QRect, QSize, Qt
 from qtcompat.QtWidgets import (
     QBoxLayout,
     QGridLayout,
     QLabel,
+    QLayout,
     QPushButton,
     QScrollArea,
+    QSizePolicy,
     QStackedWidget,
     QVBoxLayout,
     QWidget,
@@ -30,8 +32,103 @@ from qtcompat import Signal
 from ui_support.i18n import tr
 
 
+class _NotesFlow(QLayout):
+    """Wrap complete fields; explicit lines start a separate block."""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self._items = []
+        self.setContentsMargins(0, 0, 0, 0)
+
+    def addItem(self, item):
+        self._items.append(item)
+
+    def count(self):
+        return len(self._items)
+
+    def itemAt(self, index):
+        return self._items[index] if 0 <= index < len(self._items) else None
+
+    def takeAt(self, index):
+        return self._items.pop(index) if 0 <= index < len(self._items) else None
+
+    def hasHeightForWidth(self):
+        return True
+
+    def heightForWidth(self, width):
+        return self._arrange(QRect(0, 0, max(1, width), 0), measure=True)
+
+    def sizeHint(self):
+        return QSize(400, self.heightForWidth(400))
+
+    def minimumSize(self):
+        return QSize(0, self.parentWidget().fontMetrics().height())
+
+    def setGeometry(self, rect):
+        super().setGeometry(rect)
+        self._arrange(rect, measure=False)
+
+    def _arrange(self, rect, *, measure):
+        left, x, y, height = rect.x(), rect.x(), rect.y(), 0
+        for item in self._items:
+            label = item.widget()
+            natural = label.fontMetrics().horizontalAdvance(label.text()) + 2
+            width = min(max(1, rect.width()), natural)
+            if height and (label.property('notesBlockStart') or x + width > rect.right() + 1):
+                x, y, height = left, y + height, 0
+            needed = label.heightForWidth(width)
+            needed = max(needed, label.fontMetrics().height())
+            if not measure:
+                item.setGeometry(QRect(x, y, width, needed))
+            x += width + 8
+            height = max(height, needed)
+        return y + height - rect.y()
+
+
+class _NotesLabel(QWidget):
+    """Plain-text notes with one flow item per compact field."""
+
+    def __init__(self, text='', parent=None):
+        super().__init__(parent)
+        self._flow = _NotesFlow(self)
+        policy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
+        policy.setHeightForWidth(True)
+        self.setSizePolicy(policy)
+        self.setText(text)
+
+    def setText(self, text):
+        self._plain_text = text
+        while self._flow.count():
+            old = self._flow.takeAt(0).widget()
+            old.hide()
+            old.deleteLater()
+        for line in text.split('\n') if text else []:
+            for index, field in enumerate(line.split('  ·  ')):
+                label = QLabel(('·  ' if index else '') + field, self)
+                label.setObjectName('MutedText')
+                label.setTextFormat(Qt.TextFormat.PlainText)
+                label.setWordWrap(True)
+                label.setProperty('notesBlockStart', index == 0)
+                self._flow.addWidget(label)
+                label.show()
+        self._flow.invalidate()
+        self.updateGeometry()
+
+    def text(self):
+        return self._plain_text
+
+    def textFormat(self):
+        return Qt.TextFormat.PlainText
+
+    def wordWrap(self):
+        return True
+
+    def heightForWidth(self, width):
+        return self._flow.heightForWidth(width)
+
+
 class CenterPanel(QWidget):
-    """Middle panel container: switch pages according to the selected level."""
+    'Middle panel container: switch pages according to the selected level.'
 
     log_message = Signal(str)
     log_scoped = Signal(str, str)
@@ -112,8 +209,7 @@ class CenterPanel(QWidget):
         self.selection_guide_label.setObjectName("SelectionGuide")
         self.selection_guide_label.setWordWrap(True)
         self.notes_header.addWidget(self.selection_guide_label)
-        self.notes_label = QLabel("")
-        self.notes_label.setWordWrap(True)
+        self.notes_label = _NotesLabel("")
         self.notes_label.setObjectName("MutedText")
 
         self.group_notes_scroll = QScrollArea()
@@ -150,7 +246,7 @@ class CenterPanel(QWidget):
         self._update_notes('workspace', '', '')
 
     def resizeEvent(self, event) -> None:
-        """Move the notes editor below the notes in narrow columns."""
+        'Move the notes editor below the notes in narrow columns.'
         super().resizeEvent(event)
         direction = (
             QBoxLayout.Direction.LeftToRight
@@ -193,7 +289,7 @@ class CenterPanel(QWidget):
             self.pipeline.set_selection(kind, exp_id, data_id)
 
     def _update_selection_guide(self, kind: str) -> None:
-        """Show a short action hint for the selected tree level."""
+        'Show a short action hint for the selected tree level.'
         guide = {
             "workspace": (tr("Workspace"), tr("Create or open projects")),
             "project": (tr("Project"), tr("Create experiments")),
@@ -210,11 +306,11 @@ class CenterPanel(QWidget):
 
     # ------------------------------------------------------------------
     def set_manager(self, manager) -> None:
-        """Binding/renew ProjectManager (called by the main window when switching projects)."""
+        'Binding/renew ProjectManager (called by the main window when switching projects).'
         self._manager = manager
 
     def update_notes(self, *args, **kwargs) -> None:
-        """Refresh the comments page (public packaging: _update_notes)."""
+        'Refresh the comments page (public packaging: _update_notes).'
         self._update_notes(*args, **kwargs)
 
     def _update_notes(
@@ -344,7 +440,7 @@ class CenterPanel(QWidget):
         self.group_notes_scroll.setWidget(container)
 
     def _on_group_summary(self, summary: dict) -> None:
-        """Summary of group batch processing completion: log output + panel clearing progress."""
+        'Summary of group batch processing completion: log output + panel clearing progress.'
         scope = str(summary.get("log_scope") or "")
 
         def emit_log(message: str) -> None:
@@ -422,7 +518,7 @@ class CenterPanel(QWidget):
             self.group_page.refresh()
 
     def _exp_group_context(self) -> bool:
-        """Whether you are currently staying on the data group page (for refresh)."""
+        'Whether you are currently staying on the data group page (for refresh).'
         return bool(
             self.stack.currentWidget() is self.group_page
             and self.group_page.current_group_id

@@ -1,6 +1,6 @@
 # 打包
 
-v1.0.10 源码与 AppImage 发布使用 NMRFinesse 软件 **1.0.10** 和脚本 API **1.1.5**，两者分别版本化。
+v1.0.11 源码与 AppImage 发布使用 NMRFinesse 软件 **1.0.11** 和脚本 API **1.1.5**，两者分别版本化。
 AppImage 是最便捷的桌面安装方式；NMRPipe 与 SMILE 需要另行获取和安装。
 NMRPipe 用于转换和处理，SMILE 用于 NUS 重构。
 
@@ -22,7 +22,7 @@ spec 会按包内相对布局加入运行资源：`nmrfinesse_data/config`、`nm
 冻结 GUI 进行 20 秒冒烟检查。构建会在 `usr/share/doc/NMRFinesse/BUILD_INFO.txt` 中记录版本、源码提交、
 工作树状态、构建时间、主机、Python 版本及部分依赖版本。`AppRun` 启动 `usr/bin/NMRFinesse` 并提供
 `--licenses` 选项；首次启动时安装桌面入口和图标。`--remove-desktop` 可移除该集成，
-`NMRFinesse_NO_DESKTOP=1` 可跳过安装。
+`NMRFINESSE_NO_DESKTOP=1` 可跳过安装。
 
 AppImage 不包含 NMRPipe 或 SMILE。用户需单独安装这些工具，并按[外部依赖](external-dependencies.md)
 中的发现方式配置或提供它们。
@@ -58,3 +58,5 @@ bash packaging/linux/build_appimage.sh
 替换 wheel 需匹配构建平台，且 PySide6 与 shiboken6 版本应配套。可通过公开的构建脚本和 spec 使用这些库
 重新构建应用。组件与来源详情见随包的[第三方声明](../../packaging/linux/THIRD_PARTY_LICENSES/NOTICE.md)，
 许可文本来源见[来源记录](../../packaging/linux/THIRD_PARTY_LICENSES/PROVENANCE.txt)。
+
+维护者执行产物验收时使用 AppImage 发布检查表（维护者发布检查）。

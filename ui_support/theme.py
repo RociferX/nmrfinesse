@@ -61,7 +61,8 @@ def fit_combo_width(combo: QComboBox, extra: int = 18) -> None:
     text area (measured "Net True Peak Priority" 60 px Text / 62 px text area), if there is a
     slight difference in font rendering, it will be truncated by Qt ellipses. Just set the
     minimum width (the fluid layout will not be pushed back), and synchronize the minimum width
-    of the pop-up list to avoid the list items being truncated."""
+    of the pop-up list to avoid the list items being truncated.
+    """
     metrics = combo.fontMetrics()
     text_width = 0
     for index in range(combo.count()):
@@ -78,7 +79,7 @@ def fit_combo_width(combo: QComboBox, extra: int = 18) -> None:
             QStyle.SubControl.SC_ComboBoxArrow,
             combo,
         ).width()
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     width = text_width + arrow + max(0, int(extra))
     if width > combo.minimumWidth():
@@ -115,7 +116,7 @@ class _FastTooltipStyle(QProxyStyle):
 
 
 def apply_dark_theme(app: QApplication) -> None:
-    """Force the dark theme and pick up the system language (see ui_support/i18n.py)."""
+    'Force the dark theme and pick up the system language (see ui_support/i18n.py).'
     from ui_support.i18n_qt import install_qt_language
 
     install_qt_language()
@@ -158,7 +159,7 @@ def apply_dark_theme(app: QApplication) -> None:
             f' image: url("{_down}"); width: 12px; height: 12px; }}\n'
         )
     app.setStyleSheet(
-        # i18n: keep - CSS comments are not interface messages.
+        # i18n: keep —— 这段 QSS 里的中文只出现在注释里,不是界面文案
         """
         QToolTip { color: #e8e8e8; background-color: #2d2d30;
                    border: 1px solid #3c3c3c; }
@@ -182,7 +183,7 @@ def apply_dark_theme(app: QApplication) -> None:
         QTextEdit, QDateEdit, QTimeEdit {
             background-color: #1e1e1e; color: #e8e8e8;
             border: 1px solid #3c3c3c; border-radius: 4px; }
-        /* Dark spinbox buttons keep their white arrows visible. */
+
         QSpinBox::up-button, QDoubleSpinBox::up-button,
         QSpinBox::down-button, QDoubleSpinBox::down-button {
             background-color: #3c3c3c; border: none; width: 16px; }
@@ -212,7 +213,7 @@ def apply_dark_theme(app: QApplication) -> None:
         QScrollBar { background-color: #252526; }
         QScrollBar::handle { background-color: #3c3c3c; }
         QLabel { color: #e8e8e8; }
-        /* Leave room above custom group borders for the title. */
+
         QGroupBox { border: 1px solid #3c3c3c; margin-top: 1.4em;
                     border-radius: 5px; padding-top: 5px;
                     color: #e8e8e8; }
@@ -226,32 +227,32 @@ def apply_dark_theme(app: QApplication) -> None:
         QCheckBox, QRadioButton { color: #e8e8e8; }
         QListWidget { background-color: #252526; color: #e8e8e8; }
         QStackedWidget { background-color: #1e1e1e; }
-        /* Section cards and headings. */
+
         QWidget#PanelCard { background-color: #202124;
                             border: 1px solid #33363b;
                             border-radius: 6px; }
         QLabel#PanelTitle { font-weight: bold;
                             color: #e8e8e8; }
         QLabel#PanelSubtitle { color: #b0b0b0; }
-        /* Step rows: bottom separators and hover highlighting. */
+
         QWidget#StepRow { border-bottom: 1px solid #2d2d30; }
         QWidget#StepRow:hover { background-color: #26282b; }
-        /* Consistent selection and hover states. */
+
         QTreeView::item:selected, QListView::item:selected,
         QTableView::item:selected, QTableWidget::item:selected {
             background-color: #0e639c; color: #ffffff; }
         QTreeView::item:hover, QListView::item:hover,
         QTableView::item:hover, QTableWidget::item:hover {
             background-color: #2a2d2e; }
-        /* Input focus. */
+
         QLineEdit:focus, QComboBox:focus, QSpinBox:focus,
         QDoubleSpinBox:focus, QPlainTextEdit:focus, QTextEdit:focus {
             border: 1px solid #0e639c; }
-        /* Button states. */
+
         QPushButton:pressed { background-color: #2f2f2f; }
         QPushButton:checked { background-color: #0e639c;
                               border-color: #1177bb; }
-        /* Slim rounded scrollbars. */
+
         QScrollBar:vertical { background: transparent; width: 10px;
                               margin: 2px 0 2px 0; }
         QScrollBar:horizontal { background: transparent; height: 10px;
@@ -297,7 +298,7 @@ def apply_dark_theme(app: QApplication) -> None:
         QSlider::sub-page:horizontal { background: #337eb1; }
         QSlider::handle:horizontal { background: #8fbfdf; border: 1px solid #477fa6;
             width: 12px; margin: -5px 0; border-radius: 6px; }
-        /* Use the card background throughout each section so content widgets do not fragment it. */
+
         QWidget#PanelCard QTreeWidget, QWidget#PanelCard QTableWidget,
         QWidget#PanelCard QListWidget, QWidget#PanelCard QPlainTextEdit,
         QWidget#PanelCard QTextEdit, QWidget#PanelCard QStackedWidget,

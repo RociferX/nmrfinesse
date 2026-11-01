@@ -1,216 +1,148 @@
 # GUI guide
 
-The desktop application is the intended interface for processing spectra. This page is a tour of
-what the interface does; the underlying engine behaviour is in
-[processing-model.md](processing-model.md) and [qc-system.md](qc-system.md).
+Updated for the source interface as of 2026-11-01: software version 1.0.11 and API v1.1.5. The window title shows the software version; source and installers are on the [releases page](https://github.com/RociferX/nmrfinesse/releases). Change the interface language in Settings → Software settings; this tutorial follows that choice.
 
-![NMRFinesse main window](../gui/assets/nmrfinesse.png)
 
-> **Language note.** English is the interface's source language, and the public-repo build shows
-> English by default; the same build also speaks Chinese: follow the system language, pick it in
-> `Settings -> Software settings -> Interface language`, or pin it with `NMRFINESSE_LANG=zh`. The
-> Chinese wording lives in `ui_support/locales/zh.json` and is the **same code** as the English
-> version. A Chinese edition of this guide is in
-> [`Chinese_version/docs/gui.md`](../Chinese_version/docs/gui.md).
+Start with `python main.py`. See [Installation](installation.md) for setup and runtime requirements.
 
-## Starting it
+## Version, copyright and project resources
 
-```bash
-python main.py
-```
+Help → About shows the running software version, API version, author, copyright and license, with clickable GitHub, release, documentation, issue-reporting and Zenodo links. Include these versions, your Linux desktop/display session, reproduction steps and relevant logs when reporting an issue. Remove private information before sharing data or logs.
 
-Linux is the target runtime. An AppImage records its exact source commit in `BUILD_INFO.txt`, also
-available through `--licenses`; see the [releases page](https://github.com/RociferX/nmrfinesse/releases) for available
-artifacts. The first normal run installs the desktop entry (`--remove-desktop` removes it). Build
-and acceptance records are in [packaging.md](packaging.md).
+- Author and copyright: Copyright © 2026 Xuanfeng Li. Project source is licensed under [Apache-2.0](https://github.com/RociferX/nmrfinesse/blob/main/LICENSE); see [NOTICE](https://github.com/RociferX/nmrfinesse/blob/main/NOTICE).
+- Project and downloads: [GitHub](https://github.com/RociferX/nmrfinesse) · [Releases](https://github.com/RociferX/nmrfinesse/releases) · [Report an issue](https://github.com/RociferX/nmrfinesse/issues). Source and AppImage updates are released separately; restart a running program to load updated source.
+- Citing the software: use [CITATION.cff](https://github.com/RociferX/nmrfinesse/blob/main/CITATION.cff) or [Zenodo](https://doi.org/10.5281/zenodo.22909415), and state the version you used. This DOI identifies the software across versions; obtain a version-specific DOI from the corresponding Zenodo record.
+- Third-party components retain their own licenses; see [THIRD_PARTY.md](https://github.com/RociferX/nmrfinesse/blob/main/THIRD_PARTY.md). Qt/PySide6 in the Linux AppImage use LGPL-3.0; run the AppImage with `--licenses` to display bundled notices. NMRPipe and SMILE are installed separately.
 
-The GUI probes for NMRPipe and SMILE at startup and reports their availability. This does not mean
-every operation requires them: existing processed spectra can be QC-checked and peak-picked with
-pure Python. Generating a new processed spectrum requires NMRPipe; NUS reconstruction also requires
-SMILE.
+## Axis conventions
 
-## Window layout
+Axes use logical dimension names: in 2D, F1 is indirect and F2 direct; in 3D, F1/F2 are the first/second indirect dimensions and F3 direct. Same-nucleus dimensions use x/y/z suffixes assigned in direct, acqu2, acqu3 priority. NMRPipe 3D storage order (F2,F1,F3) is converted to logical order on load; the axis reorder log entry records this conversion.
 
-The window has **four columns** (the separators can be dragged; the View menu only toggles three of them):
+## 1. What the software does
 
-| Column | What it shows |
-| --- | --- |
-| 1 | Project tree: Project -> Experiment -> Input / Processing / Output / Figures. Selecting a node sets the context for everything else. |
-| 2 | Processing pipeline for the selected dataset: a breadcrumb plus the status-driven step list and the "what next" prompt. |
-| 3 | Task log: the permanent middle column. Dataset, group and global logs are independent; individual member runs go to that member's log, and group runs go to the group log. |
-| 4 | Spectrum panel: selecting a dataset automatically shows its current spectrum (large files load in the background); 3D opens on the F3-F2 plane. Expanded comparison places the reference on the left and current spectrum in the centre, with independent controls and equal plot heights. Contour start, Levels and Aspect each pair a value field with its slider; the groups keep their natural height and top alignment, wrap when space is limited, and return to one row when width allows. |
+- Reads Bruker data and identifies dimensions, experiment types and uniform/NUS sampling.
+- Generates FIDs and spectra through NMRPipe, with automatic phase, baseline, window and other parameter choices. NUS uses SMILE reconstruction.
+- Provides FID, sampling and spectrum quality checks, step reports, logs and editable processing scripts.
+- Picks peaks with three-point parabolic localisation, supports assignment editing, peak-table import and coordinate alignment.
+- Displays 1D, 2D and 3D slices; compares two or three spectra side by side or overlaid; exports peak lists, UCSF files and overlay SVGs.
+- Organises projects, experiments, data and groups. Batch processing supports independent 2D data only.
 
-Single, segmented and batch import forms stay inline on the experiment page. Scroll that page to reach them; importing from the experiment's project-tree context menu is also available.
+Real processing requires a separate NMRPipe installation; NUS additionally needs SMILE. Neither is bundled.
 
-Menus: `File` (new/open/save project, recent projects), `experiment` (new/rename/delete
-experiment), `View` (hide/show the project tree, the pipeline or the spectra), `Tools` (data-quality inspection, spectrum
-quality assessment), `Settings` (software settings), `Help` (usage tutorial, about).
-**`Help -> Usage tutorial`** opens the tutorial that ships with the program (what it does and how to use it, in the current interface language); the text lives in `nmrfinesse_data/tutorial/{zh,en}.md`.
+## 2. The window at a glance
 
-`Settings -> Software settings` covers: the interface language (follow the system / Chinese /
-English), the NMRPipe path, the data directory, the per-nucleus default line
-widths and alignment tolerances, and the SMILE thread count (plus "simple mode" in a source
-checkout). All of it goes into the local override config
-(`nmrfinesse_data/config/nmrfinesse.local.yaml`; `~/.config/NMRFinesse/nmrfinesse.local.yaml` inside
-the AppImage) and takes effect after a restart.
+The main window has three adjustable columns:
 
-The data directory sets the import browser's default starting point. An existing input path takes
-priority; when it is blank or unavailable, the browser starts in the user's home directory. Settings
-labels and fields have tooltips, and the form scrolls when it does not fit.
+- **Left: project tree.** Workspace → project → experiment → data or group. Selection opens the corresponding tools in the centre. Bruker `title` text appears below data names; hover for full details.
+- **Centre: processing.** The welcome page creates or opens projects; the project page creates experiments and exports UCSF; the experiment page imports data; data pages show the pipeline. **The task log sits below the centre panel** and follows your selection.
+- **Right: spectra.** Selecting data loads its current spectrum. Files and layers, display and slice controls, and peak tools/table collapse independently while the plot remains visible.
 
-## The processing pipeline
+The top menus are File, View, Tools, Settings and Help. Create projects in the centre welcome page and experiments on the project page. Help → Usage tutorial opens this guide. Small screens and large fonts use scrolling. Notes appear above the centre tools; short fields wrap together and remarks preserve line breaks.
 
-Four steps, each with a status - `Not ready` (locked, prerequisites missing), `Can be run`
-(ready), `Running`, `Completed`, `Failed`, and `Expired` (an input or parameter changed
-afterwards):
+Operation dialogs open centred on their owner, stay on top and block the main window until closed. File/folder browsing uses the native system chooser, starting at the current path or relevant default folder. Web links in the tutorial and About open in your default browser.
 
-| Step | Label | What it does |
-| --- | --- | --- |
-| 1 | Generate FID | Converts the raw Bruker data to an NMRPipe FID (`bruker -AUTO` from a generated `fid.com`). |
-| 2 | Generate spectrum | Runs the optimised processing path, including SMILE reconstruction for NUS data. |
-| 3 | SMILE optimisation | Optional: ranks reconstruction parameter candidates. 2D NUS only; it never replaces the active spectrum by itself. |
-| 4 | Peak picking | Automatic peak detection with intensity and S/N evaluation. |
+The Object column starts compact, with status next to the name. Drag the header separator to adjust its width; title subtitles wrap and row height follows the text.
 
-Steps unlock in order. A finished step whose inputs or parameters changed is marked `Expired`
-rather than silently reused - the step fingerprints its inputs, its script and its parameters.
+## 3. From a new project to a peak table
 
-The manual `fid.com` editor provides editable CAR dropdowns for each axis. Choices include the current
-script value, acquisition O1/BF1, O1P when present, legacy O1/SFO1, and values inferred from a direct
-reference or water at the recorded temperature using the nucleus frequency ratio. Only choices with
-required acquisition metadata appear. All axis dropdowns share one row; the explanation below follows
-the active axis, and each option has a tooltip. Opening the editor preserves the current value. Selecting
-a suggestion updates the script; typed values commit with Enter, while focus loss or Escape discards
-the draft. These choices are metadata-derived and do not automatically replace the reference convention.
+1. **New project:** select the workspace and click New project... in the centre welcome page. Enter a name and confirm. The project is created in the current workspace. Recent projects and File → Open project... open existing projects.
+2. **New experiment:** select the project, enter a title and click New experiment in its centre page. This page also shows experiment/data counts and recent runs.
+3. **Import data:** select an experiment, use Browse... in its inline import form, choose a Bruker data directory containing `acqus`, then import. The experiment's Import sample data... context action remains available. Names default to the source folder name; an entered name takes precedence. Bruker `title` becomes the default remark and appears in the tree.
+4. **Check detection:** review experiment type, sampling class and dimension layout. Evidence is in the log. Correct relevant notes or parameters before continuing if detection is wrong.
+5. **Generate FID → Generate spectrum:** run the pipeline in order. Set the direct-dimension range first if needed; the usual protein 1H range defaults to 6.5–10.5 ppm. The option to use that range for optimisation controls whether optimisation and the final run share it. NUS spectrum generation includes SMILE.
+6. **Read reports and inspect spectra:** expand step reports for FID/sampling conclusions, spectrum quality items and actual parameters. The right viewer loads current results; large files load in the background, with F3–F2 as the default 3D plane.
+7. **Pick and export peaks:** run Peak picking, inspect peaks and SNR, edit assignments as needed, then use the table's import, save or export actions.
 
-## Typical session
+The pipeline guide suggests the next step. A failed step offers View log. Regeneration, optimisation or a successful manual script refreshes the matching data's spectrum while keeping your selected log scope.
 
-The interface carries its own step-by-step walkthrough: `Help -> Usage tutorial` (the text is
-`nmrfinesse_data/tutorial/{zh,en}.md`). What follows is a short version of the same flow; the button
-positions and the branches of every step are in the tutorial.
+## 4. Pipeline steps and manual processing
 
-1. **Create or open a project** (`File -> New project...` / `Recent projects`), then **import** a
-   Bruker dataset directory (right-click the experiment node in the project tree ->
-   "Import sample data..."). Only directories containing Bruker parameter files are accepted;
-   picking the wrong one is reported straight away and no half dataset is left behind.
-   **Segmented acquisition / repeated experiment overlay** goes through "segmented data or repeated
-   experiment overlay import" (a container directory, merged into **one** dataset); **several
-   independent 2D datasets** go through the "Batch processing" group - the two are **different
-   things**, see the sections below.
-2. **Check what was understood**: experiment type with its evidence, sampling classification, and
-   the dimension layout. If the classification is wrong, the experiment template can be corrected
-   before processing - much cheaper than patching things up afterwards. This is the basis for every
-   later automatic choice.
-3. **Generate FID** -> **set the direct dimension range** (optional, "direct dimension range" on the
-   step row, 6.5-10.5 ppm by default) -> **Generate spectrum** (the next step unlocks
-   automatically). The data-quality inspection runs first and its conclusion goes into the log
-   before any optimisation step. Generate FID needs **NMRPipe** on the machine; the SMILE
-   reconstruction of NUS data is included automatically in the Generate spectrum step. QC and
-   peak picking on an existing processed spectrum do not need NMRPipe.
-4. **Read the report** at the end of the run: final spectrum quality (with signal-to-noise, phase,
-   baseline and artefact sub-scores), the data-quality inspection section, and the resolved
-   processing parameters, including anything the optimiser chose, plus the direct dimension range
-   and the CAR carrier convention. Read the report before looking at the spectrum.
-5. **Look at the spectrum**: click **"Display spectrum"** on the step row to open the current final
-   spectrum in column 4 - wheel to zoom, middle button to pan, an intensity slider, overlaid
-   spectra; clicking a row in the peak table jumps to that peak.
-6. **Adjust as needed** (usual after looking at the spectrum, and done before picking peaks): to
-   change the spectrum centre, edit `CAR` manually in the **Generate spectrum** step and run it;
-   to flip an indirect dimension, select the dimension and click **"Re-run the final script"**;
-   anything else, use the **manual** entry, edit the script and run it.
-7. **Pick peaks** and export the peak table (POKY / Sparky `.list`). When the picked peaks are not
-   what you want, **change the threshold and pick again**, or **set a reference spectrum** and pick
-   again (only peaks matching the reference peak table are kept). The export is either
-   **export directly** (original coordinates) or **export after alignment** (overall translation
-   onto the selected reference peak table); a peak table can also be **imported** from a `.list`.
-8. **Collect the results**: export the peak table with `Export peaks`; the processed spectra are in
-   the **`spectra` folder** of that dataset's working directory (the NMRPipe final spectra
-   `.ft2`/`.ft3`, plus the exported **UCSF**, same name as the final spectrum with a `.ucsf`
-   extension).
+### Generate FID
 
-**Extra entry points**: once the Generate spectrum step has completed, "Re-run the final script" on
-the step row reuses the existing script and **does not re-optimise**, changing only the direct
-dimension range and the indirect-dimension flips (the flip control and the rerun button share one
-box: in 2D the checkbox is a state, in 3D the dropdown is a command); "Reference spectrum" on the
-Peak picking step row picks a dataset that already has a peak table as the reference, so that peak
-picking keeps only the peaks matching the reference peak table. **Manual path** - any generated
-script can be opened in the script editor, edited and run directly. Successful runs report command
-and parameter differences from the last successful script; failed runs label those differences as
-attempted changes. A successful rerun or optimisation refreshes the target spectrum without changing
-the selected dataset. When a step has failed its row offers "View log" to jump straight to the log entry.
+Creates and runs `fid.com`, using NMRPipe's `bruker -AUTO` to convert raw data. 3D uses single-file or slice layouts according to its sampling grid. Inspect or edit CAR during spectrum generation.
 
-Numeric labels and units sit outside their step arrows. Type a value and press Enter to apply it;
-arrow buttons and keys still adjust by the configured step. The aspect-ratio field accepts decimal
-values such as `0.8`; `0` means free aspect ratio. After switching datasets the viewer loads the
-spectrum automatically, with large files read in the background.
+### Generate spectrum
 
-An aligned peak export shifts only the exported peak table and leaves the spectrum file unchanged.
-When too few peaks match, the interface warns about the low alignment rate and skips aligned export,
-leaving the current peak table and spectrum unchanged. The Tools menu's data-quality inspection can
-read one FID file or a folder of slices; it does not modify FIDs or processing records. Peak
-localisation is three-point parabolic only, with no method chooser.
+Produces a final spectrum using automatic or manually specified parameters. NUS includes SMILE reconstruction. Display spectrum and Re-run the final script become available afterward. The latter reuses scripts without reoptimisation: 3D NUS reruns the indirect part, while uniform 3D follows the prompt about rerunning the direct dimension.
 
-## Importing segmented acquisitions / averaged repeat experiments
+Edit CAR in the manual script to change the spectrum centre. Use indirect-axis flip controls only when positions are mirrored, then rerun. The 2D checkbox keeps the current state; selecting the same 3D flip command again cancels that flip. Existing PS parameters are compensated accordingly; the direct dimension is excluded.
 
-When one acquisition was split into several segments (**segmented NUS**, the segments complementing
-each other to fill the sampling grid), or when the same experiment was acquired repeatedly and you
-want to average them for better signal-to-noise, use this path: do **not** import the segments as
-separate datasets. There are two entries (same effect): tick "segmented data or repeated experiment
-overlay import (container directory: multiple subdirectories containing acqus are merged into one
-data)" in the import dialog, or use the **"segmented data or repeated experiment overlay import"**
-group in the experiment page's import area directly.
+Open, edit and run manual scripts. A successful run compares changes with the previous successful script; failed attempts are not reported as successfully applied parameters.
 
-A container directory = **no `acqus` at the top level** and **at least 2 subdirectories that each
-hold a set of `acqus`** below it; when you pick such a directory the checkbox in the dialog is
-**ticked automatically**; if the box is ticked but the directory is not such a structure it reports
-an error plainly. After importing, the segments are **merged into one dataset** that goes through
-the whole flow (Generate FID / Generate spectrum run once).
+### SMILE optimisation
 
-## Data groups and batch processing
+SMILE optimisation is an optional 2D NUS parameter scan and ranking with alternative ranking targets. It does not replace the active spectrum automatically: select and run the desired candidate. 3D NUS reconstruction works without this scan entry.
 
-To **batch-import several independent datasets**, use the **"Batch processing"** group in the
-experiment page's import area: add data folders one by one with "Add data folder..." ->
-**"Batch import and group (only supports 2D spectra)" is ticked by default** (with it ticked the
-imported data lands in one data group that can then be processed together) -> click "Batch import",
-and a summary (total / succeeded / failed) follows. Members can also be added and removed by
-right-clicking a data group node in the project tree.
+### Peak picking
 
-**Batch processing is 2D only**: non-2D data is skipped with a reason; failures are isolated per
-dataset, so one bad dataset does not abort the whole group.
+Detects peaks and retains peak heights and picking-time SNR, with three-point parabolic sub-grid localisation. Change thresholds and rerun, or use the step's reference spectrum action to choose data with an existing peak table and retain matching peaks. Unreliable references or absent common nuclei keep detected peaks with an explanation. Clear removes the reference constraint.
 
-## Standalone viewer
+Steps can be not ready, runnable, running, completed, failed or expired. Input or parameter changes expire affected downstream steps, which then need rerunning.
 
-```bash
-nmrfinesse-viewer          # after an editable install
-python -m viewer
-```
+## 5. Viewing, zooming and comparing spectra
 
-The viewer opens `.ft2`/`.ft3` files with drag-and-drop, keeps a recent-file list, overlays
-spectra with intensity sliders, marks peaks, and supports 3D slicing with projections.
+- Wheel to zoom, middle-drag to pan, and Full view to reset. Contour start adjusts contour threshold, Levels changes the level count, and Aspect controls proportions; `0` means free scaling.
+- Press Enter to apply typed values. Leaving a field or Escape cancels a draft; arrow buttons apply immediately. Decimal Aspect values such as `0.8` are supported.
+- The 1D full view centres zero vertically. With free Aspect, vertical wheel zoom grows at 1.5 times the horizontal rate. Both 1D and 2D support middle-button panning; 2D restores higher direct-axis ppm values on the left.
+- Above 150% zoom, a full-spectrum thumbnail appears at the upper left. Click or drag it to navigate; Full view resets the range and hides it.
+- Enlarge extends the plot to the left; click again to restore. 3D controls choose planes and slices and display projections.
+- Compare two or three spectra with separate colours, positive/negative visibility, side-by-side views or a shared overlay. Full view covers their combined ranges. Side-by-side plots have equal heights; overlay hides peak tools/table until you exit.
+- Overlay SVG export offers ppm ranges, aspect and a preview; default names identify spectra and colours.
 
-## Where the GUI writes
+The standalone viewer needs no project: run `nmrfinesse-viewer` or `python -m viewer`. It accepts dropped `.ft1`, `.ft2` and `.ft3` files.
 
-All state lives in the project directory you chose: the project file, per-dataset working
-directories, generated scripts, run records and logs. Deleting project data goes to the operating
-system's trash (recoverable) rather than being erased.
+## 6. Assigning, importing and exporting peaks
 
-**One exception: NUS bad-point cleaning rewrites the raw directory in place.** When it removes bad
-points the program **rewrites `ser` and `nuslist` in place** in the raw directory (dropping the
-whole row), copying the originals to `ser.bak` / `nuslist.bak` next to them first (an existing
-`.bak` is not overwritten), with the log stating `Source cleanup ... (backup .bak)`; the point is to
-give the reconstruction clean input. **If your raw data is read-only, or you cannot accept the
-original being rewritten, make your own copy first** - the `.bak` in the source directory is the one
-to fall back to.
+Expand peak tools and the table to select, box-select, add or delete peaks and edit Assignment. SNR retains the picking result; missing values stay empty.
 
-## Viewer controls and spectrum comparison
+- **Import `.list`:** Import peaks first asks for a file, then checks for existing picked peaks. It backs up picked assignments, coordinates, intensity and full-precision SNR as `<exp>-<data>_picked_<time>.csv` in the current data's `peaks` folder before estimating a global translation to the imported list. A failed backup stops the import.
+- **Switch tables:** Picked peaks and Imported peaks retain separate assignments. Picked rows use native coordinates; imported rows use reference coordinates, with markers on their corresponding spectrum peaks. Axis labels show offsets and the cursor shows aligned and original ppm. Spectrum data/headers stay intact; repeated imports do not accumulate offsets.
+- **Restore CSV:** Import a NMRFinesse CSV to restore the picked table directly without prior picking. This clears the reference and display offsets. Tables and calibration belong to the current loading session; reloading or repicking reads the project table again. Restore original assignments from CSV backups.
+- **Export `.list`:** direct export saves the selected table. After alignment export first chooses a reference `.list`, estimates the same global translation as import, then asks where to save. Exports contain assignments and ppm only, without intensity/SNR. The current table and spectrum file stay unchanged.
+- **Save peaks:** writes the active table back to the project and records a manual peak-table run. Internal saves retain intensity and SNR.
 
-The viewer groups file/layer selection, plotting, display/slice controls, and peak tools into separate sections. The plot remains visible; the other sections can be collapsed, and peak tools start collapsed. Expanded comparison panes keep equal plot heights while their controls can be collapsed independently. Interface font sizes of 8–18 pt apply immediately; smaller windows provide page scrolling.
+## 7. Segmented acquisitions and averaged repeats
 
-Load a comparison spectrum from the comparison menu, then choose overlay mode for two or three compatible 1D spectra or 2D planes. Full view covers the combined ppm range of all spectra, including a wider comparison spectrum; 1D intensity bounds also include every visible trace. Repainting retains the current zoom, while changing spectrum extents restores the full view. Coordinate ticks and cursor ppm readouts cover the wider region. Each spectrum has its own color, contour and sign visibility controls. Auto-fit adjusts a constant translation without modifying spectral arrays or headers. SVG export uses the displayed coordinates, colors and sign visibility.
+Use the experiment page's segmented data or repeated experiment overlay import for complementary NUS segments, or repeats with the same parameters and sampling points. The experiment's import context dialog provides the same option.
 
-In enlarged view, an expanded peak table fills the remaining sidebar height. Overlay mode hides the entire peak tools/table section and restores its fold state when leaving overlay. Successful auto-fit no longer displays a match-rate row; progress and errors remain visible.
+The container has no top-level `acqus` and at least two subdirectories containing complete data. The program recognises this structure or reports unsuitable input. Import merges it into one data set and one FID/spectrum workflow. Use the next section for several independent data sets.
 
-The main workspace keeps a 20 logical-pixel inset on the right and bottom. This places scrollbars inside the desktop boundary during maximized use and reduces accidental activation of virtual-machine edge drag detection. Scrolling remains available; dragging the pointer to the actual desktop edge can still activate the VM feature.
+## 8. Data groups and batch imports: 2D only
 
-Peak-table columns fit their headers, values and segmented Assignment editors when loaded or after a font change; headers remain manually resizable. The SNR column no longer stretches across unused space. It displays the original detection SNR and preserves it in the `.list` `S/N` column; see [noise and SNR](peak-picking.md#noise-and-signal-to-noise-ratio).
+Use Browse... on the right of the experiment page's Batch processing area to add independent data folders; Clear list removes candidates. Batch import and group is off by default. Enable it to put imported data into one group; group members can also be added or removed in the tree.
 
-The GUI Export peaks actions, including aligned export, write only `Assignment w1 w2 [w3]`. Exported files omit Data, Height/Intensity, Volume and SNR. The on-screen table and internal project saves retain intensity and SNR; reimporting a coordinate-only export does not invent missing SNR values.
+Batch import reports totals, successes and failures. Non-2D data is skipped with a reason; one failed data set does not stop the group. Individual member runs use member logs, and whole-group runs use group logs.
+
+## 9. Tools menu
+
+- **Data quality inspection:** choose a FID file or FID folder (slice group). Folders inspect directly contained `*.fid` files without recursion. Results go to the global log; no project is required and FIDs/processing records are unchanged.
+- **Spectrum quality assessment:** reads an existing spectrum and reports quality items and conclusions.
+
+## 10. Software settings and path browsing
+
+Open Settings → Software settings:
+
+- **Tool paths:** NMRPipe, bruker, proj3D.tcl and pipe2ucsf each have Browse to select an executable or script. Type a path directly if preferred; empty values use automatic discovery. SMILE is a plugin and displays detection status.
+- **Data directory:** the default import starting folder. Entered paths take precedence; unavailable paths use an existing parent or home.
+- **POKY/Sparky spectra folder:** the default UCSF destination. Browse chooses it manually; Auto-find reads this machine's user environment and POKY working-directory configuration, including paths with spaces or on other disks. Blank values use discovery; without a match, browsing starts at home.
+- **Language and font:** follow the system or choose Chinese/English, with a restart as indicated. Automatic or manual 8–18 pt fonts apply on save; large layouts remain scrollable.
+- **Per-nucleus default line width and alignment tolerance:** used by their corresponding optimisation and matching steps.
+- **SMILE threads:** 2 by default, capped according to core count; low-core machines use 1.
+
+Every path has its own Browse button. File and directory selection use separate modes, starting at the current path or relevant default folder. Settings are stored in this machine's configuration.
+
+## 11. UCSF export and product locations
+
+Select the project and click Export UCSF files… in the centre page. Choose one or more data sets by experiment; checking an experiment selects its available data. Click Export, then choose the destination. Entries without UCSF files are unavailable. Background copying keeps project originals, adds suffixes to duplicate destination names and reports successes/failures.
+
+Each data set's `spectra` folder holds NMRPipe results (`.ft1`, `.ft2`, `.ft3`). For 2D/3D results, pipe2ucsf also produces a matching `.ucsf` when available. Picked-table CSV backups are in `peaks`; manual `.list` exports use your chosen location. Projects contain scripts, run records and logs; deleting project data uses the system trash.
+
+**NUS bad-sampling-point cleaning rewrites source data.** It removes complete bad rows from raw `ser` and `nuslist`, first saving `ser.bak` and `nuslist.bak`; existing backups are not overwritten. The log records `Source cleanup …(backup .bak)`. Use a copy if originals are read-only or must remain intact.
+
+## 12. Scope
+
+Batch processing is 2D only. Peak-overlap deconvolution, structure determination and automatic assignment are outside the current scope. Inspect processing and quality reports against your data; statistics and scientific conclusions belong to your analysis workflow. Processing evidence is in `docs/evidence/real-data-comparison.md` in the repository.
+
+## 13. When something fails
+
+Start with the task log below the centre panel; failed steps offer View log. Check tool paths when an executable is missing, or use Tools → Data quality inspection for suspected input problems. Scripts, run records and `log.txt` retain input, parameter and result clues. See `docs/troubleshooting.md` and `docs/faq.md` in the repository for more guidance.

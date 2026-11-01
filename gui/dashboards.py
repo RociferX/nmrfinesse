@@ -35,7 +35,7 @@ from ui_support.i18n import tr
 
 
 def _active_data_of(exp) -> list:
-    """Data entries that were not soft deleted under the experiment."""
+    'Data entries that were not soft deleted under the experiment.'
     return [d for d in (getattr(exp, "data", None) or []) if not getattr(d, "trashed", False)]
 
 
@@ -47,20 +47,8 @@ def _data_count(project) -> int:
     )
 
 
-def _data_processed(project) -> int:
-    count = 0
-    for exp in project.experiments:
-        if getattr(exp, "trashed", False):
-            continue
-        for data in _active_data_of(exp):
-            status = getattr(data, "status", "") or ""
-            if status in ("fid_ready", "processed"):
-                count += 1
-    return count
-
-
 class ProjectDashboard(QWidget):
-    """Project overview: statistics + processing completion + recent runs + new experiments."""
+    'Project overview: statistics + processing completion + recent runs + new experiments.'
 
     create_experiment_requested = Signal(str)
 
@@ -92,9 +80,13 @@ class ProjectDashboard(QWidget):
         self.stats_label = QLabel("")
         self.stats_label.setObjectName("MutedText")
         layout.addWidget(self.stats_label)
-        self.progress_label = QLabel("")
-        self.progress_label.setObjectName("MutedText")
-        layout.addWidget(self.progress_label)
+        self.export_ucsf_button = QPushButton(tr("Export UCSF files…"))
+        self.export_ucsf_button.setToolTip(tr(
+            "Choose one or more data sets by experiment, then copy their UCSF files "
+            "to a folder. Project files are kept."
+        ))
+        self.export_ucsf_button.clicked.connect(self._on_export_ucsf)
+        layout.addWidget(self.export_ucsf_button)
 
         recent_title = QLabel(tr("recently run"))
         recent_title.setObjectName("SectionTitle")
@@ -126,10 +118,7 @@ class ProjectDashboard(QWidget):
         self.refresh()
 
     def resizeEvent(self, event) -> None:
-        """
-        Keep the compact project overview scrollable when its natural height
-        exceeds the view.
-        """
+        """Keep the compact project overview scrollable when its natural height exceeds the view."""
         super().resizeEvent(event)
         content_layout = self.page_content.layout()
         if content_layout is not None:
@@ -143,21 +132,8 @@ class ProjectDashboard(QWidget):
         self.context_label.setText(project.name)
         exp_count = len(project.experiments)
         data_count = _data_count(project)
-        processed = _data_processed(project)
-        self.stats_label.setText(
-            tr(
-                "experiment: {p0} | sample data: {p1} | Processed: "
-                "{p2}",
-                p0=exp_count,
-                p1=data_count,
-                p2=processed,
-            )
-        )
-        if data_count:
-            pct = round(processed * 100 / data_count)
-            self.progress_label.setText(tr("Processing completion: {p0}%", p0=pct))
-        else:
-            self.progress_label.setText(tr("Processing completion: - (no data yet)"))
+        self.stats_label.setText(tr("Experiments: {p0} | Data sets: {p1}",
+                                    p0=exp_count, p1=data_count))
 
         self.runs_table.setRowCount(0)
         recent = list(project.workflow_runs)[-8:]
@@ -171,12 +147,19 @@ class ProjectDashboard(QWidget):
                 row, 3, QTableWidgetItem((run.finished_at or run.started_at)[:19])
             )
 
+    def _on_export_ucsf(self) -> None:
+        if self.manager is not None and self.manager.project is not None:
+            from gui.ucsf_export_dialog import UcsfExportDialog
+
+            dialog = UcsfExportDialog(self.manager, self)
+            dialog.exec()
+
     def _on_create(self) -> None:
         self.create_experiment_requested.emit(self.title_edit.text().strip())
 
 
 class ExperimentImportPanel(QWidget):
-    """Persistent import form for single, segmented and batch datasets, with linking options."""
+    'Persistent import form for single, segmented and batch datasets, with linking options.'
 
     import_options_requested = Signal(str, str, str, bool)  # (exp_id, name, source, copy)
     segmented_import_requested = Signal(str, str)
@@ -294,18 +277,18 @@ class ExperimentImportPanel(QWidget):
                 "imports.",
             )
         )
-        self.batch_group_check.setChecked(True)
+        self.batch_group_check.setChecked(False)
         batch_layout.addWidget(self.batch_group_check)
         batch_buttons = QHBoxLayout()
-        self.batch_add_button = QPushButton(tr("Add data folder..."))
+        self.batch_add_button = QPushButton(tr("Browse..."))
         self.batch_add_button.setObjectName("SubtleAction")
         self.batch_add_button.clicked.connect(self._on_batch_add_folder)
-        batch_buttons.addWidget(self.batch_add_button)
         self.batch_clear_button = QPushButton(tr("Clear list"))
         self.batch_clear_button.setObjectName("SubtleAction")
         self.batch_clear_button.clicked.connect(self._on_batch_clear)
         batch_buttons.addWidget(self.batch_clear_button)
         batch_buttons.addStretch(1)
+        batch_buttons.addWidget(self.batch_add_button)
         batch_layout.addLayout(batch_buttons)
         self.batch_import_button = QPushButton(tr("Batch import"))
         self.batch_import_button.setObjectName("PrimaryAction")
@@ -316,38 +299,36 @@ class ExperimentImportPanel(QWidget):
         layout.addStretch(1)
 
     # ------------------------------------------------------------------
-    # ------------------------------------------------------------------ #
-    # ------------------------------------------------------------------
-    # ------------------------------------------------------------------ #
-    # ------------------------------------------------------------------
-    # ------------------------------------------------------------------ #
+
+
+
     # ------------------------------------------------------------------
     def browse_single(self) -> None:
-        """Select a single Bruker dataset directory."""
+        'Select a single Bruker dataset directory.'
         self._browse()
 
     def add_batch_folder(self) -> None:
-        """Add directory to the batch import list."""
+        'Add directory to the batch import list.'
         self._on_batch_add_folder()
 
     def clear_batch_list(self) -> None:
-        """Clear the batch import list."""
+        'Clear the batch import list.'
         self._on_batch_clear()
 
     def import_batch(self) -> None:
-        """Perform bulk import by list (or repeat experiment overlay)."""
+        'Perform bulk import by list (or repeat experiment overlay).'
         self._on_batch_import()
 
     def import_single(self) -> None:
-        """Import the currently selected single dataset."""
+        'Import the currently selected single dataset.'
         self._on_import()
 
     def browse_segmented(self) -> None:
-        """Select segmented data/Overlapping containers directory."""
+        'Select segmented data/Overlapping containers directory.'
         self._on_segmented_browse()
 
     def import_segmented(self) -> None:
-        """Execute segmented data/Repeat overlay import."""
+        'Execute segmented data/Repeat overlay import.'
         self._on_segmented_import()
 
     def set_context(self, exp_id: str) -> None:
@@ -484,7 +465,7 @@ class ExperimentImportPanel(QWidget):
 
 
 class ExperimentDashboard(QWidget):
-    """Experiment overview with dataset status, editable names and a persistent import form."""
+    'Experiment overview with dataset status, editable names and a persistent import form.'
 
     import_options_requested = Signal(str, str, str, bool)  # (exp_id, name, source, copy)
     data_rename_requested = Signal(str, str, str)  # (exp_id, data_id, new_name)
@@ -628,7 +609,7 @@ class ExperimentDashboard(QWidget):
         self.import_panel.import_single()
 
     def clear_import_form(self) -> None:
-        """Clear the import form after successful import."""
+        'Clear the import form after successful import.'
         self.import_panel.clear_import_form()
 
     def _on_segmented_browse(self) -> None:

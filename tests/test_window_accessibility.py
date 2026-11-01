@@ -317,3 +317,30 @@ def test_maximized_scrollbars_stay_inside_desktop_edge(
     window.close()
     window.deleteLater()
     qapp.processEvents()
+
+
+def test_tree_object_column_does_not_stretch_on_wide_screens(qapp, original_font, ui_language):
+    from gui.project_tree import ProjectTreePanel
+    from ui_support.typography import apply_interface_font
+
+    apply_interface_font(qapp, 12)
+    panel = ProjectTreePanel()
+    panel.resize(1000, 700)
+    panel.show()
+    QTest.qWait(20)
+    tree = panel.tree
+    initial = tree.columnWidth(0)
+    assert initial == tree.fontMetrics().horizontalAdvance('M') * 20
+    assert tree.header().sectionViewportPosition(1) == initial
+    panel.resize(1500, 700)
+    QTest.qWait(20)
+    assert tree.columnWidth(0) == initial
+    tree.setColumnWidth(0, initial - 30)
+    panel.resize(1100, 700)
+    QTest.qWait(20)
+    assert tree.columnWidth(0) == initial - 30
+    apply_interface_font(qapp, 18)
+    QTest.qWait(20)
+    assert tree.columnWidth(0) > initial
+    assert tree.columnWidth(0) == tree.fontMetrics().horizontalAdvance('M') * 20
+    panel.close()

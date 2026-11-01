@@ -8,7 +8,8 @@ the tutorial is a whole document (a dozen sections, lists and examples) - keepin
 package means it ships with the program and can be switched as a document.
 
 Resources are located through ``core.app_paths.resource_path``: in a source checkout it lives
-under ``nmrfinesse_data/``, in an installed copy under ``site-packages/nmrfinesse_data/`` and in a
+under ``nmrfinesse_data/``, in an installed copy under ``site-packages/nmrfinesse_data/`` and in
+a
 frozen build under ``_MEIPASS/nmrfinesse_data/`` - the same relative path in all three shapes
 (see packaging/linux/NMRFinesse.spec and docs/packaging.md).
 """
@@ -28,14 +29,13 @@ from qtcompat.QtWidgets import (
 from core.app_paths import resource_path
 from ui_support.i18n import get_language, tr
 
-#: tutorial directory (relative to the resource root)
 TUTORIAL_DIR = "tutorial"
-#: languages that have tutorial text; the order is also the fallback order
+
 TUTORIAL_LANGUAGES: tuple[str, ...] = ("zh", "en")
 
 
 def tutorial_path(language: str | None = None) -> Path | None:
-    """Path of the tutorial file; falls back to the other language, ``None`` if neither exists."""
+    'Path of the tutorial file; falls back to the other language, ``None`` if neither exists.'
     code = str(language or get_language() or "").strip().lower()
     for candidate in (code, *(item for item in TUTORIAL_LANGUAGES if item != code)):
         if not candidate:
@@ -47,7 +47,7 @@ def tutorial_path(language: str | None = None) -> Path | None:
 
 
 def load_tutorial_text(language: str | None = None) -> str:
-    """Read the tutorial text (UTF-8); empty string when it is missing or unreadable."""
+    'Read the tutorial text (UTF-8); empty string when it is missing or unreadable.'
     path = tutorial_path(language)
     if path is None:
         return ""
@@ -71,12 +71,14 @@ class TutorialDialog(QDialog):
         self.resize(960, 720)
         layout = QVBoxLayout(self)
         self.view = QTextBrowser()
-        self.view.setOpenExternalLinks(False)
+        self.view.setOpenExternalLinks(True)
         text = load_tutorial_text(language)
         if text:
             self.view.setMarkdown(text)
         else:
-            self.view.setPlainText(tr("The tutorial document is missing from this installation."))
+            self.view.setPlainText(
+                tr("The tutorial document is missing from this installation.")
+            )
         layout.addWidget(self.view, 1)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         buttons.button(QDialogButtonBox.StandardButton.Close).setText(tr("close"))

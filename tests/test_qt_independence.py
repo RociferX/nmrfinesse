@@ -35,11 +35,11 @@ COMPAT_LAYER = "qtcompat"
 
 #: Directories that are not project source: the virtual environment, caches and build output.
 IGNORED_DIR_NAMES = {
-    "nmrfinesse",
+    "nmrforge",
     "build",
     "dist",
     "nmrfinesse.egg-info",
-    "Chinese_version",  # full Chinese-edition mirror of the same code; not scanned twice
+    "Chinese_version",
 }
 
 
@@ -52,7 +52,9 @@ def _iter_repository_python_files() -> list[Path]:
     files: list[Path] = []
     for current, dirnames, filenames in os.walk(ROOT, topdown=True):
         dirnames[:] = sorted(
-            name for name in dirnames if not name.startswith(".") and name not in IGNORED_DIR_NAMES
+            name
+            for name in dirnames
+            if not name.startswith(".") and name not in IGNORED_DIR_NAMES
         )
         files.extend(Path(current) / name for name in sorted(filenames) if name.endswith(".py"))
     return files

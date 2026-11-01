@@ -3,7 +3,8 @@ wheel zoom. pyqtgraph's RectMode will treat the middle button as a frame selecti
 pan branch ``QPointF * numpy array `` will cause TypeError (PyQt6 measured), so the pan is
 calculated by itself. 0.2.133: The right click no longer responds to any behaviour; the view
 range is limited to the complete data range (reset_view Within the smallest rectangle obtained)
--- zooming out cannot shrink the complete spectrum out of the field of view."""
+-- zooming out cannot shrink the complete spectrum out of the field of view.
+"""
 
 from __future__ import annotations
 
@@ -15,13 +16,16 @@ _MIN_VIEW_RANGE = 8.0
 
 
 class NMRViewBox(pg.ViewBox):
-    """Keep the "middle-click drag pan" gesture under RectMode and limit the view boundaries."""
+    'Keep the "middle-click drag pan" gesture under RectMode and limit the view boundaries.'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._min_rect: list[tuple[float, float]] | None = None
+        self._min_span = (_MIN_VIEW_RANGE, _MIN_VIEW_RANGE)
+        self.wheel_y_exponent = 1.0
+        self._wheel_zoom = False
 
-    # ---------------------------------------------------------- Mouse.
+
 
     def mouseDragEvent(self, ev, axis=None) -> None:
         if ev.button() == QtCore.Qt.MouseButton.RightButton:
@@ -38,10 +42,14 @@ class NMRViewBox(pg.ViewBox):
             ev.accept()
             pos = ev.pos()
             last_pos = ev.lastPos()
-            diff = np.array([pos.x() - last_pos.x(), pos.y() - last_pos.y()]) * -1.0
+            diff = np.array(
+                [pos.x() - last_pos.x(), pos.y() - last_pos.y()]
+            ) * -1.0
             mouse_enabled = np.array(self.state["mouseEnabled"], dtype=float)
             transform = self.childGroup.transform().inverted()[0]
-            p1 = transform.map(QtCore.QPointF(float(diff[0]), float(diff[1])))
+            p1 = transform.map(
+                QtCore.QPointF(float(diff[0]), float(diff[1]))
+            )
             p0 = transform.map(QtCore.QPointF(0.0, 0.0))
             moved = p1 - p0
             x = moved.x() if mouse_enabled[0] == 1 else None
@@ -53,39 +61,51 @@ class NMRViewBox(pg.ViewBox):
             return
         super().mouseDragEvent(ev, axis)
 
-    # ---------------------------------------------------------- scope.
 
-    # ---------------------------------------------------------- Zoom.
+
+
 
     def wheelEvent(self, ev, axis=None):
         """The scroll wheel clamps immediately after zooming (zooming cannot exceed the complete
-        range)."""
-        super().wheelEvent(ev, axis)
+        range).
+        """
+        self._wheel_zoom = True
+        try:
+            super().wheelEvent(ev, axis)
+        finally:
+            self._wheel_zoom = False
         self._clamp_view_range()
 
     def scaleBy(self, s=None, center=None, **kwargs):
-        """Clamp immediately after scaling(roller/Zoom animation)."""
+        'Clamp immediately after scaling(roller/Zoom animation).'
+        if (self._wheel_zoom and self.wheel_y_exponent != 1.0 and s is not None
+                and s[0] is not None and s[1] is not None
+                and not self.state['aspectLocked']):
+            s = (s[0], s[1] ** self.wheel_y_exponent)
         super().scaleBy(s=s, center=center, **kwargs)
         self._clamp_view_range()
 
     def translateBy(self, t=None, **kwargs):
-        """Clamp immediately after translation (spectrum cannot be moved out of view)."""
+        'Clamp immediately after translation (spectrum cannot be moved out of view).'
         super().translateBy(t=t, **kwargs)
         self._clamp_view_range()
 
-    def set_full_range(self, x_range, y_range, padding=0) -> None:
+    def set_full_range(self, x_range, y_range, padding=0, min_span=None) -> None:
         """Restore the full view and update the zoom base (reset_view is exclusive). Update
         _min_rect first and then set the range to avoid being clamped by the old base; then the
-        user's zoom view cannot exceed the full range."""
+        user's zoom view cannot exceed the full range.
+        """
         self._min_rect = [
             (float(x_range[0]), float(x_range[1])),
             (float(y_range[0]), float(y_range[1])),
         ]
+        self._min_span = min_span or (_MIN_VIEW_RANGE, _MIN_VIEW_RANGE)
         super().setRange(xRange=x_range, yRange=y_range, padding=padding)
 
     def setRange(self, rect=None, **kwargs):
         """Restrictions narrowed/Translate boundaries (No constraints will be applied when the
-        complete range is not recorded)."""
+        complete range is not recorded).
+        """
         super().setRange(rect=rect, **kwargs)
         if getattr(self, "_min_rect", None) is not None:
             self._clamp_view_range()
@@ -95,7 +115,8 @@ class NMRViewBox(pg.ViewBox):
         limit of reduction = the complete range (all long sides are exposed, that is, to the
         top); translation keeps the view within the complete range; single-axis minimum span
         protection (prevents over-zooming), and the overall translation keeps the span unchanged
-        when close to the boundary."""
+        when close to the boundary.
+        """
         if getattr(self, "_min_rect", None) is None:
             return
         vr = self.viewRange()
@@ -108,13 +129,12 @@ class NMRViewBox(pg.ViewBox):
             span = hi - lo
             if mspan <= 0:
                 continue
-            # The upper limit of reduction: the span cannot exceed the complete range (all long
-            # sides are exposed, that is, the top is reached).
+
             if span > mspan:
                 center = (lo + hi) / 2.0
                 lo, hi = center - mspan / 2.0, center + mspan / 2.0
                 changed = True
-            # Panning cannot move the spectrum out of view (aligned with full range).
+
             if lo < mlo:
                 shift = mlo - lo
                 hi = min(hi + shift, mhi)
@@ -125,18 +145,22 @@ class NMRViewBox(pg.ViewBox):
                 lo = max(lo - shift, mlo)
                 hi = mhi
                 changed = True
-            # Minimum span protection (anti-over-amplification): span maintenance _MIN_VIEW_RANGE.
-            if span < _MIN_VIEW_RANGE and mspan > _MIN_VIEW_RANGE:
+
+            minimum = min(mspan, self._min_span[axis_idx])
+            if span < minimum:
                 center = (lo + hi) / 2.0
-                half = _MIN_VIEW_RANGE / 2.0
+                half = minimum / 2.0
                 lo, hi = center - half, center + half
                 if lo < mlo:
                     lo = mlo
-                    hi = mlo + _MIN_VIEW_RANGE
+                    hi = mlo + minimum
                 elif hi > mhi:
                     hi = mhi
-                    lo = mhi - _MIN_VIEW_RANGE
+                    lo = mhi - minimum
                 changed = True
             new_ranges[axis_idx] = (lo, hi)
         if changed:
-            super().setRange(xRange=new_ranges[0], yRange=new_ranges[1], padding=0)
+            super().setRange(
+                xRange=new_ranges[0], yRange=new_ranges[1], padding=0
+            )
+

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from qtcompat.QtCore import QPoint, QRect
 from qtcompat.QtGui import QFont
+from qtcompat.QtTest import QTest
 from qtcompat.QtWidgets import QApplication, QTextEdit, QVBoxLayout, QWidget
 
 from gui.carrier_editor import FidCarrierPanel
@@ -41,7 +42,11 @@ def test_contour_controls_reflow_and_numeric_inputs_keep_their_hint(qapp: QAppli
     assert controls._compact is False
 
     apply_interface_font(qapp, large_font.pointSize())
-    qapp.processEvents()
+    # Font/style changes can queue more than one layout pass in the shared Qt process.
+    for _ in range(100):
+        if controls._compact:
+            break
+        QTest.qWait(10)
     assert controls._compact is True
     large_widths = [
         spin.minimumWidth()

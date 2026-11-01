@@ -18,6 +18,8 @@ if [ ! -x "$VENV_PY" ]; then
   exit 1
 fi
 
+VERSION="$(cd "$ROOT" && "$VENV_PY" -c 'from core import __version__; print(__version__)')"
+
 # 1) icon -> hicolor theme (GNOME and other DEs look it up by theme name)
 ICON_DST="$HOME/.local/share/icons/hicolor/256x256/apps"
 mkdir -p "$ICON_DST"
@@ -29,7 +31,7 @@ mkdir -p "$APPS_DIR"
 cat > "$APPS_DIR/$APP.desktop" <<EOF
 [Desktop Entry]
 Type=Application
-Name=NMRFinesse
+Name=NMRFinesse $VERSION
 GenericName=NMR Processing and Optimization
 Comment=Automated processing, optimization and QC for Bruker 2D/3D NMR data
 Exec=$VENV_PY $ROOT/main.py --inside-venv

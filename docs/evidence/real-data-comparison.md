@@ -1,5 +1,6 @@
 # Four Processing Routes: 2D Spectra and 3D Projection Comparisons
 
+Current software: **1.0.11 / API v1.1.5**. This release does not change the processing or evidence calculations. The figures, statistics and scripts below retain their original 2026-10-20 measurements from software 1.0.9 / API v1.1.5; they have not been rerun or relabelled.
 This page presents final spectra produced by software 1.0.9 / API v1.1.5 under the current
 processing workflow. All four cases were reprocessed from raw data, measured and plotted on
 2026-10-20. Each comparison uses the automatic workflow to generate final phases and processing

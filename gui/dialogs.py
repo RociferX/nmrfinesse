@@ -28,11 +28,12 @@ from qtcompat.QtWidgets import (
     QSpinBox,
     QTableWidget,
     QTableWidgetItem,
+    QTextBrowser,
     QVBoxLayout,
     QWidget,
 )
 
-from gui.file_dialogs import choose_directory
+from gui.file_dialogs import choose_directory, choose_file
 from gui.notes import (
     DIMENSION_OPTIONS,
     EXPERIMENT_CATEGORY_OPTIONS,
@@ -92,6 +93,49 @@ class InfoDialog(QDialog):
         InfoDialog(parent, title, text).exec()
 
 
+class AboutDialog(QDialog):
+    """Software identity, copyright and public project resources."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        from core.version import software_version
+        from nmrfinesse_api.session import API_VERSION
+
+        self.setWindowTitle(tr("About NMRFinesse"))
+        self.resize(680, 580)
+        layout = QVBoxLayout(self)
+        title = QLabel(f"NMRFinesse {software_version()}")
+        title.setObjectName("PanelTitle")
+        title.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        layout.addWidget(title)
+        self.view = QTextBrowser(self)
+        self.view.setOpenExternalLinks(True)
+        self.view.setMarkdown("\n\n".join((
+            tr("Automated processing, parameter optimisation and quality control "
+               "for Bruker NMR data, with 1D/2D/3D spectrum viewing and peak-table tools."),
+            tr("**API version:** {p0}", p0=API_VERSION),
+            tr("**Author:** Xuanfeng Li"),
+            tr("Copyright © 2026 Xuanfeng Li. Source code licensed under Apache-2.0."),
+            "[GitHub](https://github.com/RociferX/nmrfinesse) · "
+            + tr("[Releases](https://github.com/RociferX/nmrfinesse/releases) · "
+                 "[Documentation](https://github.com/RociferX/nmrfinesse#readme) · "
+                 "[Report an issue](https://github.com/RociferX/nmrfinesse/issues)"),
+            tr("**Citation / Zenodo:** [10.5281/zenodo.22909415]"
+               "(https://doi.org/10.5281/zenodo.22909415)"),
+            tr("[Apache-2.0 license](https://github.com/RociferX/nmrfinesse/blob/main/LICENSE) · "
+               "[Copyright notice](https://github.com/RociferX/nmrfinesse/blob/main/NOTICE) · "
+               "[Third-party notices](https://github.com/RociferX/nmrfinesse/blob/main/THIRD_PARTY.md)"),
+            tr("Third-party components retain their own licenses. The Linux AppImage "
+               "includes Qt/PySide6 under LGPL-3.0; bundled notices are available with "
+               "--licenses. NMRPipe and SMILE are installed separately."),
+        )))
+        layout.addWidget(self.view, 1)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        buttons.button(QDialogButtonBox.StandardButton.Close).setText(tr("close"))
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+
 class MultiSelectDataDialog(QDialog):
     """Multi-select sample data dialog box (used to add other data to the data group). items:
     [(data_id, label),...];selected_ids() Returns the checked data id list.
@@ -135,7 +179,7 @@ class MultiSelectDataDialog(QDialog):
         layout.addWidget(buttons)
 
     def selected_ids(self) -> list[str]:
-        """Returns a list of checked data ids."""
+        'Returns a list of checked data ids.'
         return [
             str(self._list.item(index).data(Qt.ItemDataRole.UserRole))
             for index in range(self._list.count())
@@ -144,7 +188,7 @@ class MultiSelectDataDialog(QDialog):
 
 
 class ConfirmDialog(QDialog):
-    """Yes/No confirmation dialog (replaces QMessageBox.question)."""
+    'Yes/No confirmation dialog (replaces QMessageBox.question).'
 
     def __init__(self, parent: QWidget | None, title: str, text: str) -> None:
         super().__init__(parent)
@@ -172,7 +216,7 @@ class ConfirmDialog(QDialog):
 
 
 class ImportExperimentDialog(QDialog):
-    """Import experiment: Select Bruker dataset directory + title + associated projects."""
+    'Import experiment: Select Bruker dataset directory + title + associated projects.'
 
     def __init__(
         self,
@@ -289,7 +333,7 @@ class ImportExperimentDialog(QDialog):
                         "if they are independent data sets, import them one by one instead.",
                     )
                 )
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
     def _validate_and_accept(self) -> None:
@@ -429,15 +473,14 @@ class NotesDialog(QDialog):
         self._on_dimension_changed()
 
     def _dimension_value(self) -> str:
-        """The currently selected dimension (empty means not selected)."""
+        'The currently selected dimension (empty means not selected).'
         combo = self._combos.get("dimension")
         if combo is None:
             return ""
         return str(combo.currentData() or combo.currentText() or "")
 
     def _on_dimension_changed(self, *_args) -> None:
-        """
-        Sample data annotation: dimension changes -> repopulate data type
+        """Sample data annotation: dimension changes -> repopulate data type
         options by presets.
         """
         type_combo = self._type_combo
@@ -458,7 +501,7 @@ class NotesDialog(QDialog):
             type_combo.blockSignals(False)
 
     def result_fields(self) -> dict[str, str]:
-        """Return the filled field dict (null values are eliminated)."""
+        'Return the filled field dict (null values are eliminated).'
         fields: dict[str, str] = {}
         for key, edit in self._edits.items():
             text = edit.text().strip()
@@ -618,7 +661,7 @@ class ScriptEditorDialog(QDialog):
 
 
 class RunHistoryDialog(QDialog):
-    """Run History Dialog:workflow_runs List + Details(state/time/information/product)."""
+    'Run History Dialog:workflow_runs List + Details(state/time/information/product).'
 
     def __init__(
         self,
@@ -699,7 +742,7 @@ class RunHistoryDialog(QDialog):
         )
 
     def _open_snapshot(self) -> None:
-        """Open the script/parameter snapshot directory currently selected to run."""
+        'Open the script/parameter snapshot directory currently selected to run.'
         if not self._current_snapshot:
             return
         from qtcompat.QtCore import QUrl
@@ -786,18 +829,19 @@ class SettingsDialog(QDialog):
         form.addRow(_section_title(tr("Tool paths")))
         self.nmrpipe_edit = QLineEdit(str(settings.get("nmrpipe_path", "")))
         self.nmrpipe_edit.setPlaceholderText(tr("Not configured (auto-find)"))
-        form.addRow(tr("NMRPipe path"), self.nmrpipe_edit)
+        self.tool_browse_buttons = {}
+        form.addRow(tr("NMRPipe path"), self._tool_path_row(self.nmrpipe_edit, "nmrPipe"))
 
 
         self.bruker_edit = QLineEdit(str(settings.get("bruker_path", "")))
         self.bruker_edit.setPlaceholderText(tr("Not configured (auto-find)"))
-        form.addRow(tr("bruker path"), self.bruker_edit)
+        form.addRow(tr("bruker path"), self._tool_path_row(self.bruker_edit, "bruker"))
         self.proj3d_edit = QLineEdit(str(settings.get("proj3d_path", "")))
         self.proj3d_edit.setPlaceholderText(tr("Not configured (auto-find)"))
-        form.addRow(tr("proj3D.tcl path"), self.proj3d_edit)
+        form.addRow(tr("proj3D.tcl path"), self._tool_path_row(self.proj3d_edit, "proj3D.tcl"))
         self.pipe2ucsf_edit = QLineEdit(str(settings.get("pipe2ucsf_path", "")))
         self.pipe2ucsf_edit.setPlaceholderText(tr("Not configured (auto-find)"))
-        form.addRow(tr("pipe2ucsf path"), self.pipe2ucsf_edit)
+        form.addRow(tr("pipe2ucsf path"), self._tool_path_row(self.pipe2ucsf_edit, "pipe2ucsf"))
 
 
         form.addRow(tr("SMILE plugin"), self._build_smile_status(settings))
@@ -825,6 +869,26 @@ class SettingsDialog(QDialog):
         data_root_label = QLabel(tr("Data directory"))
         data_root_label.setToolTip(data_root_help)
         form.addRow(data_root_label, data_root_widget)
+        from gui.settings import find_spectrum_directory
+
+        self.spectrum_directory_edit = QLineEdit(str(settings.get("spectrum_directory", "")))
+        detected_spectra = find_spectrum_directory()
+        self.spectrum_directory_edit.setPlaceholderText(
+            str(detected_spectra) if detected_spectra else tr("Not configured (auto-find)")
+        )
+        self.spectrum_directory_edit.setToolTip(tr(
+            "Default folder for UCSF exports. Leave blank to find POKY/Sparky Spectra "
+            "automatically; you can also choose a folder manually."
+        ))
+        spectra_row = QHBoxLayout()
+        spectra_row.addWidget(self.spectrum_directory_edit, 1)
+        spectra_browse = QPushButton(tr("Browse..."))
+        spectra_browse.clicked.connect(self._browse_spectrum_directory)
+        spectra_auto = QPushButton(tr("Auto-find"))
+        spectra_auto.clicked.connect(self._find_spectrum_directory)
+        spectra_row.addWidget(spectra_browse)
+        spectra_row.addWidget(spectra_auto)
+        form.addRow(tr("POKY/Sparky spectra folder"), spectra_row)
 
 
         self.language_combo = QComboBox()
@@ -992,12 +1056,50 @@ class SettingsDialog(QDialog):
         )
         return label
 
+    def _tool_path_row(self, edit, tool):
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
+        row.addWidget(edit, 1)
+        button = QPushButton(tr("Browse..."))
+        button.setToolTip(tr("Select the {p0} executable or script", p0=tool))
+        button.clicked.connect(lambda: self._browse_tool_path(edit, tool))
+        row.addWidget(button)
+        self.tool_browse_buttons[tool] = button
+        return row
+
+    def _browse_tool_path(self, edit, tool):
+        import shutil
+
+        start = edit.text().strip() or shutil.which(tool) or str(Path.home())
+        path = choose_file(self, tr("Select the {p0} executable or script", p0=tool),
+                           start, tr("All files (*)"))
+        if path:
+            edit.setText(path)
+
     def _browse_data_root(self) -> None:
-        """Select data directory (0.2.199-patch29gg)."""
+        'Select data directory (0.2.199-patch29gg).'
         start = self.data_root_edit.text().strip() or str(Path.home())
         path = choose_directory(self, tr("Select the data directory"), start)
         if path:
             self.data_root_edit.setText(path)
+
+    def _browse_spectrum_directory(self) -> None:
+        from gui.settings import spectrum_directory_path
+
+        start = self.spectrum_directory_edit.text().strip() or str(spectrum_directory_path())
+        path = choose_directory(self, tr("Select the spectra export folder"), start)
+        if path:
+            self.spectrum_directory_edit.setText(path)
+
+    def _find_spectrum_directory(self) -> None:
+        from gui.settings import find_spectrum_directory
+
+        path = find_spectrum_directory()
+        if path is None:
+            InfoDialog.show_info(self, tr("Auto-find"),
+                                 tr("No POKY/Sparky spectra folder found; please choose one"))
+        else:
+            self.spectrum_directory_edit.setText(str(path))
 
     def _on_accept(self) -> None:
         from gui.settings import save_settings
@@ -1010,6 +1112,7 @@ class SettingsDialog(QDialog):
             "proj3d_path": self.proj3d_edit.text().strip(),
             "pipe2ucsf_path": self.pipe2ucsf_edit.text().strip(),
             "data_root": self.data_root_edit.text().strip(),
+            "spectrum_directory": self.spectrum_directory_edit.text().strip(),
             "linewidth_hz": {
                 nucleus: spin.value()
                 for nucleus, spin in self.linewidth_spins.items()

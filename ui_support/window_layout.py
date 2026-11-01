@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from qtcompat.QtCore import QEvent, QObject, QRect, QSize, QTimer
+import os
+import sys
+from functools import lru_cache
+from pathlib import Path
+
+from qtcompat.QtCore import QEvent, QObject, QRect, QSize, Qt, QTimer
 from qtcompat.QtWidgets import (
     QApplication,
     QDialog,
@@ -18,6 +23,43 @@ from qtcompat.QtWidgets import (
 )
 
 
+def _vmware_virtual_mouse(input_root=Path('/sys/class/input')):
+    """Identify the virtual mouse drivers exposed by the current Linux guest."""
+    for path in input_root.glob('event*/device/name'):
+        try:
+            name = path.read_text().strip()
+        except OSError:
+            continue
+        if ('VMware VMMouse' in name or 'VMware Virtual USB Mouse' in name):
+            return True
+    return False
+
+
+def configure_native_file_dialogs():
+    """Configure native pickers and Linux pointer input before QApplication."""
+    if (sys.platform.startswith('linux')
+            and os.environ.get('QT_QPA_PLATFORM', '') != 'offscreen'):
+        gnome = ('GNOME' in os.environ.get('XDG_CURRENT_DESKTOP', '').upper()
+                 and os.environ.get('DISPLAY'))
+        # Older GNOME portals ignore current_folder for OpenFile. The GTK
+        # helper sets that folder directly for both file and directory pickers.
+        if gnome:
+            os.environ.setdefault('QT_QPA_PLATFORMTHEME', 'gtk3')
+        elif os.environ.get('WAYLAND_DISPLAY'):
+            os.environ.setdefault('QT_QPA_PLATFORMTHEME', 'xdgdesktopportal')
+        # Older GNOME exports xdg-foreign v1 only; Qt's Wayland portal helper
+        # sends an empty handle there. XWayland provides a usable X11 owner.
+        if gnome and os.environ.get('WAYLAND_DISPLAY'):
+            os.environ.setdefault('QT_QPA_PLATFORM', 'xcb')
+        if (os.environ.get('DISPLAY')
+                and os.environ.get('QT_QPA_PLATFORM', '').split(':')[0] in ('', 'xcb')
+                and _vmware_virtual_mouse()):
+            # VMware switches absolute/relative XI2 devices while moving and
+            # scrolling. Qt's scroll-baseline reset can swallow the first tick.
+            # Core X11 wheel buttons avoid this on both X11 and XWayland.
+            os.environ.setdefault('QT_XCB_NO_XI2', '1')
+
+
 def available_geometry(widget=None):
     owner = widget.parentWidget() if widget is not None else None
     screen = (owner.window().screen() if owner is not None else
@@ -29,6 +71,103 @@ def available_geometry(widget=None):
 def initial_window_size(area):
     """Use the available logical desktop rather than a fixed pixel canvas."""
     return QSize(round(area.width() * .96), round(area.height() * .94))
+
+
+@lru_cache(maxsize=1)
+def _gtk3_window_api():
+    """Access the already-required GTK native picker without adding a binding."""
+    import ctypes as c
+
+    class Link(c.Structure):
+        pass
+
+    Link._fields_ = [('data', c.c_void_p), ('next', c.POINTER(Link)), ('prev', c.POINTER(Link))]
+
+    class Rect(c.Structure):
+        _fields_ = [(key, c.c_int) for key in ('x', 'y', 'width', 'height')]
+
+    try:
+        gtk = c.CDLL('libgtk-3.so.0')
+        gdk = c.CDLL('libgdk-3.so.0')
+        glib = c.CDLL('libglib-2.0.so.0')
+        obj = c.CDLL('libgobject-2.0.so.0')
+        signatures = [
+            (gtk, 'gtk_window_list_toplevels', [], c.POINTER(Link)),
+            (gtk, 'gtk_file_chooser_get_type', [], c.c_size_t),
+            (gtk, 'gtk_widget_get_visible', [c.c_void_p], c.c_int),
+            (gtk, 'gtk_widget_get_window', [c.c_void_p], c.c_void_p),
+            (gtk, 'gtk_window_get_title', [c.c_void_p], c.c_char_p),
+            (gtk, 'gtk_window_get_position', [c.c_void_p, c.POINTER(c.c_int),
+                                             c.POINTER(c.c_int)], None),
+            (gtk, 'gtk_window_move', [c.c_void_p, c.c_int, c.c_int], None),
+            (gtk, 'gtk_window_set_keep_above', [c.c_void_p, c.c_int], None),
+            (gdk, 'gdk_window_get_display', [c.c_void_p], c.c_void_p),
+            (gdk, 'gdk_x11_window_foreign_new_for_display', [c.c_void_p, c.c_ulong], c.c_void_p),
+            (gdk, 'gdk_window_get_frame_extents', [c.c_void_p, c.POINTER(Rect)], None),
+            (gdk, 'gdk_display_get_monitor_at_window', [c.c_void_p, c.c_void_p], c.c_void_p),
+            (gdk, 'gdk_monitor_get_workarea', [c.c_void_p, c.POINTER(Rect)], None),
+            (glib, 'g_list_free', [c.c_void_p], None),
+            (obj, 'g_type_check_instance_is_a', [c.c_void_p, c.c_size_t], c.c_int),
+            (obj, 'g_object_unref', [c.c_void_p], None),
+        ]
+        for library, name, args, result in signatures:
+            function = getattr(library, name)
+            function.argtypes, function.restype = args, result
+    except (OSError, AttributeError):
+        return None
+    return c, gtk, gdk, glib, obj, Rect
+
+
+def _place_gtk_file_dialog(dialog):
+    """Position the actual GTK window, leaving Qt's hidden proxy untouched."""
+    if (not sys.platform.startswith('linux') or QApplication.platformName() != 'xcb'
+            or os.environ.get('QT_QPA_PLATFORMTHEME') != 'gtk3'):
+        return
+    owner = dialog.parentWidget()
+    if owner is None:
+        return
+    api = _gtk3_window_api()
+    if api is None:
+        return
+    c, gtk, gdk, glib, obj, Rect = api
+    windows = gtk.gtk_window_list_toplevels()
+    item = windows
+    try:
+        while item:
+            widget = item.contents.data
+            item = item.contents.next
+            if (not obj.g_type_check_instance_is_a(widget, gtk.gtk_file_chooser_get_type())
+                    or not gtk.gtk_widget_get_visible(widget)
+                    or gtk.gtk_window_get_title(widget) != dialog.windowTitle().encode('utf-8')):
+                continue
+            window = gtk.gtk_widget_get_window(widget)
+            if not window:
+                continue
+            gtk.gtk_window_set_keep_above(widget, True)
+            display = gdk.gdk_window_get_display(window)
+            parent = gdk.gdk_x11_window_foreign_new_for_display(
+                display, int(owner.window().winId()),
+            )
+            if not parent:
+                continue
+            try:
+                frame, parent_frame, workarea = Rect(), Rect(), Rect()
+                gdk.gdk_window_get_frame_extents(window, c.byref(frame))
+                gdk.gdk_window_get_frame_extents(parent, c.byref(parent_frame))
+                monitor = gdk.gdk_display_get_monitor_at_window(display, parent)
+                gdk.gdk_monitor_get_workarea(monitor, c.byref(workarea))
+                x = parent_frame.x + (parent_frame.width - frame.width) // 2
+                y = parent_frame.y + (parent_frame.height - frame.height) // 2
+                x = max(workarea.x, min(x, workarea.x + workarea.width - frame.width))
+                y = max(workarea.y, min(y, workarea.y + workarea.height - frame.height))
+                current_x, current_y = c.c_int(), c.c_int()
+                gtk.gtk_window_get_position(widget, c.byref(current_x), c.byref(current_y))
+                gtk.gtk_window_move(widget, current_x.value + x - frame.x,
+                                    current_y.value + y - frame.y)
+            finally:
+                obj.g_object_unref(parent)
+    finally:
+        glib.g_list_free(windows)
 
 
 def _scroll_long_dialog(dialog, maximum_height):
@@ -91,6 +230,11 @@ def fit_dialog(dialog):
 
 def place_dialog(dialog):
     """Set native transient ownership before mapping; position manually only on X11."""
+    if isinstance(dialog, QFileDialog) and not dialog.testOption(
+        QFileDialog.Option.DontUseNativeDialog
+    ):
+        _place_gtk_file_dialog(dialog)
+        return
     owner = dialog.parentWidget()
     owner = owner.window() if owner is not None else QApplication.activeWindow()
     if owner is dialog or (owner is not None and not owner.isWindow()):
@@ -120,9 +264,17 @@ class _DialogLayoutFilter(QObject):
             place_dialog(dialog)
 
     def eventFilter(self, obj, event):
+        if isinstance(obj, QDialog) and event.type() == QEvent.Type.Polish:
+            obj.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
+            obj.setWindowModality(Qt.WindowModality.ApplicationModal)
         if isinstance(obj, QDialog) and event.type() == QEvent.Type.Show:
             fit_dialog(obj)
             place_dialog(obj)
+            handle = obj.windowHandle()
+            if handle is not None and not handle.flags() & Qt.WindowType.WindowStaysOnTopHint:
+                # QMessageBox can reset QWidget flags after its early polish.
+                # Updating the native window avoids hiding/remapping the dialog.
+                handle.setFlag(Qt.WindowType.WindowStaysOnTopHint, True)
             if not QApplication.platformName().startswith('wayland'):
                 QTimer.singleShot(0, obj, lambda: self._after_show(obj))
         return super().eventFilter(obj, event)

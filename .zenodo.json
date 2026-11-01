@@ -1,9 +1,9 @@
 {
   "title": "NMRFinesse: automation, parameter optimisation and quality control for Bruker multidimensional NMR data",
   "upload_type": "software",
-  "publication_date": "2026-10-29",
-  "description": "NMRFinesse automates Bruker multidimensional NMR processing with NMRPipe and SMILE, records processing parameters and quality-control decisions, and provides spectrum viewing and peak localization. Version 1.0.10 improves viewer sections, font sizing, overlay ranges, scroll margins and peak-table layout. GUI peak exports contain assignments and chemical shifts only, and export controls remain available after peak picking. The Python/CLI API remains 1.1.5; detection, noise and threshold calculations are unchanged.",
-  "version": "1.0.10",
+  "publication_date": "2026-11-01",
+  "description": "NMRFinesse automates Bruker multidimensional NMR processing with NMRPipe and SMILE and records parameters and quality-control decisions. Version 1.0.11 improves project navigation, 1D/2D viewing, modal dialogs, native file browsing, peak-table calibration and CSV recovery, and project-level UCSF copying. It includes VMware mouse-wheel compatibility and updated bilingual help and software information. The Python/CLI API remains 1.1.5; existing processing and evidence results are unchanged.",
+  "version": "1.0.11",
   "language": "eng",
   "creators": [
     {

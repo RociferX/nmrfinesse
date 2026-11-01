@@ -200,6 +200,19 @@ def test_overlay_1d_and_stale_fit(qapp):
     widget.close()
 
 
+def test_fit_success_does_not_show_match_rate(qapp):
+    from gui.overlay_comparison import OverlayComparison
+
+    widget = OverlayComparison()
+    widget.set_spectra([_spectrum(), _spectrum()], ['current', 'comparison'])
+    widget.toggle.setChecked(True)
+    widget._apply_fit(widget.generation, {1: ((.01, .02), .93)}, None)
+    assert widget.shifts[1] == pytest.approx((.01, .02))
+    assert widget.status.text() == ''
+    assert widget.status.isHidden()
+    widget.close()
+
+
 @pytest.mark.parametrize('ndim', [1, 2])
 @pytest.mark.parametrize('wide_index', [0, 1, 2])
 def test_overlay_full_range_covers_wider_spectrum(qapp, ndim, wide_index):
@@ -677,17 +690,4 @@ def test_shift_slider_right_moves_spectrum_right(qapp, ndim, fine, comparison_re
     QTest.keyClick(bar, Qt.Key.Key_Left)
     assert peak_screen_x() < right
     assert widget.shifts[moving][-1] == pytest.approx(0)
-    widget.close()
-
-
-def test_fit_success_does_not_show_match_rate(qapp):
-    from gui.overlay_comparison import OverlayComparison
-
-    widget = OverlayComparison()
-    widget.set_spectra([_spectrum(), _spectrum()], ['current', 'comparison'])
-    widget.toggle.setChecked(True)
-    widget._apply_fit(widget.generation, {1: ((.01, .02), .93)}, None)
-    assert widget.shifts[1] == pytest.approx((.01, .02))
-    assert not widget.status.text()
-    assert widget.status.isHidden()
     widget.close()

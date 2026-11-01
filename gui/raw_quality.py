@@ -1,7 +1,8 @@
 """Raw data quality check (automatically executed after import, GUI side read-only use core.data).
 Check items: acqus parameter existence and dimension /nuclear/temperature, ser/fid time domain
 file existence and size, small file Estimated first paragraph/tail signal noise. returns report
-dict, no exception is thrown."""
+dict, no exception is thrown.
+"""
 
 from __future__ import annotations
 
@@ -15,12 +16,13 @@ from ui_support.i18n import tr
 
 def _raw_dir(project, exp_id: str, data_id: str) -> Path | None:
     """Locate the original data directory (raw/ takes precedence, fallback to metadata source_path
-    if not copied)."""
+    if not copied).
+    """
     try:
         raw = project.data_dir(exp_id, data_id, "raw")
         if raw.is_dir():
             return raw
-    except Exception:  # noqa: BLE001 - Fallback when layout is unavailable.
+    except Exception:  # noqa: BLE001
         pass
     try:
         meta_path = project.data_metadata_path(exp_id, data_id)
@@ -31,14 +33,13 @@ def _raw_dir(project, exp_id: str, data_id: str) -> Path | None:
             source = meta.get("source_path") or ""
             if source and Path(source).is_dir():
                 return Path(source)
-    # If the metadata cannot be read, it will be treated as no original directory.
-    except Exception:  # noqa: BLE001 -
+    except Exception:  # noqa: BLE001
         pass
     return None
 
 
 def _param(acqus: Path, key: str) -> str:
-    """Read a single ``##$KEY= value`` in the Bruker parameter file."""
+    'Read a single ``##$KEY= value`` in the Bruker parameter file.'
     try:
         text = acqus.read_text(encoding="latin-1", errors="replace")
     except OSError:
@@ -51,7 +52,8 @@ def _te_to_kelvin(te: str) -> float | None:
     """Bruker TE -> Kelvin; automatically recognizes 0.1 K / K / °C, cannot be parsed and returns
     None. - TE The convention is 0.1 K (such as 2980 -> 298.0 K); - Some data are directly
     stored in K (such as 298.0) or °C (such as 25), and are judged according to the numerical
-    range."""
+    range.
+    """
     try:
         number = float(te.split()[0])
     except (TypeError, ValueError, IndexError):
@@ -68,7 +70,8 @@ def _te_to_kelvin(te: str) -> float | None:
 
 def _estimate_snr(raw: Path) -> float | None:
     """Read the time-domain data with the Bruker reader and estimate the first peak value
-    over the tail noise standard deviation."""
+    over the tail noise standard deviation.
+    """
     try:
         from core.data.bruker_reader import read_data, read_dataset
 
@@ -83,21 +86,19 @@ def _estimate_snr(raw: Path) -> float | None:
         if noise <= 0:
             noise = float(np.mean(tail)) or 1e-12
         return float(np.max(head) / noise)
-    except Exception:  # noqa: BLE001 - Skip signal-to-noise estimation when data cannot be read.
+    except Exception:  # noqa: BLE001
         return None
 
 
 def check_raw_quality(project, exp_id: str, data_id: str) -> dict:
-    """Check the original data quality and return ``{"ok", "issues", "info"}``."""
+    'Check the original data quality and return ``{"ok", "issues", "info"}``.'
     info: dict[str, str] = {}
     issues: list[str] = []
     raw = _raw_dir(project, exp_id, data_id)
     if raw is None:
         return {"ok": False, "issues": [tr("Raw data directory (raw/) not found")], "info": {}}
-    # 0.2.199: The segmented data collection raw/ is the container root directory (without
-    # acqus/ser). The quality check is evaluated based on the first segment directory (the
-    # parameters collected in each segment of the same experiment are consistent), and no missing
-    # information is falsely reported acqus/ser.
+
+
     try:
         data_entry = project.data(exp_id, data_id)
         segments = list(getattr(data_entry, "segments", None) or [])
@@ -108,7 +109,7 @@ def check_raw_quality(project, exp_id: str, data_id: str) -> dict:
             if seg0.is_dir():
                 raw = seg0
                 info[tr("segmented")] = tr("Evaluate by first paragraph ({p0})", p0=seg0.name)
-    except Exception:  # noqa: BLE001 - Unable to read segments, evaluate as normal data.
+    except Exception:  # noqa: BLE001
         pass
 
     acqus = raw / "acqus"
@@ -117,7 +118,6 @@ def check_raw_quality(project, exp_id: str, data_id: str) -> dict:
     else:
         ndim = 1 + (raw / "acqu2s").is_file() + (raw / "acqu3s").is_file()
         info[tr("Dimensions")] = f"{ndim}D"
-
         def _nuc(file: Path, key: str) -> str:
             return _param(file, key) if file.is_file() else ""
 
@@ -151,23 +151,24 @@ def check_raw_quality(project, exp_id: str, data_id: str) -> dict:
         size = data_file.stat().st_size
         info[tr("time domain file")] = tr("{p0} {p1} byte", p0=data_file.name, p1=size)
         if size < 1024:
-            issues.append(
-                tr(
-                    "The time domain data file is too small (<1KB), and the collection may fail",
-                )
-            )
+            issues.append(tr(
+                "The time domain data file is too small (<1KB), and the collection may "
+                "fail",
+            ))
         if size < 64 * 1024 * 1024:
             snr = _estimate_snr(raw)
             if snr is not None:
                 info[tr("SNR (head/tail)")] = f"{snr:.1f}"
                 if snr < 3.0:
-                    issues.append(tr("Raw signal-to-noise ratio too low ({p0:.1f})", p0=snr))
+                    issues.append(
+                        tr("Raw signal-to-noise ratio too low ({p0:.1f})", p0=snr)
+                    )
 
     return {"ok": not issues, "issues": issues, "info": info}
 
 
 def format_quality_report(report: dict) -> str:
-    """Convert quality report dict into log/pop-up window readable text."""
+    'Convert quality report dict into log/pop-up window readable text.'
     if not report:
         return tr("(not implemented)")
     lines: list[str] = []
@@ -176,7 +177,7 @@ def format_quality_report(report: dict) -> str:
         lines.append("  " + " | ".join(f"{key}={value}" for key, value in info.items()))
     issues = report.get("issues") or []
     if issues:
-        lines.append(tr(" warn: ") + ";".join(issues))
+        lines.append(tr(" warn: ") + "；".join(issues))
     else:
         lines.append(tr(" pass"))
     return "\n".join(lines)

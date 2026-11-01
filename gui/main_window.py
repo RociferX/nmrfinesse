@@ -42,6 +42,7 @@ from core.user_errors import describe_exception
 from core.workspace import WorkspaceManager
 from gui.center_panel import CenterPanel
 from gui.dialogs import (
+    AboutDialog,
     ConfirmDialog,
     ImportExperimentDialog,
     InfoDialog,
@@ -57,7 +58,7 @@ from gui.tutorial import TutorialDialog
 from qtcompat import Signal
 from ui_support.i18n import tr
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from gui.spectrum_panel import SpectrumPanel
     from workflow.import_workflow import ImportResult
 
@@ -79,7 +80,7 @@ def _pick_script_key(scripts: dict[str, str], data_id: str) -> str:
 
 
 class _HeaderLabel(QLabel):
-    """Elide header text to the available width and show full text on hover."""
+    'Elide header text to the available width and show full text on hover.'
 
     def __init__(self, text: str = '', parent=None) -> None:
         self._full_text = text
@@ -115,7 +116,7 @@ class _HeaderLabel(QLabel):
 
 
 class MainWindow(QMainWindow):
-    """NMRFinesse main window; displays the welcome page when the project is not open."""
+    'NMRFinesse main window; displays the welcome page when the project is not open.'
 
     import_failed = Signal(str)
     import_finished = Signal(object)
@@ -190,7 +191,7 @@ class MainWindow(QMainWindow):
             _icon = app_icon()
             if _icon is not None:
                 self.setWindowIcon(_icon)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         self.setAcceptDrops(True)
 
@@ -206,7 +207,7 @@ class MainWindow(QMainWindow):
         self._show_startup_environment_status()
 
     # ------------------------------------------------------------------
-    # ------------------------------------------------------------------ #
+
     # ------------------------------------------------------------------
     def _resolve_environment_on_startup(self) -> None:
         """Probe and register NMRPipe tools on first launch, then prepare an environment notice.
@@ -232,7 +233,7 @@ class MainWindow(QMainWindow):
                 warning = ""
             self._environment_warning = warning
             self._environment_warning_required = required
-        except Exception:
+        except Exception:  # noqa: BLE001
             self._environment_warning = ""
             self._environment_warning_required = False
 
@@ -249,13 +250,16 @@ class MainWindow(QMainWindow):
         """Keep essential missing-tool notices in the title; optional-tool notices use the status
         bar.
         """
+        from core import __version__
+
+        base = base.replace("NMRFinesse", f"NMRFinesse {__version__}", 1)
         warning = getattr(self, "_environment_warning", "")
         if not warning or not getattr(self, "_environment_warning_required", False):
             return base
         return f"{base}   !{warning}!"
 
     # ------------------------------------------------------------------
-    # ------------------------------------------------------------------ #
+
     # ------------------------------------------------------------------
     def _apply_default_geometry(self) -> None:
         """Open the default geometry: the top is attached to the upper edge of the screen, and the
@@ -270,7 +274,7 @@ class MainWindow(QMainWindow):
 
         from ui_support.window_layout import available_geometry, initial_window_size
 
-        cols = [18, 37, 45]
+        cols = [22, 34, 44]
         screen = self.screen() or QGuiApplication.primaryScreen()
         avail = screen.availableGeometry() if screen is not None else available_geometry(self)
         size = initial_window_size(avail)
@@ -286,7 +290,6 @@ class MainWindow(QMainWindow):
         bar = self.menuBar()
 
         file_menu = bar.addMenu(tr("&File"))
-        file_menu.addAction(tr("New project..."), self.new_project)
         file_menu.addAction(tr("Open project..."), self.open_project)
         save_action = QAction(tr("save project"), self)
         save_action.setShortcut("Ctrl+S")
@@ -297,10 +300,6 @@ class MainWindow(QMainWindow):
         file_menu.addSeparator()
         file_menu.addAction(tr("quit"), self.close)
 
-        experiment_menu = bar.addMenu(tr("&experiment"))
-        experiment_menu.addAction(tr("New experiment..."), self._create_experiment)
-        experiment_menu.addAction(tr("rename experiment..."), self.rename_experiment)
-        experiment_menu.addAction(tr("delete experiment"), self.delete_experiment)
 
         view_menu = bar.addMenu(tr("&View"))
 
@@ -520,7 +519,7 @@ class MainWindow(QMainWindow):
         self.feedback_widget.show()
 
     # ------------------------------------------------------------------
-    # ------------------------------------------------------------------ #
+
     # ------------------------------------------------------------------
     def _build_spectrum_panel(self, apply_context: bool = False):
         """Build the spectrum panel on the right (return directly if it has been built).
@@ -548,7 +547,7 @@ class MainWindow(QMainWindow):
             index = splitter.indexOf(placeholder)
             if index >= 0:
                 splitter.replaceWidget(index, panel)
-            else:
+            else:  # pragma: no cover
                 splitter.addWidget(panel)
             placeholder.deleteLater()
             self._spectrum_placeholder = None
@@ -572,10 +571,10 @@ class MainWindow(QMainWindow):
         )
 
     def _on_spectrum_panel_ready(self) -> None:
-        """Background preheating is completed -> Main thread builds spectrum panel."""
+        'Background preheating is completed -> Main thread builds spectrum panel.'
         try:
             self._build_spectrum_panel(apply_context=True)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
     def _finish_startup(self) -> None:
@@ -593,7 +592,7 @@ class MainWindow(QMainWindow):
 
             try:
                 import gui.spectrum_panel  # noqa: F401
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
             self._spectrum_panel_ready.emit()
 
@@ -608,7 +607,7 @@ class MainWindow(QMainWindow):
                     import importlib
 
                     importlib.import_module(_mod)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     continue
 
         self._prewarm_thread = threading.Thread(
@@ -617,7 +616,7 @@ class MainWindow(QMainWindow):
         self._prewarm_thread.start()
 
     # ------------------------------------------------------------------
-    # ------------------------------------------------------------------ #
+
     # ------------------------------------------------------------------
     def new_project(self) -> None:
         """New project: Inline naming (no pop-up window). Enter on the welcome page when the
@@ -648,7 +647,7 @@ class MainWindow(QMainWindow):
             self._show_feedback(str(exc), 'error')
             InfoDialog.show_info(self, tr("New project failed"), str(exc))
             return
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             self._show_feedback(describe_exception(exc), 'error')
             InfoDialog.show_info(self, tr("New project failed"), describe_exception(exc))
             return
@@ -717,7 +716,7 @@ class MainWindow(QMainWindow):
             )
 
     # ------------------------------------------------------------------
-    # ------------------------------------------------------------------ #
+
     # ------------------------------------------------------------------
     def add_experiment(self) -> None:
         """Compatible entrance: equivalent to creating a new blank experiment (to import sample
@@ -803,7 +802,7 @@ class MainWindow(QMainWindow):
                             for item in failed
                         )
                     )
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 self.import_failed.emit(describe_exception(exc))
 
         threading.Thread(target=worker, daemon=True).start()
@@ -846,6 +845,7 @@ class MainWindow(QMainWindow):
                     )
 
                     data_id = item.get("data_id", "")
+                    self.manager.data(exp_id, data_id).title = Path(item["folder"]).name
                     meta = self._read_data_metadata(exp_id, data_id)
                     filled = auto_fill_notes_from_metadata(
                         self.manager, exp_id, data_id, meta
@@ -859,7 +859,7 @@ class MainWindow(QMainWindow):
                     self._append_log(tr(" Raw data quality:"))
                     self._append_log(format_quality_report(quality))
                     self._log_experiment_type_check(exp_id, data_id)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
             else:
                 self._append_log(
@@ -908,7 +908,7 @@ class MainWindow(QMainWindow):
             ), 'success' if not fail_count else 'info')
 
     # ------------------------------------------------------------------
-    # ------------------------------------------------------------------ #
+
     # ------------------------------------------------------------------
     def _data_ndim(self, exp_id: str, data_id: str) -> int:
         """Read data dimension from metadata (3D batch is not supported yet); fallback if unable to
@@ -921,14 +921,13 @@ class MainWindow(QMainWindow):
 
                 metadata = json.loads(meta_path.read_text(encoding="utf-8"))
                 return int((metadata.get("dataset") or {}).get("ndim") or 2)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         return 2
 
 
     def _group_add_data(self, exp_id: str, group_id: str, data_ids: list) -> None:
-        """
-        Add multiple data to the data group (project.json is the only source,
+        """Add multiple data to the data group (project.json is the only source,
         0.2.164-patch1).
         """
         if self.manager.project is None:
@@ -953,7 +952,7 @@ class MainWindow(QMainWindow):
                     continue
                 self.manager.add_to_group(exp_id, group_id, str(data_id))
                 self._append_log(tr("data {p0} Joined data group {p1}", p0=data_id, p1=group_id))
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 self._append_log(tr("Failed to join {p0}: {p1}", p0=data_id, p1=exc))
         self.manager.save()
         self.refresh()
@@ -961,7 +960,7 @@ class MainWindow(QMainWindow):
     def _group_remove_data(
         self, exp_id: str, group_id: str, data_id: str
     ) -> None:
-        """Move data out of the data group (project.json is the only source, 0.2.164-patch1)."""
+        'Move data out of the data group (project.json is the only source, 0.2.164-patch1).'
         if self.manager.project is None:
             return
         self.manager.remove_from_group(exp_id, group_id, data_id)
@@ -970,7 +969,7 @@ class MainWindow(QMainWindow):
         self.refresh()
 
     def _group_rename(self, exp_id: str, group_id: str, title: str) -> None:
-        """Rename the data group."""
+        'Rename the data group.'
         if self.manager.project is None:
             return
         self.manager.rename_data_group(exp_id, group_id, title)
@@ -1047,7 +1046,7 @@ class MainWindow(QMainWindow):
         reference_data_id: str = "",
         params: dict | None = None,
     ) -> None:
-        """Data group batch processing: background thread execution, progress output via log."""
+        'Data group batch processing: background thread execution, progress output via log.'
         if self.manager.project is None:
             return
         group = self.manager.group(exp_id, group_id)
@@ -1168,7 +1167,7 @@ class MainWindow(QMainWindow):
                     {"info": info, "items": items, "log_scope": group_scope}
                 )
                 self.operation_feedback.emit(info, 'error' if failed or cancelled else 'success')
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 self.log_append_requested.emit(describe_exception(exc), group_scope)
                 self.operation_feedback.emit(describe_exception(exc), 'error')
             finally:
@@ -1285,13 +1284,13 @@ class MainWindow(QMainWindow):
                         self._last_raw_quality = check_raw_quality(
                             self.manager, target_exp_id, data_id
                         )
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         self._last_auto_fill = {}
                         self._last_raw_quality = None
                 self.manager.save()
                 self._last_import_progress = list(progress_lines)
                 self.import_finished.emit(result)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 self.import_failed.emit(describe_exception(exc))
 
         threading.Thread(target=worker, daemon=True).start()
@@ -1348,11 +1347,11 @@ class MainWindow(QMainWindow):
         self._last_import_progress = []
         self._log_experiment_type_check(exp_id, data_id)
         name = self._pending_data_names.pop(exp_id, "") if exp_id else ""
-        if exp_id and data_id and name and self.manager.project is not None:
+        if exp_id and data_id and self.manager.project is not None:
             entry = self.manager.project.experiment(exp_id)
             data_entry = next((d for d in entry.data if d.id == data_id), None) if entry else None
             if data_entry is not None:
-                data_entry.title = name
+                data_entry.title = name or Path(data_entry.source).name
                 try:
                     self.manager.save()
                 except ProjectError:
@@ -1384,7 +1383,7 @@ class MainWindow(QMainWindow):
             )
 
     def _show_import_next_step(self, exp_id: str, data_id: str) -> None:
-        """Keep the experiment page after import and point to the processing action."""
+        'Keep the experiment page after import and point to the processing action.'
         label = data_id
         if self.manager.project is not None:
             experiment = self.manager.project.experiment(exp_id)
@@ -1427,7 +1426,7 @@ class MainWindow(QMainWindow):
         )
 
     def _read_data_metadata(self, exp_id: str, data_id: str) -> dict:
-        """Read sample data metadata.json (returns empty dict if missing)."""
+        'Read sample data metadata.json (returns empty dict if missing).'
         if self.manager.project is None:
             return {}
         try:
@@ -1437,7 +1436,7 @@ class MainWindow(QMainWindow):
             import json
 
             return json.loads(meta_path.read_text(encoding="utf-8"))
-        except Exception:
+        except Exception:  # noqa: BLE001
             return {}
 
     def rename_experiment(self) -> None:
@@ -1490,32 +1489,14 @@ class MainWindow(QMainWindow):
         self.refresh()
 
     def about(self) -> None:
-        InfoDialog.show_info(
-            self,
-            tr("About NMRFinesse"),
-            tr(
-                "NMRFinesse: an automated processing, parameter-optimisation and quality-control "
-                "platform for Bruker 2D/3D NMR.\nFour columns: project tree / processing "
-                "pipeline / task log / spectrum viewer.\n\nAxis-order convention (internally "
-                "everything is organised in "
-                "the logical order F1/F2/F3):\n- 2D: F1 = indirect dimension, F2 = direct "
-                "dimension; 3D: F1 = first indirect, F2 = second indirect, F3 = direct "
-                "dimension.\n- NMRPipe stores 3D files in the standard order (F2,F1,F3); loading "
-                "transposes them into the logical order\n  (the \"axis reorder\" log line reports "
-                "exactly this and is normal behaviour).\n- Dimensions of the same nucleus (e.g. 2D "
-                "1H-1H, HNN with two 15N) are told apart by an x/y/z subscript\n  following the "
-                "priority \"direct > acqu2 > acqu3\" (e.g. Nx = the N of the HSQC, Ny = the "
-                "sequential "
-                "N).",
-            ),
-        )
+        AboutDialog(self).exec()
 
     def show_tutorial(self) -> None:
-        """Help -> Usage tutorial: open the shipped tutorial (text in the current language)."""
+        'Help -> Usage tutorial: open the shipped tutorial (text in the current language).'
         TutorialDialog(self).exec()
 
     # ------------------------------------------------------------------
-    # ------------------------------------------------------------------ #
+
     # ------------------------------------------------------------------
     def _on_view_step_log(self, step_id: str) -> None:
         """Position the log panel: append the marked line and expand it (append automatically
@@ -1577,7 +1558,8 @@ class MainWindow(QMainWindow):
     def _run_standalone_check(self, paths, kind: str) -> None:
         """Run check in worker thread, emit report to top-level global log. 0.2.199-patch29em:
         First jump to the top level (workspace root node), switch the log panel to
-        NMRFinesseWorkspace global scope, then execute in the background and output line by line.
+        NMRFinesseWorkspace global scope, then execute in the background and output line by
+        line.
         """
         top = self.project_tree.tree.topLevelItem(0)
         if top is not None:
@@ -1638,7 +1620,7 @@ class MainWindow(QMainWindow):
         threading.Thread(target=worker, daemon=True).start()
 
     def _open_settings(self) -> None:
-        """Open the software settings dialog (stage C3)."""
+        'Open the software settings dialog (stage C3).'
         from gui.dialogs import SettingsDialog
 
         if SettingsDialog(self).exec():
@@ -1667,7 +1649,7 @@ class MainWindow(QMainWindow):
         self.resize(min(self.width(), area.width()), min(self.height(), area.height()))
 
     def _on_memory_guard(self, message: str) -> None:
-        """SMILE Out of memory: log + popup (main thread)."""
+        'SMILE Out of memory: log + popup (main thread).'
         self._append_log(message)
         InfoDialog.show_info(self, tr("Out of memory"), message)
 
@@ -1733,7 +1715,7 @@ class MainWindow(QMainWindow):
             self._append_log(tr("Drag and drop import: {p0} data directory", p0=imported))
 
     def _open_manual_dialog(self, step_id: str) -> None:
-        """Manual processing entry: Open the script Editor/fid editor according to the steps."""
+        'Manual processing entry: Open the script Editor/fid editor according to the steps.'
         exp_id = self.project_tree.current_experiment_id()
         if not exp_id:
             InfoDialog.show_info(self, tr(
@@ -1793,7 +1775,7 @@ class MainWindow(QMainWindow):
         return nodes[0]
 
     def _open_fid_editor(self, data_node, exp_id: str, data_id: str, label: str) -> None:
-        """Fid.com Check/Revise/run(manual_fid_com / run_manual_fid_com)."""
+        'Fid.com Check/Revise/run(manual_fid_com / run_manual_fid_com).'
         existing = self._existing_script_editor(data_id, "fid")
         if existing is not None:
             self._focus_script_editor(existing)
@@ -1802,7 +1784,7 @@ class MainWindow(QMainWindow):
             content = self.controller.manual_fid_com(
                 data_node, exp_id=exp_id, data_id=data_id
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             InfoDialog.show_info(
                 self, "fid.com", tr("Unable to get fid.com: {p0}", p0=describe_exception(exc))
             )
@@ -1843,7 +1825,7 @@ class MainWindow(QMainWindow):
             scripts = self.controller.manual_scripts(
                 data_node, params=None, exp_id=exp_id, data_id=data_id
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             from workflow.manual import ManualRunError
 
             if isinstance(exc, ManualRunError) and tr(
@@ -1878,7 +1860,7 @@ class MainWindow(QMainWindow):
     def _wire_script_run(
         self, dialog, data_node, exp_id: str, data_id: str, script_name: str
     ) -> None:
-        """Script editor "Run" -> background execution and registration."""
+        'Script editor "Run" -> background execution and registration.'
         script_baseline = dialog.editor.toPlainText()
         dialog.run_requested.connect(
             lambda content: self._run_script_async(
@@ -1901,7 +1883,7 @@ class MainWindow(QMainWindow):
         return None
 
     def _focus_script_editor(self, dialog: ScriptEditorDialog) -> None:
-        """Bring the open editor to the foreground (reuse when opening repeatedly, 0.2.193)."""
+        'Bring the open editor to the foreground (reuse when opening repeatedly, 0.2.193).'
         dialog.show()
         dialog.raise_()
         dialog.activateWindow()
@@ -2001,7 +1983,7 @@ class MainWindow(QMainWindow):
                     )
                     message = tr("{p0} run complete: {p1}", p0=script_name, p1=result)
                     self.spectrum_results_changed.emit(exp_id, data_id)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 self.log_append_requested.emit(
                     tr("Manual run failed: {p0}", p0=describe_exception(exc)), manual_scope
                 )
@@ -2023,7 +2005,7 @@ class MainWindow(QMainWindow):
         threading.Thread(target=worker, daemon=True).start()
 
     def _on_pipeline_run_started(self, exp_id: str, data_id: str) -> None:
-        """Mark the running target without redirecting logs away from the user selection."""
+        'Mark the running target without redirecting logs away from the user selection.'
         self.project_tree.mark_running(exp_id, data_id)
         self._feedback_tasks.add((exp_id, data_id))
         self._show_feedback(tr('Processing: {p0}/{p1}', p0=exp_id, p1=data_id), 'running')
@@ -2036,7 +2018,7 @@ class MainWindow(QMainWindow):
             self.spectrum_panel.refresh_after_processing(exp_id, data_id)
 
     def _on_pipeline_run_finished(self, exp_id: str, data_id: str) -> None:
-        """Clear only the completed target's running marker and refresh the relevant panels."""
+        "Clear only the completed target's running marker and refresh the relevant panels."
         self.project_tree.clear_running(exp_id, data_id)
         self._feedback_tasks.discard((exp_id, data_id))
         self.feedback_progress.setVisible(bool(self._feedback_tasks))
@@ -2095,7 +2077,7 @@ class MainWindow(QMainWindow):
                 )
                 self.operation_feedback.emit(tr("Rank1 rerun completed: {p0}", p0=out), 'success')
                 self.spectrum_results_changed.emit(exp_id, data_id)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 self.log_append_requested.emit(
                     tr("Rank1 rerun failed: {p0}", p0=exc), run_scope
                 )
@@ -2116,7 +2098,7 @@ class MainWindow(QMainWindow):
         self.center_panel.refresh()
 
     def _on_manual_run_done(self) -> None:
-        """Refresh the Pipeline (main thread) after the manual script is completed."""
+        'Refresh the Pipeline (main thread) after the manual script is completed.'
         self.project_tree.clear_running()
         self.refresh()
         self.center_panel.refresh()
@@ -2157,7 +2139,7 @@ class MainWindow(QMainWindow):
             except ProjectError as exc2:
                 InfoDialog.show_info(self, tr("rename project failed"), str(exc2))
                 return
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             InfoDialog.show_info(self, tr("rename project failed"), describe_exception(exc))
             return
         self._rebind_shared_manager()
@@ -2194,7 +2176,7 @@ class MainWindow(QMainWindow):
                     p0=exc,
                 )
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             InfoDialog.show_info(self, tr("delete project failed"), describe_exception(exc))
             return
         if hasattr(self.recent, "remove") and self.manager.root is not None:
@@ -2231,7 +2213,7 @@ class MainWindow(QMainWindow):
         """Embedded import form in the middle panel: Import sample data (can be named) according to
         specified experiments.
         """
-        self._pending_data_names[exp_id] = name
+        self._pending_data_names[exp_id] = name.strip() or Path(source).name
         self._import_experiment_async(
             {
                 "source": source,
@@ -2257,7 +2239,7 @@ class MainWindow(QMainWindow):
         if rename_data is not None:
             try:
                 rename_data(exp_id, data_id, new_name)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 InfoDialog.show_info(self, tr("rename data failed"), str(exc))
                 return
         elif data_entry is not None:
@@ -2302,13 +2284,13 @@ class MainWindow(QMainWindow):
         self.refresh()
 
     def _create_experiment_with_title(self, title: str) -> None:
-        """Embedded form in middle panel: Create a new blank experiment."""
+        'Embedded form in middle panel: Create a new blank experiment.'
         self._create_experiment_with_title_and_fields(title.strip())
 
     def _create_experiment_with_title_and_fields(
         self, title: str, fields: dict | None = None
     ) -> None:
-        """Create a blank experiment by title (can have general information fields)."""
+        'Create a blank experiment by title (can have general information fields).'
         if self.manager.project is None:
             InfoDialog.show_info(self, tr("hint"), tr("Please create or open a project first"))
             return
@@ -2331,7 +2313,7 @@ class MainWindow(QMainWindow):
         self._show_feedback(tr('Experiment created: {p0}', p0=title or entry.id), 'success')
 
     def _import_data_for(self, exp_id: str) -> None:
-        """Import sample data under the specified experiment."""
+        'Import sample data under the specified experiment.'
         if self.manager.project is None:
             InfoDialog.show_info(self, tr("hint"), tr("Please create or open a project first"))
             return
@@ -2360,8 +2342,7 @@ class MainWindow(QMainWindow):
         self.center_panel.run_step(step, data_id=data_id)
 
     def _edit_notes(self, kind: str, exp_id: str, data_id: str) -> None:
-        """
-        Edit project/experiment/Sample data annotation(middle top comment bar
+        """Edit project/experiment/Sample data annotation(middle top comment bar
         "Edit Comment").
         """
         if self.manager.project is None or not kind:
@@ -2417,7 +2398,7 @@ class MainWindow(QMainWindow):
         self._append_log(tr("saved{p0}", p0=title))
 
     # ------------------------------------------------------------------
-    # ------------------------------------------------------------------ #
+
     # ------------------------------------------------------------------
     def _toggle_left(self, checked: bool) -> None:
         self.project_tree.setVisible(checked)
@@ -2440,7 +2421,7 @@ class MainWindow(QMainWindow):
             widget.setVisible(visible)
 
     # ------------------------------------------------------------------
-    # ------------------------------------------------------------------ #
+
     # ------------------------------------------------------------------
     def _open_spectrum_from_tree(self, path: str) -> None:
         """Double-click the spectrum file in the tree: the spectrum panel on the right directly
@@ -2511,7 +2492,7 @@ class MainWindow(QMainWindow):
     }
 
     def _update_context_bar(self) -> None:
-        """Top context bar: Project / Experiment / Data + status summary."""
+        'Top context bar: Project / Experiment / Data + status summary.'
         if self.manager.project is None:
             self.context_bar.setText(tr("project not open"))
             self.context_bar.setToolTip(self.context_bar.text())
@@ -2549,7 +2530,7 @@ class MainWindow(QMainWindow):
                     status_text = self._DATA_STATUS_TEXT.get(
                         getattr(data, "status", ""), getattr(data, "status", "")
                     )
-            except Exception:
+            except Exception:  # noqa: BLE001
                 label = data_id
             parts.append(f"{label} · {status_text}" if status_text else label)
         self.context_bar.setText(" / ".join(parts))
@@ -2602,13 +2583,13 @@ class MainWindow(QMainWindow):
                 from backend.config import load_config, nmrpipe_path
 
                 bin_dir = str(nmrpipe_path(load_config()) or "")
-            except Exception:
+            except Exception:  # noqa: BLE001
                 bin_dir = ""
             cleanup_orphan_tasks(
                 bin_dir=bin_dir or None,
                 workspace=str(self.manager.root or ""),
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         super().closeEvent(event)
 
@@ -2631,14 +2612,14 @@ class MainWindow(QMainWindow):
             from backend.config import load_config, nmrpipe_path
 
             bin_dir = str(nmrpipe_path(load_config()) or "")
-        except Exception:
+        except Exception:  # noqa: BLE001
             bin_dir = ""
         try:
             orphan_count = cleanup_orphan_tasks(
                 bin_dir=bin_dir or None,
                 workspace=str(self.manager.root or ""),
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
             orphan_count = 0
         if killed or orphan_count:
             self._append_log(
@@ -2661,7 +2642,7 @@ class MainWindow(QMainWindow):
         self.log_panel.setVisible(True)
 
     def _log_scope(self) -> str:
-        """The log scope key corresponding to the currently selected context."""
+        'The log scope key corresponding to the currently selected context.'
         return self.log_panel.scope_key(
             self._log_kind,
             self._log_exp_id,
@@ -2670,14 +2651,14 @@ class MainWindow(QMainWindow):
         )
 
     # ------------------------------------------------------------------
-    # ------------------------------------------------------------------ #
+
     # ------------------------------------------------------------------
     def _current_experiment_id(self) -> str | None:
         exp_id = self.project_tree.current_experiment_id()
         return exp_id or None
 
     def refresh(self) -> None:
-        """Refresh the window title, recent items menu and left tree."""
+        'Refresh the window title, recent items menu and left tree.'
         self._refresh_recent_menu()
         self.project_tree.refresh()
         project = self.manager.project
@@ -2704,9 +2685,12 @@ class MainWindow(QMainWindow):
 
     @staticmethod
     def run() -> int:
-        """Start the Qt application (called by main.py)."""
+        'Start the Qt application (called by main.py).'
         import sys
 
+        from ui_support.window_layout import configure_native_file_dialogs
+
+        configure_native_file_dialogs()
         app = QApplication(sys.argv)
         from gui.dialogs import install_dialog_centering
         from gui.settings import load_settings
@@ -2744,11 +2728,11 @@ class MainWindow(QMainWindow):
                 try:
                     _w.close()
                     _w.deleteLater()
-                except RuntimeError:
+                except RuntimeError:  # pragma: no cover
                     pass
             app.processEvents()
             app.sendPostedEvents(None, 0)
             app.processEvents()
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         return code

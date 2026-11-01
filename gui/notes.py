@@ -37,6 +37,8 @@ DATA_FIELDS: tuple[tuple[str, str], ...] = (
     ("dimension", tr("Dimensions")),
     ("experiment_type", tr("Data type")),
     ("nuclei", tr("Nuclei")),
+
+
     ("sampling_mode", tr("Sampling mode")),
     ("peak_sign", tr("Peak symbol")),
     ("notes", tr("Remark")),
@@ -72,7 +74,7 @@ _PRESET_OPTIONS: list[tuple[str, int]] | None = None
 
 
 def _preset_options() -> list[tuple[str, int]]:
-    """List of (name, ndim) in presets/*.yaml (lazy loading + cache)."""
+    'List of (name, ndim) in presets/*.yaml (lazy loading + cache).'
     global _PRESET_OPTIONS
     if _PRESET_OPTIONS is not None:
         return _PRESET_OPTIONS
@@ -100,7 +102,7 @@ def _preset_options() -> list[tuple[str, int]]:
 
 
 def _ndim_int(ndim: str | int) -> int:
-    """Normalizes '2D'/'3D' or 2/3 to dimension number; cannot parse and returns 0."""
+    "Normalizes '2D'/'3D' or 2/3 to dimension number; cannot parse and returns 0."
     digits = "".join(ch for ch in str(ndim) if ch.isdigit())
     try:
         return int(digits) if digits else 0
@@ -119,7 +121,6 @@ def experiment_type_options(ndim: str | int = "") -> list[str]:
         return []
     return [name for name, n in _preset_options() if n == target]
 
-
 _FIELD_LABELS: dict[str, str] = {
     key: label
     for schema in (SAMPLE_FIELDS, DATA_FIELDS, EXPERIMENT_FIELDS)
@@ -131,7 +132,7 @@ _DATA_FIELD_LABELS["experiment_type"] = tr("Data type")
 
 
 def note_fields(kind: str) -> tuple[tuple[str, str], ...]:
-    """A list of annotation fields at a certain level (key, display name)."""
+    'A list of annotation fields at a certain level (key, display name).'
     return _FIELD_BY_KIND.get(kind, ())
 
 
@@ -141,11 +142,21 @@ def format_fields(fields: dict, labels: dict | None = None) -> str:
     """
     label_map = labels if labels is not None else _FIELD_LABELS
     lines: list[str] = []
+    inline: list[str] = []
     for key, value in (fields or {}).items():
         text = str(value or "").strip()
         if not text:
             continue
-        lines.append(f"{label_map.get(key, key)}: {text}")
+        field = f"{label_map.get(key, key)}: {text}"
+        if key == "notes" or "\n" in text or "\r" in text:
+            if inline:
+                lines.append("  ·  ".join(inline))
+                inline = []
+            lines.append(field)
+        else:
+            inline.append(field)
+    if inline:
+        lines.append("  ·  ".join(inline))
     return "\n".join(lines)
 
 
@@ -161,8 +172,9 @@ def _loads(value: str) -> dict:
     return data if isinstance(data, dict) else {}
 
 
+
 def sample_note_fields(project) -> dict:
-    """Project structured comments: protein.notes in JSON fields."""
+    'Project structured comments: protein.notes in JSON fields.'
     protein = getattr(project, "protein", None)
     return _loads(str(getattr(protein, "notes", "") or ""))
 
@@ -182,6 +194,7 @@ def sample_note(project) -> str:
         return format_fields(fields)
     protein = getattr(project, "protein", None)
     return str(getattr(protein, "notes", "") or "")
+
 
 
 def experiment_note_fields(project, exp_id: str) -> dict:
@@ -212,6 +225,7 @@ def experiment_note(project, exp_id: str) -> str:
     return str(getattr(entry, "notes", "") or "") if entry is not None else ""
 
 
+
 def data_note_fields(project, exp_id: str, data_id: str) -> dict:
     if project is None:
         return {}
@@ -219,7 +233,13 @@ def data_note_fields(project, exp_id: str, data_id: str) -> dict:
     if entry is None:
         return {}
     value = ((entry.metadata or {}).get("data_notes") or {}).get(data_id)
-    return dict(value) if isinstance(value, dict) else {}
+    fields = dict(value) if isinstance(value, dict) else {}
+    if not fields.get("notes"):
+        data = next((d for d in entry.data if d.id == data_id), None)
+        title = bruker_title(data)
+        if title:
+            fields["notes"] = title
+    return fields
 
 
 def set_data_note_fields(project, exp_id: str, data_id: str, fields: dict) -> None:
@@ -236,7 +256,7 @@ def set_data_note_fields(project, exp_id: str, data_id: str, fields: dict) -> No
 
 
 def group_note(project, exp_id: str, group_id: str) -> str:
-    """Data group comments: List the comments for each data in the group."""
+    'Data group comments: List the comments for each data in the group.'
     if project is None:
         return ""
     exp = project.experiment(exp_id)
@@ -246,7 +266,7 @@ def group_note(project, exp_id: str, group_id: str) -> str:
     if group is None:
         return ""
     lines: list[str] = []
-    for data_id in group.data_ids or []:
+    for data_id in (group.data_ids or []):
         d = next((x for x in exp.data if x.id == data_id), None)
         label = (d.title or f"Data {data_id}") if d else f"Data {data_id}"
         note = data_note(project, exp_id, data_id)
@@ -271,8 +291,9 @@ def data_note(project, exp_id: str, data_id: str) -> str:
     return str(raw or "") if isinstance(raw, str) else ""
 
 
+
 def _acqus_value(raw_dir, key: str) -> str:
-    """Read a single parameter value (such as TE) from Bruker acqus."""
+    'Read a single parameter value (such as TE) from Bruker acqus.'
     acqus = Path(raw_dir) / "acqus"
     try:
         text = acqus.read_text(encoding="latin-1", errors="replace")
@@ -356,7 +377,9 @@ def _raw_dir_for(project, exp_id: str, data_id: str) -> Path | None:
     return None
 
 
-def auto_fill_notes_from_metadata(manager, exp_id: str, data_id: str, metadata: dict) -> dict:
+def auto_fill_notes_from_metadata(
+    manager, exp_id: str, data_id: str, metadata: dict
+) -> dict:
     """After importing, press Bruker file / metadata to automatically fill in the fields that can
     be filled in the sample data annotation (without overwriting existing values). Sample data
     annotation: dimension / data type (presets name) / core / temperature (acqus TE). Return the
@@ -369,6 +392,10 @@ def auto_fill_notes_from_metadata(manager, exp_id: str, data_id: str, metadata: 
     dataset = (metadata or {}).get("dataset") or {}
 
     data_fields = dict(data_note_fields(project, exp_id, data_id))
+    if not data_fields.get("notes"):
+        title = bruker_title(manager.data(exp_id, data_id), _raw_dir_for(manager, exp_id, data_id))
+        if title:
+            data_fields["notes"] = title
     ndim = dataset.get("ndim")
     if ndim and not data_fields.get("dimension"):
         data_fields["dimension"] = f"{int(ndim)}D"
@@ -397,6 +424,7 @@ def auto_fill_notes_from_metadata(manager, exp_id: str, data_id: str, metadata: 
         if temp:
             data_fields["temperature"] = temp
 
+
     if not data_fields.get("sampling_mode"):
         mode_text = sampling_mode_text(dataset)
         if mode_text:
@@ -407,3 +435,31 @@ def auto_fill_notes_from_metadata(manager, exp_id: str, data_id: str, metadata: 
         if value:
             filled[f"data.{key}"] = value
     return filled
+
+
+def bruker_title(data, raw_dir: Path | None = None) -> str:
+    """Read the original or imported Bruker title without altering the data."""
+    source = str(getattr(data, 'source', '') or '')
+    roots = [Path(source)] if source else []
+    if raw_dir is not None:
+        roots.append(raw_dir)
+    for root in roots:
+        try:
+            candidates = [root / 'title']
+            pdata = root / 'pdata'
+            if pdata.is_dir():
+                candidates.extend(p / 'title' for p in sorted(
+                    (p for p in pdata.iterdir() if p.is_dir() and p.name.isdigit()),
+                    key=lambda p: int(p.name)))
+            for path in candidates:
+                if path.is_file():
+                    raw = path.read_bytes()
+                    try:
+                        text = raw.decode('utf-8-sig')
+                    except UnicodeDecodeError:
+                        text = raw.decode('latin-1')
+                    if text.strip():
+                        return text.replace('\r\n', '\n').replace('\r', '\n').strip()
+        except OSError:
+            continue
+    return ''

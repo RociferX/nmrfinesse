@@ -49,6 +49,7 @@ from ui_support.i18n import tr
 from ui_support.numeric_inputs import CommitDoubleSpinBox, CommitSpinBox
 from viewer.contour_layer import ContourLayer
 from viewer.nmr_viewbox import NMRViewBox
+from viewer.overview import SpectrumOverview
 from viewer.spectrum import Spectrum, Spectrum1D, SpectrumAxis
 
 _COLORS = ("#1f77b4", "#d62728", "#2ca02c", "#9467bd", "#ff7f0e", "#17becf")
@@ -61,6 +62,9 @@ class _ContourControls(QWidget):
     def __init__(self, groups):
         super().__init__()
         self._groups = groups
+        for group in groups:
+            group.setParent(self)
+            group.show()
         self._compact = None
         self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Maximum)
         self._grid = QGridLayout(self)
@@ -72,16 +76,18 @@ class _ContourControls(QWidget):
         self._reflow()
 
     def _reflow(self):
-        required = sum(group.minimumSizeHint().width() for group in self._groups) + 40
+        groups = tuple(group for group in self._groups if not group.isHidden())
+        required = sum(group.minimumSizeHint().width() for group in groups) + 20 * (len(groups) - 1)
         compact = self.width() < required
-        if compact == self._compact:
+        if compact == self._compact and groups == getattr(self, '_visible_groups', None):
             return
         self._compact = compact
+        self._visible_groups = groups
         for group in self._groups:
             self._grid.removeWidget(group)
         for column in range(3):
-            self._grid.setColumnStretch(column, 0 if compact else 1)
-        for index, group in enumerate(self._groups):
+            self._grid.setColumnStretch(column, int(not compact and column < len(groups)))
+        for index, group in enumerate(groups):
             self._grid.addWidget(group, index if compact else 0,
                                  0 if compact else index, 1, 3 if compact else 1,
                                  Qt.AlignmentFlag.AlignTop)
@@ -180,7 +186,7 @@ class _BoxSelectOverlay(QWidget):
 
 
 def _label_text_box(pos: QPointF, tw: float, th: float) -> QRectF:
-    """Label text box (centered on label position; shared with drawing and hit detection)."""
+    'Label text box (centered on label position; shared with drawing and hit detection).'
     return QRectF(pos.x() - tw / 2.0, pos.y() - th / 2.0, tw, th)
 
 
@@ -198,11 +204,11 @@ class _LabelOverlay(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
     def visible_label_count(self) -> int:
-        """The current number of tags that should be displayed (test/For status)."""
+        'The current number of tags that should be displayed (test/For status).'
         return len(self._collect_labels())
 
     def _collect_labels(self) -> list[tuple[float, float, str]]:
-        """Collect the labels that should be displayed (data coordinates xi, yi, text)."""
+        'Collect the labels that should be displayed (data coordinates xi, yi, text).'
         viewer = self._viewer
         if (
             viewer._primary is None
@@ -296,7 +302,7 @@ class _LabelOverlay(QWidget):
 
 
 class SpectrumViewer(QWidget):
-    """A 2D spectrum viewer that supports multi-spectrum overlay."""
+    'A 2D spectrum viewer that supports multi-spectrum overlay.'
 
     peak_clicked = Signal(int)
     manual_peak_requested = Signal(dict)
@@ -329,6 +335,8 @@ class SpectrumViewer(QWidget):
         self._suppress_click = False
         self._mode_1d = False
         self._primary_1d: Spectrum1D | None = None
+        self._display_ppm_shifts: dict[int, float] = {}
+        self._peaks_aligned = True
         self._plot_1d: pg.PlotDataItem | None = None
         self._peaks_visible = True
 
@@ -597,6 +605,10 @@ class SpectrumViewer(QWidget):
 
         self._label_overlay = _LabelOverlay(self.plot.viewport(), self)
         self._label_overlay.setGeometry(self.plot.viewport().rect())
+        self._overview = SpectrumOverview(self.plot.viewport(), self)
+        self.plot.getViewBox().sigRangeChanged.connect(self._overview.refresh)
+        self.plot.getViewBox().sigResized.connect(self._overview.refresh)
+        self.plot.scene().changed.connect(self._overview.refresh)
         self.plot.getViewBox().sigRangeChanged.connect(
             lambda *_: self._label_overlay.update()
         )
@@ -632,13 +644,17 @@ class SpectrumViewer(QWidget):
         """
         self.show_1d_button.setVisible(visible)
         for group in (
-            self.level_controls, self.count_controls, self.aspect_controls,
-            self.level_label, self.count_label, self.aspect_label,
-            self.level_slider, self.count_slider, self.aspect_slider,
+            self.level_controls, self.count_controls,
+            self.level_label, self.count_label,
+            self.level_slider, self.count_slider,
         ):
             group.setVisible(visible)
+        self.contour_controls._reflow()
 
     def clear(self) -> None:
+        self._display_ppm_shifts = {}
+        self.plot.getViewBox().setAspectLocked(False)
+        self.plot.getViewBox().wheel_y_exponent = 1.0
         self._mode_1d = False
         self._primary_1d = None
         if self._plot_1d is not None:
@@ -649,6 +665,8 @@ class SpectrumViewer(QWidget):
         self.set_1d_mode(False)
 
         self.plot.getViewBox().invertY(False)
+        self.plot.getViewBox().invertX(False)
+        self._overview.hide()
         self._label_overlay.update()
         for layer in self.layers:
             self.plot.removeItem(layer)
@@ -707,6 +725,7 @@ class SpectrumViewer(QWidget):
             self._primary = spectrum
             self._setup_axes(spectrum)
             self.reset_view()
+            self.set_aspect_ratio(self._aspect_ratio_from_slider(self.aspect_slider.value()))
         self._update_data_bounds()
         self._refresh_phase_availability()
         return name
@@ -857,7 +876,7 @@ class SpectrumViewer(QWidget):
         self.set_contour_start(percent)
 
     def set_contour_start(self, percent: float) -> None:
-        """Set committed contour-start percentage and synchronize the input, slider and layers."""
+        'Set committed contour-start percentage and synchronize the input, slider and layers.'
         with QSignalBlocker(self.level_label):
             self.level_label.setValue(percent)
         percent = self.level_label.value()
@@ -871,8 +890,6 @@ class SpectrumViewer(QWidget):
         self.count_slider.setValue(value)
 
     def _on_aspect_spin_changed(self, value: float) -> None:
-        if self._mode_1d:
-            return
         self.aspect_slider.setValue(int(round(value * 100.0)))
 
     @staticmethod
@@ -899,14 +916,54 @@ class SpectrumViewer(QWidget):
         return ticks, axis.label
 
     def _setup_axes(self, spectrum: Spectrum) -> None:
+        self.plot.getViewBox().invertX(False)
+        self.plot.getViewBox().invertY(False)
         x_axis = spectrum.x_axis
         y_axis = spectrum.y_axis
         x_ticks, x_label = self._axis_ticks(x_axis, 10)
         y_ticks, y_label = self._axis_ticks(y_axis, 10)
+        if self._display_ppm_shifts:
+            x_label = self._aligned_axis_label(x_axis)
+            y_label = self._aligned_axis_label(y_axis)
         self.plot.getAxis("bottom").setTicks([x_ticks])
         self.plot.getAxis("left").setTicks([y_ticks])
         self.plot.setLabels(bottom=x_label, left=y_label)
         self._connect_axis_refresh()
+        self._refresh_visible_ticks()
+
+    def axis_dimension(self, axis: SpectrumAxis) -> int:
+        """Logical axis index, including the currently displayed 3D plane."""
+        if self._primary is None:
+            return -1
+        local = self._primary.axes.index(axis)
+        dims = getattr(self._primary, "dim_indices", None)
+        return int(dims[local]) if dims is not None else local
+
+    def display_shift_for_axis(self, axis: SpectrumAxis) -> float:
+        return self._display_ppm_shifts.get(self.axis_dimension(axis), 0.0)
+
+    def set_display_ppm_shifts(self, shifts: dict[int, float]) -> None:
+        """Change displayed coordinates only; arrays and SpectrumAxis stay native."""
+        self._display_ppm_shifts = dict(shifts)
+        if self._primary is not None:
+            self._setup_axes(self._primary)
+            self._setup_strip_axes()
+            self._apply_peak_items()
+        self.crosshair_label.setText(tr("Move mouse to read ppm"))
+
+    def _aligned_axis_label(self, axis: SpectrumAxis) -> str:
+        shift = self.display_shift_for_axis(axis)
+        return f"{axis.label} (ppm; Δ{shift:+.3f} ppm)"
+
+    def _ppm_readout(self, x_ppm: float, y_ppm: float) -> str:
+        if not self._display_ppm_shifts:
+            return (f"{self._primary.x_axis.label} {x_ppm:.3f} ppm | "
+                    f"{self._primary.y_axis.label} {y_ppm:.3f} ppm")
+        return " | ".join(
+            tr("{p0} aligned ppm: {p1:.3f} (original ppm: {p2:.3f})",
+               p0=axis.label, p1=value + self.display_shift_for_axis(axis), p2=value)
+            for axis, value in ((self._primary.x_axis, x_ppm), (self._primary.y_axis, y_ppm))
+        )
 
 
     def _connect_axis_refresh(self) -> None:
@@ -926,8 +983,11 @@ class SpectrumViewer(QWidget):
             self._axis_refresh_connected = False
 
     def _refresh_visible_ticks(self, *_args) -> None:
-        """Rebuild bottom axis by visible data range/left axis scale (max 5 per axis)."""
-        if not self.layers or self._mode_1d:
+        'Rebuild bottom axis by visible data range/left axis scale (max 5 per axis).'
+        if self._mode_1d:
+            self.plot.getAxis('bottom').setTicks(None)
+            return
+        if not self.layers:
             return
         spectrum = self.layer_spectra[0] if self.layer_spectra else None
         if spectrum is None:
@@ -937,14 +997,21 @@ class SpectrumViewer(QWidget):
         except Exception:  # noqa: BLE001
             return
         extend = getattr(self, 'extend_axis_ticks', False)
-        x_ticks, _ = self._visible_axis_ticks(spectrum.x_axis, x_range, extend=extend)
-        y_ticks, _ = self._visible_axis_ticks(spectrum.y_axis, y_range, extend=extend)
+        x_ticks, _ = self._visible_axis_ticks(
+            spectrum.x_axis, x_range, extend=extend,
+            ppm_shift=self.display_shift_for_axis(spectrum.x_axis),
+        )
+        y_ticks, _ = self._visible_axis_ticks(
+            spectrum.y_axis, y_range, extend=extend,
+            ppm_shift=self.display_shift_for_axis(spectrum.y_axis),
+        )
         self.plot.getAxis("bottom").setTicks([x_ticks])
         self.plot.getAxis("left").setTicks([y_ticks])
 
     @staticmethod
     def _visible_axis_ticks(
-        axis: SpectrumAxis, span: tuple[float, float], *, extend: bool = False
+        axis: SpectrumAxis, span: tuple[float, float], *, extend: bool = False,
+        ppm_shift: float = 0.0,
     ) -> tuple[list[tuple[int, str]], str]:
         """Select 5 equidistant ticks within the visible span (index position, label rounding
         ppm/serial number).
@@ -967,7 +1034,9 @@ class SpectrumViewer(QWidget):
             if axis.sw_hz > 0 and axis.obs_mhz > 0:
                 ppm = (float(axis.ppm[0]) + i * float(axis.ppm[1] - axis.ppm[0])
                        if extend else axis.ppm_at(i))
+                ppm += ppm_shift
                 label = (
+                    f"{ppm:.3f}" if ppm_shift else
                     f"{round(ppm):.0f}"
                     if abs(ppm - round(ppm)) < 0.1
                     else f"{ppm:.1f}"
@@ -1005,13 +1074,17 @@ class SpectrumViewer(QWidget):
         for layer in self.layers:
             layer.setVisible(False)
         axis = spectrum1d.axis
+        self.plot.getAxis("left").setTicks(None)
+        self.plot.getAxis("left").enableAutoSIPrefix(True)
+        self.plot.getAxis("left").setStyle(autoExpandTextSpace=True)
         vb = self.plot.getViewBox()
+        vb.wheel_y_exponent = 1.5
 
 
         self.set_aspect_ratio(None)
 
         self.show_1d_button.setVisible(False)
-
+        # 1D keeps aspect controls; contour controls apply only to 2D.
         self._set_2d_controls_visible(False)
         self.phase_panel.set_visible_1d_mode(True)
         if spectrum1d.ppm_valid:
@@ -1039,6 +1112,7 @@ class SpectrumViewer(QWidget):
             self.plot.getAxis('bottom').setTicks(None)
         self.set_1d_mode(False)
         self.reset_view()
+        self.set_aspect_ratio(self._aspect_ratio_from_slider(self.aspect_slider.value()))
         self._connect_axis_refresh()
         self._refresh_phase_availability()
         return name or (
@@ -1046,7 +1120,7 @@ class SpectrumViewer(QWidget):
         )
 
     def _restore_2d(self) -> None:
-        """Exit the 1D view and restore the 2D outline layer."""
+        'Exit the 1D view and restore the 2D outline layer.'
         if not self._mode_1d:
             return
         self._mode_1d = False
@@ -1057,6 +1131,7 @@ class SpectrumViewer(QWidget):
         for layer in self.layers:
             layer.setVisible(True)
         vb = self.plot.getViewBox()
+        vb.wheel_y_exponent = 1.0
         vb.invertX(False)
         vb.invertY(False)
         self._set_2d_controls_visible(True)
@@ -1077,7 +1152,7 @@ class SpectrumViewer(QWidget):
         self.phase_panel.set_visible_1d_mode(self._phase_target() != "")
 
     def _phase_target(self) -> str:
-        """Current phaseable 1D targets: Primary 1D trace / 1D strip."""
+        'Current phaseable 1D targets: Primary 1D trace / 1D strip.'
         if self._mode_1d and self._primary_1d is not None:
             return "1d"
         if self._strips_active and self._primary is not None:
@@ -1093,7 +1168,7 @@ class SpectrumViewer(QWidget):
         """
         try:
             from scipy.signal import hilbert
-        except ImportError:
+        except ImportError:  # pragma: no cover
             return np.asarray(real, dtype=float)
         data = np.asarray(real, dtype=float)
         if data.ndim != 1 or data.size == 0:
@@ -1144,6 +1219,7 @@ class SpectrumViewer(QWidget):
                 self._box_overlay.setGeometry(self.plot.viewport().rect())
             if self._label_overlay is not None:
                 self._label_overlay.setGeometry(self.plot.viewport().rect())
+            self._overview.refresh()
             return super().eventFilter(obj, event)
         if obj is self._plot_scene:
             kind = self._mouse_event_kind(event.type())
@@ -1232,7 +1308,7 @@ class SpectrumViewer(QWidget):
             self._box_overlay.clear()
 
     def _finish_box_select(self, scene_pos) -> None:
-        """Frame selection ends: Select all peaks within the rectangle and link the peak table."""
+        'Frame selection ends: Select all peaks within the rectangle and link the peak table.'
         if self._box_press_scene is None or self._primary is None:
             self._cancel_box_select()
             return
@@ -1304,7 +1380,7 @@ class SpectrumViewer(QWidget):
         self._plot_1d.setData(self._primary_1d.x_values(), phased)
 
     def _refresh_strips_phase(self) -> None:
-        """Recalculate two 1D strip traces according to the current phase (for display)."""
+        'Recalculate two 1D strip traces according to the current phase (for display).'
         pos = getattr(self, "_strip_pos", None)
         if pos is None or not self._strips_active or self._primary is None:
             return
@@ -1328,7 +1404,7 @@ class SpectrumViewer(QWidget):
             self.set_contour_signs(hide_positive=False, hide_negative=False)
 
     def set_1d_mode(self, active: bool) -> None:
-        """Switch 1D spectrum display (TopSpin type): Crosshair + superior/right 1D strip."""
+        'Switch 1D spectrum display (TopSpin type): Crosshair + superior/right 1D strip.'
         active = bool(active)
         if self._primary is None or self._mode_1d:
             active = False
@@ -1381,6 +1457,14 @@ class SpectrumViewer(QWidget):
         y_axis = self._primary.y_axis
         x_ticks, x_label = self._axis_ticks(x_axis, 6)
         y_ticks, y_label = self._axis_ticks(y_axis, 6)
+        if self._display_ppm_shifts:
+            x_ticks, _ = self._visible_axis_ticks(
+                x_axis, (0, x_axis.size - 1), ppm_shift=self.display_shift_for_axis(x_axis),
+            )
+            y_ticks, _ = self._visible_axis_ticks(
+                y_axis, (0, y_axis.size - 1), ppm_shift=self.display_shift_for_axis(y_axis),
+            )
+            x_label, y_label = self._aligned_axis_label(x_axis), self._aligned_axis_label(y_axis)
         self.strip_top.getAxis("bottom").setTicks([x_ticks])
         self.strip_top.setLabels(bottom=x_label, left="Intensity")
         self.strip_right.getAxis("left").setTicks([y_ticks])
@@ -1412,7 +1496,7 @@ class SpectrumViewer(QWidget):
         self._crosshair_h.setPos(y)
 
     def _restore_strips(self) -> None:
-        """Hide bars and crosshairs."""
+        'Hide bars and crosshairs.'
         self.strip_top.hide()
         self.strip_right.hide()
         self._crosshair_v.hide()
@@ -1421,7 +1505,7 @@ class SpectrumViewer(QWidget):
     # ------------------------------------------------------------ layers
 
     def _on_layer_context_menu(self, pos) -> None:
-        """Right click on the layer list: Delete this layer/Delete all layers."""
+        'Right click on the layer list: Delete this layer/Delete all layers.'
         item = self.layer_list.itemAt(pos)
         if item is None:
             return
@@ -1457,20 +1541,25 @@ class SpectrumViewer(QWidget):
     # ------------------------------------------------------------- view
 
     def reset_view(self) -> None:
-        """Restore the full visible range of 1D traces or overlaid spectra."""
+        'Restore the full visible range of 1D traces or overlaid spectra.'
         if self._mode_1d and self._primary_1d is not None:
             curves = [item for item in self.plot.listDataItems()
                       if isinstance(item, pg.PlotDataItem) and item.isVisible()
                       and item.xData is not None and item.xData.size]
             if not curves:
                 return
+            x0 = min(float(np.min(item.xData)) for item in curves)
+            x1 = max(float(np.max(item.xData)) for item in curves)
+            y0 = min(float(np.min(item.yData)) for item in curves)
+            y1 = max(float(np.max(item.yData)) for item in curves)
+            amplitude = max(abs(y0), abs(y1)) or 1.0
+            y0, y1 = -amplitude, amplitude
+            step = (x1 - x0) / max(1, self._primary_1d.axis.size - 1)
             self.plot.getViewBox().set_full_range(
-                (min(float(np.min(item.xData)) for item in curves),
-                 max(float(np.max(item.xData)) for item in curves)),
-                (min(float(np.min(item.yData)) for item in curves),
-                 max(float(np.max(item.yData)) for item in curves)),
-                padding=0.02,
+                (x0, x1), (y0, y1), padding=0,
+                min_span=(max(step * 2, 1e-12), max((y1 - y0) * 1e-6, 1e-12)),
             )
+            self._overview.refresh()
             return
         if not self.layers:
             return
@@ -1515,8 +1604,6 @@ class SpectrumViewer(QWidget):
 
     def _on_aspect_changed(self, value: int) -> None:
         """Aspect ratio slider callback."""
-        if self._mode_1d:
-            return
         ratio = self._aspect_ratio_from_slider(value)
         with QSignalBlocker(self.aspect_label):
             self.aspect_label.setValue(0.0 if ratio is None else ratio)
@@ -1525,17 +1612,20 @@ class SpectrumViewer(QWidget):
 
 
     def set_aspect_ratio(self, ratio: float | None) -> None:
-        """Lock the display aspect ratio (data unit x/y); None means free stretching (default)."""
+        'Lock the display aspect ratio (data unit x/y); None means free stretching (default).'
         vb = self.plot.getViewBox()
         if ratio is None:
             vb.setAspectLocked(False)
         else:
+            if self._mode_1d and vb._min_rect is not None:
+                (x0, x1), (y0, y1) = vb._min_rect
+                ratio *= (y1 - y0) / max(x1 - x0, 1e-12)
             vb.setAspectLocked(True, ratio=float(ratio))
 
     # ------------------------------------------------------------- peaks
 
     def set_peaks_visible(self, visible: bool) -> None:
-        """Show/Hide all peak markers(check control callback)."""
+        'Show/Hide all peak markers(check control callback).'
         visible = bool(visible)
         if visible == self._peaks_visible:
             return
@@ -1544,9 +1634,12 @@ class SpectrumViewer(QWidget):
             self.show_peaks_checkbox.setChecked(visible)
         self._apply_peak_items()
 
-    def set_peaks(self, peaks: list[dict], show_labels: bool = True) -> None:
-        """Overlay peak label: dict supports H_shift/N_shift or x_ppm/y_ppm, optional label."""
+    def set_peaks(
+        self, peaks: list[dict], show_labels: bool = True, *, aligned: bool = True,
+    ) -> None:
+        'Overlay peak label: dict supports H_shift/N_shift or x_ppm/y_ppm, optional label.'
         self._peaks = list(peaks)
+        self._peaks_aligned = aligned
         self._selected_peak = None
         self._box_selected_rows.clear()
         self._drag_label_row = None
@@ -1626,7 +1719,7 @@ class SpectrumViewer(QWidget):
         QTimer.singleShot(400, self._clear_flash)
 
     def _clear_flash(self) -> None:
-        """Remove flicker ring (timer trigger or external cleanup)."""
+        'Remove flicker ring (timer trigger or external cleanup).'
         if self._flash_item is not None:
             try:
                 self.plot.removeItem(self._flash_item)
@@ -1635,25 +1728,23 @@ class SpectrumViewer(QWidget):
             self._flash_item = None
 
     def set_peak_size(self, size: float) -> None:
-        """Peak marker size (data coordinate units, scaled with spectrum); 0.2.199-patch29az."""
+        'Peak marker size (data coordinate units, scaled with spectrum); 0.2.199-patch29az.'
         self._peak_size = max(0.5, float(size))
         self._apply_peak_items()
 
     # ----------------------------------------------------------------
-    # ---------------------------------------------------------------- #
-    # ----------------------------------------------------------------
-    # ---------------------------------------------------------------- #
-    # ----------------------------------------------------------------
-    # ---------------------------------------------------------------- #
+
+
+
     # ----------------------------------------------------------------
     @property
     def peak_labels_visible(self) -> bool:
-        """Whether the peak label (Assignment) is currently displayed."""
+        'Whether the peak label (Assignment) is currently displayed.'
         return bool(self._show_peak_labels)
 
     @property
     def primary_spectrum(self):
-        """The current main score (the first one in the overlay; not loaded is None)."""
+        'The current main score (the first one in the overlay; not loaded is None).'
         return self._primary
 
     @property
@@ -1676,7 +1767,7 @@ class SpectrumViewer(QWidget):
             self.layers[0].setPen(pen, pg.mkPen(color, width=1))
 
     def refresh_levels(self) -> None:
-        """Press current contour starting point/Layer redraw contours."""
+        'Press current contour starting point/Layer redraw contours.'
         self._update_levels()
 
     def set_peak_labels_visible(self, visible: bool) -> None:
@@ -1691,7 +1782,7 @@ class SpectrumViewer(QWidget):
         self._label_overlay.update()
 
     def set_peak_click_mode(self, mode: str) -> None:
-        """Left-click behaviour: select=select peak/add=add peak/delete=delete peak."""
+        'Left-click behaviour: select=select peak/add=add peak/delete=delete peak.'
         self._click_mode = mode if mode in ("select", "add", "delete") else "select"
         if mode != "select":
             self._cancel_box_select()
@@ -1751,6 +1842,14 @@ class SpectrumViewer(QWidget):
         x_ppm = _pick(_dim_of(x_axis), "H_shift", "x_ppm")
         y_ppm = _pick(_dim_of(y_axis), "N_shift", "y_ppm")
         return x_ppm, y_ppm
+
+    def _peak_native_xy(self, peak: dict) -> tuple[float, float]:
+        """Imported rows are aligned ppm; contour items remain native data indices."""
+        x_ppm, y_ppm = self._peak_xy(peak)
+        if not self._peaks_aligned:
+            return x_ppm, y_ppm
+        return (x_ppm - self.display_shift_for_axis(self._primary.x_axis),
+                y_ppm - self.display_shift_for_axis(self._primary.y_axis))
 
     def _label_widget_pos(self, row: int) -> QPointF | None:
         """Assignment screen position (0.2.199-patch29cl/patch29cm): Default = the peak layer is
@@ -1877,6 +1976,8 @@ class SpectrumViewer(QWidget):
                 return True
             if not value:
                 return True
+            if self._peaks_aligned:
+                value -= self._display_ppm_shifts.get(int(slice_axis), 0.0)
             if abs(value - float(slice_ppm)) <= 0.5 * float(slice_step):
                 return True
 
@@ -1907,7 +2008,7 @@ class SpectrumViewer(QWidget):
         for row, peak in enumerate(self._peaks):
             if not visible[row]:
                 continue
-            x_ppm, y_ppm = self._peak_xy(peak)
+            x_ppm, y_ppm = self._peak_native_xy(peak)
             xs.append(float(x_axis.index_at_f(x_ppm)))
 
 
@@ -2042,6 +2143,9 @@ class SpectrumViewer(QWidget):
         x_ppm = float(x_axis.ppm_at(xi))
         y_ppm = float(y_axis.ppm_at(yi))
         peak: dict = {"label": ""}
+        if self._peaks_aligned:
+            x_ppm += self.display_shift_for_axis(x_axis)
+            y_ppm += self.display_shift_for_axis(y_axis)
         dims = getattr(self._primary, "dim_indices", None)
         if dims is not None:
             for axis, ppm in ((x_axis, x_ppm), (y_axis, y_ppm)):
@@ -2052,12 +2156,19 @@ class SpectrumViewer(QWidget):
                 dim = int(dims[local]) if local < len(dims) else local
                 if 0 <= dim <= 2:
                     peak[f"F{dim + 1}_shift"] = ppm
+            fixed = getattr(self._primary, "slice_axis", None)
+            fixed_ppm = getattr(self._primary, "slice_ppm", None)
+            if fixed is not None and fixed_ppm is not None:
+                peak[f"F{int(fixed) + 1}_shift"] = (
+                    float(fixed_ppm) + (self._display_ppm_shifts.get(int(fixed), 0.0)
+                                        if self._peaks_aligned else 0.0)
+                )
         else:
             peak["H_shift"] = x_ppm
             peak["N_shift"] = y_ppm
         try:
             peak["Intensity"] = float(self._primary.data[yi, xi])
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         return peak
 
@@ -2073,7 +2184,7 @@ class SpectrumViewer(QWidget):
                 and row not in self._visible_peak_rows
             ):
                 continue
-            x_ppm, y_ppm = self._peak_xy(peak)
+            x_ppm, y_ppm = self._peak_native_xy(peak)
             dx = x_axis.index_at(x_ppm) - xi
             dy = y_axis.index_at(y_ppm) - yi
             dist = float(np.hypot(dx, dy))
@@ -2111,7 +2222,7 @@ class SpectrumViewer(QWidget):
                 x_ppm = x_axis.ppm[0] + point.x() * (x_axis.ppm[1] - x_axis.ppm[0])
                 y_ppm = y_axis.ppm[0] + point.y() * (y_axis.ppm[1] - y_axis.ppm[0])
                 self.crosshair_label.setText(
-                    f'{x_axis.label} {x_ppm:.3f} ppm | {y_axis.label} {y_ppm:.3f} ppm'
+                    self._ppm_readout(float(x_ppm), float(y_ppm))
                 )
             return
         if self._strips_active:
@@ -2122,16 +2233,14 @@ class SpectrumViewer(QWidget):
             x_axis = self._primary.x_axis
             y_axis = self._primary.y_axis
             self.crosshair_label.setText(
-                f"{x_axis.label} {x_axis.ppm_at(xi):.3f} ppm | "
-                f"{y_axis.label} {y_axis.ppm_at(yi):.3f} ppm"
+                self._ppm_readout(x_axis.ppm_at(xi), y_axis.ppm_at(yi))
             )
         else:
 
             x_axis = self._primary.x_axis
             y_axis = self._primary.y_axis
             self.crosshair_label.setText(
-                f"{x_axis.label} {x_axis.ppm_at(xi):.3f} ppm | "
-                f"{y_axis.label} {y_axis.ppm_at(yi):.3f} ppm"
+                self._ppm_readout(x_axis.ppm_at(xi), y_axis.ppm_at(yi))
             )
 
     # ------------------------------------------------------------- misc

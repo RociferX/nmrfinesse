@@ -17,7 +17,7 @@ from core.user_errors import describe_exception
 from gui.pipeline_state import record_step_success
 from ui_support.i18n import tr
 
-_DATA_KEY_FILES = ("acqus", "acqu2s", "acqu3s", "ser", "fid", "nuslist")
+_DATA_KEY_FILES = ('acqus', 'acqu2s', 'acqu3s', 'ser', 'fid', 'nuslist')
 
 
 def _segment_dirs(root: Path) -> list[Path]:
@@ -27,7 +27,9 @@ def _segment_dirs(root: Path) -> list[Path]:
     user rule) -- The selected total file folder does not have acqus at the top level, which is
     a normal form of the container and should not be reported as missing.
     """
-    return sorted(p for p in root.iterdir() if p.is_dir() and (p / "acqus").is_file())
+    return sorted(
+        p for p in root.iterdir() if p.is_dir() and (p / "acqus").is_file()
+    )
 
 
 def is_segmented_container(path) -> bool:
@@ -57,7 +59,7 @@ def resolve_import_source(path) -> tuple[str, bool]:
     from workflow.import_workflow import ImportWorkflowError
 
     root = Path(path)
-    if (root / "acqus").is_file():
+    if (root / 'acqus').is_file():
         return str(root), False
     if not root.is_dir():
         raise ImportWorkflowError(tr("directory does not exist: {p0}", p0=root))
@@ -66,7 +68,7 @@ def resolve_import_source(path) -> tuple[str, bool]:
         raise ImportWorkflowError(
             tr(
                 "This directory holds {p0} data sets; single import only takes one data set. "
-                'Use "segmented data or repeated experiment overlay import" if these are parts '
+                "Use \"segmented data or repeated experiment overlay import\" if these are parts "
                 "of one acquisition (complementary NUS / repeated experiment), or import the "
                 "subdirectories one by one if they are independent data sets: {p1}",
                 p0=len(segments),
@@ -81,6 +83,8 @@ def resolve_import_source(path) -> tuple[str, bool]:
         if p.is_dir() and any((p / name).is_file() for name in _DATA_KEY_FILES)
     )
     if data_subdirs:
+
+
         raise ImportWorkflowError(
             tr(
                 "The subdirectories of the selected directory contain data files but none of them "
@@ -107,6 +111,7 @@ class ProcessingController:
 
     def __init__(self, manager: ProjectManager | None = None) -> None:
 
+
         self._backend_local = threading.local()
         self._manager = manager
 
@@ -116,8 +121,47 @@ class ProcessingController:
         """
         self._manager = manager
 
+    @staticmethod
+    def estimate_display_alignment(detected, reference, *, cur_nuclei=None, ref_nuclei=None):
+        """Estimate a view-only offset without changing processing or peak files."""
+        from workflow.display_alignment import estimate_display_alignment
+
+        return estimate_display_alignment(
+            detected, reference, cur_nuclei=cur_nuclei, ref_nuclei=ref_nuclei,
+        )
+
+    def backup_picked_peaks(self, exp_id, data_id, rows):
+        """Keep a dated CSV before replacing the displayed table with a reference."""
+        from datetime import datetime
+
+        from workflow.peak_snapshot import save_peak_snapshot
+
+        directory = self._manager.data_dir(exp_id, data_id, "peaks")
+        name = f"{exp_id}-{data_id}_picked_{datetime.now():%Y%m%d-%H%M%S-%f}.csv"
+        return save_peak_snapshot(directory / name, rows)
+
+    @staticmethod
+    def restore_picked_peaks(path):
+        """Load a picked-table snapshot without a reference alignment."""
+        from workflow.peak_snapshot import load_peak_snapshot
+
+        return load_peak_snapshot(Path(path))
+
+    def ucsf_export_entries(self):
+        """List current UCSF files without converting or changing project data."""
+        from workflow.ucsf_transfer import ucsf_export_entries
+
+        return ucsf_export_entries(self._manager)
+
+    @staticmethod
+    def transfer_ucsf_files(entries, destination):
+        """Copy selected UCSF results into the user's chosen folder."""
+        from workflow.ucsf_transfer import transfer_ucsf_files
+
+        return transfer_ucsf_files(entries, Path(destination))
+
     def _backend_instance(self):
-        """Create a backend lazily per thread to isolate mutable working-directory state."""
+        'Create a backend lazily per thread to isolate mutable working-directory state.'
         backend = getattr(self._backend_local, "instance", None)
         if backend is None:
             from backend.config import load_config
@@ -127,7 +171,10 @@ class ProcessingController:
             self._backend_local.instance = backend
         return backend
 
+
     # ------------------------------------------------------------------
+
+
 
     # ------------------------------------------------------------------
     def import_data(self, entry: ExperimentEntry, source: str, copy: bool = True) -> dict:
@@ -141,7 +188,9 @@ class ProcessingController:
         result = import_data(self._manager, entry.id, source, copy=copy)
         data_id = getattr(result, "data_id", "") or ""
         if data_id:
-            record_step_success(self._manager, entry.id, data_id, "import", params={"copy": copy})
+            record_step_success(
+                self._manager, entry.id, data_id, "import", params={"copy": copy}
+            )
         self._manager.save()
         return {
             "experiment_id": entry.id,
@@ -179,10 +228,7 @@ class ProcessingController:
         )
 
     def batch_import(
-        self,
-        exp_id: str,
-        folders: list,
-        group: bool = True,
+        self, exp_id: str, folders: list, group: bool = True,
         on_progress: Callable[[str, str, bool, str], None] | None = None,
     ) -> dict:
         """Batch import multiple data directories to experiment type; group=True is classified into
@@ -199,6 +245,7 @@ class ProcessingController:
         if entry is None:
             raise RuntimeError(tr("experiment type does not exist: {p0}", p0=exp_id))
 
+
         batch = ""
         if group:
             batch = self._manager.create_data_group(exp_id).id
@@ -212,19 +259,25 @@ class ProcessingController:
             }
             _f = Path(str(folder))
 
+
+
             if group and (
                 not (_f / "acqu2s").is_file()
                 or (_f / "acqu3s").is_file()
                 or (_f / "acqu3").is_file()
             ):
                 item["error"] = tr(
-                    "Non-2D spectrum, batch only supports 2D for now, has been skipped",
+                    "Non-2D spectrum, batch only supports 2D for now, has been "
+                    "skipped",
                 )
                 results.append(item)
                 if on_progress is not None:
                     on_progress(str(folder), "", False, item["error"])
                 continue
             try:
+
+
+
                 _is_nd = (_f / "acqu2s").is_file() or (_f / "acqu3s").is_file()
                 _data_file = "ser" if _is_nd else "fid"
                 if not (_f / _data_file).is_file():
@@ -403,6 +456,8 @@ class ProcessingController:
             **kwargs,
         )
 
+
+
         route = (params or {}).get("phase_route")
         label = {
             "unified": tr("Automatic optimisation"),
@@ -411,6 +466,7 @@ class ProcessingController:
         emit(tr("Spectrum generation finished ({p0})", p0=label))
         if data_id:
             record_step_success(self._manager, exp_id, data_id, "spectrum")
+
 
             self._snapshot_step(
                 exp_id,
@@ -445,22 +501,17 @@ class ProcessingController:
         try:
             from workflow.pick_peaks import pick_peaks as backend_pick_peaks
         except ImportError as exc:  # pragma: no cover
-            raise NotImplementedError(
-                tr(
-                    "Peak picking (workflow.pick_peaks) is to be implemented by Backend",
-                )
-            ) from exc
+            raise NotImplementedError(tr(
+                "Peak picking (workflow.pick_peaks) is to be implemented by "
+                "Backend",
+            )) from exc
         if self._manager is None:
             raise RuntimeError(tr("The processing controller is not bound to a project yet"))
         exp_id = exp_id or getattr(data, "exp_id", "")
         data_id = data_id or getattr(data, "id", "")
         result = backend_pick_peaks(
-            self._manager,
-            exp_id,
-            data_id,
-            sigma_multiplier=sigma_multiplier,
-            ref_peaks=ref_peaks,
-            ref_nuclei=ref_nuclei,
+            self._manager, exp_id, data_id, sigma_multiplier=sigma_multiplier,
+            ref_peaks=ref_peaks, ref_nuclei=ref_nuclei,
             tolerance_ppm=tolerance_ppm,
             ref_name=ref_name,
         )
@@ -469,15 +520,18 @@ class ProcessingController:
         self._manager.save()
         return result
 
+
     # ------------------------------------------------------------------
     def manual_fid_com(self, data, exp_id: str | None = None, data_id: str | None = None) -> str:
-        """Get/generate fid.com Content (for viewing and modification)."""
+        'Get/generate fid.com Content (for viewing and modification).'
         from workflow.manual import manual_fid_com as backend_manual_fid_com
 
         self._require_manager()
         exp_id = exp_id or getattr(data, "exp_id", "")
         data_id = data_id or getattr(data, "id", "")
-        return backend_manual_fid_com(self._manager, exp_id, data_id, self._backend_instance())
+        return backend_manual_fid_com(
+            self._manager, exp_id, data_id, self._backend_instance()
+        )
 
     def fid_carrier_options(self, data, exp_id=None, data_id=None) -> list[dict]:
         """Read optional reference alternatives for the manual FID editor."""
@@ -500,7 +554,6 @@ class ProcessingController:
 
         return replace_script_carrier(content, key, value)
 
-
     def run_manual_fid_com(
         self,
         data,
@@ -509,7 +562,7 @@ class ProcessingController:
         data_id: str | None = None,
         progress: Callable[[str], None] | None = None,
     ) -> str:
-        """Write and run the modified fid.com."""
+        'Write and run the modified fid.com.'
         from workflow.manual import run_manual_fid_com as backend_run_fid
 
         self._require_manager()
@@ -525,7 +578,9 @@ class ProcessingController:
         )
         if data_id:
             record_step_success(self._manager, exp_id, data_id, "fid")
-            self._snapshot_step(exp_id, data_id, ("manual_fid",), {"fid.com": content})
+            self._snapshot_step(
+                exp_id, data_id, ("manual_fid",), {"fid.com": content}
+            )
         self._manager.save()
         return result
 
@@ -536,13 +591,15 @@ class ProcessingController:
         exp_id: str | None = None,
         data_id: str | None = None,
     ) -> dict:
-        """Render spectrum step script (process.com/nus*.com)."""
+        'Render spectrum step script (process.com/nus*.com).'
         from workflow.manual import manual_scripts as backend_manual_scripts
 
         self._require_manager()
         exp_id = exp_id or getattr(data, "exp_id", "")
         data_id = data_id or getattr(data, "id", "")
-        return backend_manual_scripts(self._manager, exp_id, data_id, params=params)
+        return backend_manual_scripts(
+            self._manager, exp_id, data_id, params=params
+        )
 
     def run_manual_spectrum(
         self,
@@ -553,23 +610,21 @@ class ProcessingController:
         progress: Callable[[str], None] | None = None,
         script_baselines: dict[str, str] | None = None,
     ) -> str:
-        """Run spectrum script (consume converted fid)."""
+        'Run spectrum script (consume converted fid).'
         from workflow.manual import run_manual_spectrum as backend_run_spectrum
 
         self._require_manager()
         exp_id = exp_id or getattr(data, "exp_id", "")
         data_id = data_id or getattr(data, "id", "")
         result = backend_run_spectrum(
-            self._manager,
-            exp_id,
-            data_id,
-            scripts,
-            progress=progress,
+            self._manager, exp_id, data_id, scripts, progress=progress,
             script_baselines=script_baselines,
         )
         if data_id:
             record_step_success(self._manager, exp_id, data_id, "spectrum")
-            self._snapshot_step(exp_id, data_id, MANUAL_SPECTRUM_RUN_REFS, scripts)
+            self._snapshot_step(
+                exp_id, data_id, MANUAL_SPECTRUM_RUN_REFS, scripts
+            )
         self._manager.save()
         return result
 
@@ -632,14 +687,13 @@ class ProcessingController:
         peaks_dir.mkdir(parents=True, exist_ok=True)
         target_path = peaks_dir / f"{exp_id}-{data_id}.list"
 
+
         from core.peaks.localize import localization_records_path
 
         localization_records_path(target_path).unlink(missing_ok=True)
         list_path = export_peaks_poky(
-            target_path,
-            peaks,
-            ndim=ndim,
-            nuclei=nuclei,
+            target_path, peaks,
+            ndim=ndim, nuclei=nuclei,
         )
         if data_id:
             record_step_success(self._manager, exp_id, data_id, "peaks")
@@ -651,9 +705,7 @@ class ProcessingController:
         )
         try:
             self._manager.finish_run(
-                run.run_id,
-                "success",
-                outputs={"peaks": str(list_path)},
+                run.run_id, "success", outputs={"peaks": str(list_path)},
                 message=tr("Manual peak table editing ({p0} peak)", p0=len(peaks)),
             )
         except Exception:  # noqa: BLE001
@@ -771,6 +823,7 @@ class ProcessingController:
                 )
             )
         if int(getattr(experiment, "ndim", 2) or 2) != 2:
+
             raise RuntimeError(
                 tr(
                     "SMILE optimisation currently only supports 2D NUS (3D NUS is not available "
@@ -879,7 +932,7 @@ class ProcessingController:
         data_id: str,
         progress: Callable[[str], None] | None = None,
     ) -> str:
-        """Run and use SMILE Rank1, and refresh all companion products and traceability."""
+        'Run and use SMILE Rank1, and refresh all companion products and traceability.'
         import json
 
         from backend.runtime import CshRuntime
@@ -905,7 +958,11 @@ class ProcessingController:
         try:
             payload = json.loads(ranking_path.read_text(encoding="utf-8"))
             rank_params = next(
-                (dict(row) for row in payload.get("rows", []) if int(row.get("rank", 0) or 0) == 1),
+                (
+                    dict(row)
+                    for row in payload.get("rows", [])
+                    if int(row.get("rank", 0) or 0) == 1
+                ),
                 {},
             )
         except (OSError, ValueError, TypeError):
@@ -932,12 +989,19 @@ class ProcessingController:
             )
             if progress is not None:
                 progress(tr("Press Rank1 to rerun the script: {p0}", p0=script.name))
-            run_result = CshRuntime().run(["csh", script.name], cwd=str(proc), timeout=7200.0)
+            run_result = CshRuntime().run(
+                ["csh", script.name], cwd=str(proc), timeout=7200.0
+            )
             produced = proc / f"{data_id}.{ext}"
-            if run_result.returncode != 0 or not produced.is_file() or produced.stat().st_size == 0:
+            if (
+                run_result.returncode != 0
+                or not produced.is_file()
+                or produced.stat().st_size == 0
+            ):
                 raise RuntimeError(
                     tr(
-                        "Rank1 rerun failed (rc={p0}), not generated {p1}",
+                        "Rank1 rerun failed (rc={p0}), not generated "
+                        "{p1}",
                         p0=run_result.returncode,
                         p1=produced.name,
                     )
@@ -963,15 +1027,16 @@ class ProcessingController:
                     str(target), optimization_logs=logs, progress=progress
                 )
                 if quality_lines:
-                    write_quality_record(str(target), run_params, "\n".join(quality_lines))
+                    write_quality_record(
+                        str(target), run_params, "\n".join(quality_lines)
+                    )
             except Exception as exc:  # noqa: BLE001
                 if progress is not None:
-                    progress(
-                        tr(
-                            "Rank1 quality record generation failed and has been skipped: {p0}",
-                            p0=exc,
-                        )
-                    )
+                    progress(tr(
+                        "Rank1 quality record generation failed and has been skipped: "
+                        "{p0}",
+                        p0=exc,
+                    ))
 
             outputs = {"spectrum_path": str(target)}
             if ucsf_path:
@@ -998,6 +1063,7 @@ class ProcessingController:
                 )
                 self._manager.save()
             raise
+
 
     # ------------------------------------------------------------------
 
@@ -1039,23 +1105,32 @@ class ProcessingController:
             return ""
 
     def _fid_com_script(self, exp_id: str, data_id: str) -> dict[str, str]:
-        """Read fid.com(0.2.91 under process/; old data falls back to raw/)."""
+        'Read fid.com(0.2.91 under process/; old data falls back to raw/).'
         if self._manager is None:
             return {}
         try:
             entry = self._manager.data(exp_id, data_id)
         except Exception:  # noqa: BLE001
             return {}
-        raw = Path(entry.raw_dir) if getattr(entry, "raw_dir", "") else Path(entry.source)
+        raw = (
+            Path(entry.raw_dir)
+            if getattr(entry, "raw_dir", "")
+            else Path(entry.source)
+        )
         if not raw.is_absolute():
             raw = self._manager.root / raw
         if not raw.is_dir():
+
             raw = self._manager.data_dir(exp_id, data_id, "raw")
         fid_com = self._manager.data_dir(exp_id, data_id, "process") / "fid.com"
         if not fid_com.is_file():
             fid_com = raw / "fid.com"
         if fid_com.is_file():
-            return {"fid.com": fid_com.read_text(encoding="utf-8", errors="replace")}
+            return {
+                "fid.com": fid_com.read_text(
+                    encoding="utf-8", errors="replace"
+                )
+            }
         return {}
 
     def _spectrum_scripts(self, exp_id: str, data_id: str) -> dict[str, str]:
@@ -1072,8 +1147,11 @@ class ProcessingController:
             return scripts
         for path in paths:
             if path.name != "fid.com":
-                scripts[path.name] = path.read_text(encoding="utf-8", errors="replace")
+                scripts[path.name] = path.read_text(
+                    encoding="utf-8", errors="replace"
+                )
         return scripts
+
 
     def _require_manager(self) -> None:
         if self._manager is None:

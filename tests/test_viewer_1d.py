@@ -1,4 +1,4 @@
-"""1D spectrum/FID view tests: Spectrum1D, TopSpin-style 1D strips, layer removal, peak toggle."""
+'1D spectrum/FID view tests: Spectrum1D, TopSpin-style 1D strips, layer removal, peak toggle.'
 
 from __future__ import annotations
 
@@ -17,7 +17,9 @@ from viewer.spectrum import Spectrum, Spectrum1D, SpectrumAxis
 from viewer.spectrum_viewer import SpectrumViewer
 
 
-def _axis(label: str, size: int, sw: float = 6000.0, car: float = 4.7) -> SpectrumAxis:
+def _axis(
+    label: str, size: int, sw: float = 6000.0, car: float = 4.7
+) -> SpectrumAxis:
     return SpectrumAxis(
         label=label,
         size=size,
@@ -37,7 +39,9 @@ def _synthetic_spectrum(shape: tuple[int, int] = (64, 128)) -> Spectrum:
 
     data = gaussian_filter(data, sigma=(1.5, 1.5))
     data = data + rng.normal(0, 0.05, size=shape)
-    return Spectrum(data, [_axis("F1", shape[0]), _axis("F2", shape[1])])
+    return Spectrum(
+        data, [_axis("F1", shape[0]), _axis("F2", shape[1])]
+    )
 
 
 def _write_ft2(path: Path, spectrum: Spectrum) -> None:
@@ -59,7 +63,9 @@ def _write_ft2(path: Path, spectrum: Spectrum) -> None:
         dic[prefix + "OBS"] = axis.obs_mhz
         dic[prefix + "CAR"] = axis.carrier_ppm
         dic[prefix + "ORIG"] = axis.orig_hz
-    pipe.write(str(path), dic, spectrum.data.astype(np.float32), overwrite=True)
+    pipe.write(
+        str(path), dic, spectrum.data.astype(np.float32), overwrite=True
+    )
 
 
 def _write_fid(path: Path, data: np.ndarray) -> None:
@@ -82,7 +88,8 @@ def _write_fid(path: Path, data: np.ndarray) -> None:
 
 def _write_fid2d(path: Path, data: np.ndarray) -> None:
     """Write a 2D time-domain FID (FDDIMCOUNT=2: row = indirect-dim increment,
-    column = direct-dim time point)."""
+    column = direct-dim time point).
+    """
     from nmrglue.fileio import pipe
 
     data = np.asarray(data)
@@ -112,7 +119,7 @@ def test_spectrum1d_load_from_fid_roundtrip(tmp_path: Path) -> None:
     assert loaded.data.shape == (64,)
     np.testing.assert_allclose(loaded.data, data)
     assert loaded.axis.size == 64
-    assert not loaded.ppm_valid  # time-domain FID has no ppm axis
+    assert not loaded.ppm_valid
     np.testing.assert_allclose(loaded.x_values(), np.arange(64))
     assert loaded.source == path
 
@@ -121,10 +128,11 @@ def test_spectrum1d_load_from_fid_2d_returns_timedomain_spectrum(
     tmp_path: Path,
 ) -> None:
     """0.2.78: a 2D FID is shown as a whole nmrDraw-style time-domain image
-    (rows = individual FIDs, columns = time points)."""
+    (rows = individual FIDs, columns = time points).
+    """
     rng = np.random.default_rng(1)
     data = rng.normal(size=(16, 32))
-    data[0, 3] += 10000.0  # Individual spikes: do not affect the quantile baseline
+    data[0, 3] += 10000.0
     path = tmp_path / "raw.fid"
     _write_fid2d(path, data)
     loaded = Spectrum1D.load_from_fid(path)
@@ -136,13 +144,14 @@ def test_spectrum1d_load_from_fid_2d_returns_timedomain_spectrum(
     assert loaded.axes[0].size == 16
     assert loaded.axes[1].size == 32
     assert loaded.source == path
-    # Contour default baseline uses a high quantile so spikes do not swamp it
+
     assert 0 < loaded.robust_max < loaded.max_intensity
 
 
 def test_viewer_fid_2d_window_load(tmp_path: Path, qapp: QApplication) -> None:
     """0.2.78: opening a 2D FID shows a 2D time-domain image, not the 1D trace of
-    the first FID."""
+    the first FID.
+    """
     rng = np.random.default_rng(2)
     data = rng.normal(size=(16, 64))
     data[0, :] = np.exp(-np.arange(64) / 10.0) * 5000.0
@@ -160,7 +169,8 @@ def test_viewer_fid_2d_window_load(tmp_path: Path, qapp: QApplication) -> None:
 
 def test_display_phase_math() -> None:
     """0.2.87: display-only phase (does not change the data): 0° identity, 180° sign
-    flip, 90° change."""
+    flip, 90° change.
+    """
     from viewer.spectrum_viewer import SpectrumViewer
 
     rng = np.random.default_rng(3)
@@ -177,7 +187,8 @@ def test_viewer_phase_panel_display_only_real_data(
     qapp: QApplication,
 ) -> None:
     """0.2.87: the phase panel is available for real 1D spectra; it only displays
-    the phase shift and never changes the data."""
+    the phase shift and never changes the data.
+    """
     from viewer.spectrum import SpectrumAxis
 
     n = 64
@@ -187,12 +198,12 @@ def test_viewer_phase_panel_display_only_real_data(
     viewer = SpectrumViewer()
     viewer.add_spectrum(spectrum1d, name="1d")
     assert viewer.phase_panel.p0_slider.isEnabled()
-    viewer._on_phase_changed(True)  # establish the display baseline (P0=P1=0)
+    viewer._on_phase_changed(True)
     _x0, y0 = viewer._plot_1d.getData()
     viewer.phase_panel.set_values(90, 0)
     _x1, y1 = viewer._plot_1d.getData()
     assert not np.allclose(np.asarray(y0), np.asarray(y1))
-    # Display-only phase shift: the original data is unchanged
+
     np.testing.assert_allclose(viewer._primary_1d.data, real)
     viewer.phase_panel.set_values(0, 0)
     _x2, y2 = viewer._plot_1d.getData()
@@ -205,7 +216,8 @@ def test_viewer_1d_hide_then_clear_restore_2d_controls(
 ) -> None:
     """0.2.199-patch29gj-fix: after the 1D view hides the contour/aspect controls,
     clear() must restore them; otherwise the contour control stays hidden when
-    switching back to 2D/3D."""
+    switching back to 2D/3D.
+    """
     from viewer.spectrum import SpectrumAxis
 
     n = 64
@@ -216,9 +228,8 @@ def test_viewer_1d_hide_then_clear_restore_2d_controls(
     viewer.add_spectrum(spectrum1d, name="1d")
     assert viewer._mode_1d
     assert viewer.level_slider.isHidden()
-    assert viewer.aspect_slider.isHidden()
-    # Simulate clear() before switching back to 2D/3D (it used not to restore the
-    # contour controls -- regression)
+    assert not viewer.aspect_slider.isHidden()
+
     viewer.clear()
     assert not viewer.level_slider.isHidden()
     assert not viewer.aspect_slider.isHidden()
@@ -231,7 +242,8 @@ def test_viewer_1d_hide_then_clear_restore_2d_controls(
 
 def test_viewer_1d_strips_toggle_and_update(qapp: QApplication) -> None:
     """1D mode toggle: crosshair + top/right strips; clicking a position shows the two
-    1D traces there."""
+    1D traces there.
+    """
     spectrum = _synthetic_spectrum()
     viewer = SpectrumViewer()
     viewer.add_spectrum(spectrum)
@@ -242,21 +254,22 @@ def test_viewer_1d_strips_toggle_and_update(qapp: QApplication) -> None:
     assert viewer.show_1d_button.isChecked()
     assert not viewer.strip_top.isHidden()
     assert not viewer.strip_right.isHidden()
-    # 0.2.199-patch29bt: horizontal strip 170 high, vertical strip 190 wide
+
     assert viewer.strip_top.minimumHeight() == viewer.strip_top.maximumHeight() == 170
-    assert viewer.strip_right.minimumWidth() == viewer.strip_right.maximumWidth() == 190
-    # Update the crosshair position → two 1D traces
+    assert (
+        viewer.strip_right.minimumWidth() == viewer.strip_right.maximumWidth() == 190
+    )
+
     viewer._update_strips(40, 120)
     _xt, yt = viewer.strip_top_curve.getData()
     np.testing.assert_allclose(np.asarray(yt), spectrum.data[40, :])
     xr, _yr = viewer.strip_right_curve.getData()
     np.testing.assert_allclose(np.asarray(xr), spectrum.data[:, 120])
-    # 0.2.133: in 1D mode the crosshair follows only while the left button is held;
-    # simulate a press and then a move
+
     viewer._mouse_left_pressed = True
     scene_pt = viewer.plot.getViewBox().mapViewToScene(QPointF(120.0, 40))
     viewer._on_mouse_moved(scene_pt)
-    # After releasing the left button the crosshair no longer follows the new position
+
     viewer._mouse_left_pressed = False
     scene_pt2 = viewer.plot.getViewBox().mapViewToScene(QPointF(90.0, 30))
     viewer._on_mouse_moved(scene_pt2)
@@ -269,7 +282,7 @@ def test_viewer_1d_strips_toggle_and_update(qapp: QApplication) -> None:
     np.testing.assert_allclose(np.asarray(xr), spectrum.data[:, 120])
     assert viewer._crosshair_v.pos().x() == pytest.approx(120.0)
     assert viewer._crosshair_h.pos().y() == pytest.approx(40)
-    # Off: strips and crosshairs are hidden
+
     viewer.set_1d_mode(False)
     assert not viewer._strips_active
     assert viewer.strip_top.isHidden()
@@ -302,7 +315,7 @@ def test_viewer_layer_delete(qapp: QApplication) -> None:
 
 
 def test_viewer_view_to_data_maps_view_y_to_row(qapp: QApplication) -> None:
-    """View coordinates are data indices: view y = row number, out of range returns (-1,-1)."""
+    'View coordinates are data indices: view y = row number, out of range returns (-1,-1).'
     spectrum = _synthetic_spectrum()
     viewer = SpectrumViewer()
     viewer.add_spectrum(spectrum)
@@ -315,7 +328,7 @@ def test_viewer_view_to_data_maps_view_y_to_row(qapp: QApplication) -> None:
 
 
 def test_viewer_peaks_aligned_with_contour(qapp: QApplication) -> None:
-    """Peak markers' view y is the data row (consistent with the contour)."""
+    "Peak markers' view y is the data row (consistent with the contour)."
     spectrum = _synthetic_spectrum()
     viewer = SpectrumViewer()
     viewer.add_spectrum(spectrum)
@@ -333,7 +346,7 @@ def test_viewer_peaks_aligned_with_contour(qapp: QApplication) -> None:
 
 
 class _FakeClickEvent:
-    """Minimal mouse-event stub: left click (not a drag)."""
+    'Minimal mouse-event stub: left click (not a drag).'
 
     def __init__(self, scene_pos: QPointF) -> None:
         self._pos = scene_pos
@@ -350,7 +363,8 @@ class _FakeClickEvent:
 
 def test_viewer_plot_click_strips_and_select(qapp: QApplication) -> None:
     """Click the screen position of data (120, 40): the strips show the correct
-    row/column and that peak can be selected."""
+    row/column and that peak can be selected.
+    """
     spectrum = _synthetic_spectrum()
     viewer = SpectrumViewer()
     viewer.add_spectrum(spectrum)
@@ -377,7 +391,8 @@ def test_viewer_plot_click_strips_and_select(qapp: QApplication) -> None:
 
 def test_viewer_strip_right_y_direction_and_link(qapp: QApplication) -> None:
     """The right 1D strip matches the Y direction of the 2D spectrum, and its y
-    range follows zooming of the main plot."""
+    range follows zooming of the main plot.
+    """
     spectrum = _synthetic_spectrum()
     viewer = SpectrumViewer()
     viewer.add_spectrum(spectrum)
@@ -385,30 +400,33 @@ def test_viewer_strip_right_y_direction_and_link(qapp: QApplication) -> None:
     main_inv = viewer.plot.getViewBox().state["yInverted"]
     right_inv = viewer.strip_right.getViewBox().state["yInverted"]
     assert right_inv == main_inv
-    # Main-plot Y zoom → right strip yRange follows (synced with 2D axis pan/zoom)
+
     viewer.plot.getViewBox().setRange(yRange=(10.0, 40.0), padding=0)
     np.testing.assert_allclose(
         viewer.strip_right.getViewBox().viewRange()[1],
         viewer.plot.getViewBox().viewRange()[1],
     )
-    # Right-strip data row 0 points the same way (down) as the main plot (matches the
-    # 2D Y axis)
-    right_s0 = viewer.strip_right.getViewBox().mapViewToScene(QPointF(0.0, 0.0))
+
+    right_s0 = viewer.strip_right.getViewBox().mapViewToScene(
+        QPointF(0.0, 0.0)
+    )
     right_s1 = viewer.strip_right.getViewBox().mapViewToScene(
         QPointF(0.0, spectrum.data.shape[0] - 1)
     )
     main_s0 = viewer.plot.getViewBox().mapViewToScene(QPointF(0.0, 0.0))
-    main_s1 = viewer.plot.getViewBox().mapViewToScene(QPointF(0.0, spectrum.data.shape[0] - 1))
+    main_s1 = viewer.plot.getViewBox().mapViewToScene(
+        QPointF(0.0, spectrum.data.shape[0] - 1)
+    )
     assert (right_s0.y() < right_s1.y()) == (main_s0.y() < main_s1.y())
     viewer.close()
 
 
 def test_viewer_clear_restores_2d_direction(qapp: QApplication) -> None:
-    """clear() unifies the main plot's 2D display direction (row 0 = high ppm at the bottom)."""
+    "clear() unifies the main plot's 2D display direction (row 0 = high ppm at the bottom)."
     spectrum = _synthetic_spectrum()
     viewer = SpectrumViewer()
     viewer.add_spectrum(spectrum)
-    viewer.plot.getViewBox().invertY(True)  # simulate the state after a 1D view
+    viewer.plot.getViewBox().invertY(True)
     viewer.clear()
     assert viewer.plot.getViewBox().state["yInverted"] is False
     viewer.close()
@@ -434,23 +452,24 @@ def test_viewer_peaks_toggle(qapp: QApplication) -> None:
     viewer.close()
 
 
+
 class _FakeClickEventNoPress(_FakeClickEvent):
-    """Simulates pyqtgraph MouseClickEvent: no buttonDownScenePos (0.2.199-patch29aw)."""
+    'Simulates pyqtgraph MouseClickEvent: no buttonDownScenePos (0.2.199-patch29aw).'
 
     def buttonDownScenePos(self, _button):
         raise AttributeError("MouseClickEvent has no attribute 'buttonDownScenePos'")
 
 
 def test_viewer_plot_click_without_button_down_pos(qapp: QApplication) -> None:
-    # 0.2.199-patch29aw: a real MouseClickEvent without buttonDownScenePos no longer raises
+
     spectrum = _synthetic_spectrum()
     viewer = SpectrumViewer()
     viewer.add_spectrum(spectrum)
     viewer.set_peaks(
         [
             {
-                "H_shift": spectrum.x_axis.ppm_at(60),
-                "N_shift": spectrum.y_axis.ppm_at(30),
+                'H_shift': spectrum.x_axis.ppm_at(60),
+                'N_shift': spectrum.y_axis.ppm_at(30),
             }
         ]
     )
@@ -460,16 +479,17 @@ def test_viewer_plot_click_without_button_down_pos(qapp: QApplication) -> None:
     viewer.close()
 
 
+
 def test_box_select_uses_peak_coords_only(qapp: QApplication) -> None:
-    # 0.2.199-patch29ay: box selection only compares the box range with cached peak coords
+
     spectrum = _synthetic_spectrum()
     viewer = SpectrumViewer()
     viewer.add_spectrum(spectrum)
     viewer.set_peaks(
         [
-            {"H_shift": spectrum.x_axis.ppm_at(30), "N_shift": spectrum.y_axis.ppm_at(20)},
-            {"H_shift": spectrum.x_axis.ppm_at(100), "N_shift": spectrum.y_axis.ppm_at(50)},
-            {"H_shift": spectrum.x_axis.ppm_at(80), "N_shift": spectrum.y_axis.ppm_at(10)},
+            {'H_shift': spectrum.x_axis.ppm_at(30), 'N_shift': spectrum.y_axis.ppm_at(20)},
+            {'H_shift': spectrum.x_axis.ppm_at(100), 'N_shift': spectrum.y_axis.ppm_at(50)},
+            {'H_shift': spectrum.x_axis.ppm_at(80), 'N_shift': spectrum.y_axis.ppm_at(10)},
         ]
     )
     viewer._apply_peak_items()
@@ -481,20 +501,152 @@ def test_box_select_uses_peak_coords_only(qapp: QApplication) -> None:
     viewer.close()
 
 
+
 def test_box_select_clamps_to_spectrum_edges(qapp: QApplication) -> None:
-    # 0.2.199-patch29bf: a box beyond the spectrum is clamped to the edge and still selects
+
     spectrum = _synthetic_spectrum()
     viewer = SpectrumViewer()
     viewer.add_spectrum(spectrum)
     viewer.set_peaks(
         [
-            {"H_shift": spectrum.x_axis.ppm_at(30), "N_shift": spectrum.y_axis.ppm_at(20)},
-            {"H_shift": spectrum.x_axis.ppm_at(100), "N_shift": spectrum.y_axis.ppm_at(50)},
+            {'H_shift': spectrum.x_axis.ppm_at(30), 'N_shift': spectrum.y_axis.ppm_at(20)},
+            {'H_shift': spectrum.x_axis.ppm_at(100), 'N_shift': spectrum.y_axis.ppm_at(50)},
         ]
     )
     vb = viewer.plot.getViewBox()
     viewer._box_press_scene = vb.mapViewToScene(QPointF(10.0, 10.0))
-    # The release point is far outside the spectrum (upper right); clamp to the edge
+
     viewer._finish_box_select(vb.mapViewToScene(QPointF(1e6, 1e6)))
     assert viewer._box_selected_rows == {0, 1}
+    viewer.close()
+
+
+def test_1d_zoom_pan_aspect_and_axis_reset(qapp: QApplication) -> None:
+    """PPM zoom stays horizontal, panning works, and 2D direction cannot leak."""
+    viewer = SpectrumViewer()
+    viewer.resize(950, 850)
+    viewer.show()
+    viewer.add_spectrum(_synthetic_spectrum())
+    spectrum = Spectrum1D(np.sin(np.arange(1024) / 20) * 1e12, _axis('H', 1024))
+    viewer.add_spectrum(spectrum)
+    qapp.processEvents()
+    vb = viewer.plot.getViewBox()
+    assert viewer.plot.getAxis('left')._tickLevels is None
+    assert not viewer.aspect_controls.isHidden()
+    assert viewer.contour_controls._grid.getItemPosition(0)[:2] == (0, 0)
+    for _ in range(12):
+        vb.scaleBy((.7, .7))
+    (x0, x1), (y0, y1) = vb.viewRange()
+    assert x1 - x0 < .2
+    assert x1 - x0 >= vb._min_span[0] * .99
+
+    class Drag:
+        def button(self):
+            return Qt.MouseButton.MiddleButton
+
+        def pos(self):
+            return QPointF(220, 200)
+
+        def lastPos(self):
+            return QPointF(180, 180)
+
+        def accept(self):
+            pass
+
+    vb.mouseDragEvent(Drag())
+    after = vb.viewRange()
+    assert after[0] != [x0, x1] and after[1] != [y0, y1]
+    assert after[0][1] - after[0][0] == pytest.approx(x1 - x0)
+    viewer.aspect_slider.setValue(150)
+    full = vb._min_rect
+    assert vb.state['aspectLocked'] == pytest.approx(
+        1.5 * (full[1][1] - full[1][0]) / (full[0][1] - full[0][0]))
+    assert np.isfinite(np.array(vb.viewRange())).all()
+    viewer.clear()
+    spec2 = _synthetic_spectrum()
+    viewer.add_spectrum(spec2)
+    qapp.processEvents()
+    left = vb.mapViewToScene(QPointF(0, 0))
+    right = vb.mapViewToScene(QPointF(spec2.x_axis.size - 1, 0))
+    assert left.x() < right.x()
+    assert spec2.x_axis.ppm_at(0) > spec2.x_axis.ppm_at(spec2.x_axis.size - 1)
+    assert not vb.state['xInverted']
+    assert vb.state['aspectLocked'] == 1.5
+    viewer.close()
+
+
+@pytest.mark.parametrize('one_dimensional', [False, True])
+def test_full_spectrum_overview_threshold_and_navigation(qapp, one_dimensional):
+    viewer = SpectrumViewer()
+    viewer.resize(950, 850)
+    viewer.show()
+    spectrum = (Spectrum1D(np.sin(np.arange(512) / 20), _axis('H', 512))
+                if one_dimensional else _synthetic_spectrum())
+    viewer.add_spectrum(spectrum)
+    qapp.processEvents()
+    vb = viewer.plot.getViewBox()
+    overview = viewer._overview
+    assert overview.isHidden()
+    vb.scaleBy((1 / 1.5, 1 / 1.5))
+    qapp.processEvents()
+    assert overview.isHidden()
+    vb.scaleBy((.5, .5))
+    qapp.processEvents()
+    assert not overview.isHidden()
+    assert overview.pos().x() >= viewer.plot.mapFromScene(vb.sceneBoundingRect().topLeft()).x()
+    assert not overview.grab().isNull()
+    area, mapping = overview._mapping()
+    full = vb._min_rect
+    p0 = mapping.map(QPointF(full[0][0], full[1][0]))
+    p1 = mapping.map(QPointF(full[0][1], full[1][1]))
+    assert (p0.x() > p1.x()) == one_dimensional
+    before = vb.viewRange()
+    overview._recenter(area.topLeft() + QPointF(area.width() * .25, area.height() * .25))
+    assert vb.viewRange() != before
+    assert vb.viewRange()[0][1] - vb.viewRange()[0][0] == pytest.approx(before[0][1] - before[0][0])
+    viewer.reset_view()
+    qapp.processEvents()
+    assert overview.isHidden()
+    viewer.clear()
+    assert overview.isHidden()
+    viewer.close()
+
+
+@pytest.mark.parametrize('sign', [1, -1, 0])
+def test_1d_zero_centred_and_wheel_vertical_rate(qapp, sign):
+    viewer = SpectrumViewer()
+    viewer.resize(950, 850)
+    viewer.show()
+    spectrum = Spectrum1D(np.linspace(.1, 1, 1024) * sign * 1e9, _axis('H', 1024))
+    viewer.add_spectrum(spectrum)
+    qapp.processEvents()
+    vb = viewer.plot.getViewBox()
+    before = np.diff(vb.viewRange(), axis=1).ravel()
+    assert sum(vb.viewRange()[1]) == pytest.approx(0, abs=1e-6)
+
+    class Wheel:
+        def __init__(self, delta):
+            self._delta = delta
+
+        def delta(self):
+            return self._delta
+
+        def pos(self):
+            return vb.mapFromView(QPointF(np.mean(vb.viewRange()[0]), 0))
+
+        def accept(self):
+            pass
+
+    vb.wheelEvent(Wheel(120))
+    factor = before / np.diff(vb.viewRange(), axis=1).ravel()
+    assert factor[1] == pytest.approx(factor[0] ** 1.5)
+    assert sum(vb.viewRange()[1]) == pytest.approx(0, abs=1e-5)
+    vb.wheelEvent(Wheel(-120))
+    np.testing.assert_allclose(np.diff(vb.viewRange(), axis=1).ravel(), before)
+    viewer.clear()
+    viewer.add_spectrum(_synthetic_spectrum())
+    before = np.diff(vb.viewRange(), axis=1).ravel()
+    vb.wheelEvent(Wheel(120))
+    factor = before / np.diff(vb.viewRange(), axis=1).ravel()
+    assert factor[1] == pytest.approx(factor[0])
     viewer.close()

@@ -78,3 +78,16 @@ The central workspace layout reserves 20 logical pixels at the right and bottom.
 Peak-table columns fit headers, values and assignment editors on load and FontChange. The last column does not stretch; SNR uses the stored detector value without GUI noise estimation.
 
 GUI peak exports include assignments and coordinates only. Refresh preserves export/save availability for loaded peaks; manual addition enables export and deleting all peaks or leaving the data context disables it. Detection and noise calculations are unchanged.
+
+
+## Project navigation, dialogs and peak tables
+
+The main window has a project tree, centre workflow area with its log below, and spectrum viewer. The Object column has a compact font-scaled default width and can be resized; status stays next to it. Bruker title subtitles wrap and update row height when column width changes.
+
+Dialog layout applies screen fitting, owner centring, application modality and topmost state. Native message-box flags are restored after construction when necessary. Background-click flashing and mouse polling are removed. GNOME uses GTK3 native file selection with a valid XWayland owner and requested starting directory. GTK placement uses one GDK coordinate system for both windows.
+
+On Linux, startup detects VMware VMMouse or Virtual USB Mouse names in the current machine's input devices. X11/XWayland uses Qt core X11 pointer events for those devices to avoid XI2 scroll-baseline resets on absolute/relative device switches. Native Wayland and physical machines keep their existing input paths. Desktop and VMware service settings are unchanged.
+
+Picked and imported peak tables retain separate assignments. Importing a list first backs up the picked table as full-precision CSV, then uses the shared global-shift search to calibrate display coordinates only. Restoring the application's CSV recovers the picked table directly. Aligned export uses the same search; list exports contain assignments and chemical shifts only. Existing processing and API calculations are unchanged.
+
+Project-level UCSF export copies selected data by experiment, retains sources and avoids overwriting destination files. The default destination is discovered from the current user's POKY/Sparky configuration or set manually. All path settings provide Browse. Help includes bilingual usage instructions, copyright, running versions, licensing and project/citation links.

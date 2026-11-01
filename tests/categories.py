@@ -1,7 +1,8 @@
 """Test categories (Phase 12): the **single source of truth** for unit / integration / regression.
 
 Why markers instead of moving directories: the audit (F.2) confirmed that many tests locate
-fixtures with ``Path(__file__).parent / fixtures``, so moving files would be a real refactor with
+fixtures with ``Path(__file__).parent / fixtures``, so moving files would be a real refactor
+with
 no release-time benefit. Categories are expressed as pytest markers: ``tests/conftest.py`` marks
 every test from this table and ``tests/test_test_categories.py`` guarantees that every test file
 is listed, its category is valid, and all three categories are non-empty.
@@ -25,8 +26,11 @@ from __future__ import annotations
 
 __all__ = ["CATEGORIES", "CATEGORY_MARKERS", "category_of"]
 
-#: filename → category (single source of truth)
+
 CATEGORIES: dict[str, str] = {
+    "test_ucsf_transfer.py": "integration",
+    "test_gui_ucsf_transfer.py": "integration",
+    "test_peak_snapshot.py": "integration",
     "test_overlay_svg_export.py": "regression",
     "test_spectrum_overlay.py": "regression",
     "test_peak_sign_weights.py": "regression",
@@ -124,6 +128,7 @@ CATEGORIES: dict[str, str] = {
     "test_ownership.py": "regression",
     "test_param_optimize.py": "unit",
     "test_peak_align.py": "integration",
+    "test_display_alignment.py": "integration",
     "test_peak_table.py": "integration",
     "test_phase_consensus.py": "unit",
     "test_phase_routes.py": "integration",
@@ -183,7 +188,7 @@ CATEGORIES: dict[str, str] = {
     "test_workspace.py": "integration",
 }
 
-#: category → pytest marker name (matches the markers registered in pyproject)
+
 CATEGORY_MARKERS: dict[str, str] = {
     "unit": "unit",
     "integration": "integration",
@@ -192,5 +197,5 @@ CATEGORY_MARKERS: dict[str, str] = {
 
 
 def category_of(filename: str) -> str:
-    """Category for a filename; unregistered files conservatively default to ``integration``."""
+    'Category for a filename; unregistered files conservatively default to ``integration``.'
     return CATEGORIES.get(filename, "integration")

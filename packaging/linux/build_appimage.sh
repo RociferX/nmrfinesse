@@ -150,6 +150,7 @@ echo "frozen start-up smoke passed (offscreen, running after 20 s)"
 install -m 0644 packaging/linux/NMRFinesse.desktop "$APPDIR/usr/share/applications/"
 install -m 0644 packaging/linux/icons/nmrfinesse.png \
   "$APPDIR/usr/share/icons/hicolor/256x256/apps/"
+sed -i "s/^Name=NMRFinesse$/Name=NMRFinesse $VERSION/" "$APPDIR/usr/share/applications/NMRFinesse.desktop"
 cp "$APPDIR/usr/share/applications/NMRFinesse.desktop" "$APPDIR/NMRFinesse.desktop"
 cp "$APPDIR/usr/share/icons/hicolor/256x256/apps/nmrfinesse.png" "$APPDIR/nmrfinesse.png"
 
@@ -199,7 +200,8 @@ if [ -z "${NMRFINESSE_NO_DESKTOP:-}" ] && [ -n "${APPIMAGE:-}" ]; then
     DESKTOP_DIR="$HOME/.local/share/applications"
     ICON_DIR="$HOME/.local/share/icons/hicolor/256x256/apps"
     DESKTOP_FILE="$DESKTOP_DIR/nmrfinesse.desktop"
-    if [ ! -f "$DESKTOP_FILE" ] || ! grep -qF "Exec=$APPIMG_PATH" "$DESKTOP_FILE"; then
+    if [ ! -f "$DESKTOP_FILE" ] || ! grep -qF "Exec=$APPIMG_PATH" "$DESKTOP_FILE" \
+       || ! grep -qxF "$(grep '^Name=' "$HERE/NMRFinesse.desktop")" "$DESKTOP_FILE"; then
         mkdir -p "$DESKTOP_DIR" "$ICON_DIR"
         sed -e "s|^Exec=.*|Exec=\"$APPIMG_PATH\"|" \
             -e "1a TryExec=$APPIMG_PATH" \

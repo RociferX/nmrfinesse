@@ -1,5 +1,6 @@
 """Independent spectrum viewing window: Decoupled from project management GUI,.ft2 can be opened
-directly for viewing."""
+directly for viewing.
+"""
 
 from __future__ import annotations
 
@@ -16,6 +17,7 @@ from qtcompat.QtWidgets import (
     QVBoxLayout,
 )
 
+from core import __version__
 from ui_support.i18n import tr
 from viewer.spectrum import Spectrum, Spectrum1D, Spectrum3D
 from viewer.spectrum3d_panel import Spectrum3DPanel
@@ -23,7 +25,7 @@ from viewer.spectrum_viewer import SpectrumViewer
 
 
 class InfoDialog(QDialog):
-    """Replaces QMessageBox (avoids mouse grab warning of modal pop-ups under Qt6 Windows)."""
+    'Replaces QMessageBox (avoids mouse grab warning of modal pop-ups under Qt6 Windows).'
 
     def __init__(self, parent, title: str, text: str) -> None:
         super().__init__(parent)
@@ -51,11 +53,12 @@ _ASPECT_CHOICES = (
 
 
 class SpectrumWindow(QMainWindow):
-    """Independent spectrum window:Open/stacked spectrum, aspect ratio, peak mode, reset view."""
+    'Independent spectrum window:Open/stacked spectrum, aspect ratio, peak mode, reset view.'
 
     def __init__(self, parent=None, start_dir: str = "") -> None:
         super().__init__(parent)
-        self.setWindowTitle(tr("NMRFinesse spectrum viewer"))
+        self.setWindowTitle(tr("NMRFinesse spectrum viewer").replace(
+            'NMRFinesse', f'NMRFinesse {__version__}', 1))
         from ui_support.window_layout import available_geometry, initial_window_size
 
         self.resize(initial_window_size(available_geometry(self)))
@@ -132,22 +135,16 @@ class SpectrumWindow(QMainWindow):
         path, _ = QFileDialog.getOpenFileName(
             self,
             tr("Open NMRPipe spectrum"),
-            self.start_dir or "",
+            self.start_dir or str(Path.home()),
             tr("NMRPipe spectrum (*.ft2 *.ft3 *.ft1 *.fid);; all files (*)"),
         )
         if path:
             self.load_spectrum(Path(path))
 
     def load_spectrum(self, path: Path, name: str | None = None) -> bool:
-        """Load spectrum (.ft2/.ft3) and display; pop up a window on failure and return False."""
-        # 0.2.199-patch29dh(user):axis sequence/Tags only start with The.ft3 header shall
-        # prevail, # and metadata will not be transmitted to the loader nuclear/Label (the
-        # software handles # axis rearrangement, and the metadata collection sequence cannot be
-        # divulged).
-        # 0.2.199-patch29dh(user):axis sequence/Tags only start with The.ft3 header shall
-        # prevail, # and metadata will not be transmitted to the loader nuclear/Label (the
-        # software handles # axis rearrangement, and the metadata collection sequence cannot be
-        # divulged).
+        'Load spectrum (.ft2/.ft3) and display; pop up a window on failure and return False.'
+
+
         try:
             if path.suffix.lower() == ".ft3":
                 spectrum3d = Spectrum3D.load_from_ft3(path, lazy=True)
@@ -161,7 +158,7 @@ class SpectrumWindow(QMainWindow):
                 spectrum3d = None
                 spectrum = Spectrum.load_from_ft2(path)
                 spectrum1d = None
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             show_info(self, tr("Open failed"), f"{path}\n{exc}")
             return False
         if spectrum3d is not None:
@@ -175,6 +172,7 @@ class SpectrumWindow(QMainWindow):
                 spectrum1d if spectrum1d is not None else spectrum,
                 name=name or path.stem,
             )
+        self.start_dir = str(path.parent)
         self._recent = [str(path), *[p for p in self._recent if p != str(path)]][:8]
         self._refresh_recent()
         if spectrum3d is not None:
@@ -184,12 +182,14 @@ class SpectrumWindow(QMainWindow):
         else:
             status_text = tr("Loaded: {p0}", p0=path)
         self.statusBar().showMessage(status_text)
-        self.setWindowTitle(tr("NMRFinesse spectrum viewer - {p0}", p0=path.name))
+        self.setWindowTitle(tr("NMRFinesse spectrum viewer - {p0}", p0=path.name).replace(
+            'NMRFinesse', f'NMRFinesse {__version__}', 1))
         return True
 
     def _enter_3d_mode(self, spectrum3d: Spectrum3D, name: str) -> None:
         """Enter 3D viewing mode: Bind panel (automatically renders the default F1-F2 middle
-        slice)."""
+        slice).
+        """
         self._spectrum3d_active = True
         self._spectrum3d_name = name
         self._spectrum3d_panel.set_spectrum3d(spectrum3d)
@@ -197,7 +197,8 @@ class SpectrumWindow(QMainWindow):
 
     def _render_3d(self) -> None:
         """Press the current plane of the panel/slice/Rendering a 2D view in projection mode (reuse
-        2D drawing)."""
+        2D drawing).
+        """
         spectrum = self._spectrum3d_panel.current_spectrum()
         if spectrum is None:
             return
@@ -211,7 +212,8 @@ class SpectrumWindow(QMainWindow):
         self._spectrum3d_active = False
         self._spectrum3d_panel.clear()
         self.viewer.clear()
-        self.setWindowTitle(tr("NMRFinesse spectrum viewer"))
+        self.setWindowTitle(tr("NMRFinesse spectrum viewer").replace(
+            'NMRFinesse', f'NMRFinesse {__version__}', 1))
         self.statusBar().showMessage(tr("spectrum cleared"))
 
     def _refresh_recent(self) -> None:
@@ -282,11 +284,14 @@ def _install_dialog_centering(app) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Command line entry: nmrfinesse-viewer [spectrum.ft2...]."""
+    'Command line entry: nmrfinesse-viewer [spectrum.ft2...].'
     from qtcompat.QtWidgets import QApplication
 
     args = argv if argv is not None else sys.argv[1:]
     paths = [Path(a) for a in args if Path(a).suffix in (".ft2", ".ft3", ".ft1", ".fid")]
+    from ui_support.window_layout import configure_native_file_dialogs
+
+    configure_native_file_dialogs()
     app = QApplication(sys.argv[:1] + args)
     from ui_support.typography import apply_interface_font, configured_font_size
 

@@ -15,6 +15,7 @@ from qtcompat.QtCore import QEvent, QItemSelectionModel, QSignalBlocker, Qt, QTi
 from qtcompat.QtWidgets import (
     QAbstractItemView,
     QBoxLayout,
+    QComboBox,
     QDoubleSpinBox,
     QFileDialog,
     QHBoxLayout,
@@ -24,6 +25,7 @@ from qtcompat.QtWidgets import (
     QListWidget,
     QMenu,
     QProgressBar,
+    QProgressDialog,
     QPushButton,
     QSizePolicy,
     QSplitter,
@@ -69,7 +71,7 @@ def _contiguous_runs(indices: list[int]) -> list[tuple[int, int]]:
 
 
 def _format_snr(value) -> str:
-    """Display SNR with one decimal place; keep missing values blank and legacy SN compatible."""
+    'Display SNR with one decimal place; keep missing values blank and legacy SN compatible.'
     if value is None or value == "":
         return ""
     try:
@@ -82,7 +84,7 @@ def _format_snr(value) -> str:
 
 
 def _peak_snr_text(peak: dict) -> str:
-    """Return the SN table cell, preferring SN and falling back to pipeline CSV SNR."""
+    'Return the SN table cell, preferring SN and falling back to pipeline CSV SNR.'
     text = _format_snr(peak.get("SN"))
     if text:
         return text
@@ -90,7 +92,7 @@ def _peak_snr_text(peak: dict) -> str:
 
 
 def _axis_step(axis) -> float:
-    """Axisppm/point(median of adjacent positive steps); returns 0 on exception."""
+    'Axisppm/point(median of adjacent positive steps); returns 0 on exception.'
     ppm = getattr(axis, "ppm", None)
     if ppm is None:
         return 0.0
@@ -182,7 +184,7 @@ class _AssignmentCell(QWidget):
 
 
 class SpectrumPanel(QWidget):
-    """Spectrum panel: viewer + file list + peak table (add/delete/change/live)."""
+    'Spectrum panel: viewer + file list + peak table (add/delete/change/live).'
 
     peaks_saved = Signal()
     status_message = Signal(str)
@@ -196,6 +198,7 @@ class SpectrumPanel(QWidget):
     plane_loaded = Signal(int, int)
     _plane_ready = Signal(int, int, int, int)  # (token, index, ready, total)
     _plane_stream_done = Signal(int)  # token
+    _alignment_done = Signal(int, object, object, object)
 
     expand_requested = Signal(bool)
 
@@ -217,6 +220,15 @@ class SpectrumPanel(QWidget):
         self._current_exp_id: str = ""
         self._current_data_id: str = ""
         self._loading_peaks = False
+        self._display_alignment: dict[int, float] = {}
+        self._picked_peaks: list[dict] = []
+        self._imported_peaks: list[dict] | None = None
+        self._active_peak_source = "picked"
+        self._picked_backup_path = None
+        self._alignment_token = 0
+        self._alignment_progress = None
+        self._alignment_callback = None
+        self._alignment_done.connect(self._finish_peak_import)
         self._applying_label_format = False
         self._viewer3d_state: dict[tuple[str, str], int] = {}
 
@@ -352,14 +364,18 @@ class SpectrumPanel(QWidget):
         self.peak_toolbar2.addWidget(self.delete_peak_button)
         self.import_poky_button = QPushButton("Import peaks")
         self.import_poky_button.setEnabled(False)
-        self.import_poky_button.setToolTip(tr("from Poky/Sparky.list import peak table"))
+        self.import_poky_button.setToolTip(tr(
+            "Import a .list after picking peaks to align the displayed ppm coordinates; "
+            "the picked table is backed up as CSV. Import a NMRFinesse CSV to restore "
+            "picked peaks directly. Switch tables to keep assignments separate."
+        ))
         self.import_poky_button.clicked.connect(self._on_import_poky)
         self.peak_toolbar2.addWidget(self.import_poky_button)
         self.export_poky_button = QPushButton("Export peaks")
         self.export_poky_button.setEnabled(False)
         self.export_poky_button.setToolTip(
             tr(
-                "export peak table: direct export (original coordinates) or export after alignment "
+                "export peak table: direct export (current coordinates) or export after alignment "
                 "(overall translation and alignment to the selected reference peak "
                 "file)",
             )
@@ -371,6 +387,12 @@ class SpectrumPanel(QWidget):
         self.export_aligned_action = self.export_menu.addAction(
             tr("After alignment export"), self._export_peaks_aligned
         )
+        self.export_menu.setToolTipsVisible(True)
+        self.export_aligned_action.setToolTip(tr(
+            "Select a reference .list, align the current peak table to it using coarse/fine "
+            "minimum-median-distance translation, then export assignments and shifted ppm "
+            "coordinates. The current spectrum and peak table are unchanged."
+        ))
         self.export_poky_button.setMenu(self.export_menu)
         self.peak_toolbar2.addWidget(self.export_poky_button)
         self.save_peaks_button = QPushButton("Save peaks")
@@ -588,6 +610,11 @@ class SpectrumPanel(QWidget):
         peaks_body = QVBoxLayout(self.peaks_section.body)
         peaks_body.setContentsMargins(0, 0, 0, 0)
         peaks_body.setSpacing(4)
+        self.peak_source_combo = QComboBox()
+        self.peak_source_combo.addItem(tr("Picked peaks"), "picked")
+        self.peak_source_combo.setToolTip(tr("Switch peak tables; assignments are kept separately"))
+        self.peak_source_combo.currentIndexChanged.connect(self._switch_peak_source)
+        peaks_body.addWidget(self.peak_source_combo)
         peaks_body.addWidget(self.peak_toolbar_widget)
         peaks_body.addWidget(self.peak_table)
         self._panel_splitter.addWidget(self.peaks_section)
@@ -620,20 +647,19 @@ class SpectrumPanel(QWidget):
 
     @property
     def planes_ready(self) -> int:
-        """
-        Return the number of immediately available planes along the selected 3D
+        """Return the number of immediately available planes along the selected 3D
         slicing axis.
         """
         return int(self._planes_ready)
 
     @property
     def planes_total(self) -> int:
-        """Return the selected slicing axis's plane count, or zero without a 3D spectrum."""
+        "Return the selected slicing axis's plane count, or zero without a 3D spectrum."
         return int(self._planes_total)
 
     @property
     def plane_stream_active(self) -> bool:
-        """Return whether background plane streaming is still reading."""
+        'Return whether background plane streaming is still reading.'
         thread = self._stream_thread
         return bool(thread is not None and thread.is_alive())
 
@@ -704,7 +730,7 @@ class SpectrumPanel(QWidget):
                 "spectrum",
                 dict(self._display_states[key]),
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
     def _restore_display_state(self) -> None:
@@ -741,7 +767,7 @@ class SpectrumPanel(QWidget):
                 for field in defaults:
                     if file_state.get(field) is not None:
                         defaults[field] = file_state[field]
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
             state = defaults
             self._display_states[key] = dict(state)
@@ -769,7 +795,7 @@ class SpectrumPanel(QWidget):
             self.peak_size_spin.setValue(
                 float(state.get("peak_size", 1.5))
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         finally:
             self._restoring_display_state = False
@@ -877,7 +903,7 @@ class SpectrumPanel(QWidget):
             for ext in ("ft1", "ft2", "ft3"):
                 try:
                     files.extend(spectra_dir.glob(f"*.{ext}"))
-                except OSError:
+                except OSError:  # noqa: PERF203
                     continue
         return sorted(set(files))
 
@@ -971,7 +997,7 @@ class SpectrumPanel(QWidget):
                     self._load_ft2_async(path)
                     return True
                 spectrum = Spectrum.load_from_ft2(path)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             self.log_message.emit(
                 tr(
                     "2D spectrum loading failed {p0}: {p1}",
@@ -1023,7 +1049,7 @@ class SpectrumPanel(QWidget):
                 try:
                     spectrum = Spectrum.load_from_ft2(target)
                     spectrum.plane_max = spectrum.max_intensity
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001
                     if request_token == self._ft3_load_token:
                         self._ft2_failed.emit(request_token, target, describe_exception(exc))
                 else:
@@ -1080,7 +1106,7 @@ class SpectrumPanel(QWidget):
                 spectrum3d.estimate_noise()
                 spectrum3d.slice(slice_axis, spectrum3d.axes[slice_axis].size // 2)
                 self._ft3_ready.emit(token, path, spectrum3d)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 self._ft3_failed.emit(token, path, describe_exception(exc))
 
         threading.Thread(target=worker, daemon=True).start()
@@ -1118,6 +1144,7 @@ class SpectrumPanel(QWidget):
     def _on_ft3_failed(self, token, path, message: str) -> None:
         """Report a large ft3 load failure on the main thread only if the request is still current.
 
+
         """
         if token != self._ft3_load_token or path != self._current_spectrum:
             return
@@ -1134,7 +1161,7 @@ class SpectrumPanel(QWidget):
     def _show_loading_indicator(
         self, text: str = "", ready: int = 0, total: int = 0
     ) -> None:
-        """Show the indicator above the spectrum; total <= 0 uses indeterminate progress."""
+        'Show the indicator above the spectrum; total <= 0 uses indeterminate progress.'
         self.loading_label.setText(text)
         if total > 0:
             self.loading_progress.setRange(0, int(total))
@@ -1154,7 +1181,7 @@ class SpectrumPanel(QWidget):
         self.loading_indicator.setVisible(True)
 
     def _update_loading_progress(self, ready: int, total: int) -> None:
-        """Update plane-loading progress without changing the title text."""
+        'Update plane-loading progress without changing the title text.'
         self.loading_progress.setRange(0, max(1, int(total)))
         self.loading_progress.setValue(min(int(ready), int(total)))
         self.loading_progress.setFormat("%v / %m")
@@ -1164,7 +1191,7 @@ class SpectrumPanel(QWidget):
         self._reveal_loading_indicator()
 
     def _hide_loading_indicator(self) -> None:
-        """Hide the loading indicator while idle."""
+        'Hide the loading indicator while idle.'
         self.loading_indicator.setVisible(False)
         self.loading_progress.setRange(0, 1)
         self.loading_progress.setValue(0)
@@ -1205,10 +1232,10 @@ class SpectrumPanel(QWidget):
                 self._stream_planes(
                     spectrum3d, axis_idx, token, cancel.is_set
                 )
-            except Exception:
+            except Exception:  # noqa: BLE001
                 try:
                     self._plane_stream_done.emit(token)
-                except RuntimeError:
+                except RuntimeError:  # pragma: no cover
                     pass
 
         thread = threading.Thread(target=worker, daemon=True)
@@ -1216,7 +1243,7 @@ class SpectrumPanel(QWidget):
         thread.start()
 
     def _stop_plane_stream(self) -> None:
-        """Request nonblocking stream cancellation; the worker exits at a block boundary."""
+        'Request nonblocking stream cancellation; the worker exits at a block boundary.'
         if self._stream_cancel is not None:
             self._stream_cancel.set()
             self._stream_cancel = None
@@ -1278,7 +1305,7 @@ class SpectrumPanel(QWidget):
             self.plane_loaded.emit(int(self._stream_axis), int(index))
 
     def _on_plane_stream_done(self, token: int) -> None:
-        """Hide stream progress and remember that the selected axis has been fully loaded."""
+        'Hide stream progress and remember that the selected axis has been fully loaded.'
         if token != self._stream_token:
             return
         self._planes_ready = self._planes_total
@@ -1287,7 +1314,7 @@ class SpectrumPanel(QWidget):
         self._hide_loading_indicator()
 
     def closeEvent(self, event) -> None:
-        """Stop plane streaming on close so workers do not signal destroyed widgets."""
+        'Stop plane streaming on close so workers do not signal destroyed widgets.'
         self._clear_current_spectrum()
         super().closeEvent(event)
 
@@ -1471,7 +1498,7 @@ class SpectrumPanel(QWidget):
                     continue
                 try:
                     s3d_axes = list(Spectrum3D.load_from_ft3(ft3, lazy=True).axes or [])
-                except Exception:
+                except Exception:  # noqa: BLE001
                     s3d_axes = []
                 if len(s3d_axes) == 3:
                     break
@@ -1643,12 +1670,13 @@ class SpectrumPanel(QWidget):
             spectrum,
             name=self._spectrum3d_panel.current_name(base),
         )
+        self.viewer.set_display_ppm_shifts(self._display_alignment)
         if self._comparison_active:
             self._overlay_refresh.start(0)
         if self._peaks:
-            self.viewer.set_peaks(self._peaks)
+            self._update_viewer_peaks()
     def _save_3d_state(self, *_args) -> None:
-        """Remember the 3D viewing plane of the current sample data (0.2.133 slice mode only)."""
+        'Remember the 3D viewing plane of the current sample data (0.2.133 slice mode only).'
         if self._current_data_id:
             self._viewer3d_state[(self._current_exp_id, self._current_data_id)] = (
                 self._spectrum3d_panel.plane_combo.currentIndex()
@@ -1665,7 +1693,7 @@ class SpectrumPanel(QWidget):
         self._load_peaks(paths[0])
 
     # ------------------------------------------------------------------
-    # ------------------------------------------------------------------ #
+
     # ------------------------------------------------------------------
     def _peak_file_path(self, spectrum_path: Path) -> Path | None:
         """Peak table file:.list takes priority (peak table is list), and the old CSV is compatible
@@ -1709,7 +1737,7 @@ class SpectrumPanel(QWidget):
         self._peaks = self._assign_peak_ids(peaks)
         self._normalize_peak_snr(self._peaks)
         self._populate_peak_table()
-        self.viewer.set_peaks(self._peaks)
+        self._update_viewer_peaks()
         self.export_poky_button.setEnabled(True)
         self.save_peaks_button.setEnabled(True)
         self._update_delete_button()
@@ -1821,11 +1849,13 @@ class SpectrumPanel(QWidget):
     def _populate_peak_table(self) -> None:
         """Populate 2D/3D rows from optional .list S/N or legacy CSV SNR values.
 
-        Keep SN as the internal key and SNR as its visible title; never reestimate noise here."""
+        Keep SN as the internal key and SNR as its visible title; never reestimate noise here.
+        """
         is_3d = bool(self._peaks) and "F1_shift" in self._peaks[0]
         self._set_peak_columns(is_3d)
         self._loading_peaks = True
         try:
+            self.peak_table.setRowCount(0)
             self.peak_table.setRowCount(len(self._peaks))
             for row, peak in enumerate(self._peaks):
                 for col, key in enumerate(self._peak_keys):
@@ -1895,9 +1925,35 @@ class SpectrumPanel(QWidget):
                         peak[key] = item.text() if item is not None else ""
                     continue
                 item = self.peak_table.item(row, col)
+                if key == "SN" and item is not None and item.text() == _peak_snr_text(peak):
+                    continue
                 peak[key] = item.text() if item is not None else ""
             peaks.append(peak)
         return peaks
+
+    def _remember_peak_table(self):
+        rows = self._table_peaks()
+        if self._active_peak_source == "imported":
+            self._imported_peaks = rows
+        else:
+            self._picked_peaks = rows
+
+    def _update_viewer_peaks(self):
+        self.viewer.set_peaks(self._peaks, aligned=self._active_peak_source == "imported")
+
+    def _switch_peak_source(self, index):
+        source = self.peak_source_combo.itemData(index)
+        if source not in ("picked", "imported") or source == self._active_peak_source:
+            return
+        self._remember_peak_table()
+        self._active_peak_source = source
+        rows = self._imported_peaks if source == "imported" else self._picked_peaks
+        self._peaks = [dict(row) for row in rows or []]
+        self._populate_peak_table()
+        self._update_viewer_peaks()
+        self.export_poky_button.setEnabled(bool(self._peaks))
+        self.save_peaks_button.setEnabled(bool(self._peaks))
+        self._update_delete_button()
 
     def _update_delete_button(self) -> None:
         """Delete peak button: Available when there is a peak table (automatic/Manual) and data is
@@ -2022,7 +2078,7 @@ class SpectrumPanel(QWidget):
         peak["Peak_ID"] = next_id
         self._peaks.append(peak)
         self._populate_peak_table()
-        self.viewer.set_peaks(self._peaks)
+        self._update_viewer_peaks()
         self._update_delete_button()
         self.export_poky_button.setEnabled(True)
         self.save_peaks_button.setEnabled(True)
@@ -2045,13 +2101,15 @@ class SpectrumPanel(QWidget):
         self._peaks = [
             peak for i, peak in enumerate(self._peaks) if i not in remove
         ]
-        self.viewer.set_peaks(self._peaks)
+        self._update_viewer_peaks()
         self.export_poky_button.setEnabled(bool(self._peaks))
         self.save_peaks_button.setEnabled(bool(self._peaks))
         self._update_delete_button()
 
     def _on_import_poky(self) -> None:
         if self.manager.project is None or not self._current_exp_id:
+            return
+        if self._alignment_progress is not None:
             return
         start = str(Path.home())
         try:
@@ -2063,15 +2121,49 @@ class SpectrumPanel(QWidget):
         except Exception:  # noqa: BLE001
             pass
         path, _ = QFileDialog.getOpenFileName(
-            self, tr(
-                "import Poky peak "
-                "table",
-            ), start, tr(
-                "Poky peak table (*.list);; all files "
-                "(*)",
-            )
+            self, tr("Import peaks"), start,
+            tr("Peak tables (*.list *.csv);;Poky peak table (*.list);;NMRFinesse peak CSV (*.csv)"),
         )
         if not path:
+            return
+        if Path(path).suffix.lower() == ".csv":
+            try:
+                peaks = self.controller.restore_picked_peaks(path)
+                expected_3d = self._spectrum3d_panel.spectrum3d is not None
+                if (self.viewer.primary_spectrum is not None
+                        and ("F1_shift" in peaks[0]) != expected_3d):
+                    raise ValueError(tr("The CSV dimensions do not match the current spectrum"))
+            except Exception as exc:
+                InfoDialog.show_info(self, tr("import failed"), str(exc))
+                return
+            self._remember_peak_table()
+            self._picked_peaks = self._assign_peak_ids(self._normalize_peak_snr(peaks))
+            self._display_alignment = {}
+            self.viewer.set_display_ppm_shifts({})
+            # A restored native CSV starts a fresh reference alignment.
+            self._imported_peaks = None
+            self._active_peak_source = "picked"
+            with QSignalBlocker(self.peak_source_combo):
+                self.peak_source_combo.setCurrentIndex(0)
+                if self.peak_source_combo.count() > 1:
+                    self.peak_source_combo.removeItem(1)
+            self._peaks = [dict(row) for row in self._picked_peaks]
+            self._populate_peak_table()
+            self._update_viewer_peaks()
+            self.export_poky_button.setEnabled(True)
+            self.save_peaks_button.setEnabled(True)
+            self._update_delete_button()
+            return
+        self._remember_peak_table()
+        if not self._picked_peaks:
+            InfoDialog.show_info(
+                self, tr("Import peaks"), tr("Please pick peaks in the current spectrum first"),
+            )
+            return
+        if self.viewer.primary_spectrum is None or self._projection_active:
+            InfoDialog.show_info(
+                self, tr("Import peaks"), tr("Please display the current spectrum first"),
+            )
             return
         try:
             peaks = import_peaks_poky(
@@ -2088,24 +2180,97 @@ class SpectrumPanel(QWidget):
                 "file",
             ))
             return
-        self._peaks = self._assign_peak_ids(peaks)
-        self._populate_peak_table()
+        detected = [dict(row) for row in self._picked_peaks]
+        nuclei = self._current_3d_nuclei()
+        if "F1_shift" not in detected[0]:
+            from viewer.spectrum import _parse_nmrpipe_label
 
-        self.viewer.set_peaks(self._peaks)
+            nuclei = [_parse_nmrpipe_label(axis.label)
+                      for axis in self.viewer.primary_spectrum.axes]
+            if not all(nuclei):
+                InfoDialog.show_info(
+                    self, tr("Import peaks"), tr("Cannot determine spectrum nuclei for alignment"),
+                )
+                return
+        ref_nuclei = (self._current_3d_nuclei() or ["15N", "13C", "1H"]
+                      if "F1_shift" in peaks[0] else None)
+        if ref_nuclei is None and nuclei and len(nuclei) == 2:
+            ref_nuclei = nuclei
+        try:
+            self.controller.set_manager(self.manager)
+            self._picked_backup_path = self.controller.backup_picked_peaks(
+                self._current_exp_id, self._current_data_id, detected,
+            )
+        except Exception as exc:
+            InfoDialog.show_info(self, tr("import failed"), str(exc))
+            return
+        self._start_peak_alignment(detected, peaks, nuclei, ref_nuclei, self._apply_imported_peaks)
+
+    def _start_peak_alignment(self, detected, peaks, nuclei, ref_nuclei, callback):
+        self._alignment_callback = callback
+        self._alignment_token += 1
+        token = self._alignment_token
+        progress = QProgressDialog(
+            tr("Aligning the spectrum to the imported peak table…"), "", 0, 0, self,
+        )
+        progress.setCancelButton(None)
+        progress.setWindowModality(Qt.WindowModality.ApplicationModal)
+        progress.setMinimumDuration(0)
+        self._alignment_progress = progress
+        progress.show()
+
+        def calculate():
+            result, error = None, None
+            try:
+                result = self.controller.estimate_display_alignment(
+                    detected, peaks, cur_nuclei=nuclei, ref_nuclei=ref_nuclei,
+                )
+                result["source_peaks"] = detected
+            except Exception as exc:  # noqa: BLE001 - report errors on the GUI thread
+                error = str(exc)
+            try:
+                self._alignment_done.emit(token, peaks, result, error)
+            except RuntimeError:
+                pass  # The owning panel was closed while the worker was running.
+
+        threading.Thread(target=calculate, daemon=True).start()
+
+    def _finish_peak_import(self, token, peaks, result, error) -> None:
+        if token != self._alignment_token:
+            return
+        if self._alignment_progress is not None:
+            self._alignment_progress.close()
+            self._alignment_progress.deleteLater()
+            self._alignment_progress = None
+        if error:
+            self._alignment_callback = None
+            InfoDialog.show_info(self, tr("Peak alignment failed"), error)
+            return
+        callback, self._alignment_callback = self._alignment_callback, None
+        if callback is not None:
+            callback(peaks, result)
+
+    def _apply_imported_peaks(self, peaks, result):
+        self._display_alignment = result["axis_shifts"]
+        self._imported_peaks = self._assign_peak_ids(peaks)
+        self._normalize_peak_snr(self._imported_peaks)
+        self._active_peak_source = "imported"
+        with QSignalBlocker(self.peak_source_combo):
+            if self.peak_source_combo.count() == 1:
+                self.peak_source_combo.addItem(tr("Imported peaks"), "imported")
+            self.peak_source_combo.setCurrentIndex(1)
+        self._peaks = [dict(row) for row in self._imported_peaks]
+        self._populate_peak_table()
+        self.viewer.set_display_ppm_shifts(self._display_alignment)
+        self._update_viewer_peaks()
         self.export_poky_button.setEnabled(True)
         self.save_peaks_button.setEnabled(True)
         self._update_delete_button()
-
-
         InfoDialog.show_info(
-            self.import_poky_button,
-            tr("import completed"),
-            tr(
-                "The current peak table association was replaced with the Poky peak table ({p0} "
-                "peak(s));\n(click \"Save peak table\" to write back to the .list "
-                "file)",
-                p0=len(peaks),
-            ),
+            self.import_poky_button, tr("import completed"),
+            tr("Imported {p0} peaks. Both tables keep their own assignments. "
+               "Picked peaks were backed up to:\n{p1}",
+               p0=len(peaks), p1=self._picked_backup_path),
         )
 
     def _on_save_peaks(self) -> None:
@@ -2128,11 +2293,11 @@ class SpectrumPanel(QWidget):
                 data_id=self._current_data_id,
                 nuclei=self._current_3d_nuclei(),
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             InfoDialog.show_info(self, tr("save failed"), describe_exception(exc))
             return
         self._peaks = peaks
-        self.viewer.set_peaks(peaks)
+        self._update_viewer_peaks()
         self.save_peaks_button.setEnabled(True)
         self.peaks_saved.emit()
         InfoDialog.show_info(self, tr(
@@ -2191,70 +2356,43 @@ class SpectrumPanel(QWidget):
         ref_path, _ = QFileDialog.getOpenFileName(
             self,
             tr("Select export reference peak file (.list)"),
-            "",
+            str(self._current_spectrum.parent) if self._current_spectrum else str(Path.home()),
             tr("Poky peak table (*.list);; all files (*)"),
         )
         if not ref_path:
             return
-        from workflow.peak_align import (
-            MIN_ACCEPTABLE_RATIO,
-            align_peak_files,
-            alignment_figure,
-            shifted_rows,
-        )
-
         try:
-
-            from gui.settings import load_settings
-
-            settings_tol = (
-                load_settings().get("alignment_tolerance_ppm") or None
-            )
             ref_path = Path(ref_path)
             ref_rows = import_peaks_poky(ref_path)
             if not ref_rows:
-                InfoDialog.show_info(self, tr(
-                    "Alignment export "
-                    "failed",
-                ), tr(
-                    "Reference peak file is empty or cannot be "
-                    "parsed",
-                ))
-                return
+                raise ValueError(tr("Reference peak file is empty or cannot be parsed"))
+            ref_nuclei = ["15N", "13C", "1H"] if "F1_shift" in ref_rows[0] else None
+            nuclei = self._current_3d_nuclei() if "F1_shift" in self._peaks[0] else None
+            if nuclei is None and self.viewer.primary_spectrum is not None:
+                from viewer.spectrum import _parse_nmrpipe_label
 
-
-
-            ref_nuclei_ref = None
-            if ref_rows and "F1_shift" in ref_rows[0]:
-                ref_nuclei_ref = ["15N", "13C", "1H"]
-            is_3d = "F1_shift" in (self._peaks[0] if self._peaks else {})
-            nuclei = self._current_3d_nuclei() if is_3d else None
-            result = align_peak_files(
-                self._peaks,
-                ref_rows,
-                cur_nuclei=nuclei,
-                ref_nuclei=ref_nuclei_ref,
-                tol_ppm=settings_tol,
+                axes = [_parse_nmrpipe_label(axis.label)
+                        for axis in self.viewer.primary_spectrum.axes]
+                if all(axes):
+                    nuclei = axes
+            if ref_nuclei is None and nuclei and len(nuclei) == 2:
+                ref_nuclei = nuclei
+            self._start_peak_alignment(
+                [dict(row) for row in self._table_peaks()], ref_rows, nuclei, ref_nuclei,
+                lambda rows, result: self._complete_aligned_export(
+                    ref_path, rows, nuclei, ref_nuclei, result,
+                ),
             )
-            if result["status"] == "no_common":
-                InfoDialog.show_info(
-                    self, tr("Alignment export failed"), result["message"]
-                )
-                return
-            if result["status"] == "low":
-                InfoDialog.show_info(
-                    self,
-                    tr("Alignment rate is low"),
-                    tr(
-                        "Alignment rate {p0:.0%} < {p1:.0%}: check whether the reference spectrum "
-                        "matches this "
-                        "one",
-                        p0=result["ratio"],
-                        p1=MIN_ACCEPTABLE_RATIO,
-                    ),
-                )
-                return
-            out_rows = shifted_rows(self._peaks, result["shift"], nuclei)
+        except Exception as exc:  # noqa: BLE001
+            InfoDialog.show_info(self, tr("Alignment export failed"), str(exc))
+
+    def _complete_aligned_export(self, ref_path, ref_rows, nuclei, ref_nuclei_ref, result):
+        from workflow.peak_align import alignment_figure, shifted_rows
+
+        settings_tol = {"1H": 0.05, "15N": 0.5, "13C": 0.5}
+        try:
+            current_rows = result["source_peaks"]
+            out_rows = shifted_rows(current_rows, result["shift"], nuclei)
             default = None
             try:
                 default = (
@@ -2302,7 +2440,7 @@ class SpectrumPanel(QWidget):
                 )
                 fig_path = figures_dir / f"{cur_name}_aligned_{ref_name}.png"
                 alignment_figure(
-                    self._peaks,
+                    current_rows,
                     ref_rows,
                     result["shift"],
                     fig_path,
@@ -2316,17 +2454,15 @@ class SpectrumPanel(QWidget):
                 fig_lines.append(
                     tr("Alignment check chart (SVG): {p0}", p0=fig_path.with_suffix('.svg'))
                 )
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 fig_lines.append(tr("Alignment check map generation failed: {p0}", p0=exc))
             msg = (
                 tr("Exported peak table after alignment: ")
                 + str(path)
                 + "\n"
                 + tr(
-                    "(alignment rate {p0:.0%}, shift "
-                    "{p1})",
-                    p0=result["ratio"],
-                    p1=result["shift"],
+                    "Matched reference peaks: {p0}/{p1}; shift {p2}",
+                    p0=result["matched"], p1=result["n_reference"], p2=result["shift"],
                 )
             )
             if fig_lines:
@@ -2336,6 +2472,22 @@ class SpectrumPanel(QWidget):
             InfoDialog.show_info(self, tr("Alignment export failed"), str(exc))
 
     def _clear_peaks(self) -> None:
+        self._alignment_token += 1
+        if self._alignment_progress is not None:
+            self._alignment_progress.close()
+            self._alignment_progress.deleteLater()
+            self._alignment_progress = None
+        self._alignment_callback = None
+        self._picked_peaks = []
+        self._imported_peaks = None
+        self._active_peak_source = "picked"
+        self._picked_backup_path = None
+        with QSignalBlocker(self.peak_source_combo):
+            self.peak_source_combo.setCurrentIndex(0)
+            if self.peak_source_combo.count() > 1:
+                self.peak_source_combo.removeItem(1)
+        self._display_alignment = {}
+        self.viewer.set_display_ppm_shifts({})
         self._peaks = []
         self.peak_table.setRowCount(0)
         self.viewer.set_peaks([])
@@ -2351,7 +2503,7 @@ class SpectrumPanel(QWidget):
 
     @staticmethod
     def _assign_peak_ids(peaks: list[dict]) -> list[dict]:
-        """Number rows that are missing Peak_ID in row order (Poky.list has no ID column)."""
+        'Number rows that are missing Peak_ID in row order (Poky.list has no ID column).'
         for i, peak in enumerate(peaks, start=1):
             if not (peak.get("Peak_ID") or ""):
                 peak["Peak_ID"] = i
@@ -2397,11 +2549,11 @@ class SpectrumPanel(QWidget):
             ))
 
     def _on_menu_open_spectrum(self) -> None:
-        """File menu: Open any spectrum file to the current viewer (independent viewer entry)."""
+        'File menu: Open any spectrum file to the current viewer (independent viewer entry).'
         path, _ = QFileDialog.getOpenFileName(
             self,
             tr("Open NMRPipe spectrum"),
-            "",
+            str(self._current_spectrum.parent) if self._current_spectrum else str(Path.home()),
             tr("NMRPipe spectrum (*.ft2 *.ft3 *.ft1 *.fid);; all files (*)"),
         )
         if not path:
@@ -2413,7 +2565,7 @@ class SpectrumPanel(QWidget):
             self.status_message.emit(tr("Opened: {p0}", p0=target.name))
 
     def _on_menu_clear_spectrum(self) -> None:
-        """File menu: Clear the current viewer spectrum and peak table."""
+        'File menu: Clear the current viewer spectrum and peak table.'
         self._clear_current_spectrum()
 
     def _clear_current_spectrum(self) -> None:
@@ -2435,7 +2587,7 @@ class SpectrumPanel(QWidget):
         self._projection_active = False
 
     def _on_menu_show_help(self) -> None:
-        """Help menu: Viewer operating instructions."""
+        'Help menu: Viewer operating instructions.'
         InfoDialog.show_info(
             self,
             tr("Operating Instructions"),
@@ -2503,7 +2655,7 @@ class SpectrumPanel(QWidget):
                   p0=path.name, p1=source, p2=path)
 
     def _refresh_compare_menu(self) -> None:
-        """Rebuild comparison choices from current project results before opening the menu."""
+        'Rebuild comparison choices from current project results before opening the menu.'
         self.compare_menu.clear()
         self.compare_menu.setToolTipsVisible(True)
         if self._comparison_active:
@@ -2558,7 +2710,7 @@ class SpectrumPanel(QWidget):
     def _load_external_comparison(self) -> None:
         path, _filter = QFileDialog.getOpenFileName(
             self, tr('Load spectrum...'),
-            str(self._current_spectrum.parent) if self._current_spectrum else '',
+            str(self._current_spectrum.parent) if self._current_spectrum else str(Path.home()),
             tr('NMRPipe spectrum (*.ft2 *.ft3 *.ft1 *.fid);; all files (*)'),
         )
         if not path:
@@ -2866,8 +3018,7 @@ class SpectrumPanel(QWidget):
                 viewer.view_splitter.setSizes([height, controls])
 
     def _load_compare_spectrum(self, path: Path) -> bool:
-        """
-        Load the left comparison spectrum read-only into its independent viewer
+        """Load the left comparison spectrum read-only into its independent viewer
         and controls.
         """
         viewer = self._ensure_compare_viewer()
@@ -2896,7 +3047,7 @@ class SpectrumPanel(QWidget):
                 viewer.add_spectrum(Spectrum.load_from_ft2(path), name=path.stem)
             self._compare_spectrum = path
             return True
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             viewer.clear()
             panel3d.clear()
             self._compare_spectrum = None
@@ -2941,7 +3092,7 @@ class SpectrumPanel(QWidget):
         return column
 
     def _activate_comparison(self, path: Path) -> None:
-        """Use three columns: comparison spectrum, current spectrum, shared file/peak table."""
+        'Use three columns: comparison spectrum, current spectrum, shared file/peak table.'
         if not self._expanded or self._expand_splitter is None:
             return
         if self._comparison_active:
@@ -2998,7 +3149,7 @@ class SpectrumPanel(QWidget):
         self._comparison_layout_timer.start(0)
 
     def _deactivate_comparison(self) -> None:
-        """Restore the original expanded layout without sharing the two viewers' control state."""
+        "Restore the original expanded layout without sharing the two viewers' control state."
         if not self._comparison_active:
             return
         if self.overlay.toggle.isChecked():
@@ -3188,6 +3339,8 @@ class SpectrumPanel(QWidget):
                 )
             )
             return
+        if self._active_peak_source == "imported":
+            value -= self._display_alignment.get(int(slice_axis), 0.0)
         axis = s3d.axes[int(slice_axis)]
         index = int(axis.index_at(value))
 
