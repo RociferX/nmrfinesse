@@ -10,11 +10,11 @@ NMRFinesse读取Bruker数据集，识别实验类型与采样方式，规划处�
 数据检查、自动与人工处理、参数优化、质量控制、选峰和查看在同一工作流中完成，
 实际采用的参数、脚本、告警和输出与结果一同留档，便于复现和核查。
 
-**软件版本：1.0.11 · Python/CLI API：1.1.5 · 目标平台：Linux**
+**软件版本：1.0.12 · Python/CLI API：1.1.5 · 目标平台：Linux**
 
 **Linux桌面用户最简单的使用方式是AppImage。**
-下载[1.0.11 AppImage](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.11/NMRFinesse-1.0.11-x86_64.AppImage)
-及[校验文件](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.11/SHA256SUMS-v1.0.11.txt)，
+下载[1.0.12 AppImage](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.12/NMRFinesse-1.0.12-x86_64.AppImage)
+及[校验文件](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.12/SHA256SUMS-v1.0.12.txt)，
 按[安装步骤](#安装)校验、赋予执行权限并启动，无需自行配置Python或Qt。
 真实谱图处理仍需单独安装NMRPipe，NUS重构还需要SMILE。
 
@@ -125,13 +125,13 @@ NMRFinesse 不会替你分发、下载或安装 NMRPipe/SMILE。它在运行时�
 
 ### Linux AppImage：最简单的桌面使用方式
 
-从[1.0.11发行页](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.11)下载
-`NMRFinesse-1.0.11-x86_64.AppImage`与`SHA256SUMS-v1.0.11.txt`，然后运行：
+从[1.0.12发行页](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12)下载
+`NMRFinesse-1.0.12-x86_64.AppImage`与`SHA256SUMS-v1.0.12.txt`，然后运行：
 
 ```bash
-sha256sum -c SHA256SUMS-v1.0.11.txt
-chmod +x NMRFinesse-1.0.11-x86_64.AppImage
-./NMRFinesse-1.0.11-x86_64.AppImage
+sha256sum -c SHA256SUMS-v1.0.12.txt
+chmod +x NMRFinesse-1.0.12-x86_64.AppImage
+./NMRFinesse-1.0.12-x86_64.AppImage
 ```
 
 AppImage包含Python、Qt和桌面程序，无需自行创建Python环境或安装Python依赖；
@@ -214,7 +214,7 @@ UCSF 复制入口在 `工具 → 导出 UCSF 文件…`，打开项目后可用�
 待更新状态会给出缺失路径或变化文件；旧记录证据不足时会说明无法细分原因。
 拾取峰表和导入峰表可切换、各自保留指认；CSV 用于完整恢复，GUI 的 `.list` 只导出指认和坐标。
 
-这些说明对应当前源码。现有 v1.0.11 AppImage 不会因源码更新而自动改变；本次不重建安装包。
+v1.0.12 AppImage 包含本节功能；后续源码更新与安装包重建分别发布。
 完整操作见 [GUI 指南](docs/gui.md)。
 
 ## 命令行用法

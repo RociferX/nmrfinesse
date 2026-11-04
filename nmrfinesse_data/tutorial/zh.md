@@ -6,7 +6,7 @@
 
 ### 1.1 项目资源与引用
 
-- 当前软件版本 1.0.11，Python/CLI API 版本 v1.1.5。「帮助 → 关于」显示实际运行版本、作者、许可证及项目链接。
+- 当前软件版本 1.0.12，Python/CLI API 版本 v1.1.5。「帮助 → 关于」显示实际运行版本、作者、许可证及项目链接。
 - Copyright © 2026 Xuanfeng Li（李宣锋）。源码采用 [Apache-2.0](https://github.com/RociferX/nmrfinesse/blob/main/LICENSE)，版权声明见 [NOTICE](https://github.com/RociferX/nmrfinesse/blob/main/NOTICE)。
 - [GitHub](https://github.com/RociferX/nmrfinesse) · [下载与发布说明](https://github.com/RociferX/nmrfinesse/releases) · [问题反馈](https://github.com/RociferX/nmrfinesse/issues)。
 - 引用使用 [CITATION.cff](https://github.com/RociferX/nmrfinesse/blob/main/CITATION.cff) 或 [Zenodo](https://doi.org/10.5281/zenodo.22909415)，并注明实际版本。此 DOI 为跨版本概念 DOI，具体版本 DOI 见对应记录。

@@ -13,8 +13,8 @@ editable repository checkout.
 ### Can I run it on Windows or macOS?
 
 Linux is the target runtime; Windows is an editing environment. macOS has not been validated.
-The current version is software 1.0.11 / API v1.1.5. Download the Linux AppImage from the
-[1.0.11 release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.11).
+The current version is software 1.0.12 / API v1.1.5. Download the Linux AppImage from the
+[1.0.12 release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12).
 API parameters and the
 38-column peak-table contract are documented in the [Python API](python-api.md).
 

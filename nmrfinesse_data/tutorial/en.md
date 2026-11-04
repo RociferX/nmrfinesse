@@ -6,7 +6,7 @@ This guide describes the current source interface. Help → About identifies the
 
 ### 1.1 Project resources and citation
 
-- Software 1.0.11, Python/CLI API v1.1.5. Help → About shows the running versions, author, licence and project links.
+- Software 1.0.12, Python/CLI API v1.1.5. Help → About shows the running versions, author, licence and project links.
 - Copyright © 2026 Xuanfeng Li. Source uses [Apache-2.0](https://github.com/RociferX/nmrfinesse/blob/main/LICENSE); see [NOTICE](https://github.com/RociferX/nmrfinesse/blob/main/NOTICE).
 - [GitHub](https://github.com/RociferX/nmrfinesse) · [Downloads and release notes](https://github.com/RociferX/nmrfinesse/releases) · [Issue tracker](https://github.com/RociferX/nmrfinesse/issues).
 - Cite [CITATION.cff](https://github.com/RociferX/nmrfinesse/blob/main/CITATION.cff) or [Zenodo](https://doi.org/10.5281/zenodo.22909415), naming the version used. This is the concept DOI; a specific version DOI is listed in its record.

@@ -1,19 +1,19 @@
 # Installation
 
 Linux is the target runtime; Windows may be used to edit source but is not a supported runtime
-environment. Linux desktop users can use the AppImage; download the [1.0.11 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.11) from the release.
+environment. Linux desktop users can use the AppImage; download the [1.0.12 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12) from the release.
 Install the Python API and command-line tools separately by following the source steps below.
 
 ## AppImage (Linux)
 
-Download `NMRFinesse-1.0.11-x86_64.AppImage` and
-`SHA256SUMS-v1.0.11.txt` from its release, then verify and start the AppImage in the same directory:
+Download `NMRFinesse-1.0.12-x86_64.AppImage` and
+`SHA256SUMS-v1.0.12.txt` from its release, then verify and start the AppImage in the same directory:
 
 ```bash
-sha256sum -c SHA256SUMS-v1.0.11.txt
-chmod +x NMRFinesse-1.0.11-x86_64.AppImage
-./NMRFinesse-1.0.11-x86_64.AppImage --licenses
-./NMRFinesse-1.0.11-x86_64.AppImage
+sha256sum -c SHA256SUMS-v1.0.12.txt
+chmod +x NMRFinesse-1.0.12-x86_64.AppImage
+./NMRFinesse-1.0.12-x86_64.AppImage --licenses
+./NMRFinesse-1.0.12-x86_64.AppImage
 ```
 
 The AppImage includes third-party licence notices, including those for PySide6/Qt. See the

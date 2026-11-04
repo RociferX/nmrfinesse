@@ -1,6 +1,6 @@
 # 快速开始
 
-本页介绍 1.0.11 的安装与首次处理。Linux 桌面用户可从 [1.0.11 Release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.11) 下载 AppImage；源码安装见下方步骤。公开 API 版本为 v1.1.5。
+本页介绍 1.0.12 的安装与首次处理。Linux 桌面用户可从 [1.0.12 Release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12) 下载 AppImage；源码安装见下方步骤。公开 API 版本为 v1.1.5。
 
 ## 路线 A —— 源码安装与 GUI
 
@@ -113,7 +113,7 @@ UCSF 复制入口在 `工具 → 导出 UCSF 文件…`，打开项目后可用�
 待更新状态会给出缺失路径或变化文件；旧记录证据不足时会说明无法细分原因。
 拾取峰表和导入峰表可切换、各自保留指认；CSV 用于完整恢复，GUI 的 `.list` 只导出指认和坐标。
 
-这些说明对应当前源码。现有 v1.0.11 AppImage 不会因源码更新而自动改变；本次不重建安装包。
+v1.0.12 AppImage 包含本节功能；后续源码更新与安装包重建分别发布。
 完整操作见 [GUI 指南](gui.md)。
 
 ## 下一步

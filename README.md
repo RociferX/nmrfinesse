@@ -11,11 +11,11 @@ strategy, and drives NMRPipe and SMILE to produce spectra. It brings data inspec
 manual processing, optimisation, quality control, peak picking and viewing into one workflow, with
 the resolved parameters, scripts, warnings and outputs saved alongside the result.
 
-**Software: 1.0.11 · Python/CLI API: 1.1.5 · Target platform: Linux**
+**Software: 1.0.12 · Python/CLI API: 1.1.5 · Target platform: Linux**
 
 **For desktop use on Linux, the simplest option is the AppImage.**
-Download the [1.0.11 AppImage](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.11/NMRFinesse-1.0.11-x86_64.AppImage)
-and its [checksum file](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.11/SHA256SUMS-v1.0.11.txt)
+Download the [1.0.12 AppImage](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.12/NMRFinesse-1.0.12-x86_64.AppImage)
+and its [checksum file](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.12/SHA256SUMS-v1.0.12.txt)
 from the release; no separate Python or Qt setup is needed. Follow
 [Installation](#installation) for startup and source/API setup. Real spectral processing still
 requires a separate NMRPipe installation; NUS reconstruction also needs SMILE.
@@ -141,14 +141,14 @@ licence inventory.
 
 ### Linux AppImage — simplest desktop setup
 
-Use the [1.0.11 release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.11).
-Download `NMRFinesse-1.0.11-x86_64.AppImage` and
-`SHA256SUMS-v1.0.11.txt`, then run:
+Use the [1.0.12 release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12).
+Download `NMRFinesse-1.0.12-x86_64.AppImage` and
+`SHA256SUMS-v1.0.12.txt`, then run:
 
 ```bash
-sha256sum -c SHA256SUMS-v1.0.11.txt
-chmod +x NMRFinesse-1.0.11-x86_64.AppImage
-./NMRFinesse-1.0.11-x86_64.AppImage
+sha256sum -c SHA256SUMS-v1.0.12.txt
+chmod +x NMRFinesse-1.0.12-x86_64.AppImage
+./NMRFinesse-1.0.12-x86_64.AppImage
 ```
 
 The AppImage bundles Python, Qt and the desktop application, so desktop users can start without
@@ -241,8 +241,8 @@ Needs-update details identify missing paths or changed files; old records explic
 provenance. Picked/imported peak tables retain separate assignments. CSV restores the full table;
 GUI `.list` exports contain assignments and coordinates only.
 
-These instructions describe current source. The existing v1.0.11 AppImage does not change when
-source is updated; this update does not rebuild it. See the [GUI guide](docs/gui.md) for full instructions.
+The v1.0.12 AppImage includes these features. Subsequent source changes and rebuilt
+AppImages are published separately. See the [GUI guide](docs/gui.md) for full instructions.
 
 ## CLI usage
 

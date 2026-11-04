@@ -1,7 +1,7 @@
 # Getting started
 
 This guide covers first data inspection and the processing boundary. For Linux desktop use,
-download the [1.0.11 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.11).
+download the [1.0.12 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12).
 For source installation, follow the steps below.
 
 ## Install from source
@@ -100,8 +100,8 @@ Needs-update details identify missing paths or changed files; old records explic
 provenance. Picked/imported peak tables retain separate assignments. CSV restores the full table;
 GUI `.list` exports contain assignments and coordinates only.
 
-These instructions describe current source. The existing v1.0.11 AppImage does not change when
-source is updated; this update does not rebuild it. See the [GUI guide](gui.md) for full instructions.
+The v1.0.12 AppImage includes these features. Subsequent source changes and rebuilt
+AppImages are published separately. See the [GUI guide](gui.md) for full instructions.
 
 ## Where to go next
 
