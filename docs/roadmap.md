@@ -5,7 +5,7 @@
 | Operation | Desktop workflow | Python/CLI API |
 | --- | --- | --- |
 | 2D uniform | Automatic and manual processing | Reference and parameter combinations |
-| 2D NUS | Automatic/manual SMILE reconstruction; SMILE optimisation and rank rerun | Reference and parameter combinations |
+| 2D NUS | Automatic/manual SMILE reconstruction; GUI parameter optimisation and ranked reruns unavailable | Reference and parameter combinations |
 | 3D uniform | Automatic and manual processing; complete spectrum or supported plane output | Reference and parameter combinations |
 | 3D NUS | Automatic and manual SMILE reconstruction | Reference construction; combination execution is rejected |
 | Batch operations | 2D data groups | Explicit workflow/condition combinations with resume |

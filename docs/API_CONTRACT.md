@@ -85,8 +85,8 @@ does not identify a unique axis. Plane views keep the identity and calibration o
 ## 5. Desktop processing adapter
 
 [`ProcessingController`](../gui/processing.py) binds a `ProjectManager` to workflow calls.
-It imports datasets, generates FIDs/spectra, runs edited scripts, picks peaks and manages supported
-SMILE optimisation/rerun operations. Calls carry `exp_id` and `data_id`, so status, products and logs
+It imports datasets, generates FIDs/spectra, runs edited scripts and picks peaks. Internal SMILE
+optimisation/rerun methods remain implemented, but have no GUI entry. Calls carry `exp_id` and `data_id`, so status, products and logs
 remain associated with their original target even if the selection changes.
 
 Conversion and spectrum execution delegate to `workflow.stepwise`; manual execution delegates to

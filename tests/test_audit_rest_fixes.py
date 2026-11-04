@@ -58,7 +58,6 @@ def test_analysis_removed_from_product_surface() -> None:
     assert [step[0] for step in PIPELINE_STEPS] == [
         "fid",
         "spectrum",
-        "smile",
         "peaks",
     ]
     assert "analysis" not in BATCH_STEPS
@@ -84,8 +83,8 @@ def test_analysis_removal_is_documented() -> None:
         return
     changelog_path = Path("CHANGELOG.md")
     if not changelog_path.is_file():
-        # The public repo does not ship CHANGELOG.md: with neither record present there is
-        # no source to assert against, so skip
+    # The public repo does not ship CHANGELOG.md: with neither record present there is
+    # no source to assert against, so skip
         return
     changelog = changelog_path.read_text(encoding="utf-8")
     assert "REPORT-008" in changelog
@@ -117,7 +116,10 @@ def test_version_single_source() -> None:
     data = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
     assert data["project"]["dynamic"] == ["version"]
     assert "version" not in data["project"]
-    assert data["tool"]["setuptools"]["dynamic"]["version"]["attr"] == "core.__version__"
+    assert (
+        data["tool"]["setuptools"]["dynamic"]["version"]["attr"]
+        == "core.__version__"
+    )
     assert core.__version__ != "0.1.0"
 
 
@@ -214,11 +216,16 @@ def test_open_project_persists_migration(tmp_path: Path) -> None:
         ],
         "processing_history": [],
     }
-    (root / "project.json").write_text(json.dumps(legacy, ensure_ascii=False), encoding="utf-8")
+    (root / "project.json").write_text(
+        json.dumps(legacy, ensure_ascii=False), encoding="utf-8"
+    )
     ProjectManager.open_project(root)
     stored = json.loads((root / "project.json").read_text(encoding="utf-8"))
     assert stored["schema_version"] == SCHEMA_VERSION
-    assert any(item.get("action") == "project_migrated" for item in stored["processing_history"])
+    assert any(
+        item.get("action") == "project_migrated"
+        for item in stored["processing_history"]
+    )
 
 
 def test_open_current_schema_project_is_not_rewritten(tmp_path: Path) -> None:
@@ -254,7 +261,9 @@ def test_bad_point_log_does_not_claim_false_deletion(tmp_path: Path) -> None:
         sampling=Sampling(mode=SamplingMode.NUS),
     )
     logs: list[str] = []
-    _valid, bad, removed = NMRPipeBackend()._clean_source_nus(experiment, [raw], logs)
+    _valid, bad, removed = NMRPipeBackend()._clean_source_nus(
+        experiment, [raw], logs
+    )
     assert bad, "重复采样点应被识别为坏点"
     assert removed is False
     assert (raw / "nuslist").read_text(encoding="utf-8") == "10\n10\n11\n"
@@ -283,8 +292,12 @@ def test_batch_skips_3d_with_documented_reason(
     class _Exp3D:
         ndim = 3
 
-    monkeypatch.setattr("workflow.stepwise._read_experiment", lambda *a, **k: _Exp3D())
-    result = batch_mod.run_batch(manager, entry.id, [data.id], ["fid"], backend=object())
+    monkeypatch.setattr(
+        "workflow.stepwise._read_experiment", lambda *a, **k: _Exp3D()
+    )
+    result = batch_mod.run_batch(
+        manager, entry.id, [data.id], ["fid"], backend=object()
+    )
     per = result["results"][data.id]
     assert per["status"] == "skipped"
     assert per["steps"] == {}
@@ -323,7 +336,9 @@ def test_default_config_has_no_consumerless_sections() -> None:
 
     from core.app_paths import resource_path
 
-    raw = yaml.safe_load(resource_path("config/nmrfinesse.yaml").read_text(encoding="utf-8"))
+    raw = yaml.safe_load(
+        resource_path("config/nmrfinesse.yaml").read_text(encoding="utf-8")
+    )
     for section in ("app", "optimization", "qc", "reporting", "logging"):
         assert section not in raw, section
     # peaks.localization (2026-09-13) is consumed by
@@ -336,11 +351,7 @@ def test_default_config_has_no_consumerless_sections() -> None:
 def test_smile_wording_matches_scheme_b() -> None:
     from gui.pipeline_panel import PIPELINE_STEPS
 
-    description = next(
-        text for step_id, _label, text, _deps in PIPELINE_STEPS if step_id == "smile"
-    )
-    assert "采用最优谱" not in description
-    assert "不自动替换" in description
+    assert all(step[0] != "smile" for step in PIPELINE_STEPS)
 
 
 def test_appimage_build_guards_against_missing_runtime_pieces() -> None:

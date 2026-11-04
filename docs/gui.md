@@ -76,8 +76,9 @@ Check dimension, experiment type, sampling and layout after import. Ordinary inp
 
 1. **Generate FID:** create and run conversion scripts to produce NMRPipe FIDs; 3D can use one file or a slice layout.
 2. **Generate spectrum:** use automatically selected or specified processing parameters. NUS includes SMILE reconstruction. Set the direct-dimension range when needed; the common protein 1H default is 6.5–10.5 ppm, to be checked against the data.
-3. **SMILE optimisation:** an optional 2D NUS step comparing the selected n×n parameter grid. Select a result to produce its final spectrum. This parameter-scan entry is not used for 3D.
-4. **Peak picking:** detect peaks, preserve intensity/SNR and create a table. See section 6 for editing and export.
+3. **Peak picking:** detect peaks, preserve intensity/SNR and create a table. See section 6 for editing and export.
+
+SMILE parameter optimisation, ranking and ranked reruns are temporarily unavailable in the GUI. NUS spectrum generation still uses SMILE reconstruction.
 
 ### 4.2 Manual scripts, reports and logs
 

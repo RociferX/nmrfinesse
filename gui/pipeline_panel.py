@@ -1,13 +1,9 @@
-"""Middle Pipeline panel: Displays processing steps and status around the current sample
-data/experiment type. Five-step process (Contract v1.2 / G2B-002, including optional SMILE
-optimisation): Import sample data -> Generate FID -> Generate spectrum (including SMILE
-reconstruction) -> [SMILE optimisation, optional] -> Peak selection. Analysis (HSQC CSP) has
-been pressed The user decided to delete (2026-09-12, REPORT-008). For the deletion scope and
-recovery method, see docs/tasks/archive/2026-09-12-analysis-removal.md. - The step status is
-inferred based on the pre-dependency and product file (LOCKED/READY/RUNNING/SUCCESS/FAILED); -
-READY The step provides a "Run" button and is executed by the corresponding method of
-ProcessingController; - LOCKED The step tooltip explains which pre-step is missing; - GUI The
-layer does not directly touch Backend: the only outlet is ProcessingController.
+"""The desktop processing panel displays the selected data's steps and state.
+
+Import is followed by FID generation, spectrum generation and peak picking.
+NUS spectrum generation retains SMILE reconstruction; its optional parameter
+optimisation and ranked rerun are temporarily unavailable in the GUI.
+Status follows dependencies and products. ProcessingController owns workflow calls.
 """
 
 from __future__ import annotations
@@ -86,17 +82,6 @@ PIPELINE_STEPS: tuple[tuple[str, str, str, tuple[str, ...]], ...] = (
         ("fid",),
     ),
     (
-        "smile",
-        tr(
-            "SMILE optimisation",
-        ),
-        tr(
-            "Optional for 2D NUS: compare reconstruction parameters without replacing the current "
-            "spectrum",
-        ),
-        ("spectrum",),
-    ),
-    (
         "peaks",
         tr(
             "Peak picking",
@@ -144,7 +129,6 @@ STATUS_ICON = {
 STEP_METHOD: dict[str, str] = {
     "fid": "generate_fid",
     "spectrum": "generate_spectrum",
-    "smile": "optimize_smile",
     "peaks": "pick_peaks",
 }
 
@@ -767,6 +751,7 @@ class _FlowLayout(QLayout):
 
 # ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # --------------------------------------------------------------------------- # #
 # ---------------------------------------------------------------------------
 #
@@ -1009,6 +994,7 @@ class PipelineStepRow(QWidget):
     """
 
     run_requested = Signal(str)  # step_id
+    # step_id
     # step_id
     rerun_final_requested = Signal(str, dict)
     manual_requested = Signal(str)
@@ -1506,7 +1492,9 @@ class PipelineStepRow(QWidget):
 
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _set_rerun_widgets_visible(self, visible: bool) -> None:
@@ -1760,7 +1748,6 @@ class PipelinePanel(QWidget):
             row.clear_ref_requested.connect(self._on_clear_reference)
             row.detail_toggled.connect(self._toggle_step_detail)
             row.view_log_requested.connect(self.view_log_requested.emit)
-            row.rank1_run_requested.connect(self.rank1_run_requested.emit)
             steps_box.addWidget(row)
             self._rows[step_id] = row
 
@@ -1801,7 +1788,9 @@ class PipelinePanel(QWidget):
 
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _data_facts(self, exp_id: str, data_id: str) -> dict:
@@ -2187,9 +2176,6 @@ class PipelinePanel(QWidget):
         self._sync_reference_display()
 
         self._update_segment_shift_button()
-
-
-        self._set_smile_visible(self._smile_supported(self._current_exp_id, self._current_data_id))
         self._set_peaks_visible(self._data_ndim(self._current_exp_id, self._current_data_id) != 1)
         statuses = self._current_statuses()
 
@@ -2209,13 +2195,6 @@ class PipelinePanel(QWidget):
             (sid for sid, st in statuses.items() if sid != "smile" and st == "READY"),
             None,
         )
-        smile_status = statuses.get("smile") if self._smile_step_visible else None
-        if smile_status == "OUTDATED":
-            optional_text = tr("SMILE optimisation (rerun)")
-        elif smile_status == "READY":
-            optional_text = tr("SMILE optimisation")
-        else:
-            optional_text = ""
         if outdated_next:
             text = tr("Next step: update {p0}", p0=STEP_LABEL[outdated_next])
         elif next_step:
@@ -2226,8 +2205,6 @@ class PipelinePanel(QWidget):
                 if any(st == "SUCCESS" for st in statuses.values())
                 else tr("Wait for import sample data")
             )
-        if optional_text:
-            text = tr("Optional: {p0}|{p1}", p0=optional_text, p1=text)
         self.next_label.setText(text)
         reasons = _lock_reasons(statuses)
         outdated = _outdated_reasons(
@@ -2281,7 +2258,9 @@ class PipelinePanel(QWidget):
 
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _on_ext_range_requested(self, step_id: str) -> None:
@@ -2674,7 +2653,9 @@ class PipelinePanel(QWidget):
 
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def run_step(self, step_id: str, data_id: str | None = None) -> None:
@@ -2933,7 +2914,9 @@ class PipelinePanel(QWidget):
 
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _reference_candidates(self) -> list[tuple[str, str, str]]:
@@ -3136,13 +3119,8 @@ class PipelinePanel(QWidget):
         )
         if entry is None:
             return
-
-        if step_id == "smile" and not self._smile_supported(
-            self._current_exp_id, self._current_data_id
-        ):
-            self.log_message.emit(
-                tr("SMILE optimisation only works with 2D NUS data (not currently, step is hidden)")
-            )
+        if step_id == "smile":
+            self.log_message.emit(tr("SMILE optimisation is temporarily unavailable in the GUI."))
             return
         method_name = STEP_METHOD.get(step_id)
         method = getattr(self.controller, method_name, None) if method_name else None

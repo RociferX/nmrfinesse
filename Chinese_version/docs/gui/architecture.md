@@ -1,5 +1,7 @@
 # GUI 架构
 
+桌面流水线仅注册生成FID、生成谱图、峰挑选三步。SMILE优化行、可选提示与排名重跑窗口连接已移除；历史优化记录不恢复入口。普通2D/3D NUS重构保留。
+
 桌面应用由 `gui/main_window.py` 组装。`MainWindow` 持有当前的 `ProjectManager`、
 `ProcessingController`、项目树、流水线/中心面板、日志面板和谱图面板。切换项目时会更新
 项目管理器所绑定的项目；项目 JSON 与数据条目通过 `core.project` 服务读写。正常应用入口

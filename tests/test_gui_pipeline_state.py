@@ -208,7 +208,7 @@ def test_smile_rank_scripts_do_not_invalidate_active_spectrum(
 
     statuses = compute_step_statuses(manager, exp_id)
     assert statuses["spectrum"] == "SUCCESS"
-    assert statuses["smile"] == "SUCCESS"
+    assert "smile" not in statuses
     assert statuses["peaks"] == "SUCCESS"
 
     spectrum_script.write_text("#!/bin/csh\nnmrPipe -fn FT -auto\n", encoding="utf-8")
@@ -397,8 +397,8 @@ def test_next_label_skips_optional_smile(tmp_path: Path, qapp: QApplication) -> 
     panel.set_selection("data", exp_id, data_id)
     text = panel.next_label.text()
     assert "峰挑选" in text
-    assert "SMILE" in text
-    assert "可选做" in text
+    assert "SMILE" not in text
+    assert "可选做" not in text
     # once SMILE is done "optional" no longer appears; the next step is peak picking
     record_step_success(manager, exp_id, data_id, "smile")
     panel.refresh()
@@ -581,14 +581,14 @@ def test_pipeline_smile_step_hidden_for_uniform_data(
         )
     )
     panel.set_selection("data", exp.id, d1.id)
-    assert panel._rows["smile"].isHidden()
+    assert "smile" not in panel._rows
     panel.close()
 
 
-def test_pipeline_smile_step_shown_for_2d_nus_data(
+def test_pipeline_smile_step_removed_for_2d_nus_data(
     tmp_path: Path, qapp: QApplication
 ) -> None:
-    """2D NUS data shows the SMILE optimization step (0.2.199-patch29gd + fix21 limits it to 2D)."""
+    """SMILE parameter optimisation is also absent for 2D NUS data."""
     from types import SimpleNamespace
 
     from core.data.internal_data_model import SamplingMode
@@ -605,7 +605,7 @@ def test_pipeline_smile_step_shown_for_2d_nus_data(
         )
     )
     panel.set_selection("data", exp.id, d1.id)
-    assert not panel._rows["smile"].isHidden()
+    assert "smile" not in panel._rows
     panel.close()
 
 
@@ -629,7 +629,7 @@ def test_pipeline_smile_step_hidden_for_3d_nus_data(
         )
     )
     panel.set_selection("data", exp.id, d1.id)
-    assert panel._rows["smile"].isHidden()
+    assert "smile" not in panel._rows
     panel.close()
 
 

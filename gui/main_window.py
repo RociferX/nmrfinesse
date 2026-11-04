@@ -122,6 +122,7 @@ class MainWindow(QMainWindow):
     import_finished = Signal(object)
     batch_import_finished = Signal(str, str, int, object)  # (exp_id, batch_id, count, results)
     # (exp_id, batch_id, count, results)
+    # (exp_id, batch_id, count, results)
     batch_import_progress = Signal(str, str, str, bool, str)
 
     group_data_done = Signal(str, str, str)  # (exp_id, data_id, status)
@@ -166,7 +167,6 @@ class MainWindow(QMainWindow):
         self._spectrum_panel_ready.connect(self._on_spectrum_panel_ready)
         self._pending_data_names: dict[str, str] = {}
         # Keep script editors alive, keyed by (data_id, step).
-
         self._script_editors: dict[tuple[str, str], ScriptEditorDialog] = {}
         self._last_auto_fill: dict = {}
         self._last_raw_quality: dict | None = None
@@ -206,6 +206,8 @@ class MainWindow(QMainWindow):
         self.refresh()
         self._show_startup_environment_status()
 
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
@@ -259,6 +261,8 @@ class MainWindow(QMainWindow):
             return base
         return f"{base}   !{warning}!"
 
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
@@ -448,7 +452,6 @@ class MainWindow(QMainWindow):
         self.pipeline.show_spectrum_requested.connect(
             self._show_spectrum_from_pipeline
         )
-        self.pipeline.rank1_run_requested.connect(self._on_rank1_rerun)
 
         self._spectrum_placeholder = QWidget()
         if not self._defer_spectrum_panel:
@@ -572,6 +575,8 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     def _build_spectrum_panel(self, apply_context: bool = False):
         """Build the spectrum panel on the right (return directly if it has been built).
         0.2.199-patch29ht: The panel import pyqtgraph/viewer is relatively heavy and can be
@@ -668,6 +673,8 @@ class MainWindow(QMainWindow):
         )
         self._prewarm_thread.start()
 
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
@@ -769,6 +776,8 @@ class MainWindow(QMainWindow):
                 lambda _checked=False, p=path: self._open_root(Path(p))
             )
 
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
@@ -962,6 +971,8 @@ class MainWindow(QMainWindow):
                 p0=ok_count,
             ), 'success' if not fail_count else 'info')
 
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
@@ -1551,6 +1562,8 @@ class MainWindow(QMainWindow):
         'Help -> Usage tutorial: open the shipped tutorial (text in the current language).'
         TutorialDialog(self).exec()
 
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
@@ -2146,45 +2159,6 @@ class MainWindow(QMainWindow):
                 "yet",
             ))
 
-    def _on_rank1_rerun(self) -> None:
-        """"Rerun by Rank1": Rerun the final spectrum using the Rank1 script scanned by SMILE
-        (Option B).
-        """
-        import threading
-
-        exp_id = self.pipeline.current_experiment_id()
-        data_id = self.pipeline.current_data_id
-        if not (exp_id and data_id):
-            return
-        run_scope = self.log_panel.scope_key("data", exp_id, data_id)
-        self._show_feedback(tr('Processing: {p0}/{p1}', p0=exp_id, p1=data_id), 'running')
-        self._append_log(tr(
-            "Press Rank1 to rerun the final script and start: "
-            "{p0}/{p1}",
-            p0=exp_id,
-            p1=data_id,
-        ), scope=run_scope)
-
-        def worker() -> None:
-            try:
-                out = self.controller.rerun_smile_rank1(
-                    exp_id,
-                    data_id,
-                    progress=lambda msg: self.log_append_requested.emit(msg, run_scope),
-                )
-                self.log_append_requested.emit(
-                    tr("Rank1 rerun completed: {p0}", p0=out), run_scope
-                )
-                self.operation_feedback.emit(tr("Rank1 rerun completed: {p0}", p0=out), 'success')
-                self.spectrum_results_changed.emit(exp_id, data_id)
-            except Exception as exc:  # noqa: BLE001
-                self.log_append_requested.emit(
-                    tr("Rank1 rerun failed: {p0}", p0=exc), run_scope
-                )
-                self.operation_feedback.emit(tr("Rank1 rerun failed: {p0}", p0=exc), 'error')
-            self.manual_run_done.emit()
-
-        threading.Thread(target=worker, daemon=True).start()
 
     def _on_batch_run_done(self) -> None:
         """Data group batch processing is completed: clear the running mark, progress and refresh
@@ -2501,6 +2475,8 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     def _toggle_left(self, checked: bool) -> None:
         self.project_tree.setVisible(checked)
 
@@ -2521,6 +2497,8 @@ class MainWindow(QMainWindow):
                 visible = visible and self.view_left_action.isChecked()
             widget.setVisible(visible)
 
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
@@ -2752,6 +2730,8 @@ class MainWindow(QMainWindow):
             self._log_group_id,
         )
 
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------

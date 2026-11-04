@@ -340,8 +340,8 @@ dynamically, so the package version and the version written into run records can
 ## Limitations
 
 - Processing supports **2D and 3D, uniform and NUS**. Batch processing is **2D-only**.
-- SMILE parameter sweeps and re-running by rank are available for **2D NUS**; the 3D NUS
-  reconstruction route works, while the 3D SMILE optimisation UI is hidden.
+- SMILE parameter optimisation and ranked reruns are temporarily unavailable in the GUI.
+  Normal 2D/3D NUS reconstruction with SMILE remains available.
 - Real processing requires external NMRPipe, and NUS reconstruction additionally requires SMILE.
   Data inspection and the synthetic walkthrough remain available without these engines.
 - Bad-point correction can rewrite the project's copied `ser` and `nuslist` in complete rows,

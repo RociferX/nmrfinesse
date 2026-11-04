@@ -70,7 +70,7 @@ ppm[i] = orig_hz / obs_mhz + (size - 1 - i) * sw_hz / (size * obs_mhz)
 ## 5. 桌面处理适配
 
 [`ProcessingController`](../../gui/processing.py)把`ProjectManager`与工作流连接起来，提供导入、生成FID/终谱、
-执行人工脚本、选峰及支持的SMILE优化/重跑入口。调用携带`exp_id`和`data_id`，选择切换后状态、产物与日志仍归原目标。
+执行人工脚本和选峰；控制器保留SMILE优化/重跑方法供内部调用，GUI暂不提供对应入口。调用携带`exp_id`和`data_id`，选择切换后状态、产物与日志仍归原目标。
 
 转换/生成谱图委托`workflow.stepwise`，人工执行委托`workflow.manual`。控制器记录成功步骤和脚本快照；
 后台信号把结果交给GUI线程，绘图及控件更新在该线程执行。见[GUI架构](gui/architecture.md)。

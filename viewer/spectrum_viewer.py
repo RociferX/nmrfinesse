@@ -177,6 +177,13 @@ class _ContourSigns(QWidget):
         required_height = self._box.sizeHint().height()
         if self.minimumHeight() != required_height:
             self.setMinimumHeight(required_height)
+        # A fixed-height slider group must grow when the sign row wraps.
+        parent = self.parentWidget()
+        if parent is not None and parent.layout() is not None:
+            parent.layout().invalidate()
+            height = parent.layout().minimumSize().height()
+            if parent.minimumHeight() != height:
+                parent.setMinimumHeight(height)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)

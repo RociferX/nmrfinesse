@@ -163,6 +163,8 @@ class FakeProcessingController:
 # ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
+# ----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 def test_project_tree_structure(
     tmp_path: Path, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -233,6 +235,8 @@ def test_project_tree_column_widths_readable(qapp: QApplication) -> None:
     panel.close()
 
 
+# ----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
@@ -410,13 +414,13 @@ def test_pipeline_ext_button_text_reflects_override(
     panel.close()
 
 
-def test_pipeline_steps_include_optional_smile() -> None:
+def test_pipeline_steps_exclude_smile_optimisation() -> None:
     ids = [step[0] for step in PIPELINE_STEPS]
-    assert ids == ["fid", "spectrum", "smile", "peaks"]
+    assert ids == ["fid", "spectrum", "peaks"]
     deps = {step[0]: step[3] for step in PIPELINE_STEPS}
 
     assert "smile" not in deps["peaks"]
-    assert deps["smile"] == ("spectrum",)
+    assert "smile" not in deps
     for _, _, _, step_deps in PIPELINE_STEPS:
         for dep in step_deps:
             assert dep in ids
@@ -628,6 +632,8 @@ def test_pipeline_step_log_emits_separator_before_start(
 # ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
+# ----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 def test_spectrum_panel_lists_and_loads_spectrum(tmp_path: Path, qapp: QApplication) -> None:
     manager = _manager_with_experiment(tmp_path)
     spectra = manager.data_dir("exp_001", "d_001", "spectra")
@@ -656,6 +662,8 @@ def test_spectrum_panel_open_corrupt_returns_false(tmp_path: Path, qapp: QApplic
 # ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
+# ----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 def test_main_window_three_column_layout(
     tmp_path: Path, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -671,8 +679,7 @@ def test_main_window_three_column_layout(
 
     assert window.log_panel.minimumWidth() <= 400
     assert window.log_panel.maximumWidth() >= 10000
-    assert window.project_tree.minimumWidth() <= 1
-    # Smaller screens scroll across the 1080p content canvas.
+    assert window.project_tree.minimumWidth() <= 1  # Scroll smaller screens.
     from qtcompat.QtGui import QGuiApplication
 
     screen = window.screen() or QGuiApplication.primaryScreen()
@@ -1131,28 +1138,19 @@ def test_group_summary_stays_in_group_log_after_member_selected(
     window.close()
 
 
-def test_rank1_logs_keep_target_after_selection_changes(
+def test_retired_rank1_signal_does_not_start_a_gui_task(
     tmp_path: Path, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     DeferredThread.pending.clear()
     monkeypatch.setattr("threading.Thread", DeferredThread)
     manager = _manager_with_experiment(tmp_path, monkeypatch)
-    group = manager.create_data_group("exp_001", data_ids=["d_001"])
     controller = FakeProcessingController()
-
-    def rerun(*_args, progress):
-        progress("Rank1 目标数据的脚本输出")
-        return "result.ft2"
-
-    controller.rerun_smile_rank1 = rerun
+    controller.rerun_smile_rank1 = lambda *a, **k: pytest.fail("retired GUI entry ran")
     window = MainWindow(manager=manager, controller=controller)
     window._update_context("data", "exp_001", "d_001")
-    window._on_rank1_rerun()
-    window._update_context("group", "exp_001", "", group.id)
-    DeferredThread.pending.pop(0)()
-    assert "Rank1" not in window.log_panel.text.toPlainText()
-    window._update_context("data", "exp_001", "d_001")
-    assert "Rank1 目标数据的脚本输出" in window.log_panel.text.toPlainText()
+    window.pipeline.rank1_run_requested.emit("smile")
+    assert not DeferredThread.pending
+    assert not hasattr(window, "_on_rank1_rerun")
     window.close()
 
 

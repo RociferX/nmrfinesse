@@ -1,5 +1,10 @@
 # GUI architecture
 
+The desktop registers only FID generation, spectrum generation and peak picking. The optional
+SMILE optimisation row, next-step suggestion and ranked-rerun window connection are removed.
+Existing optimisation records do not restore an entry or affect the three active steps.
+Normal 2D/3D NUS reconstruction and internal optimisation implementations are retained.
+
 The desktop application is assembled by `gui/main_window.py`. `MainWindow` owns the active
 `ProjectManager`, `ProcessingController`, project tree, pipeline/center panels, log panel, and the
 spectrum panel. Project selection changes the manager's active project; project JSON and data-entry

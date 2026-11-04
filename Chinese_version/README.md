@@ -302,7 +302,7 @@ python examples/quickstart.py ./example_data/hsqc_2d
 ## 已知边界
 
 - 处理覆盖**2D、3D的uniform与NUS**；批量处理目前**仅支持2D**。
-- SMILE参数扫描与按排名重跑用于**2D NUS**；3D NUS重构可用，但3D SMILE优化界面隐藏。
+- GUI 暂不提供 SMILE 参数扫描与按排名重跑；2D/3D NUS 的正常 SMILE 重构保留。
 - 真实处理需要外部NMRPipe，NUS重构还需要SMILE；无引擎时仍可检查数据和运行合成走查。
 - 坏点校正可能按整行改写项目副本中的`ser`与`nuslist`，并保留`ser.bak`与`nuslist.bak`。
   临时文件加替换的写法会断开链接，保持原始输入不变；不能确定行布局时改为清理生成FID。

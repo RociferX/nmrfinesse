@@ -30,8 +30,8 @@ Source-level cleanup of invalid or duplicate NUS points can rewrite acquisition 
 
 ### Does it handle non-uniform sampling?
 
-Yes, for 2D and 3D, using SMILE. 3D NUS processing works; the 3D SMILE parameter-optimisation UI
-is currently hidden, and the SMILE sweep/"re-run by rank" controls are exposed for 2D NUS only.
+Yes, for both 2D and 3D, using SMILE reconstruction. SMILE parameter optimisation and ranked
+reruns are temporarily unavailable in the GUI.
 
 ### Why is batch processing 2D-only?
 
