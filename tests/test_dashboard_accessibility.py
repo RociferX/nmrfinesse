@@ -170,7 +170,13 @@ def test_tree_level_selection_explains_the_center_panel_tools(
         tree.tree.setCurrentItem(item)
         qapp.processEvents()
         assert center.stack.currentIndex() == page_index
-        assert tr(level) in center.selection_guide_label.text()
+        if page_index != 3:
+            assert tr(level) in center.selection_guide_label.text()
+        else:
+            assert center.pipeline.header_widget.isHidden()
+            flow = tr('import -> FID -> spectrum -> peak selection')
+            assert flow in center.selection_guide_label.text()
+            assert manager.project.name in center.selection_guide_label.text()
         assert tr(purpose) in center.selection_guide_label.text()
 
     assert tree.findChild(QLabel, "TreeSelectionHint").text()

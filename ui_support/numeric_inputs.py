@@ -13,12 +13,10 @@ class _EnterCommitMixin:
         super().__init__(*args, **kwargs)
         self._has_draft = False
         self.setKeyboardTracking(False)
-        self.setToolTip(
-            tr(
-                "Type a value and press Enter to apply; leaving the field cancels the edit. "
-                "Arrow buttons apply immediately."
-            )
-        )
+        self.setToolTip(tr(
+            "Type a value and press Enter to apply; leaving the field cancels the edit. "
+            "Arrow buttons apply immediately."
+        ))
         self.lineEdit().textEdited.connect(self._mark_draft)
         self.lineEdit().installEventFilter(self)
 
@@ -82,3 +80,18 @@ class CommitSpinBox(_EnterCommitMixin, QSpinBox):
 
 class CommitDoubleSpinBox(_EnterCommitMixin, QDoubleSpinBox):
     """Decimal input with explicit Enter confirmation."""
+
+
+class PeakSizeSpinBox(CommitDoubleSpinBox):
+    """Use fine steps below 0.5 and half-unit steps above that boundary."""
+
+    def stepBy(self, steps):  # noqa: N802 - Qt API
+        self._discard_draft()
+        value = self.value()
+        for _ in range(abs(steps)):
+            if steps > 0:
+                value += 0.1 if value < 0.5 else 0.5
+            else:
+                value = max(0.5, value - 0.5) if value > 0.5 else value - 0.1
+            value = min(self.maximum(), max(self.minimum(), round(value, 1)))
+        self.setValue(value)

@@ -151,7 +151,9 @@ def test_raw_fingerprint_tracks_schedule_named_by_acqus(tmp_path: Path) -> None:
     assert first != second
 
 
-def test_statuses_success_without_state(tmp_path: Path, qapp: QApplication) -> None:
+def test_statuses_success_without_state(
+    tmp_path: Path, qapp: QApplication
+) -> None:
     """Old data (no fingerprint state): an existing artifact is SUCCESS, not OUTDATED."""
     manager, exp_id, _data_id, _artifacts = _manager_with_artifacts(tmp_path)
     statuses = compute_step_statuses(manager, exp_id)
@@ -159,7 +161,9 @@ def test_statuses_success_without_state(tmp_path: Path, qapp: QApplication) -> N
         assert statuses[step] == "SUCCESS"
 
 
-def test_upstream_regen_marks_downstream_outdated(tmp_path: Path, qapp: QApplication) -> None:
+def test_upstream_regen_marks_downstream_outdated(
+    tmp_path: Path, qapp: QApplication
+) -> None:
     """Re-running spectrum generation and recording it → peak picking becomes
     OUTDATED (fingerprint check)."""
     manager, exp_id, data_id, artifacts = _manager_with_artifacts(tmp_path)
@@ -176,7 +180,8 @@ def test_upstream_regen_marks_downstream_outdated(tmp_path: Path, qapp: QApplica
 
     # re-pick peaks (peak table content updated) and record → peaks back to SUCCESS
     artifacts["csv"].write_text(
-        "Peak_ID,H_shift,N_shift,Intensity,SN,label\n1,8.0,115.0,100,20,G1\n2,7.5,118.0,80,15,A2\n",
+        "Peak_ID,H_shift,N_shift,Intensity,SN,label\n"
+        "1,8.0,115.0,100,20,G1\n2,7.5,118.0,80,15,A2\n",
         encoding="utf-8",
     )
     record_step_success(manager, exp_id, data_id, "peaks")
@@ -211,7 +216,10 @@ def test_smile_rank_scripts_do_not_invalidate_active_spectrum(
     assert statuses["spectrum"] == "OUTDATED"
 
 
-def test_projection_only_is_not_primary_spectrum(tmp_path: Path, qapp: QApplication) -> None:
+
+def test_projection_only_is_not_primary_spectrum(
+    tmp_path: Path, qapp: QApplication
+) -> None:
     """STATE-006: a projection leftover must not make any Pipeline view treat
     the main spectrum as present."""
     manager = ProjectManager.create_project(tmp_path / "proj_projection", "demo")
@@ -236,8 +244,9 @@ def test_projection_only_is_not_primary_spectrum(tmp_path: Path, qapp: QApplicat
     assert find_primary_spectrum(manager, entry.id, data.id) == main
     assert compute_step_statuses(manager, entry.id)["spectrum"] == "SUCCESS"
 
-
-def test_raw_change_marks_fid_outdated_and_propagates(tmp_path: Path, qapp: QApplication) -> None:
+def test_raw_change_marks_fid_outdated_and_propagates(
+    tmp_path: Path, qapp: QApplication
+) -> None:
     """Raw data change → FID OUTDATED, propagated to downstream along dependencies."""
     manager, exp_id, data_id, _artifacts = _manager_with_artifacts(tmp_path)
     _record_all(manager, exp_id, data_id)
@@ -249,7 +258,9 @@ def test_raw_change_marks_fid_outdated_and_propagates(tmp_path: Path, qapp: QApp
     assert statuses["peaks"] == "OUTDATED"
 
 
-def test_segmented_merged_fid_directory_counts_as_done(tmp_path: Path, qapp: QApplication) -> None:
+def test_segmented_merged_fid_directory_counts_as_done(
+    tmp_path: Path, qapp: QApplication
+) -> None:
     """0.2.108: when the segmented merged FID is a process/merged/fid
     directory, the FID step is SUCCESS."""
     manager, exp_id, data_id, _artifacts = _manager_with_artifacts(tmp_path)
@@ -283,7 +294,9 @@ def test_simple_mode_disables_outdated(
     assert statuses["spectrum"] == "SUCCESS"
 
 
-def test_mtime_fallback_without_state(tmp_path: Path, qapp: QApplication) -> None:
+def test_mtime_fallback_without_state(
+    tmp_path: Path, qapp: QApplication
+) -> None:
     """Old data (no fingerprint state): an upstream artifact newer than the
     downstream one → OUTDATED (mtime heuristic)."""
     manager, exp_id, data_id, artifacts = _manager_with_artifacts(tmp_path)
@@ -350,7 +363,9 @@ class _FakeController:
 
         from core.data.internal_data_model import SamplingMode
 
-        return SimpleNamespace(sampling=SimpleNamespace(mode=SamplingMode.NUS))
+        return SimpleNamespace(
+            sampling=SimpleNamespace(mode=SamplingMode.NUS)
+        )
 
     def data_facts(self, *args, **kwargs) -> dict:
         """Public interface (0.2.199-patch29hz): Pipeline gating reads a dict,
@@ -361,6 +376,8 @@ class _FakeController:
             "is_nus": True,
             "sampling_mode": "NUS",
         }
+
+
 
 
 def test_next_label_skips_optional_smile(tmp_path: Path, qapp: QApplication) -> None:
@@ -390,8 +407,9 @@ def test_next_label_skips_optional_smile(tmp_path: Path, qapp: QApplication) -> 
     assert "峰挑选" in text
     panel.close()
 
-
-def test_pipeline_peaks_reference_selection(tmp_path: Path, qapp: QApplication) -> None:
+def test_pipeline_peaks_reference_selection(
+    tmp_path: Path, qapp: QApplication
+) -> None:
     """0.2.199-patch29dl: peak-picking "Reference spectrum" button, candidate
     data and reference loading."""
     from core.peaks.peak_table import export_peaks_poky
@@ -435,7 +453,10 @@ def test_pipeline_peaks_reference_selection(tmp_path: Path, qapp: QApplication) 
     panel.close()
 
 
-def test_pipeline_peak_threshold_isolated_per_data(tmp_path: Path, qapp: QApplication) -> None:
+
+def test_pipeline_peak_threshold_isolated_per_data(
+    tmp_path: Path, qapp: QApplication
+) -> None:
     """0.2.199-patch29fz: the peak-picking threshold is isolated per data set --
     changing it for d_001 does not affect d_002, and switching back to d_001
     restores each value."""
@@ -461,7 +482,9 @@ def test_pipeline_peak_threshold_isolated_per_data(tmp_path: Path, qapp: QApplic
     panel.close()
 
 
-def test_pipeline_threshold_persisted_in_data_folder(tmp_path: Path, qapp: QApplication) -> None:
+def test_pipeline_threshold_persisted_in_data_folder(
+    tmp_path: Path, qapp: QApplication
+) -> None:
     """0.2.199-patch29ga: the threshold is persisted to d_xxx/ui_state.json and
     restored after a restart."""
     import json
@@ -487,7 +510,9 @@ def test_pipeline_threshold_persisted_in_data_folder(tmp_path: Path, qapp: QAppl
     panel2.close()
 
 
-def test_threshold_legacy_default15_migrates_to35(tmp_path: Path, qapp: QApplication) -> None:
+def test_threshold_legacy_default15_migrates_to35(
+    tmp_path: Path, qapp: QApplication
+) -> None:
     """Legacy default 15σ (not explicitly customized) migrates to the new default 35σ."""
     import json
 
@@ -509,7 +534,9 @@ def test_threshold_legacy_default15_migrates_to35(tmp_path: Path, qapp: QApplica
     panel.close()
 
 
-def test_threshold_explicit_15_preserved_when_custom(tmp_path: Path, qapp: QApplication) -> None:
+def test_threshold_explicit_15_preserved_when_custom(
+    tmp_path: Path, qapp: QApplication
+) -> None:
     """0.2.199-patch29gc: an explicitly customized 15σ (custom=True) is not
     overwritten by the migration."""
     import json
@@ -523,7 +550,9 @@ def test_threshold_explicit_15_preserved_when_custom(tmp_path: Path, qapp: QAppl
     base = manager.data_base(exp.id, d1.id)
     base.mkdir(parents=True, exist_ok=True)
     (base / "ui_state.json").write_text(
-        json.dumps({"version": 1, "peaks": {"threshold": 15.0, "custom": True}}),
+        json.dumps(
+            {"version": 1, "peaks": {"threshold": 15.0, "custom": True}}
+        ),
         encoding="utf-8",
     )
     panel = PipelinePanel(manager)
@@ -532,7 +561,9 @@ def test_threshold_explicit_15_preserved_when_custom(tmp_path: Path, qapp: QAppl
     panel.close()
 
 
-def test_pipeline_smile_step_hidden_for_uniform_data(tmp_path: Path, qapp: QApplication) -> None:
+def test_pipeline_smile_step_hidden_for_uniform_data(
+    tmp_path: Path, qapp: QApplication
+) -> None:
     """0.2.199-patch29gd: non-NUS (fully sampled) data hides the SMILE optimization step."""
     from types import SimpleNamespace
 
@@ -544,15 +575,19 @@ def test_pipeline_smile_step_hidden_for_uniform_data(tmp_path: Path, qapp: QAppl
     exp = manager.create_experiment("HSQC")
     d1 = manager.import_data(exp.id, "/fake/1")
     panel = PipelinePanel(manager)
-    panel.controller._read_experiment = lambda *a, **k: SimpleNamespace(
-        sampling=SimpleNamespace(mode=SamplingMode.UNIFORM)
+    panel.controller._read_experiment = (
+        lambda *a, **k: SimpleNamespace(
+            sampling=SimpleNamespace(mode=SamplingMode.UNIFORM)
+        )
     )
     panel.set_selection("data", exp.id, d1.id)
     assert panel._rows["smile"].isHidden()
     panel.close()
 
 
-def test_pipeline_smile_step_shown_for_2d_nus_data(tmp_path: Path, qapp: QApplication) -> None:
+def test_pipeline_smile_step_shown_for_2d_nus_data(
+    tmp_path: Path, qapp: QApplication
+) -> None:
     """2D NUS data shows the SMILE optimization step (0.2.199-patch29gd + fix21 limits it to 2D)."""
     from types import SimpleNamespace
 
@@ -564,15 +599,19 @@ def test_pipeline_smile_step_shown_for_2d_nus_data(tmp_path: Path, qapp: QApplic
     exp = manager.create_experiment("HNCA")
     d1 = manager.import_data(exp.id, "/fake/1")
     panel = PipelinePanel(manager)
-    panel.controller._read_experiment = lambda *a, **k: SimpleNamespace(
-        ndim=2, sampling=SimpleNamespace(mode=SamplingMode.NUS)
+    panel.controller._read_experiment = (
+        lambda *a, **k: SimpleNamespace(
+            ndim=2, sampling=SimpleNamespace(mode=SamplingMode.NUS)
+        )
     )
     panel.set_selection("data", exp.id, d1.id)
     assert not panel._rows["smile"].isHidden()
     panel.close()
 
 
-def test_pipeline_smile_step_hidden_for_3d_nus_data(tmp_path: Path, qapp: QApplication) -> None:
+def test_pipeline_smile_step_hidden_for_3d_nus_data(
+    tmp_path: Path, qapp: QApplication
+) -> None:
     """0.2.199-patch29hz-fix21 (user): 3D NUS temporarily hides the SMILE optimization entry."""
     from types import SimpleNamespace
 
@@ -584,9 +623,118 @@ def test_pipeline_smile_step_hidden_for_3d_nus_data(tmp_path: Path, qapp: QAppli
     exp = manager.create_experiment("HNCA")
     d1 = manager.import_data(exp.id, "/fake/1")
     panel = PipelinePanel(manager)
-    panel.controller._read_experiment = lambda *a, **k: SimpleNamespace(
-        ndim=3, sampling=SimpleNamespace(mode=SamplingMode.NUS)
+    panel.controller._read_experiment = (
+        lambda *a, **k: SimpleNamespace(
+            ndim=3, sampling=SimpleNamespace(mode=SamplingMode.NUS)
+        )
     )
     panel.set_selection("data", exp.id, d1.id)
     assert panel._rows["smile"].isHidden()
     panel.close()
+
+
+def _record_with_real_raw(tmp_path):
+    manager, exp_id, data_id, artifacts = _manager_with_artifacts(tmp_path)
+    node = manager.data(exp_id, data_id)
+    raw = manager.data_dir(exp_id, data_id, 'raw')
+    raw.mkdir(parents=True)
+    node.raw_dir = raw.relative_to(manager.root).as_posix()
+    for name in ('acqus', 'acqu2s', 'ser'):
+        (raw / name).write_bytes(b'original input')
+    metadata = manager.data_metadata_path(exp_id, data_id)
+    metadata.write_text('{}')
+    _record_all(manager, exp_id, data_id)
+    return manager, exp_id, data_id, artifacts, raw
+
+
+def test_outdated_reason_names_only_the_changed_input_files(tmp_path, qapp):
+    from gui.pipeline_panel import _outdated_reasons
+
+    manager, exp_id, data_id, _, raw = _record_with_real_raw(tmp_path)
+    entry = load_pipeline_state(manager, exp_id, data_id)['steps']['fid']
+    assert entry['input_hash'] == input_fingerprint(manager, exp_id, data_id, 'fid')
+    assert 'input_files' in entry and 'script_files' in entry
+    (raw / 'acqu2s').write_bytes(b'changed acquisition parameter')
+    statuses = compute_step_statuses(manager, exp_id)
+    reasons = _outdated_reasons(statuses, manager, exp_id, data_id)
+    assert str(raw / 'acqu2s') in reasons['fid']
+    assert str(raw / 'acqus') not in reasons['fid']
+    assert str(raw / 'ser') not in reasons['fid']
+    assert str(raw / 'acqu2s') in reasons['spectrum']
+    panel = PipelinePanel(manager, _FakeController())
+    panel.set_selection('data', exp_id, data_id)
+    assert str(raw / 'acqu2s') in panel._rows['fid'].reason_label.text()
+    assert str(raw / 'acqu2s') in panel._rows['fid'].status_label.toolTip()
+    panel.close()
+
+
+def test_outdated_reason_names_missing_file_and_broken_source_directory(tmp_path, qapp):
+    from gui.pipeline_panel import _outdated_reasons
+    from ui_support.i18n import tr
+
+    manager, exp_id, data_id, _, raw = _record_with_real_raw(tmp_path)
+    (raw / 'ser').unlink()
+    reasons = _outdated_reasons(compute_step_statuses(manager, exp_id), manager, exp_id, data_id)
+    assert tr('Input file is missing: {p0}', p0=raw / 'ser') in reasons['fid']
+    # An old source is genuinely unavailable through the project's symlinks.
+    source = tmp_path / 'original-source'
+    source.mkdir()
+    (source / 'acqus').write_bytes(b'acquisition')
+    (raw / 'acqus').unlink()
+    (raw / 'acqus').symlink_to(source / 'acqus')
+    manager.data(exp_id, data_id).source = str(source)
+    _record_all(manager, exp_id, data_id)
+    (source / 'acqus').unlink()
+    source.rmdir()
+    reasons = _outdated_reasons(compute_step_statuses(manager, exp_id), manager, exp_id, data_id)
+    expected = tr('Original data path does not exist: {p0}', p0=source)
+    assert reasons['fid'] == expected
+    assert expected in reasons['spectrum']
+
+
+def test_outdated_reason_does_not_blame_missing_source_when_raw_copy_is_valid(tmp_path, qapp):
+    from gui.pipeline_panel import _outdated_reasons
+
+    manager, exp_id, data_id, _, raw = _record_with_real_raw(tmp_path)
+    assert compute_step_statuses(manager, exp_id)['fid'] == 'SUCCESS'
+    # The external source is absent, but all project inputs remain real files.
+    assert not Path(manager.data(exp_id, data_id).source).exists()
+    (raw / 'acqus').write_bytes(b'changed copy')
+    reasons = _outdated_reasons(compute_step_statuses(manager, exp_id), manager, exp_id, data_id)
+    assert str(raw / 'acqus') in reasons['fid']
+    assert manager.data(exp_id, data_id).source not in reasons['fid']
+
+
+def test_outdated_reason_names_changed_script_and_upstream_fid(tmp_path, qapp):
+    from gui.pipeline_panel import _outdated_reasons
+
+    manager, exp_id, data_id, artifacts, _ = _record_with_real_raw(tmp_path)
+    process = manager.data_dir(exp_id, data_id, 'process')
+    first, second = process / 'first.com', process / 'second.com'
+    first.write_text('first script')
+    second.write_text('second script')
+    record_step_success(manager, exp_id, data_id, 'spectrum')
+    second.write_text('updated second script')
+    reasons = _outdated_reasons(compute_step_statuses(manager, exp_id), manager, exp_id, data_id)
+    assert str(second) in reasons['spectrum']
+    assert str(first) not in reasons['spectrum']
+    record_step_success(manager, exp_id, data_id, 'spectrum')
+    artifacts['fid'].write_bytes(b'new upstream fid')
+    reasons = _outdated_reasons(compute_step_statuses(manager, exp_id), manager, exp_id, data_id)
+    assert str(artifacts['fid']) in reasons['spectrum']
+
+
+def test_legacy_raw_snapshot_without_per_file_evidence_does_not_guess(tmp_path, qapp):
+    from gui.pipeline_panel import _outdated_reasons
+    from gui.pipeline_state import save_pipeline_state
+    from ui_support.i18n import tr
+
+    manager, exp_id, data_id, _, raw = _record_with_real_raw(tmp_path)
+    state = load_pipeline_state(manager, exp_id, data_id)
+    state['steps']['fid'].pop('input_files')
+    save_pipeline_state(manager, exp_id, data_id, state)
+    (raw / 'ser').write_bytes(b'new data')
+    reasons = _outdated_reasons(compute_step_statuses(manager, exp_id), manager, exp_id, data_id)
+    assert reasons['fid'] == tr(
+        'The input changed; this older record has no per-file fingerprints, '
+        'so the changed file cannot be identified.')

@@ -59,3 +59,6 @@ SMILE for NUS reconstruction. See [external dependencies](../external-dependenci
 [processing model](../processing-model.md), and the shared [architecture](../architecture.md).
 
 Detector SNR is preserved in the optional .list S/N field and in localisation attachments with full-precision height, noise_sigma and baseline_offset. Detection continues to use the global median baseline and MAD noise estimator.
+
+
+GUI exchange exports (`.list`) contain assignments and chemical shifts only. Internal/API peak products and full-precision CSV retain their documented metrics; the API schema and numerical calculation are unchanged.

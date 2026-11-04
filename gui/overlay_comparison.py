@@ -251,7 +251,8 @@ class OverlayComparison(QWidget):
     @property
     def viewer(self):
         if self._viewer is None:
-            self._viewer = SpectrumViewer(self)
+            # Overlay controls are hidden; preserve the complete union on both axes.
+            self._viewer = SpectrumViewer(self, default_1d_aspect=0)
             self._viewer.extend_axis_ticks = True
             self._viewer.set_data_bounds_visible(False)
             self._viewer.contour_controls.hide()
@@ -278,7 +279,7 @@ class OverlayComparison(QWidget):
         self.fit_button.setEnabled(not self.fit_running)
         tips = list(tooltips or names)
         retained = [i < len(self.spectra) and name == self.names[i]
-                    and tips[i] == self.tooltips[i]
+                    and spectrum.source == self.spectra[i].source
                     and [a.label for a in spectrum_axes(spectrum)]
                     == [a.label for a in spectrum_axes(self.spectra[i])]
                     for i, (name, spectrum) in enumerate(zip(names, spectra))]
@@ -355,6 +356,7 @@ class OverlayComparison(QWidget):
         # Rebase all display offsets so the selected reference stays at its native coordinates.
         origin = self.shifts[anchor].copy()
         self.shifts = [shift - origin for shift in self.shifts]
+        self.reference_choice.setToolTip(self.reference_choice.currentData(Qt.ItemDataRole.ToolTipRole))
         previous_moving = self.moving.currentData()
         with QSignalBlocker(self.moving):
             self.moving.clear()
@@ -374,6 +376,7 @@ class OverlayComparison(QWidget):
     def _sync_editors(self, *_args, reset_fine=True):
         if not self.spectra or self.moving.currentData() is None:
             return
+        self.moving.setToolTip(self.moving.currentData(Qt.ItemDataRole.ToolTipRole))
         axes = spectrum_axes(self.spectra[self.reference_index])
         index = int(self.moving.currentData())
         ndim = len(axes)
@@ -477,6 +480,13 @@ class OverlayComparison(QWidget):
         legend = self.viewer.plot.addLegend()
         for index, name in enumerate(self.names):
             legend.addItem(pg.PlotDataItem(pen=pg.mkPen(self.colors[index], width=1)), name)
+            sample, label = legend.items[-1]
+            sample.setToolTip(self.tooltips[index])
+            label.setToolTip(self.tooltips[index])
+        order = [anchor] + [i for i in range(len(self.names)) if i != anchor]
+        for layer_index, index in enumerate(order):
+            if layer_index < self.viewer.layer_list.count():
+                self.viewer.layer_list.item(layer_index).setToolTip(self.tooltips[index])
         key = (tuple(self.names), anchor, tuple(
             tuple((a.label, len(a.ppm), float(a.ppm[0]), float(a.ppm[-1]))
                   for a in spectrum_axes(spectrum))
@@ -606,6 +616,6 @@ class OverlayComparison(QWidget):
 
         dialog = OverlaySvgExportDialog(
             self.viewer, self, directory=self.export_directory,
-            spectra=list(zip(self.names, self.colors)),
+            spectra=list(zip(self.names, self.colors)), tooltips=self.tooltips,
         )
         dialog.exec()

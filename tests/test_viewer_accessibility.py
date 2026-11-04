@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from qtcompat.QtCore import QPoint, QRect
 from qtcompat.QtGui import QFont
 from qtcompat.QtTest import QTest
@@ -171,3 +172,32 @@ def test_assignment_cells_and_carrier_choices_fit_large_font(qapp: QApplication)
     assert all(box.width() >= box.minimumSizeHint().width() for box in carrier._carrier_boxes)
     cell.close()
     carrier.close()
+
+
+@pytest.mark.parametrize('font_size', [10, 18])
+@pytest.mark.parametrize('width', [430, 900])
+def test_wrapped_mouse_coordinates_keep_sign_buttons_at_natural_height(qapp, font_size, width):
+    original = qapp.font().pointSize()
+    apply_interface_font(qapp, font_size)
+    viewer = SpectrumViewer()
+    viewer.resize(width, 1000)
+    viewer.show()
+    try:
+        viewer.crosshair_label.setText(
+            'Aligned ppm: F2 9.123, F1 118.234 (original ppm: F2 9.456, F1 118.567)'
+        )
+        QTest.qWait(100)
+        label = viewer.crosshair_label
+        assert label.height() >= label.heightForWidth(label.width())
+        body = viewer.controls_section.body
+        controls_bottom = viewer.contour_controls.mapTo(
+            body, QPoint(0, viewer.contour_controls.height())).y()
+        assert viewer.reset_button.mapTo(body, QPoint()).y() >= controls_bottom
+        for button in (viewer.hide_positive, viewer.hide_negative):
+            assert button.height() >= button.sizeHint().height()
+            assert viewer.sign_controls.rect().contains(QRect(button.pos(), button.size()))
+    finally:
+        viewer.close()
+        viewer.deleteLater()
+        qapp.processEvents()
+        apply_interface_font(qapp, original)

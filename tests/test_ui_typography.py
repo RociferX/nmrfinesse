@@ -79,3 +79,13 @@ def test_returning_to_automatic_uses_original_system_font(qapp, monkeypatch) -> 
         assert qapp.font().pointSize() == expected
     finally:
         qapp.setFont(original)
+
+
+def test_reapplying_the_same_font_does_not_repolish_the_interface(qapp, monkeypatch):
+    from ui_support.typography import apply_interface_font
+    apply_interface_font(qapp, 10)
+    applied = []
+    original = qapp.setStyleSheet
+    monkeypatch.setattr(qapp, 'setStyleSheet', lambda text: (applied.append(text), original(text)))
+    apply_interface_font(qapp, 10)
+    assert not applied

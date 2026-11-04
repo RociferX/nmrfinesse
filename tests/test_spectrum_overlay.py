@@ -562,8 +562,8 @@ def test_compare_sources_are_in_menu_and_color_tooltips(qapp, tmp_path, monkeypa
     seen = {}
 
     class ExportDialog:
-        def __init__(self, viewer, parent, *, directory, spectra):
-            seen.update(directory=directory, spectra=spectra)
+        def __init__(self, viewer, parent, *, directory, spectra, tooltips):
+            seen.update(directory=directory, spectra=spectra, tooltips=tooltips)
 
         def exec(self):
             pass
@@ -575,6 +575,7 @@ def test_compare_sources_are_in_menu_and_color_tooltips(qapp, tmp_path, monkeypa
     panel.overlay._export()
     assert seen['directory'] == manager.data_dir('exp_001', 'd_001', 'figures')
     assert seen['spectra'] == list(zip(panel.overlay.names, panel.overlay.colors))
+    assert seen['tooltips'] == panel.overlay.tooltips
     qapp.processEvents()
     assert panel._expand_splitter.sizes()[-1] <= 470
     panel._deactivate_comparison()

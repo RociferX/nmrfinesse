@@ -38,6 +38,7 @@ from gui.pipeline_state import ALL_STEP_RUN_REFS
 from qtcompat import Signal
 from ui_support.i18n import tr
 from ui_support.theme import TEXT_SECONDARY
+from ui_support.title_layout import title_rows, tooltip_title
 
 DATA_SUBFOLDERS = ("raw", "process", "spectra", "peaks", "figures", "report")
 
@@ -99,7 +100,8 @@ class _TreeLevelDelegate(QStyledItemDelegate):
         width = max(1, self._text_rect(opt).width())
         return opt.fontMetrics.boundingRect(
             QRect(0, 0, width, 10000), Qt.TextFlag.TextWordWrap,
-            index.data(Qt.ItemDataRole.UserRole + 1) or '')
+            '\n'.join(title_rows(index.data(Qt.ItemDataRole.UserRole + 1) or '',
+                                 width, opt.fontMetrics.horizontalAdvance)))
 
     def paint(self, painter, option, index) -> None:
         meta = index.data(Qt.ItemDataRole.UserRole)
@@ -141,7 +143,8 @@ class _TreeLevelDelegate(QStyledItemDelegate):
             painter.setPen(opt.palette.color(role) if opt.state & QStyle.StateFlag.State_Selected
                            else QColor(TEXT_SECONDARY))
             painter.drawText(note_rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
-                             | Qt.TextFlag.TextWordWrap, note)
+                             | Qt.TextFlag.TextWordWrap, '\n'.join(title_rows(
+                                 note, note_rect.width(), opt.fontMetrics.horizontalAdvance)))
         painter.restore()
 
     def sizeHint(self, option, index):
@@ -381,7 +384,7 @@ class ProjectTreePanel(QWidget):
         self.tree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
         self.tree.header().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.tree.set_default_object_width()
-        self.tree.setMinimumWidth(360)
+        self.tree.setMinimumWidth(0)
         self.tree.itemSelectionChanged.connect(self._on_selection_changed)
         self.tree.itemDoubleClicked.connect(self._on_double_clicked)
         self.tree.itemClicked.connect(self._on_item_clicked)
@@ -405,7 +408,8 @@ class ProjectTreePanel(QWidget):
         self.refresh()
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def refresh(self) -> None:
         """Incrementally refresh the tree: Only update changed nodes/son directory, unchanged nodes
@@ -679,7 +683,8 @@ class ProjectTreePanel(QWidget):
             return []
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _workspace_path(self) -> str:
         from core.workspace import default_workspace_path
@@ -780,10 +785,15 @@ class ProjectTreePanel(QWidget):
         raw_dir = self.manager.root / raw if raw and self.manager.root else None
         title = bruker_title(data_node, raw_dir)
         item.setData(0, Qt.ItemDataRole.UserRole + 1, title)
+        source = str(getattr(data_node, 'source', '') or raw_dir or tr('Not recorded'))
+        item.setToolTip(0, tr(
+            'Data: {p0}\nTitle: {p1}\nOriginal data: {p2}\nRight-click for data actions.',
+            p0=getattr(data_node, 'id', ''), p1=tooltip_title(title) or tr('Not recorded'),
+            p2=source,
+        ))
 
     def _make_data_item(self, exp, data_node, in_group: bool = False) -> QTreeWidgetItem:
         data_id = getattr(data_node, "id", exp.id)
-        source = getattr(data_node, "source", "") or getattr(exp, "source", "")
         status = self._data_status(exp, data_node)
         title = getattr(data_node, "title", "") or ""
         label = title or data_id
@@ -791,21 +801,6 @@ class ProjectTreePanel(QWidget):
         data_item = QTreeWidgetItem([label, status])
         self._set_data_subtitle(data_item, data_node)
         data_item.setIcon(0, self._icon("data"))
-        tooltip = tr("{p0}source: {p1}", p0=data_id, p1=source)
-        if in_group:
-            tooltip += (
-                tr(
-                    "\nright click: remove this data from the group / open its folder / open in a "
-                    "terminal / rename / delete the sample "
-                    "data",
-                )
-            )
-        else:
-            tooltip += tr(
-                "Right click: open the directory / open in the terminal / rename / delete sample "
-                "data",
-            )
-        data_item.setToolTip(0, tooltip)
         data_item.setData(
             0,
             Qt.ItemDataRole.UserRole,
@@ -984,7 +979,8 @@ class ProjectTreePanel(QWidget):
         return QIcon(pix)
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def current_experiment_id(self) -> str:
         """Returns the experiment id to which the currently selected node belongs (normalized to
@@ -1227,7 +1223,8 @@ class ProjectTreePanel(QWidget):
             return None
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _on_context_menu(self, pos) -> None:
         item = self.tree.itemAt(pos)
@@ -1374,7 +1371,8 @@ class ProjectTreePanel(QWidget):
         return path.parent if path.exists() else None
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def begin_create_project(self, initial: str = "unnamed") -> None:
         """New project: Name inline in the project tree (no pop-up window), press Enter to submit /
@@ -1494,7 +1492,8 @@ class ProjectTreePanel(QWidget):
         return workspace_item.child(0) if workspace_item.childCount() else None
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def begin_rename_experiment(self, exp_id: str) -> None:
         'Menu "Rename Experiment": Display the rename input box near the tree node.'

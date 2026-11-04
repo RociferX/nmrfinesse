@@ -210,3 +210,6 @@ affected步骤说明重算范围。黄金向量的谱图/表哈希标识确定�
 项目.list可追加S/N列，缺值nan，导入接受SNR/SN别名；内部SN与38列API表保持。定位附件保存SNR/Intensity、noise_sigma和baseline_offset。
 
 项目内部保存保留峰指标；界面直接/对齐后导出仅指认和坐标，Shared Contract `export_peaks_poky(..., include_metrics=False)`省略指标，默认True兼容原内部调用。
+
+
+GUI 的 `.list` 交换导出只包含指认和化学位移；内部/API 峰表与完整 CSV 保留已有指标，API 契约与数值计算不变。

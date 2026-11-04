@@ -66,8 +66,12 @@ def test_bruker_title_remark_and_tree_subtitle(tmp_path, qapp, monkeypatch):
     qapp.processEvents()
     node = tree.tree.topLevelItem(0).child(0).child(0).child(0)
     assert node.data(0, Qt.ItemDataRole.UserRole + 1) == title
+    from ui_support.title_layout import tooltip_title
+
+    assert tooltip_title(title) in node.toolTip(0)
+    assert str(source) in node.toolTip(0)
     assert node.text(1) == ''
-    assert tree.tree.visualItemRect(node).height() >= tree.fontMetrics().height() * 3
+    assert tree.tree.visualItemRect(node).height() >= tree.fontMetrics().height() * 2
     set_data_note_fields(manager.project, exp_id, data_id, {'notes': 'User remark'})
     auto_fill_notes_from_metadata(manager, exp_id, data_id, {})
     assert data_note_fields(manager.project, exp_id, data_id)['notes'] == 'User remark'
@@ -725,3 +729,58 @@ def test_notes_dialog_experiment_category_options(qapp: QApplication) -> None:
     assert "dimension" not in dialog._combos
     assert dialog.result_fields() == {"experiment_type": "指认实验"}
     dialog.close()
+
+
+
+def test_title_rows_join_and_wrap_at_original_line_boundaries():
+    from ui_support.title_layout import title_rows
+
+    title = 'AAAA BBBB\nCCCC DDDD\nEEEE FFFF'
+    assert title_rows(title, 40, len) == ['AAAA BBBB | CCCC DDDD | EEEE FFFF']
+    assert title_rows(title, 22, len) == ['AAAA BBBB | CCCC DDDD', 'EEEE FFFF']
+    assert title_rows(title, 9, len) == title.splitlines()
+    assert title_rows(title, 3, len) == title.splitlines()  # Long parts stay intact here.
+
+
+def test_title_label_reflows_from_original_lines_when_resized(qapp):
+    from qtcompat.QtTest import QTest
+
+    from ui_support.title_layout import TitleLabel
+
+    title = 'First original line\nSecond original line\nThird original line'
+    label = TitleLabel(title)
+    parts = title.splitlines()
+    wide = label.fontMetrics().horizontalAdvance(' | '.join(parts)) + 20
+    narrow = max(label.fontMetrics().horizontalAdvance(part) for part in parts) + 2
+    label.resize(wide, label.heightForWidth(wide))
+    label.show()
+    QTest.qWait(20)
+    assert label.text() == ' | '.join(parts)
+    wide_height = label.height()
+    label.resize(narrow, label.heightForWidth(narrow))
+    QTest.qWait(20)
+    assert label.text().splitlines() == parts
+    assert label.height() > wide_height
+    assert label.original_title == title
+    label.resize(wide, label.heightForWidth(wide))
+    QTest.qWait(20)
+    assert label.text() == ' | '.join(parts)
+    label.close()
+
+
+def test_center_notes_remove_heading_and_keep_title_content(tmp_path, qapp):
+    from gui.center_panel import CenterPanel
+    from ui_support.title_layout import TitleLabel
+
+    manager, exp_id, data_id = _manager(tmp_path)
+    title = 'Sample HSQC\nBuffer pH 6.5\n298 K'
+    set_data_note_fields(manager.project, exp_id, data_id, {'notes': title})
+    panel = CenterPanel(manager)
+    panel.set_selection('data', exp_id, data_id)
+    assert not panel.notes_label.text().startswith(('Note:', '注释:', '注释：'))
+    assert title in panel.notes_label.text()
+    assert not panel.edit_notes_button.isHidden()
+    labels = panel.notes_label.findChildren(TitleLabel)
+    assert len(labels) == 1
+    assert labels[0].original_title.endswith(title)
+    panel.close()

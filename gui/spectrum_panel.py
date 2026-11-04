@@ -16,7 +16,6 @@ from qtcompat.QtWidgets import (
     QAbstractItemView,
     QBoxLayout,
     QComboBox,
-    QDoubleSpinBox,
     QFileDialog,
     QHBoxLayout,
     QHeaderView,
@@ -50,7 +49,9 @@ from qtcompat import Signal
 from ui_support.collapsible import CollapsibleSection
 from ui_support.i18n import tr
 from ui_support.theme import TEXT_MUTED
+from ui_support.title_layout import spectrum_tooltip
 from viewer.spectrum3d_panel import Spectrum3DPanel
+from viewer.spectrum_overlay import validate_spectra
 from viewer.spectrum_viewer import SpectrumViewer
 
 _ASSIGNMENT_WIDGET_BUFFER = 12
@@ -278,6 +279,7 @@ class SpectrumPanel(QWidget):
         header.addStretch(1)
         layout.addLayout(header)
         self.viewer = SpectrumViewer()
+        self.viewer.spectrum_tooltip_provider = self._spectrum_tooltip
         self._spectrum3d_panel = Spectrum3DPanel()
         self._spectrum3d_panel.setVisible(False)
         self._ft3_ready.connect(self._on_ft3_ready)
@@ -375,9 +377,12 @@ class SpectrumPanel(QWidget):
         self.export_poky_button.setEnabled(False)
         self.export_poky_button.setToolTip(
             tr(
-                "export peak table: direct export (current coordinates) or export after alignment "
-                "(overall translation and alignment to the selected reference peak "
-                "file)",
+                (
+                    'Export the selected peak table as assignments and ppm '
+                    'coordinates only. Choose direct export or align to a '
+                    'reference .list before export. Intensity, volume and SNR '
+                    'remain in internal saves/CSV backups.'
+                ),
             )
         )
         self.export_menu = QMenu(self)
@@ -405,11 +410,12 @@ class SpectrumPanel(QWidget):
         self.peak_toolbar2.addWidget(self.save_peaks_button)
 
         self.peak_size_label = QLabel(tr("Mark size"))
-        self.peak_size_spin = QDoubleSpinBox()
-        self.peak_size_spin.setRange(0.5, 50.0)
+        from ui_support.numeric_inputs import PeakSizeSpinBox
+        self.peak_size_spin = PeakSizeSpinBox()
+        self.peak_size_spin.setRange(0.1, 50.0)
         self.peak_size_spin.setSingleStep(0.5)
         self.peak_size_spin.setDecimals(1)
-        self.peak_size_spin.setValue(1.5)
+        self.peak_size_spin.setValue(0.5)
         self.peak_size_spin.setToolTip(tr(
             "Marker size (data coordinate units, scaled with "
             "spectrum)",
@@ -577,6 +583,7 @@ class SpectrumPanel(QWidget):
         self._extra_compare_column = None
         self._overlay_column = None
         self._overlay_slice_homes = []
+        self._connect_comparison_crosshair(self.viewer)
         self.overlay = OverlayComparison(self)
         self.overlay.hide()
         self.overlay.controls.setParent(self)
@@ -749,7 +756,7 @@ class SpectrumPanel(QWidget):
                 "level_percent": None,
                 "level_count": 8,
                 "aspect": 0,
-                "peak_size": 1.5,
+                "peak_size": 0.5,
                 "hide_positive": False,
                 "hide_negative": False,
             }
@@ -793,7 +800,7 @@ class SpectrumPanel(QWidget):
                 hide_negative=bool(state.get("hide_negative", False)),
             )
             self.peak_size_spin.setValue(
-                float(state.get("peak_size", 1.5))
+                float(state.get("peak_size", 0.5))
             )
         except Exception:  # noqa: BLE001
             pass
@@ -838,6 +845,7 @@ class SpectrumPanel(QWidget):
         paths = self._spectrum_paths()
         for path in paths:
             self.file_list.addItem(path.name)
+            self.file_list.item(self.file_list.count() - 1).setToolTip(self._spectrum_tooltip(path))
         self.file_list.setVisible(bool(paths))
         self._sync_peak_ui_visibility()
         self._fit_accessibility_controls()
@@ -1156,13 +1164,15 @@ class SpectrumPanel(QWidget):
         self.log_message.emit(tr("3D spectrum loading failed {p0}: {p1}", p0=path.name, p1=message))
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _show_loading_indicator(
         self, text: str = "", ready: int = 0, total: int = 0
     ) -> None:
         'Show the indicator above the spectrum; total <= 0 uses indeterminate progress.'
         self.loading_label.setText(text)
+        self.loading_label.setToolTip(self._spectrum_tooltip(self._current_spectrum))
         if total > 0:
             self.loading_progress.setRange(0, int(total))
             self.loading_progress.setValue(min(int(ready), int(total)))
@@ -1693,7 +1703,8 @@ class SpectrumPanel(QWidget):
         self._load_peaks(paths[0])
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _peak_file_path(self, spectrum_path: Path) -> Path | None:
         """Peak table file:.list takes priority (peak table is list), and the old CSV is compatible
@@ -2638,21 +2649,7 @@ class SpectrumPanel(QWidget):
         return sorted(candidates, key=lambda item: item[0].casefold())
 
     def _spectrum_tooltip(self, path: Path) -> str:
-        source = tr('Not recorded')
-        project = self.manager.project
-        if project is not None:
-            for experiment in project.experiments:
-                for data in experiment.data or []:
-                    folder = self.manager.data_dir(experiment.id, data.id, 'spectra')
-                    if path.parent == folder:
-                        source = data.source or (str(self.manager.root / data.raw_dir)
-                                                 if data.raw_dir else tr('Not recorded'))
-                        if data.segments:
-                            source += '\n' + '\n'.join(data.segments)
-                        return tr('Spectrum: {p0}\nOriginal data: {p1}\nSpectrum file: {p2}',
-                                  p0=path.name, p1=source, p2=path)
-        return tr('Spectrum: {p0}\nOriginal data: {p1}\nSpectrum file: {p2}',
-                  p0=path.name, p1=source, p2=path)
+        return spectrum_tooltip(path, self.manager)
 
     def _refresh_compare_menu(self) -> None:
         'Rebuild comparison choices from current project results before opening the menu.'
@@ -2676,12 +2673,19 @@ class SpectrumPanel(QWidget):
             empty = self.compare_menu.addAction(tr("No other result spectra"))
             empty.setEnabled(False)
             return
+        third_menu = None
+        if self._comparison_active and self._extra_compare_spectrum is None:
+            third_menu = self.compare_menu.addMenu(tr('Add third spectrum'))
+            third_menu.setToolTipsVisible(True)
+            third_menu.setEnabled(any(path != self._compare_spectrum
+                                      for _label, _exp, _data, path in candidates))
+            self.compare_menu.addSeparator()
         for label, exp_id, data_id, path in candidates:
             action = self.compare_menu.addAction(label)
             action.setData((exp_id, data_id, str(path)))
             action.setToolTip(self._spectrum_tooltip(path))
-            if self._comparison_active and self._extra_compare_spectrum is None:
-                third = self.compare_menu.addAction(tr('Add third: {p0}', p0=label))
+            if third_menu is not None:
+                third = third_menu.addAction(label)
                 third.setData(('__third__', data_id, str(path)))
                 third.setToolTip(self._spectrum_tooltip(path))
                 third.setEnabled(path != self._compare_spectrum)
@@ -2727,6 +2731,7 @@ class SpectrumPanel(QWidget):
         if path == self._compare_spectrum or path == self._current_spectrum:
             return
         viewer = SpectrumViewer()
+        viewer.spectrum_tooltip_provider = self._spectrum_tooltip
         panel = Spectrum3DPanel()
         panel.hide()
         viewer.add_control_panel(panel)
@@ -2753,6 +2758,7 @@ class SpectrumPanel(QWidget):
             self.log_message.emit(describe_exception(exc))
             return
         self._extra_compare_viewer = viewer
+        self._connect_comparison_crosshair(viewer)
         self._extra_compare_3d = panel
         self._extra_compare_spectrum = path
         panel.slice_changed.connect(self._render_extra_compare)
@@ -2798,6 +2804,38 @@ class SpectrumPanel(QWidget):
             )
             self._overlay_refresh.start(0)
 
+    def _connect_comparison_crosshair(self, viewer: SpectrumViewer) -> None:
+        viewer.crosshair_moved.connect(
+            lambda x, y: self._sync_comparison_crosshair(viewer, x, y)
+        )
+        viewer.crosshair_left.connect(self._hide_comparison_crosshairs)
+
+    def _sync_comparison_crosshair(self, source, x_ppm, y_ppm) -> None:
+        if not self._comparison_active or self.overlay.toggle.isChecked():
+            return
+        spectrum = source.displayed_spectrum
+        if spectrum is None or spectrum.data.ndim != 2:
+            return
+        for target in self._comparison_viewers():
+            if target is source:
+                continue
+            other = target.displayed_spectrum
+            if other is None or other.data.ndim != 2:
+                continue
+            try:
+                validate_spectra([spectrum, other])
+            except ValueError:
+                target.hide_linked_crosshair()
+                continue
+            if target._strips_active and not source._mouse_left_pressed:
+                continue
+            target.set_linked_crosshair_ppm(x_ppm, y_ppm)
+
+    def _hide_comparison_crosshairs(self) -> None:
+        if self._comparison_active:
+            for viewer in self._comparison_viewers():
+                viewer.hide_linked_crosshair()
+
     def _comparison_viewers(self):
         return [viewer for viewer in (self.viewer, self._compare_viewer,
                                       self._extra_compare_viewer) if viewer is not None]
@@ -2838,11 +2876,25 @@ class SpectrumPanel(QWidget):
         leaving = not enabled and self._overlay_column is not None
         for viewer, controls in zip(self._comparison_viewers(), self.overlay.spectrum_controls):
             if entering:
-                controls.hide_positive.setChecked(viewer.hide_positive.isChecked())
-                controls.hide_negative.setChecked(viewer.hide_negative.isChecked())
+                with QSignalBlocker(controls):
+                    controls.start.setValue(viewer.level_label.value())
+                    controls.levels.setValue(viewer.count_label.value())
+                    controls.hide_positive.setChecked(viewer.hide_positive.isChecked())
+                    controls.hide_negative.setChecked(viewer.hide_negative.isChecked())
+                    if viewer.layer_list.count():
+                        controls.visible.setChecked(
+                            viewer.layer_list.item(0).checkState() == Qt.CheckState.Checked
+                        )
             elif leaving:
+                viewer.set_contour_start(controls.start.value())
+                viewer.count_label.setValue(controls.levels.value())
                 viewer.hide_positive.setChecked(controls.hide_positive.isChecked())
                 viewer.hide_negative.setChecked(controls.hide_negative.isChecked())
+                if viewer.layer_list.count():
+                    viewer.layer_list.item(0).setCheckState(
+                        Qt.CheckState.Checked if controls.visible.isChecked()
+                        else Qt.CheckState.Unchecked
+                    )
         self._set_overlay_compact(enabled)
         if enabled:
             try:
@@ -2862,7 +2914,7 @@ class SpectrumPanel(QWidget):
                         and all(panel is not p for p, _v in self._overlay_slice_homes)):
                     self._overlay_slice_homes.append((panel, viewer))
                     self.overlay.slice_layout.addWidget(panel)
-                    panel.setToolTip(self.overlay.names[index])
+                    panel.setToolTip(self.overlay.tooltips[index])
                     panel.show()
         elif self._overlay_column is not None:
             self._restore_overlay_slice_panels()
@@ -2911,6 +2963,8 @@ class SpectrumPanel(QWidget):
     def _ensure_compare_viewer(self) -> SpectrumViewer:
         if self._compare_viewer is None:
             self._compare_viewer = SpectrumViewer()
+            self._compare_viewer.spectrum_tooltip_provider = self._spectrum_tooltip
+            self._connect_comparison_crosshair(self._compare_viewer)
             self._compare_viewer.controls_section.geometry_changed.connect(
                 lambda: self._comparison_layout_timer.start(0) if self._comparison_active else None
             )
@@ -3075,13 +3129,15 @@ class SpectrumPanel(QWidget):
         )
         self._overlay_refresh.start(0)
 
-    @staticmethod
-    def _comparison_column(title: str, viewer: SpectrumViewer) -> QWidget:
+    def _comparison_column(self, title: str, viewer: SpectrumViewer) -> QWidget:
         column = QWidget()
         layout = QVBoxLayout(column)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
         label = QLabel(title)
+        spectrum = viewer.displayed_spectrum
+        if spectrum is not None:
+            label.setToolTip(self._spectrum_tooltip(spectrum.source))
         label.setSizePolicy(label.sizePolicy().horizontalPolicy(),
                             QSizePolicy.Policy.Maximum)
         column._viewer_heading = label
@@ -3100,6 +3156,7 @@ class SpectrumPanel(QWidget):
                 label = self._compare_column.findChild(QLabel)
                 if label is not None:
                     label.setText(path.name)
+                    label.setToolTip(self._spectrum_tooltip(path))
             self._comparison_layout_timer.start(0)
             self._refresh_overlay_spectra()
             return
@@ -3152,6 +3209,7 @@ class SpectrumPanel(QWidget):
         "Restore the original expanded layout without sharing the two viewers' control state."
         if not self._comparison_active:
             return
+        self._hide_comparison_crosshairs()
         if self.overlay.toggle.isChecked():
             self.overlay.toggle.setChecked(False)
         self._remove_third_comparison(refresh=False)

@@ -30,6 +30,7 @@ from gui.pipeline_panel import PipelinePanel
 from gui.welcome_page import WelcomePage
 from qtcompat import Signal
 from ui_support.i18n import tr
+from ui_support.title_layout import TitleLabel
 
 
 class _NotesFlow(QLayout):
@@ -72,7 +73,8 @@ class _NotesFlow(QLayout):
         left, x, y, height = rect.x(), rect.x(), rect.y(), 0
         for item in self._items:
             label = item.widget()
-            natural = label.fontMetrics().horizontalAdvance(label.text()) + 2
+            natural = (label.natural_width() if isinstance(label, TitleLabel) else
+                       label.fontMetrics().horizontalAdvance(label.text()) + 2)
             width = min(max(1, rect.width()), natural)
             if height and (label.property('notesBlockStart') or x + width > rect.right() + 1):
                 x, y, height = left, y + height, 0
@@ -96,21 +98,35 @@ class _NotesLabel(QWidget):
         self.setSizePolicy(policy)
         self.setText(text)
 
-    def setText(self, text):
+    def setText(self, text, *, title=""):
         self._plain_text = text
         while self._flow.count():
             old = self._flow.takeAt(0).widget()
             old.hide()
             old.deleteLater()
-        for line in text.split('\n') if text else []:
-            for index, field in enumerate(line.split('  ·  ')):
-                label = QLabel(('·  ' if index else '') + field, self)
+        blocks = [(False, text)]
+        if title and title in text:
+            before, _match, after = text.partition(title)
+            head, separator, prefix = before.rpartition('\n')
+            blocks = [(False, head if separator else ''), (True, prefix + title),
+                      (False, after.lstrip('\n'))]
+        for is_title, block in blocks:
+            if is_title:
+                label = TitleLabel(block, self)
                 label.setObjectName('MutedText')
-                label.setTextFormat(Qt.TextFormat.PlainText)
-                label.setWordWrap(True)
-                label.setProperty('notesBlockStart', index == 0)
+                label.setProperty('notesBlockStart', True)
                 self._flow.addWidget(label)
                 label.show()
+                continue
+            for line in block.split('\n') if block else []:
+                for index, field in enumerate(line.split('  ·  ')):
+                    label = QLabel(('·  ' if index else '') + field, self)
+                    label.setObjectName('MutedText')
+                    label.setTextFormat(Qt.TextFormat.PlainText)
+                    label.setWordWrap(True)
+                    label.setProperty('notesBlockStart', index == 0)
+                    self._flow.addWidget(label)
+                    label.show()
         self._flow.invalidate()
         self.updateGeometry()
 
@@ -163,6 +179,7 @@ class CenterPanel(QWidget):
         self.welcome_page.open_project_requested.connect(self.open_project_requested.emit)
 
         self.pipeline = PipelinePanel(manager, controller)
+        self.pipeline.header_widget.hide()
         self.pipeline.log_message.connect(self.log_message.emit)
         self.pipeline.log_scoped.connect(self.log_scoped.emit)
         self.pipeline.memory_guard_requested.connect(
@@ -266,7 +283,7 @@ class CenterPanel(QWidget):
         """Press the tree selection level to switch to the middle page and refresh the top comment
         bar.
         """
-        self._update_selection_guide(kind)
+        self._update_selection_guide(kind, exp_id)
         self._update_notes(kind, exp_id, data_id, group_id)
         if kind == "workspace":
             self.stack.setCurrentIndex(0)
@@ -288,7 +305,7 @@ class CenterPanel(QWidget):
             self.stack.setCurrentIndex(3)
             self.pipeline.set_selection(kind, exp_id, data_id)
 
-    def _update_selection_guide(self, kind: str) -> None:
+    def _update_selection_guide(self, kind: str, exp_id: str = "") -> None:
         'Show a short action hint for the selected tree level.'
         guide = {
             "workspace": (tr("Workspace"), tr("Create or open projects")),
@@ -297,12 +314,23 @@ class CenterPanel(QWidget):
             "group": (tr("Group"), tr("Process group data in batches")),
         }
         if kind in ("data", "folder"):
-            level, purpose = tr("Data"), tr("Process sample data")
+            project = self._manager.project if self._manager is not None else None
+            experiment = project.experiment(exp_id) if project is not None else None
+            context = (f"{project.name} / {experiment.title or exp_id}"
+                       if project is not None and experiment is not None else exp_id)
+            flow = tr('Flow: {p0}', p0=tr('import -> FID -> spectrum -> peak selection'))
+            text = f"{tr('Process sample data')}  ·  {flow}"
+            if context:
+                text += f"  ·  {context}"
+            self.selection_guide_label.setText(text)
+            self.selection_guide_label.setToolTip(text)
+            return
         else:
             level, purpose = guide.get(
                 kind, (tr("Workspace"), tr("Create or open projects"))
             )
         self.selection_guide_label.setText(f"{level}  ·  {purpose}")
+        self.selection_guide_label.setToolTip("")
 
     # ------------------------------------------------------------------
     def set_manager(self, manager) -> None:
@@ -319,7 +347,7 @@ class CenterPanel(QWidget):
         """Display the project/experiment type/sample data/Data group annotation according to the
         selected level (the top of the middle area).
         """
-        from gui.notes import data_note, experiment_note, sample_note
+        from gui.notes import data_note, data_note_fields, experiment_note, sample_note
 
         self._notes_kind = kind if kind in (
             "project", "experiment", "data", "folder", "group"
@@ -341,16 +369,16 @@ class CenterPanel(QWidget):
         if project is None:
             return
         text = ""
+        title = ""
         if kind == "project":
             text = sample_note(project)
         elif kind == "experiment":
             text = experiment_note(project, exp_id)
         elif kind in ("data", "folder"):
             text = data_note(project, exp_id, data_id)
+            title = str(data_note_fields(project, exp_id, data_id).get("notes", "") or "")
             if not data_id:
-                self.notes_label.setText(
-                    tr("Note:\n{p0}", p0=text) if text else tr("Note: (not filled in)")
-                )
+                self.notes_label.setText(text, title=title)
                 return
             try:
                 entry = self._manager.data(exp_id, data_id)
@@ -368,9 +396,7 @@ class CenterPanel(QWidget):
             except (AttributeError, OSError, RuntimeError, ValueError):
 
                 pass
-        self.notes_label.setText(
-            tr("Note:\n{p0}", p0=text) if text else tr("Note: (not filled in)")
-        )
+        self.notes_label.setText(text, title=title)
 
     def _set_group_notes(self, project, exp_id: str, group_id: str) -> None:
         """Data group annotation: Annotation fields are rows (field names in the first column), and

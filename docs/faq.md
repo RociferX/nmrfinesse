@@ -26,12 +26,7 @@ includes its runtime.
 
 ### Does it modify my raw data?
 
-Not on purpose, and never silently. Where acquisition headers must be adjusted (for example to
-recompute the sampling grid after bad points were removed), the original is backed up as `.bak`
-on first modification, and work is done on copies rather than in-place. Automatic bad-point
-*repair* is optional; detection is unconditional, and findings are reported with indices and
-metrics before any decision is made. Deleting a project in the GUI moves it to the operating
-system trash rather than erasing it.
+Source-level cleanup of invalid or duplicate NUS points can rewrite acquisition files. It creates `.bak` backups and records the change in logs and audit records. Linked or referenced imports still depend on their source directories. The Tools abnormal-FID-to-NUS export writes a new folder and preserves its input. GUI project deletion uses the system trash.
 
 ### Does it handle non-uniform sampling?
 

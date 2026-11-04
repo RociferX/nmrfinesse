@@ -23,8 +23,8 @@ Key behaviours:
 
 ## Using it
 
-GUI: `tool` (Tools) -> data groups -> batch run. Progress is reported per dataset in the log for.
-the group's scope, and the project tree shows per-dataset running state.
+GUI: select the data group in the project tree and start batch processing from its centre page.
+Progress appears in the group log; each member keeps its own processing status.
 
 Python:
 

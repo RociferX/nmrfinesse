@@ -419,7 +419,7 @@ def test_viewer_peaks_poky_style(qapp: QApplication) -> None:
     assert viewer.peak_item.opts["pxMode"] is False
     assert viewer._label_overlay.visible_label_count() == 2
     viewer.highlight_peak(0)
-    assert float(viewer.peak_item.data["size"][0]) == pytest.approx(1.5 * 3.0)
+    assert float(viewer.peak_item.data["size"][0]) == pytest.approx(0.5 * 3.0)
     assert viewer._flash_item is not None
     assert viewer._flash_item.flags() & QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations
     viewer._clear_flash()
@@ -729,7 +729,7 @@ def test_value_spinboxes_roundtrip(qapp: QApplication) -> None:
     viewer.level_slider.setValue(50)
     percent = viewer.level_label.value()
     assert 12.0 <= percent <= 13.0  # (0.5)^3 = 12.5%
-
+    # (0.5)^3 = 12.5%
     from qtcompat.QtWidgets import QLabel
 
     assert viewer.level_label.prefix() == viewer.level_label.suffix() == ""
@@ -923,7 +923,7 @@ def test_data_bounds_item_tracks_spectrum(qapp: QApplication) -> None:
 
     assert item in vb.addedItems
         # 0.2.150: removed ignoreBounds (box now in addedItems)
-
+    # 0.2.150: removed ignoreBounds (box now in addedItems)
     viewer.clear()
     assert viewer._data_bounds_item is None
     viewer.close()

@@ -295,9 +295,14 @@ def test_experiment_dashboard_segmented_between_single_and_batch(
 
     page = ExperimentDashboard()
     assert isinstance(page.segmented_group, QGroupBox)
-    assert page.segmented_group.title() == "分段数据或重复实验叠加导入"
+    from ui_support.i18n import tr
+    assert page.segmented_group.title() == tr("Segments / repeats")
 
-    layout = page.import_panel.layout()
+    outer = page.import_panel.layout()
+    from qtcompat.QtWidgets import QHBoxLayout
+    layout = next(outer.itemAt(i).layout() for i in range(outer.count())
+                  if isinstance(outer.itemAt(i).layout(), QHBoxLayout)
+                  and outer.itemAt(i).layout().indexOf(page.single_group) >= 0)
     assert layout.indexOf(page.single_group) < layout.indexOf(page.segmented_group)
     assert layout.indexOf(page.segmented_group) < layout.indexOf(page.batch_group)
     emitted: list[tuple[str, str]] = []
@@ -407,7 +412,12 @@ def test_experiment_dashboard_copy_check_above_groups(
 
     page = ExperimentDashboard()
     layout = page.import_panel.layout()
-    assert layout.indexOf(page.copy_check) < layout.indexOf(page.single_group)
+    columns = next(layout.itemAt(i).layout() for i in range(layout.count())
+                   if layout.itemAt(i).layout() is not None
+                   and layout.itemAt(i).layout().indexOf(page.single_group) >= 0)
+    row_index = next(i for i in range(layout.count()) if layout.itemAt(i).layout() is columns)
+    assert layout.indexOf(page.copy_check) < row_index
+    layout = columns
     assert layout.indexOf(page.single_group) < layout.indexOf(page.segmented_group)
     assert layout.indexOf(page.segmented_group) < layout.indexOf(page.batch_group)
     assert page.copy_check.isChecked()
@@ -437,7 +447,8 @@ def test_experiment_dashboard_inline_import_panel_forwards_signal(
 
     page = ExperimentDashboard()
     assert page.import_panel.single_group.title() == "单个导入"
-    assert page.import_panel.segmented_group.title() == "分段数据或重复实验叠加导入"
+    from ui_support.i18n import tr
+    assert page.import_panel.segmented_group.title() == tr("Segments / repeats")
     assert page.import_panel.batch_group.title() == "批量处理"
     emitted: list[tuple] = []
     page.import_options_requested.connect(lambda *a: emitted.append(a))
@@ -484,7 +495,7 @@ def test_batch_import_group_option(qapp: QApplication) -> None:
     panel._on_batch_import()
     assert emitted and emitted[0][2] is False
     panel.batch_group_check.setChecked(True)
-
+    # Import clears the list; add it again to test grouping.
     panel.batch_list.addItem("/data/b")
     panel._on_batch_import()
     assert emitted[-1][2] is True
@@ -540,3 +551,57 @@ def test_experiment_dashboard_rename_data_name(
     entry2 = manager.project.experiment(entry.id)
     assert entry2 is not None and entry2.data[0].title == "新名称"
     window.close()
+
+
+@pytest.mark.parametrize('language', ['en', 'zh'])
+@pytest.mark.parametrize('font_size', [10, 18])
+def test_import_explanations_grow_and_shrink_with_column_width(qapp, language, font_size):
+    from qtcompat.QtCore import QPoint
+    from qtcompat.QtGui import QFont
+    from qtcompat.QtTest import QTest
+
+    from gui.dashboards import ExperimentImportPanel, _ImportHint
+    from ui_support import i18n
+
+    previous = i18n._language
+    i18n.set_language(language)
+    panel = ExperimentImportPanel()
+    try:
+        hints = panel.findChildren(_ImportHint)
+        assert len(hints) == 2
+        for hint in hints:
+            font = QFont(hint.font())
+            font.setPointSize(font_size)
+            hint.setFont(font)
+            hint.setFixedWidth(180)
+        panel.show()
+        QTest.qWait(40)
+        action_y = [button.mapTo(panel, QPoint(0, 0)).y() for button in (
+            panel.import_button, panel.segmented_import_button, panel.batch_import_button)]
+        assert len(set(action_y)) == 1
+        assert panel.segmented_import_button.y() < hints[0].y()
+        assert panel.batch_import_button.y() < hints[1].y()
+        assert panel.batch_list.isHidden()
+        panel.batch_list.addItem('/data/a')
+        qapp.processEvents()
+        assert not panel.batch_list.isHidden()
+        one_row_height = panel.batch_list.height()
+        for index in range(6):
+            panel.batch_list.addItem(f'/data/{index}')
+        assert one_row_height < panel.batch_list.height() <= 4 * one_row_height
+        panel.clear_batch_list()
+        qapp.processEvents()
+        assert panel.batch_list.isHidden()
+        narrow = [hint.height() for hint in hints]
+        for hint in hints:
+            assert hint.height() >= hint.heightForWidth(hint.width())
+            hint.setFixedWidth(330)
+        QTest.qWait(40)
+        for hint, old_height in zip(hints, narrow, strict=True):
+            assert hint.height() >= hint.heightForWidth(hint.width())
+            assert hint.height() < old_height
+    finally:
+        panel.close()
+        panel.deleteLater()
+        qapp.processEvents()
+        i18n.set_language(previous)

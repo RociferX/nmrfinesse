@@ -19,6 +19,7 @@ from qtcompat.QtWidgets import (
 
 from core import __version__
 from ui_support.i18n import tr
+from ui_support.title_layout import spectrum_tooltip
 from viewer.spectrum import Spectrum, Spectrum1D, Spectrum3D
 from viewer.spectrum3d_panel import Spectrum3DPanel
 from viewer.spectrum_viewer import SpectrumViewer
@@ -182,6 +183,7 @@ class SpectrumWindow(QMainWindow):
         else:
             status_text = tr("Loaded: {p0}", p0=path)
         self.statusBar().showMessage(status_text)
+        self.statusBar().setToolTip(spectrum_tooltip(path))
         self.setWindowTitle(tr("NMRFinesse spectrum viewer - {p0}", p0=path.name).replace(
             'NMRFinesse', f'NMRFinesse {__version__}', 1))
         return True
@@ -214,12 +216,15 @@ class SpectrumWindow(QMainWindow):
         self.viewer.clear()
         self.setWindowTitle(tr("NMRFinesse spectrum viewer").replace(
             'NMRFinesse', f'NMRFinesse {__version__}', 1))
+        self.statusBar().setToolTip("")
         self.statusBar().showMessage(tr("spectrum cleared"))
 
     def _refresh_recent(self) -> None:
         self.recent_menu.clear()
+        self.recent_menu.setToolTipsVisible(True)
         for path in self._recent:
             action = self.recent_menu.addAction(path)
+            action.setToolTip(spectrum_tooltip(Path(path)))
             action.triggered.connect(
                 lambda _checked=False, p=path: self.load_spectrum(Path(p))
             )

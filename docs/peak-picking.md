@@ -132,3 +132,6 @@ Internal POKY/Sparky `.list` saves append `S/N` when a finite SNR is available. 
 The noise definition differs from POKY: the [official iPick entry point](https://github.com/pokynmr/iPick/blob/master/iPick.py) samples 100 random points, and [ucsfTool](https://github.com/pokynmr/iPick/blob/master/ucsftool3.py) takes the middle sorted absolute intensity. The [peak-list code](https://github.com/pokynmr/iPick/blob/master/peak_list_dialog.py) divides peak height by the spectrum's noise and labels it S/N. This program retains its existing MAD estimator and thresholds; compatible columns do not imply identical numerical values.
 
 The GUI Export peaks actions, including aligned export, write only `Assignment w1 w2 [w3]`. Exported files omit Data, Height/Intensity, Volume and SNR. The on-screen table and internal project saves retain intensity and SNR; reimporting a coordinate-only export does not invent missing SNR values.
+
+
+GUI exchange exports (`.list`) contain assignments and chemical shifts only. Internal/API peak products and full-precision CSV retain their documented metrics; the API schema and numerical calculation are unchanged.

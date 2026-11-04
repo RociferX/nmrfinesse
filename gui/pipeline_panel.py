@@ -41,14 +41,17 @@ from qtcompat.QtWidgets import (
     QWidget,
 )
 
+from core.data.raw_fingerprint import raw_key_files
 from core.project import ProjectManager
 from core.project.artifacts import find_primary_spectrum
 from core.user_errors import describe_exception
 from gui.pipeline_state import (
     STEP_RUN_REFS,
+    input_file_fingerprints,
     input_fingerprint,
     load_pipeline_state,
     record_step_success,
+    script_file_fingerprints,
     script_fingerprint,
 )
 from gui.processing import ProcessingController
@@ -417,6 +420,59 @@ def compute_data_step_statuses(
     return _node_step_statuses(manager, exp_id, node)
 
 
+
+def _missing_raw_input_reason(manager, exp_id, data_id) -> str:
+    """Name a missing directory or broken authoritative raw-file link."""
+    node = manager.data(exp_id, data_id)
+    directory = Path(node.raw_dir or node.source)
+    if not directory.is_absolute():
+        directory = manager.root / directory
+    if not directory.is_dir():
+        return tr('Original data path does not exist: {p0}', p0=directory)
+    names = list(raw_key_files(directory))
+    if not node.segments:
+        names.extend(name for name in node.checksums if name not in names
+                     and Path(name).name == name)
+    missing = [directory / name for name in names
+               if ((directory / name).is_symlink() or name in node.checksums)
+               and not (directory / name).is_file()]
+    if missing:
+        source = Path(node.source) if node.source else None
+        if source is not None and not source.is_absolute():
+            source = manager.root / source
+        if (source is not None and not source.is_dir()
+                and any(path.is_symlink() for path in missing)):
+            return tr('Original data path does not exist: {p0}', p0=source)
+        return '\n'.join(tr('Input file is missing: {p0}', p0=path) for path in missing)
+    return ''
+
+
+def _file_change_reason(manager, saved, current, *, script=False) -> str:
+    """Explain only differences supported by a saved per-file baseline."""
+    if not isinstance(saved, dict):
+        # A single upstream file can also be identified in older state files.
+        if len(current) != 1:
+            return ''
+        keys = list(current)
+    else:
+        keys = [key for key in sorted(saved.keys() | current.keys())
+                if saved.get(key) != current.get(key)]
+    lines = []
+    for key in keys:
+        path = Path(key)
+        if not path.is_absolute():
+            path = manager.root / path
+        if current.get(key) is None:
+            lines.append(tr('Input file is missing: {p0}', p0=path))
+        elif script:
+            lines.append(tr('Processing script changed: {p0}', p0=path))
+        elif isinstance(saved, dict) and saved.get(key) is None:
+            lines.append(tr('Input file added: {p0}', p0=path))
+        else:
+            lines.append(tr('Input file changed: {p0}', p0=path))
+    return '\n'.join(lines)
+
+
 def _outdated_reasons(
     statuses: dict[str, str],
     manager: ProjectManager,
@@ -442,10 +498,18 @@ def _outdated_reasons(
             if entry and entry.get("input_hash"):
                 current = input_fingerprint(manager, exp_id, node_data_id, step_id)
                 if current is not None and current != entry["input_hash"]:
-                    reason = tr(
-                        "The input has changed (upstream re-run or external modification), please "
-                        "re-run",
-                    )
+                    if step_id == 'fid':
+                        reason = _missing_raw_input_reason(manager, exp_id, node_data_id)
+                    if not reason:
+                        reason = _file_change_reason(
+                            manager, entry.get('input_files'),
+                            input_file_fingerprints(manager, exp_id, node_data_id, step_id),
+                        )
+                    if not reason:
+                        reason = tr(
+                            'The input changed; this older record has no per-file fingerprints, '
+                            'so the changed file cannot be identified.'
+                        )
                     break
                 current_script = script_fingerprint(manager, exp_id, node_data_id, step_id)
                 if (
@@ -453,12 +517,22 @@ def _outdated_reasons(
                     and entry.get("script_hash")
                     and current_script != entry["script_hash"]
                 ):
-                    reason = tr("The processing script has changed, please run it again")
+                    reason = _file_change_reason(
+                        manager, entry.get('script_files'),
+                        script_file_fingerprints(manager, exp_id, node_data_id, step_id),
+                        script=True,
+                    ) or tr(
+                        'Processing scripts changed; this older record '
+                        'has no per-file fingerprints.')
                     break
         if not reason:
             stale_upstream = [STEP_LABEL[dep] for dep in deps if statuses.get(dep) == "OUTDATED"]
             if stale_upstream:
                 reason = tr("The upstream step has expired: ") + "、".join(stale_upstream)
+                details = [reasons[dep] for dep in deps
+                           if statuses.get(dep) == 'OUTDATED' and dep in reasons]
+                if details:
+                    reason += '\n' + '\n'.join(dict.fromkeys(details))
             else:
                 reason = tr(
                     "The input or parameters changed; update this step to refresh the result",
@@ -692,6 +766,7 @@ class _FlowLayout(QLayout):
 
 
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # --------------------------------------------------------------------------- # #
 # ---------------------------------------------------------------------------
 #
@@ -703,7 +778,6 @@ class _FlowLayout(QLayout):
 # ---------------------------------------------------------------------------
 # --------------------------------------------------------------------------- # #
 # ---------------------------------------------------------------------------
-
 # --------------------------------------------------------------------------- # #
 # ---------------------------------------------------------------------------
 # --------------------------------------------------------------------------- # #
@@ -935,7 +1009,7 @@ class PipelineStepRow(QWidget):
     """
 
     run_requested = Signal(str)  # step_id
-
+    # step_id
     rerun_final_requested = Signal(str, dict)
     manual_requested = Signal(str)
     show_spectrum_requested = Signal(str)
@@ -1008,10 +1082,12 @@ class PipelineStepRow(QWidget):
         self.ext_range_button = QPushButton(tr("direct dimension range"), self)
         self.ext_range_button.setToolTip(
             tr(
-                'Set the direct-dimension extraction window (EXT -x1/-xn); "apply this range to '
-                'the optimisation" is on by default and can be turned off; when unset the default '
-                "(10.5-6.5) is "
-                "used",
+                (
+                    'Set the direct-dimension ppm range. Applying it during '
+                    'optimisation is enabled by default and can be turned off. '
+                    'Check the proposed range against the direct nucleus and '
+                    'your data.'
+                ),
             )
         )
         self.ext_range_button.setVisible(self.step_id == "spectrum")
@@ -1102,22 +1178,22 @@ class PipelineStepRow(QWidget):
         self.rank_combo.setVisible(self.step_id == "smile")
         self.rank_combo.setToolTip(
             tr(
-                "Ranking criterion: decides which three of the 25 parameter combinations provide "
-                'the\nfinal-run scripts.\n\n- Pure peaks first (default): ranks by "stable peaks '
-                'minus suspected spurious peaks".\n  A stable peak is one that appears in most '
-                "parameter combinations;\n  a suspected spurious peak appears in only a few.\n  "
-                'Suited to "as few spurious peaks and as many true peaks as possible";\n  the '
-                "number of peaks comes from SMILE's own low threshold (3 sigma),\n  and under this "
-                "criterion every combination is reconstructed from all sampling points\n  (the "
-                "final-spectrum criterion),\n  independently of the threshold used by the "
-                "peak-picking step (35 sigma by default).\n\n- Consistency first: ranks by the "
-                "residual on the held-out sampling points.\n  Under this criterion every "
-                "combination is reconstructed from the held-out points:\n  the reconstruction is "
-                "then compared with the measured values (a smaller residual is better,\n  and a "
-                "correlation coefficient closer to 1 is better), independently of the peak "
-                'count.\n  Suited to wanting trustworthy "shape and intensities" first;\n  when '
-                "no hold-out table is available it falls back to ranking by fit "
-                "residual.",
+                (
+                    (
+                        'Rank the selected n×n grid; retain up to three '
+                        'final-script choices.\n\nPure peaks first (default):\n- '
+                        'Stable peaks occur in most candidate '
+                        'reconstructions.\n- Suspected spurious peaks appear in '
+                        'only a few.\n- Rank stable minus suspected spurious '
+                        'peaks.\n- SMILE uses its own 3-sigma detection, '
+                        'independently of\n  the peak-picking threshold (35 '
+                        'sigma by default).\n- Reconstruct candidates from all '
+                        'sampled points.\n\nConsistency first:\n- Rank by residual '
+                        'on held-out sampled points.\n- Lower residual and '
+                        'higher correlation are better.\n- Without a hold-out '
+                        'table, use fit residual.'
+                    )
+                ),
             )
         )
         fit_combo_width(self.rank_combo)
@@ -1157,9 +1233,12 @@ class PipelineStepRow(QWidget):
         self.segment_shift_button = QPushButton(tr("Inter-part field drift"))
         self.segment_shift_button.setToolTip(
             tr(
-                "Segmented data only: set a frequency offset (Hz) for parts 2..N (part 1 is the "
-                'reference); "run" writes PS -rs into each part\'s fid.com according to these '
-                "values. There is no automatic detection any more.",
+                (
+                    'Segmented data only: set the frequency offset (Hz) of parts '
+                    '2..N relative to part 1. Running applies these manual '
+                    'offsets during FID conversion; offsets are not detected '
+                    'automatically.'
+                ),
             )
         )
         self.segment_shift_button.setVisible(False)
@@ -1426,7 +1505,9 @@ class PipelineStepRow(QWidget):
         self.rank1_button.setVisible(status == "SUCCESS" and self.step_id == "smile")
 
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _set_rerun_widgets_visible(self, visible: bool) -> None:
         """Show/hide "Re-run the final script" and the indirect flip (one unit inside the same
@@ -1622,7 +1703,8 @@ class PipelinePanel(QWidget):
         layout.setSpacing(6)
 
 
-        title_row = QVBoxLayout()
+        self.header_widget = QWidget()
+        title_row = QVBoxLayout(self.header_widget)
         title_row.setContentsMargins(0, 0, 0, 0)
         panel_title = QLabel(tr("Processing flow"))
         panel_title.setObjectName("PanelTitle")
@@ -1631,15 +1713,14 @@ class PipelinePanel(QWidget):
         flow_hint.setObjectName("PanelSubtitle")
         flow_hint.setWordWrap(True)
         title_row.addWidget(flow_hint)
-        title_row.addStretch(1)
-        layout.addLayout(title_row)
 
         self.context_label = QLabel(tr("project not open"))
         self.context_label.setStyleSheet(
             f"font-weight: bold; color: {TEXT_PRIMARY};"
         )
         self.context_label.setWordWrap(True)
-        layout.addWidget(self.context_label)
+        title_row.addWidget(self.context_label)
+        layout.addWidget(self.header_widget)
 
         self.next_label = QLabel("")
         self.next_label.setWordWrap(True)
@@ -1719,7 +1800,9 @@ class PipelinePanel(QWidget):
         self.refresh()
 
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _data_facts(self, exp_id: str, data_id: str) -> dict:
         """Current data fact (ndim / direct dimension nuclide / whether NUS). 0.2.199-patch29hz:
@@ -2197,7 +2280,9 @@ class PipelinePanel(QWidget):
         self._refresh_expanded_details()
 
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _on_ext_range_requested(self, step_id: str) -> None:
         """"Direct dimension range" button: Pop up the input dialog box and press the data to save
@@ -2333,10 +2418,12 @@ class PipelinePanel(QWidget):
             row.set_ext_override(tr("direct dimension range"))
             row.ext_range_button.setToolTip(
                 tr(
-                    "Set the direct-dimension extraction window (EXT -x1/-xn). Use default if not "
-                    "set (10.5-6.5 ppm);\n\"Apply this range to the optimisation\" is on by "
-                    "default and can be turned off to optimise over the default wide 6.5-10.5 "
-                    "range",
+                    (
+                        'Set the direct-dimension ppm range. Applying it during '
+                        'optimisation is enabled by default and can be turned off. '
+                        'Check the proposed range against the direct nucleus and '
+                        'your data.'
+                    ),
                 )
             )
 
@@ -2512,9 +2599,12 @@ class PipelinePanel(QWidget):
             row.segment_shift_button.setText(tr("Inter-part field drift"))
             row.segment_shift_button.setToolTip(
                 tr(
-                    "Segmented data only: set a frequency offset (Hz) for parts 2..N (part 1 is "
-                    "the reference); \"run\" writes PS -rs into each part's fid.com according to "
-                    "these values. There is no automatic detection any more.",
+                    (
+                        'Segmented data only: set the frequency offset (Hz) of parts '
+                        '2..N relative to part 1. Running applies these manual '
+                        'offsets during FID conversion; offsets are not detected '
+                        'automatically.'
+                    ),
                 )
             )
 
@@ -2583,7 +2673,9 @@ class PipelinePanel(QWidget):
         row.set_indirect_neg_state(indirect_neg_state(content, ndim=ndim))
 
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def run_step(self, step_id: str, data_id: str | None = None) -> None:
         """Run the specified step (data_id specified scope; Defaults to currently selected/first
@@ -2840,7 +2932,9 @@ class PipelinePanel(QWidget):
                 row.set_detail(text, failed=failed)
 
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _reference_candidates(self) -> list[tuple[str, str, str]]:
         """There is already a data list of peak tables in the project (display name, exp_id,

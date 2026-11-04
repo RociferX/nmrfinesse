@@ -37,6 +37,9 @@ class PhasePanel(QWidget):
         outer = QVBoxLayout(self)
         outer.setContentsMargins(4, 2, 4, 2)
         outer.setSpacing(2)
+        self.axis_label = QLabel()
+        self.axis_label.hide()
+        outer.addWidget(self.axis_label)
 
 
         row = QHBoxLayout()
@@ -86,15 +89,19 @@ class PhasePanel(QWidget):
         row.addWidget(self.p1_slider, 1)
 
         self.reset_button = QPushButton("Reset")
-        self.reset_button.setToolTip(tr("P0/P1 Return to zero"))
+        self.reset_button.setToolTip(tr(
+                                            'Reset P0 and P1 for this row only.'
+                                        ))
         self.reset_button.clicked.connect(self.reset)
         row.addWidget(self.reset_button)
         self.copy_button = QPushButton("Copy")
         self.copy_button.setToolTip(
             tr(
-                "Copy the P0/P1 value, which can be pasted into the manual phase parameter or "
-                "script PS "
-                "line",
+                (
+                    'Copy this row’s P0/P1 values for a manual phase parameter '
+                    'or script. This preview does not write phase changes to the '
+                    'spectrum file.'
+                ),
             )
         )
         self.copy_button.clicked.connect(self._copy_values)

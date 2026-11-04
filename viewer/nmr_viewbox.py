@@ -101,6 +101,8 @@ class NMRViewBox(pg.ViewBox):
         ]
         self._min_span = min_span or (_MIN_VIEW_RANGE, _MIN_VIEW_RANGE)
         super().setRange(xRange=x_range, yRange=y_range, padding=padding)
+        if self.wheel_y_exponent != 1.0 and self.state['aspectLocked']:
+            self._clamp_locked_1d([x_range, y_range])
 
     def setRange(self, rect=None, **kwargs):
         """Restrictions narrowed/Translate boundaries (No constraints will be applied when the
@@ -120,6 +122,9 @@ class NMRViewBox(pg.ViewBox):
         if getattr(self, "_min_rect", None) is None:
             return
         vr = self.viewRange()
+        if self.wheel_y_exponent != 1.0 and self.state['aspectLocked']:
+            self._clamp_locked_1d(vr)
+            return
         new_ranges = list(vr)
         changed = False
         for axis_idx in (0, 1):
@@ -164,3 +169,27 @@ class NMRViewBox(pg.ViewBox):
                 xRange=new_ranges[0], yRange=new_ranges[1], padding=0
             )
 
+
+    def _clamp_locked_1d(self, ranges) -> None:
+        """Keep aspect while allowing both 1D axes to become fully visible."""
+        bounds = self.rect()
+        aspect = float(self.state['aspectLocked'])
+        view_ratio = bounds.width() / max(bounds.height(), 1e-12) / aspect
+        if view_ratio <= 0 or not np.isfinite(view_ratio):
+            return
+        full_x, full_y = self._min_rect
+        maximum = max(full_x[1]-full_x[0], (full_y[1]-full_y[0])*view_ratio)
+        minimum = min(maximum, max(self._min_span[0], self._min_span[1]*view_ratio))
+        xspan = min(maximum, max(minimum, ranges[0][1]-ranges[0][0]))
+        spans = (xspan, xspan/view_ratio)
+        corrected = []
+        for axis, span in enumerate(spans):
+            lo, hi = self._min_rect[axis]
+            # A smaller view stays inside the data; a larger view contains it.
+            lower, upper = lo+span/2, hi-span/2
+            if lower > upper:
+                lower, upper = upper, lower
+            center = min(upper, max(lower, sum(ranges[axis])/2))
+            corrected.append((center-span/2, center+span/2))
+        if not np.allclose(ranges, corrected, rtol=1e-10, atol=1e-12):
+            super().setRange(xRange=corrected[0], yRange=corrected[1], padding=0)

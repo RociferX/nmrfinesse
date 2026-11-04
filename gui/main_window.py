@@ -121,7 +121,7 @@ class MainWindow(QMainWindow):
     import_failed = Signal(str)
     import_finished = Signal(object)
     batch_import_finished = Signal(str, str, int, object)  # (exp_id, batch_id, count, results)
-
+    # (exp_id, batch_id, count, results)
     batch_import_progress = Signal(str, str, str, bool, str)
 
     group_data_done = Signal(str, str, str)  # (exp_id, data_id, status)
@@ -165,7 +165,7 @@ class MainWindow(QMainWindow):
         self.operation_feedback.connect(self._show_feedback)
         self._spectrum_panel_ready.connect(self._on_spectrum_panel_ready)
         self._pending_data_names: dict[str, str] = {}
-
+        # Keep script editors alive, keyed by (data_id, step).
 
         self._script_editors: dict[tuple[str, str], ScriptEditorDialog] = {}
         self._last_auto_fill: dict = {}
@@ -207,7 +207,8 @@ class MainWindow(QMainWindow):
         self._show_startup_environment_status()
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _resolve_environment_on_startup(self) -> None:
         """Probe and register NMRPipe tools on first launch, then prepare an environment notice.
@@ -259,7 +260,8 @@ class MainWindow(QMainWindow):
         return f"{base}   !{warning}!"
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _apply_default_geometry(self) -> None:
         """Open the default geometry: the top is attached to the upper edge of the screen, and the
@@ -279,11 +281,13 @@ class MainWindow(QMainWindow):
         avail = screen.availableGeometry() if screen is not None else available_geometry(self)
         size = initial_window_size(avail)
         self.resize(size)
+        self._initial_requested_size = size
         self.main_splitter.setSizes([round(size.width() * value / 100) for value in cols])
+        QTimer.singleShot(0, self, self._fit_tree_width)
         self.workflow_splitter.setSizes([round(size.height() * .72), round(size.height() * .28)])
         if not QApplication.platformName().startswith('wayland'):
-            self.setGeometry(QRect(avail.center().x() - size.width() // 2,
-                                   avail.center().y() - size.height() // 2,
+            self.setGeometry(QRect(avail.x() + (avail.width() - size.width()) // 2,
+                                   avail.y() + (avail.height() - size.height()) // 2,
                                    size.width(), size.height()))
 
     def _build_menus(self) -> None:
@@ -318,6 +322,7 @@ class MainWindow(QMainWindow):
         view_menu.addAction(self.view_spectrum_action)
 
         tools_menu = bar.addMenu(tr("&Tools"))
+        tools_menu.setToolTipsVisible(True)
         fid_diagnostics_menu = tools_menu.addMenu(
             tr("Data quality inspection...")
         )
@@ -342,11 +347,35 @@ class MainWindow(QMainWindow):
             self._run_standalone_spectrum_quality,
         )
 
+        tools_menu.addAction(tr("Remove abnormal FIDs and export NUS…"), self._open_uniform_nus)
+        tools_menu.addSeparator()
+        self.export_ucsf_action = tools_menu.addAction(
+            tr("Export UCSF files…"), self._open_ucsf_export,
+        )
+        self.export_ucsf_action.setToolTip(tr(
+            "Choose one or more data sets by experiment, then copy their UCSF files "
+            "to a folder. Project files are kept."
+        ))
+        self.export_ucsf_action.setEnabled(self.manager.project is not None)
+        tools_menu.aboutToShow.connect(
+            lambda: self.export_ucsf_action.setEnabled(self.manager.project is not None)
+        )
+
         settings_menu = bar.addMenu(tr("&Settings"))
         settings_menu.addAction(tr("Software settings..."), self._open_settings)
         help_menu = bar.addMenu(tr("&Help"))
         help_menu.addAction(tr("Usage tutorial..."), self.show_tutorial)
         help_menu.addAction(tr("about"), self.about)
+
+    def _open_ucsf_export(self) -> None:
+        if self.manager.project is not None:
+            from gui.ucsf_export_dialog import UcsfExportDialog
+
+            UcsfExportDialog(self.manager, self).exec()
+
+    def _open_uniform_nus(self) -> None:
+        from gui.uniform_nus_dialog import UniformNusDialog
+        UniformNusDialog(self).exec()
 
     def _build_central(self) -> None:
         self.project_tree = ProjectTreePanel(self.manager, workspace=self.workspace)
@@ -443,10 +472,12 @@ class MainWindow(QMainWindow):
             if self.spectrum_panel is not None
             else self._spectrum_placeholder
         )
-        self.main_splitter.setStretchFactor(0, 20)
+        self.project_tree.tree.header().sectionResized.connect(self._queue_tree_width)
+        self.project_tree.tree.verticalScrollBar().rangeChanged.connect(self._queue_tree_width)
+        self.main_splitter.setStretchFactor(0, 0)
         self.main_splitter.setStretchFactor(1, 40)
         self.main_splitter.setStretchFactor(2, 50)
-
+        # Use a 1080p content canvas; smaller screens expose it through workspace scrolling.
 
         central = QWidget()
         central_layout = QVBoxLayout(central)
@@ -497,6 +528,25 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(0, self, self._fit_workspace_height)
         return super().eventFilter(obj, event)
 
+    def _queue_tree_width(self, *_args) -> None:
+        if not getattr(self, '_tree_width_pending', False):
+            self._tree_width_pending = True
+            QTimer.singleShot(0, self, self._fit_tree_width)
+
+    def _fit_tree_width(self) -> None:
+        self._tree_width_pending = False
+        tree = self.project_tree.tree
+        margin = self.project_tree.layout().contentsMargins()
+        width = tree.header().length() + 2 * tree.frameWidth() + margin.left() + margin.right()
+        if tree.verticalScrollBar().isVisible():
+            width += tree.verticalScrollBar().width()
+        sizes = self.main_splitter.sizes()
+        if len(sizes) == 3 and abs(sizes[0] - width) > 1:
+            remaining = sum(sizes) - width
+            fraction = sizes[1] / max(1, sizes[1] + sizes[2])
+            self.main_splitter.setSizes(
+                [width, round(remaining*fraction), round(remaining*(1-fraction))])
+
     def _fit_workspace_height(self) -> None:
         self._workspace_fit_pending = False
         height = max(850, self.main_splitter.minimumSizeHint().height())
@@ -519,7 +569,8 @@ class MainWindow(QMainWindow):
         self.feedback_widget.show()
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _build_spectrum_panel(self, apply_context: bool = False):
         """Build the spectrum panel on the right (return directly if it has been built).
@@ -546,7 +597,9 @@ class MainWindow(QMainWindow):
         if placeholder is not None and splitter is not None:
             index = splitter.indexOf(placeholder)
             if index >= 0:
+                sizes = splitter.sizes()
                 splitter.replaceWidget(index, panel)
+                splitter.setSizes(sizes)
             else:  # pragma: no cover
                 splitter.addWidget(panel)
             placeholder.deleteLater()
@@ -616,7 +669,8 @@ class MainWindow(QMainWindow):
         self._prewarm_thread.start()
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def new_project(self) -> None:
         """New project: Inline naming (no pop-up window). Enter on the welcome page when the
@@ -716,7 +770,8 @@ class MainWindow(QMainWindow):
             )
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def add_experiment(self) -> None:
         """Compatible entrance: equivalent to creating a new blank experiment (to import sample
@@ -908,7 +963,8 @@ class MainWindow(QMainWindow):
             ), 'success' if not fail_count else 'info')
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _data_ndim(self, exp_id: str, data_id: str) -> int:
         """Read data dimension from metadata (3D batch is not supported yet); fallback if unable to
@@ -1496,7 +1552,8 @@ class MainWindow(QMainWindow):
         TutorialDialog(self).exec()
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _on_view_step_log(self, step_id: str) -> None:
         """Position the log panel: append the marked line and expand it (append automatically
@@ -1632,10 +1689,53 @@ class MainWindow(QMainWindow):
         from ui_support.typography import apply_interface_font
 
         apply_interface_font(QApplication.instance(), load_settings()['interface_font_size'],
-                             screen or self.screen())
+                             screen=screen or self.screen(),
+                             fullscreen=self.isMaximized() or self.isFullScreen())
+
+    def changeEvent(self, event) -> None:
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.WindowStateChange:
+            QTimer.singleShot(0, self, self._apply_interface_font)
+
+    def _fit_initial_frame(self) -> None:
+        if not getattr(self, '_initial_geometry_managed', False):
+            return
+        from ui_support.window_layout import available_geometry, initial_window_size
+        area = available_geometry(self)
+        target = initial_window_size(area)
+        frame = self.frameGeometry().size() - self.size()
+        width = max(1, target.width()-frame.width())
+        height = max(1, target.height()-frame.height())
+        if self.isMaximized() or self.isFullScreen():
+            self.showNormal()
+        self.resize(width, height)
+        self.move(area.x()+(area.width()-target.width())//2,
+                  area.y()+(area.height()-target.height())//2)
+        self._queue_tree_width()
+        if hasattr(self, '_initial_opacity'):
+            QTimer.singleShot(0, self, self._reveal_initial_window)
+
+    def _reveal_initial_window(self) -> None:
+        self.setWindowOpacity(self._initial_opacity)
 
     def showEvent(self, event) -> None:
         super().showEvent(event)
+        if not getattr(self, '_initial_frame_fitted', False):
+            self._initial_frame_fitted = True
+            self._initial_geometry_managed = (
+                self.size() == self._initial_requested_size
+                and not self.isMaximized() and not self.isFullScreen()
+            )
+            x11 = QApplication.platformName() == 'xcb'
+            if self._initial_geometry_managed and x11:
+                # Reveal the first frame after native decoration and state settle.
+                self._initial_opacity = self.windowOpacity()
+                self.setWindowOpacity(0)
+                # First map below Mutter's auto-maximize threshold, then fit
+                # the normal window before revealing any application content.
+                self.resize(min(960, round(self.width() * .6)),
+                            min(640, round(self.height() * .6)))
+            QTimer.singleShot(100 if x11 else 0, self, self._fit_initial_frame)
         handle = self.windowHandle()
         if handle is not None and not getattr(self, '_screen_hooked', False):
             handle.screenChanged.connect(self._on_screen_changed)
@@ -2398,7 +2498,8 @@ class MainWindow(QMainWindow):
         self._append_log(tr("saved{p0}", p0=title))
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _toggle_left(self, checked: bool) -> None:
         self.project_tree.setVisible(checked)
@@ -2421,7 +2522,8 @@ class MainWindow(QMainWindow):
             widget.setVisible(visible)
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _open_spectrum_from_tree(self, path: str) -> None:
         """Double-click the spectrum file in the tree: the spectrum panel on the right directly
@@ -2651,7 +2753,8 @@ class MainWindow(QMainWindow):
         )
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _current_experiment_id(self) -> str | None:
         exp_id = self.project_tree.current_experiment_id()
@@ -2659,6 +2762,7 @@ class MainWindow(QMainWindow):
 
     def refresh(self) -> None:
         'Refresh the window title, recent items menu and left tree.'
+        self.export_ucsf_action.setEnabled(self.manager.project is not None)
         self._refresh_recent_menu()
         self.project_tree.refresh()
         project = self.manager.project

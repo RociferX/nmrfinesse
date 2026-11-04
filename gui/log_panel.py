@@ -54,7 +54,9 @@ class LogPanel(QWidget):
         title.setObjectName("PanelTitle")
         header.addWidget(title)
         self.scope_label = QLabel("")
-        self.scope_label.setStyleSheet(f"color: {TEXT_MUTED};")
+        self.scope_label.setStyleSheet(
+            f"color: {TEXT_MUTED};"
+        )
         header.addWidget(self.scope_label)
         header.addStretch(1)
         self.clear_button = QPushButton(tr("Clear"))
@@ -63,9 +65,10 @@ class LogPanel(QWidget):
         self.stop_button = QPushButton(tr("Stop task"))
         self.stop_button.setToolTip(
             tr(
-                "Terminate the processing task that is running (including SMILE/nmrPipe child "
-                "processes, leaving no "
-                "residue)",
+                (
+                    'Stop the current processing task and request termination of '
+                    'its NMRPipe/SMILE child processes.'
+                ),
             )
         )
         self.stop_button.clicked.connect(self.stop_requested.emit)
@@ -94,10 +97,12 @@ class LogPanel(QWidget):
             return None
         new_path = None
         try:
+
             from gui.per_data_records import data_log_path, group_log_path
 
             if key.startswith("data:"):
                 _kind, exp_id, data_id = key.split(":", 2)
+
 
                 if _data_is_trashed(manager, exp_id, data_id):
                     return None
@@ -118,8 +123,7 @@ class LogPanel(QWidget):
             path.parent.mkdir(parents=True, exist_ok=True)
             if not path.is_file():
                 path.write_text(
-                    "# NMRFinesse 数据日志(report 文件夹)\n",  # i18n: keep
-                    encoding="utf-8",  # i18n: keep
+                    "# NMRFinesse 数据日志(report 文件夹)\n", encoding="utf-8"  # i18n: keep
                 )
             with path.open("a", encoding="utf-8") as fh:
                 fh.write(line + "\n")
@@ -154,14 +158,15 @@ class LogPanel(QWidget):
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(
-                "# NMRFinesse 数据日志(report 文件夹)\n",  # i18n: keep
-                encoding="utf-8",  # i18n: keep
+                "# NMRFinesse 数据日志(report 文件夹)\n", encoding="utf-8"  # i18n: keep
             )
         except OSError:
             pass
 
     @staticmethod
-    def scope_key(kind: str, exp_id: str, data_id: str = "", group_id: str = "") -> str:
+    def scope_key(
+        kind: str, exp_id: str, data_id: str = "", group_id: str = ""
+    ) -> str:
         """Select the context -> log scope key. - Data group: the same group log
         (group:{exp}:{group}); - Single data: each data is independent (data:{exp}:{data}); -
         Experiment: experimental log (exp:{exp}); - Others (project/workspace/Not selected):
@@ -175,7 +180,9 @@ class LogPanel(QWidget):
             return f"exp:{exp_id}"
         return "global"
 
-    def set_scope(self, kind: str, exp_id: str, data_id: str = "", group_id: str = "") -> None:
+    def set_scope(
+        self, kind: str, exp_id: str, data_id: str = "", group_id: str = ""
+    ) -> None:
         """Switch the current scope: display the existing log of this scope, and subsequent append
         will fall here.
         """

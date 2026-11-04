@@ -77,6 +77,8 @@ def test_tutorial_uses_the_names_the_interface_shows() -> None:
         "Software settings...",
         "Data quality inspection...",
         "spectrum quality assessment...",
+        "Remove abnormal FIDs and export NUS…",
+        "Export UCSF files…",
     )
     for label in (*STEP_LABEL.values(), *fixed):
         source = to_english.get(label, label)
@@ -223,3 +225,31 @@ def test_about_action_opens_about_dialog(qapp, monkeypatch) -> None:
         assert opened == [window]
     finally:
         window.close()
+
+
+
+def test_tutorial_contents_navigates_and_headings_have_distinct_levels(qapp):
+    from qtcompat.QtCore import Qt
+    from qtcompat.QtTest import QTest
+
+    dialog = TutorialDialog(language='en')
+    dialog.resize(1000, 650)
+    dialog.show()
+    QTest.qWait(30)
+    assert dialog.contents.topLevelItemCount() == 9
+    assert dialog.contents.topLevelItem(0).childCount() == 2
+    target = dialog.contents.topLevelItem(8)
+    dialog.contents.scrollToItem(target)
+    QTest.mouseClick(dialog.contents.viewport(), Qt.MouseButton.LeftButton,
+                    pos=dialog.contents.visualItemRect(target).center())
+    QTest.qWait(30)
+    assert dialog.view.verticalScrollBar().value() > 0
+    sizes = {}
+    block = dialog.view.document().begin()
+    while block.isValid():
+        level = block.blockFormat().headingLevel()
+        if level in (1, 2, 3):
+            sizes.setdefault(level, block.begin().fragment().charFormat().fontPointSize())
+        block = block.next()
+    assert sizes[1] > sizes[2] > sizes[3] > 0
+    dialog.close()

@@ -91,3 +91,6 @@ On Linux, startup detects VMware VMMouse or Virtual USB Mouse names in the curre
 Picked and imported peak tables retain separate assignments. Importing a list first backs up the picked table as full-precision CSV, then uses the shared global-shift search to calibrate display coordinates only. Restoring the application's CSV recovers the picked table directly. Aligned export uses the same search; list exports contain assignments and chemical shifts only. Existing processing and API calculations are unchanged.
 
 Project-level UCSF export copies selected data by experiment, retains sources and avoids overwriting destination files. The default destination is discovered from the current user's POKY/Sparky configuration or set manually. All path settings provide Browse. Help includes bilingual usage instructions, copyright, running versions, licensing and project/citation links.
+
+
+The tutorial uses nine main sections, task subsections and an anchored contents tree. The experiment data table follows the horizontal import cards. UCSF export is a Tools action enabled for an open project.

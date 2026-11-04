@@ -30,6 +30,9 @@ STATE_VERSION = 1
 STATE_FILENAME = ".pipeline_state.json"
 
 
+
+
+
 def _sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()
 
@@ -59,7 +62,9 @@ def save_pipeline_state(manager: Any, exp_id: str, data_id: str, state: dict) ->
     """Atomic write fingerprint state."""
     path = pipeline_state_path(manager, exp_id, data_id)
     path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(prefix=path.stem + "-", suffix=".tmp", dir=path.parent)
+    fd, tmp = tempfile.mkstemp(
+        prefix=path.stem + "-", suffix=".tmp", dir=path.parent
+    )
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             json.dump(state, fh, ensure_ascii=False, indent=2)
@@ -135,6 +140,7 @@ def _fid_file(manager: Any, exp_id: str, data_id: str) -> Path | None:
         if not path.is_absolute():
             path = manager.root / path
 
+
         if path.is_file() or path.is_dir():
             return path
     proc = manager.data_dir(exp_id, data_id, "process")
@@ -160,13 +166,17 @@ def _spectrum_file(manager: Any, exp_id: str, data_id: str) -> Path | None:
 def _peaks_file(manager: Any, exp_id: str, data_id: str) -> Path | None:
     """Peak table file:.list takes priority (peak table is list), CSV is the bottom line."""
     for suffix in (".list", ".csv"):
-        path = manager.data_dir(exp_id, data_id, "peaks") / (f"{exp_id}-{data_id}{suffix}")
+        path = manager.data_dir(exp_id, data_id, "peaks") / (
+            f"{exp_id}-{data_id}{suffix}"
+        )
         if path.is_file():
             return path
     return None
 
 
-def input_fingerprint(manager: Any, exp_id: str, data_id: str, step_id: str) -> str | None:
+def input_fingerprint(
+    manager: Any, exp_id: str, data_id: str, step_id: str
+) -> str | None:
     """Enter your fingerprint in the current step (for status verification)."""
     if step_id in ("import", "fid"):
         return raw_fingerprint(manager, exp_id, data_id)
@@ -179,7 +189,9 @@ def input_fingerprint(manager: Any, exp_id: str, data_id: str, step_id: str) -> 
     return None
 
 
-def script_fingerprint(manager: Any, exp_id: str, data_id: str, step_id: str) -> str | None:
+def script_fingerprint(
+    manager: Any, exp_id: str, data_id: str, step_id: str
+) -> str | None:
     """Step script fingerprint (fid.com in process/, old data fallback raw/; spectrum script in
     process/).
     """
@@ -188,7 +200,11 @@ def script_fingerprint(manager: Any, exp_id: str, data_id: str, step_id: str) ->
         if not fid_com.is_file():
             raw = _raw_dir(manager, exp_id, data_id)
             fid_com = raw / "fid.com" if raw is not None else None
-        return file_fingerprint(fid_com) if fid_com is not None and fid_com.is_file() else None
+        return (
+            file_fingerprint(fid_com)
+            if fid_com is not None and fid_com.is_file()
+            else None
+        )
     if step_id == "spectrum":
         proc = manager.data_dir(exp_id, data_id, "process")
         try:
@@ -208,6 +224,60 @@ def script_fingerprint(manager: Any, exp_id: str, data_id: str, step_id: str) ->
             digest.update((file_fingerprint(path) or "").encode())
         return digest.hexdigest()
     return None
+
+
+
+def _file_key(manager: Any, path: Path) -> str:
+    try:
+        return path.relative_to(manager.root).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def input_file_fingerprints(manager: Any, exp_id: str, data_id: str, step_id: str) -> dict:
+    """Per-file evidence for explanations; the existing status hash stays unchanged."""
+    paths = []
+    if step_id in ('import', 'fid'):
+        paths.append(manager.data_metadata_path(exp_id, data_id))
+        raw = _raw_dir(manager, exp_id, data_id)
+        if raw is not None:
+            directories = [raw]
+            entry = manager.data(exp_id, data_id)
+            for value in entry.segments or []:
+                segment = Path(value)
+                if not segment.is_absolute():
+                    segment = manager.root / segment
+                if segment.is_dir() and segment not in directories:
+                    directories.append(segment)
+            for directory in directories:
+                paths.extend(directory / name for name in raw_key_files(directory))
+    elif step_id == 'spectrum':
+        fid = _fid_file(manager, exp_id, data_id)
+        if fid is not None:
+            paths.append(fid)
+    elif step_id in ('smile', 'peaks'):
+        spectrum = _spectrum_file(manager, exp_id, data_id)
+        if spectrum is not None:
+            paths.append(spectrum)
+    return {_file_key(manager, path): file_fingerprint(path) for path in paths}
+
+
+def script_file_fingerprints(manager: Any, exp_id: str, data_id: str, step_id: str) -> dict:
+    """Capture the scripts included in the existing combined script fingerprint."""
+    process = manager.data_dir(exp_id, data_id, 'process')
+    paths = []
+    if step_id == 'fid':
+        path = process / 'fid.com'
+        if not path.is_file():
+            raw = _raw_dir(manager, exp_id, data_id)
+            path = raw / 'fid.com' if raw is not None else None
+        if path is not None and path.is_file():
+            paths.append(path)
+    elif step_id == 'spectrum':
+        paths = sorted(path for path in process.glob('*.com')
+                       if path.name != 'fid.com' and re.search(
+                           r'_nus_rank\d+\.com$', path.name, re.IGNORECASE) is None)
+    return {_file_key(manager, path): file_fingerprint(path) for path in paths}
 
 
 def record_step_success(
@@ -236,6 +306,8 @@ def record_step_success(
         "input_hash": input_fingerprint(manager, exp_id, data_id, step_id),
         "script_hash": script_fingerprint(manager, exp_id, data_id, step_id),
         "output": output,
+        "input_files": input_file_fingerprints(manager, exp_id, data_id, step_id),
+        "script_files": script_file_fingerprints(manager, exp_id, data_id, step_id),
     }
     if params:
         entry["params_hash"] = _sha256_text(json.dumps(params, sort_keys=True))

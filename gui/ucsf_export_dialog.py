@@ -22,6 +22,7 @@ from gui.processing import ProcessingController
 from gui.settings import spectrum_directory_path
 from qtcompat import Signal
 from ui_support.i18n import tr
+from ui_support.title_layout import spectrum_tooltip
 
 
 class UcsfExportDialog(QDialog):
@@ -62,7 +63,9 @@ class UcsfExportDialog(QDialog):
                 item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
                 item.setCheckState(0, Qt.CheckState.Unchecked)
                 item.setData(0, Qt.ItemDataRole.UserRole, entry)
-                item.setToolTip(1, entry["source"])
+                tooltip = spectrum_tooltip(Path(entry["source"]), manager)
+                item.setToolTip(0, tooltip)
+                item.setToolTip(1, tooltip)
             else:
                 item.setDisabled(True)
         for group in groups.values():

@@ -8,6 +8,7 @@ for the current release-artifact status. NMRPipe and SMILE are installed separat
 ## Installation and use
 
 - [Getting started](getting-started.md), [Installation](installation.md) and [GUI guide](gui.md).
+- [GUI Tools](gui.md): read-only FID checks, 2D/3D abnormal-FID-to-NUS export and UCSF transfer.
 - [CLI reference](cli.md) and [Python API](python-api.md).
 - [External dependencies](external-dependencies.md): engine discovery, configuration and execution.
 - [Troubleshooting](troubleshooting.md) and [FAQ](faq.md).

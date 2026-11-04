@@ -9,7 +9,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import numpy as np
 import pytest
-from qtcompat.QtCore import QPointF, Qt
+from qtcompat.QtCore import QEvent, QPointF, Qt
 from qtcompat.QtWidgets import QApplication
 
 from viewer.app import SpectrumWindow
@@ -269,23 +269,40 @@ def test_viewer_1d_strips_toggle_and_update(qapp: QApplication) -> None:
     viewer._mouse_left_pressed = True
     scene_pt = viewer.plot.getViewBox().mapViewToScene(QPointF(120.0, 40))
     viewer._on_mouse_moved(scene_pt)
-
+    assert viewer._crosshair_v.pos().x() == pytest.approx(120.0)
+    assert viewer._crosshair_h.pos().y() == pytest.approx(40.0)
+    # Released hover must not move the crosshair or either chosen strip.
     viewer._mouse_left_pressed = False
     scene_pt2 = viewer.plot.getViewBox().mapViewToScene(QPointF(90.0, 30))
     viewer._on_mouse_moved(scene_pt2)
     _xt, yt = viewer.strip_top_curve.getData()
     np.testing.assert_allclose(np.asarray(yt), spectrum.data[40, :])
-    assert viewer._crosshair_v.pos().x() == pytest.approx(120.0)
-    _xt, yt = viewer.strip_top_curve.getData()
-    np.testing.assert_allclose(np.asarray(yt), spectrum.data[40, :])
     xr, _yr = viewer.strip_right_curve.getData()
     np.testing.assert_allclose(np.asarray(xr), spectrum.data[:, 120])
     assert viewer._crosshair_v.pos().x() == pytest.approx(120.0)
-    assert viewer._crosshair_h.pos().y() == pytest.approx(40)
+    assert viewer._crosshair_h.pos().y() == pytest.approx(40.0)
+    viewer.eventFilter(viewer._plot_viewport, QEvent(QEvent.Type.Leave))
+    assert viewer._crosshair_v.isVisible() and viewer._crosshair_h.isVisible()
+    # Another left drag selects a new pair of cuts.
+    viewer._mouse_left_pressed = True
+    viewer._on_mouse_moved(scene_pt2)
+    viewer._mouse_left_pressed = False
+    _xt, yt = viewer.strip_top_curve.getData()
+    np.testing.assert_allclose(np.asarray(yt), spectrum.data[30, :])
+    xr, _yr = viewer.strip_right_curve.getData()
+    np.testing.assert_allclose(np.asarray(xr), spectrum.data[:, 90])
+    assert viewer._crosshair_v.pos().x() == pytest.approx(90.0)
+    assert viewer._crosshair_h.pos().y() == pytest.approx(30.0)
 
     viewer.set_1d_mode(False)
     assert not viewer._strips_active
     assert viewer.strip_top.isHidden()
+    # Ordinary 2D hover resumes immediately after leaving strip mode.
+    viewer._on_mouse_moved(scene_pt)
+    assert viewer._crosshair_v.pos().x() == pytest.approx(120.0)
+    assert viewer._crosshair_h.pos().y() == pytest.approx(40.0)
+    viewer.eventFilter(viewer._plot_viewport, QEvent(QEvent.Type.Leave))
+    assert not viewer._crosshair_v.isVisible() and not viewer._crosshair_h.isVisible()
     viewer.close()
 
 
@@ -571,7 +588,7 @@ def test_1d_zoom_pan_aspect_and_axis_reset(qapp: QApplication) -> None:
     assert left.x() < right.x()
     assert spec2.x_axis.ppm_at(0) > spec2.x_axis.ppm_at(spec2.x_axis.size - 1)
     assert not vb.state['xInverted']
-    assert vb.state['aspectLocked'] == 1.5
+    assert not vb.state['aspectLocked']
     viewer.close()
 
 
@@ -619,6 +636,7 @@ def test_1d_zero_centred_and_wheel_vertical_rate(qapp, sign):
     viewer.show()
     spectrum = Spectrum1D(np.linspace(.1, 1, 1024) * sign * 1e9, _axis('H', 1024))
     viewer.add_spectrum(spectrum)
+    viewer.aspect_slider.setValue(0)  # Independent zoom rates apply in free-aspect mode.
     qapp.processEvents()
     vb = viewer.plot.getViewBox()
     before = np.diff(vb.viewRange(), axis=1).ravel()
@@ -649,4 +667,82 @@ def test_1d_zero_centred_and_wheel_vertical_rate(qapp, sign):
     vb.wheelEvent(Wheel(120))
     factor = before / np.diff(vb.viewRange(), axis=1).ravel()
     assert factor[1] == pytest.approx(factor[0])
+    viewer.close()
+
+
+@pytest.mark.parametrize('sign', [1, -1])
+@pytest.mark.parametrize('size', [(1000, 800), (460, 900)])
+def test_locked_1d_can_zoom_out_past_full_ppm_without_changing_initial_view(qapp, sign, size):
+    from qtcompat.QtTest import QTest
+    viewer = SpectrumViewer()
+    viewer.resize(*size)
+    viewer.show()
+    QTest.qWait(40)
+    water = sign * 1e6 * np.exp(-np.linspace(-5, 5, 1024)**2)
+    viewer.add_spectrum(Spectrum1D(water, _axis('H', 1024)))
+    QTest.qWait(60)
+    vb = viewer.plot.getViewBox()
+    full = np.asarray(vb._min_rect)
+    initial = np.asarray(vb.viewRange())
+    initial_spans = np.diff(initial, axis=1).ravel()
+    full_spans = np.diff(full, axis=1).ravel()
+    assert viewer.aspect_slider.value() == 2
+    assert initial_spans[0] < 1.5 * full_spans[0]
+    assert initial_spans[1] < .5 * full_spans[1]  # Water need not fit initially.
+    center = QPointF(float(full[0].mean()), 0)
+    vb.scaleBy((2, 2), center=center)
+    after = np.asarray(vb.viewRange())
+    spans = np.diff(after, axis=1).ravel()
+    assert spans[0] > initial_spans[0] * 1.5
+    assert spans[1] / initial_spans[1] == pytest.approx(spans[0] / initial_spans[0])
+    assert after[0, 0] <= full[0, 0] and after[0, 1] >= full[0, 1]
+    for _ in range(12):
+        vb.scaleBy((2, 2), center=center)
+    complete = np.asarray(vb.viewRange())
+    assert np.all(complete[:, 0] <= full[:, 0] + 1e-6)
+    assert np.all(complete[:, 1] >= full[:, 1] - 1e-6)
+    viewer.reset_view()
+    reset = np.asarray(vb.viewRange())
+    assert reset[0] == pytest.approx(full[0])
+    assert np.diff(reset[1])[0] < .5 * full_spans[1]
+    viewer.close()
+    viewer.deleteLater()
+    qapp.processEvents()
+
+
+def test_strip_phases_are_independent_and_preserved_when_selecting_cuts(qapp):
+    spectrum = _synthetic_spectrum()
+    original = spectrum.data.copy()
+    viewer = SpectrumViewer()
+    viewer.add_spectrum(spectrum)
+    viewer.set_1d_mode(True)
+    viewer._update_strips(40, 120)
+    assert not viewer.right_phase_panel.isHidden()
+    top_before = viewer.strip_top_curve.getData()[1].copy()
+    right_before = viewer.strip_right_curve.getData()[0].copy()
+    viewer.phase_panel.set_values(90, 15)
+    np.testing.assert_allclose(viewer.strip_right_curve.getData()[0], right_before)
+    top_phased = viewer.strip_top_curve.getData()[1].copy()
+    assert not np.allclose(top_phased, top_before)
+    viewer.right_phase_panel.set_values(-60, 20)
+    np.testing.assert_allclose(viewer.strip_top_curve.getData()[1], top_phased)
+    np.testing.assert_allclose(viewer.strip_right_curve.getData()[0],
+        viewer._display_phase(spectrum.data[:, 120], -60, 20))
+    viewer._update_strips(35, 110)
+    np.testing.assert_allclose(viewer.strip_top_curve.getData()[1],
+        viewer._display_phase(spectrum.data[35], 90, 15))
+    np.testing.assert_allclose(viewer.strip_right_curve.getData()[0],
+        viewer._display_phase(spectrum.data[:, 110], -60, 20))
+    viewer.phase_panel.reset()
+    assert viewer.right_phase_panel.values() == (-60, 20)
+    np.testing.assert_allclose(viewer.strip_top_curve.getData()[1], spectrum.data[35])
+    viewer.set_1d_mode(False)
+    assert viewer.right_phase_panel.isHidden()
+    viewer.set_1d_mode(True)
+    assert viewer.phase_panel.values() == (0, 0)
+    assert viewer.right_phase_panel.values() == (-60, 20)
+    np.testing.assert_array_equal(spectrum.data, original)
+    viewer.add_spectrum(Spectrum1D(spectrum.data[35], spectrum.x_axis))
+    assert viewer.right_phase_panel.isHidden()
+    assert not viewer.phase_panel.isHidden()
     viewer.close()

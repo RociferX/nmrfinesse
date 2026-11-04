@@ -160,7 +160,8 @@ class FakeProcessingController:
 
 
 # ----------------------------------------------------------------------
-
+# ----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
 def test_project_tree_structure(
     tmp_path: Path, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
@@ -233,7 +234,8 @@ def test_project_tree_column_widths_readable(qapp: QApplication) -> None:
 
 
 # ----------------------------------------------------------------------
-
+# ----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
 def test_pipeline_spectrum_row_ext_range_button_before_run(
     tmp_path: Path, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
@@ -404,7 +406,7 @@ def test_pipeline_ext_button_text_reflects_override(
     )
 
     panel.set_selection("data", "exp_001", "d_002")
-    assert "未设置时用默认" in panel._rows["spectrum"].ext_range_button.toolTip()
+    assert "直接维核素" in panel._rows["spectrum"].ext_range_button.toolTip()
     panel.close()
 
 
@@ -623,7 +625,8 @@ def test_pipeline_step_log_emits_separator_before_start(
 
 
 # ----------------------------------------------------------------------
-
+# ----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
 def test_spectrum_panel_lists_and_loads_spectrum(tmp_path: Path, qapp: QApplication) -> None:
     manager = _manager_with_experiment(tmp_path)
@@ -650,7 +653,8 @@ def test_spectrum_panel_open_corrupt_returns_false(tmp_path: Path, qapp: QApplic
 
 
 # ----------------------------------------------------------------------
-
+# ----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
 def test_main_window_three_column_layout(
     tmp_path: Path, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
@@ -668,7 +672,7 @@ def test_main_window_three_column_layout(
     assert window.log_panel.minimumWidth() <= 400
     assert window.log_panel.maximumWidth() >= 10000
     assert window.project_tree.minimumWidth() <= 1
-
+    # Smaller screens scroll across the 1080p content canvas.
     from qtcompat.QtGui import QGuiApplication
 
     screen = window.screen() or QGuiApplication.primaryScreen()
@@ -1930,7 +1934,7 @@ def test_spectrum_panel_vertical_layout(qapp: QApplication) -> None:
     assert found, "SpectrumPanel 内应有 QSplitter"
     splitter = panel._panel_splitter
     assert splitter.orientation() == Qt.Orientation.Vertical
-    assert splitter.count() == 3
+    assert splitter.count() == 3  # File area / viewer and display controls / peak tools and table.
     assert splitter.widget(0) is panel.files_section
     assert splitter.widget(1) is panel.viewer
     assert splitter.widget(2) is panel.peaks_section
@@ -2302,7 +2306,7 @@ def test_rename_project_to_sample_wording(
 
     assert window.context_bar.text() == "未打开项目"
     assert window.center_panel.welcome_page.new_button.text() == "新建项目..."
-
+    # Project creation remains on the welcome page; the top experiment menu is removed.
     menus = [action.text() for action in window.menuBar().actions()]
     assert "实验(&E)" not in menus
     window.close()
@@ -2855,7 +2859,7 @@ def test_spectrum_display_settings_isolated_per_data(
     assert panel.viewer.level_slider.value() == 31
     assert panel.viewer.count_slider.value() == 8
     assert panel.viewer.aspect_slider.value() == 0
-    assert panel.peak_size_spin.value() == 1.5
+    assert panel.peak_size_spin.value() == 0.5
     assert not panel.viewer.hide_positive.isChecked()
     assert not panel.viewer.hide_negative.isChecked()
 
@@ -3025,3 +3029,270 @@ def test_embedded_controls_do_not_show_as_top_level_windows(qapp, tmp_path, monk
             window.close()
             window.deleteLater()
         qapp.processEvents()
+
+
+def _crosshair_spectrum(shape=(64, 128), first=(135., 10.), step=(-.3, -.02)):
+    from viewer.spectrum import Spectrum, SpectrumAxis
+
+    axes = [SpectrumAxis(label, n, -delta * n * 600., 600., 0.,
+                         (start + delta * (n - 1)) * 600.)
+            for label, n, start, delta in zip(('15N', '1H'), shape, first, step)]
+    data = np.zeros(shape)
+    data[shape[0] // 2, shape[1] // 2] = 100.
+    return Spectrum(data, axes)
+
+
+def _crosshair_point(viewer, x_ppm, y_ppm):
+    return tuple((ppm - viewer.display_shift_for_axis(axis) - axis.ppm[0])
+                 / (axis.ppm[1] - axis.ppm[0])
+                 for axis, ppm in zip((viewer._primary.x_axis, viewer._primary.y_axis),
+                                      (x_ppm, y_ppm)))
+
+
+def test_comparison_crosshairs_use_displayed_ppm_and_do_not_reemit(tmp_path, qapp):
+    from qtcompat.QtCore import QEvent
+
+    panel = SpectrumPanel(_manager_with_experiment(tmp_path))
+    current, reference = panel.viewer, panel._ensure_compare_viewer()
+    current.add_spectrum(_crosshair_spectrum(), 'current')
+    plane = _crosshair_spectrum((96, 256), (140., 11.), (-.25, -.015))
+    plane.dim_indices = (1, 2)  # A 3D HN plane uses original dimensions for shifts.
+    reference.add_spectrum(plane, 'reference')
+    current.set_display_ppm_shifts({0: .4, 1: .1})
+    reference.set_display_ppm_shifts({1: -.2, 2: -.1})
+    panel._comparison_active = True
+    received = []
+    reference.crosshair_moved.connect(lambda *ppm: received.append(ppm))
+    ranges = reference.plot.getViewBox().viewRange()
+    point = _crosshair_point(current, 9.2, 128.4)
+    current._move_crosshair(*point)
+    expected = _crosshair_point(reference, 9.2, 128.4)
+    assert reference._crosshair_v.value() == pytest.approx(expected[0])
+    assert reference._crosshair_h.value() == pytest.approx(expected[1])
+    assert not received  # Receiving must not recursively publish another update.
+    assert '9.200' in reference.crosshair_label.text()
+    assert '128.400' in reference.crosshair_label.text()
+    assert reference.plot.getViewBox().viewRange() == ranges
+
+    reference._move_crosshair(*_crosshair_point(reference, 8.45, 126.25))
+    expected = _crosshair_point(current, 8.45, 126.25)
+    assert current._crosshair_v.value() == pytest.approx(expected[0])
+    assert current._crosshair_h.value() == pytest.approx(expected[1])
+    current.eventFilter(current._plot_viewport, QEvent(QEvent.Type.Leave))
+    assert not current._crosshair_v.isVisible()
+    assert not reference._crosshair_v.isVisible()
+
+    # Out-of-range positions remain outside: never snap to an edge or pan.
+    current._move_crosshair(*_crosshair_point(current, 6.5, 128.4))
+    assert reference._crosshair_v.value() > reference._primary.x_axis.size
+    assert reference.plot.getViewBox().viewRange() == ranges
+    before = reference._crosshair_v.value()
+    panel._comparison_active = False
+    current._move_crosshair(20., 20.)
+    assert reference._crosshair_v.value() == before
+    panel.close()
+
+
+def test_comparison_crosshairs_preserve_strip_selection_and_reject_wrong_plane(tmp_path, qapp):
+    panel = SpectrumPanel(_manager_with_experiment(tmp_path))
+    current, reference = panel.viewer, panel._ensure_compare_viewer()
+    current.add_spectrum(_crosshair_spectrum(), 'current')
+    reference.add_spectrum(_crosshair_spectrum(), 'reference')
+    panel._comparison_active = True
+    reference.set_1d_mode(True)
+    before = reference._strip_pos
+    current._move_crosshair(15.25, 20.25)
+    assert reference._strip_pos == before
+    current._mouse_left_pressed = True
+    current._move_crosshair(15.25, 20.25)
+    assert reference._strip_pos == (20, 15)
+    assert reference._crosshair_v.value() == pytest.approx(15.25)
+    panel._hide_comparison_crosshairs()
+    assert reference._crosshair_v.isVisible()
+    reference.set_1d_mode(False)
+    # Changing to an incompatible nucleus must not show stale linked lines.
+    from dataclasses import replace
+
+    reference._primary.axes[0] = replace(reference._primary.axes[0], label='13C')
+    current._move_crosshair(15., 20.)
+    assert not reference._crosshair_v.isVisible()
+    panel.close()
+
+
+def test_third_spectrum_submenu_triggers_add_and_links_all_three(tmp_path, qapp):
+    from ui_support.i18n import tr
+
+    manager = _manager_with_experiment(tmp_path)
+    first = manager.data_dir('exp_001', 'd_001', 'spectra') / 'first.ft2'
+    second = manager.data_dir('exp_002', 'd_001', 'spectra') / 'second.ft2'
+    third = second.with_name('third.ft2')
+    for path in (first, second, third):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        _write_ft2(path)
+    panel = SpectrumPanel(manager)
+    panel.set_context('exp_001', 'd_001')
+    assert panel.load_current_spectrum()
+    panel.expand_button.setChecked(True)
+    assert panel._load_compare_spectrum(second)
+    panel._activate_comparison(second)
+    panel._refresh_compare_menu()
+    menus = [action.menu() for action in panel.compare_menu.actions() if action.menu()]
+    assert len(menus) == 1
+    menu = menus[0]
+    assert menu.title() == tr('Add third spectrum')
+    options = menu.actions()
+    assert len(options) == 2
+    assert all(action.text() in [candidate[0] for candidate in panel._comparison_candidates()]
+               for action in options)
+    assert not next(action for action in options if action.data()[2] == str(second)).isEnabled()
+    next(action for action in options if action.data()[2] == str(third)).trigger()
+    assert panel._extra_compare_spectrum == third
+    assert panel._extra_compare_viewer is not None
+    panel.viewer._move_crosshair(35.25, 22.5)
+    for viewer in (panel._compare_viewer, panel._extra_compare_viewer):
+        assert viewer._crosshair_v.value() == pytest.approx(35.25)
+        assert viewer._crosshair_h.value() == pytest.approx(22.5)
+    panel._extra_compare_viewer._move_crosshair(28.25, 31.5)
+    assert panel.viewer._crosshair_h.value() == pytest.approx(31.5)
+    panel._refresh_compare_menu()
+    assert not any(action.menu() for action in panel.compare_menu.actions())
+    panel._deactivate_comparison()
+    assert not panel.viewer._crosshair_v.isVisible()
+    panel.expand_button.setChecked(False)
+    panel.close()
+
+
+def test_spectrum_title_tooltips_cover_files_layers_comparison_and_export(tmp_path, qapp):
+    from gui.overlay_svg_export import OverlaySvgExportDialog
+    from ui_support.title_layout import tooltip_title
+
+    manager = _manager_with_experiment(tmp_path)
+    paths = []
+    titles = ['Current sample\nPBS pH 6.5, 150 mM NaCl', 'Reference sample\nHSQC 298 K']
+    for index, title in enumerate(titles, 1):
+        exp_id = f'exp_{index:03d}'
+        raw = manager.data_dir(exp_id, 'd_001', 'raw')
+        (raw / 'pdata/1').mkdir(parents=True, exist_ok=True)
+        (raw / 'pdata/1/title').write_text(title, encoding='utf-8')
+        path = manager.data_dir(exp_id, 'd_001', 'spectra') / 'd_001.ft2'
+        path.parent.mkdir(parents=True, exist_ok=True)
+        _write_ft2(path)
+        paths.append(path)
+    third = paths[1].with_name('third.ft2')
+    _write_ft2(third)
+    display_titles = [tooltip_title(title) for title in titles]
+    panel = SpectrumPanel(manager)
+    panel.set_context('exp_001', 'd_001')
+    assert panel.load_current_spectrum()
+    assert display_titles[0] in panel.file_list.item(0).toolTip()
+    assert display_titles[0] in panel.viewer.layer_list.item(0).toolTip()
+    assert display_titles[1] not in panel.viewer.layer_list.item(0).toolTip()
+    panel.expand_button.setChecked(True)
+    assert panel._load_compare_spectrum(paths[1])
+    panel._activate_comparison(paths[1])
+    panel._refresh_compare_menu()
+    for action in panel.compare_menu.actions():
+        if isinstance(action.data(), (tuple, list)):
+            assert display_titles[1] in action.toolTip()
+        if action.menu():
+            assert all(display_titles[1] in item.toolTip() for item in action.menu().actions())
+    assert display_titles[0] in panel._current_column._viewer_heading.toolTip()
+    assert display_titles[1] in panel._compare_column._viewer_heading.toolTip()
+    assert display_titles[0] in panel.overlay.color_buttons[0].toolTip()
+    assert display_titles[1] in panel.overlay.color_buttons[1].toolTip()
+    panel._add_third_comparison(third)
+    assert display_titles[1] in panel._extra_compare_column._viewer_heading.toolTip()
+    panel.overlay.toggle.setChecked(True)
+    assert display_titles[1] in panel.overlay.moving.toolTip()
+    legend = panel.overlay.viewer.plot.plotItem.legend
+    for i, (_sample, label) in enumerate(legend.items):
+        assert display_titles[0 if i == 0 else 1] in label.toolTip()
+    for i in range(panel.overlay.viewer.layer_list.count()):
+        tooltip = panel.overlay.viewer.layer_list.item(i).toolTip()
+        assert display_titles[0 if i == 0 else 1] in tooltip
+    dialog = OverlaySvgExportDialog(panel.overlay.viewer,
+        spectra=list(zip(panel.overlay.names, panel.overlay.colors)),
+        tooltips=panel.overlay.tooltips)
+    assert all(title in dialog.spectrum_description.toolTip() for title in display_titles)
+    dialog.close()
+    # Metadata updates must not reset an already adjusted overlay.
+    panel.overlay.spectrum_controls[1].start.setValue(12.5)
+    panel.overlay.shifts[1][1] = .02
+    raw = manager.data_dir('exp_002', 'd_001', 'raw')
+    (raw / 'pdata/1/title').write_text('Updated reference title', encoding='utf-8')
+    panel._refresh_overlay_spectra()
+    assert 'Updated reference title' in panel.overlay.color_buttons[1].toolTip()
+    assert panel.overlay.spectrum_controls[1].start.value() == pytest.approx(12.5)
+    assert panel.overlay.shifts[1][1] == pytest.approx(.02)
+    panel._deactivate_comparison()
+    panel.expand_button.setChecked(False)
+    panel.close()
+
+
+def test_overlay_toggle_keeps_current_contours_in_both_directions(tmp_path, qapp):
+    manager = _manager_with_experiment(tmp_path)
+    paths = [manager.data_dir(exp, 'd_001', 'spectra') / 'd_001.ft2'
+             for exp in ('exp_001', 'exp_002')]
+    for path in paths:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        _write_ft2(path)
+    panel = SpectrumPanel(manager)
+    panel.set_context('exp_001', 'd_001')
+    assert panel.load_current_spectrum()
+    panel.expand_button.setChecked(True)
+    assert panel._load_compare_spectrum(paths[1])
+    panel._activate_comparison(paths[1])
+    viewers = panel._comparison_viewers()
+    settings = [(7.25, 12, True, False), (13.5, 17, False, True)]
+    for viewer, (start, levels, positive, negative) in zip(viewers, settings):
+        viewer.set_contour_start(start)
+        viewer.count_label.setValue(levels)
+        viewer.set_contour_signs(hide_positive=positive, hide_negative=negative)
+    panel.overlay.toggle.setChecked(True)
+    for controls, expected in zip(panel.overlay.spectrum_controls, settings):
+        assert (controls.start.value(), controls.levels.value(),
+                controls.hide_positive.isChecked(), controls.hide_negative.isChecked()) == expected
+    controls = panel.overlay.spectrum_controls[1]
+    controls.start.setValue(22.75)
+    controls.levels.setValue(21)
+    controls.visible.setChecked(False)
+    controls.hide_negative.setChecked(False)
+    panel.overlay.toggle.setChecked(False)
+    reference = viewers[1]
+    assert reference.level_label.value() == pytest.approx(22.75)
+    assert reference.count_label.value() == 21
+    assert not reference.hide_negative.isChecked()
+    assert reference.layer_list.item(0).checkState().value == 0
+    panel.overlay.toggle.setChecked(True)
+    assert controls.start.value() == pytest.approx(22.75)
+    assert controls.levels.value() == 21
+    assert not controls.visible.isChecked()
+    assert panel.overlay.spectrum_controls[0].start.value() == pytest.approx(7.25)
+    panel._deactivate_comparison()
+    panel.expand_button.setChecked(False)
+    panel.close()
+
+
+def test_spectrum_tooltip_external_and_standalone_keep_multiline_title(tmp_path, qapp):
+    from ui_support.spectrum_metadata import spectrum_tooltip
+    from ui_support.title_layout import tooltip_title
+    from viewer.app import SpectrumWindow
+
+    raw = tmp_path / 'raw/pdata/2'
+    raw.mkdir(parents=True)
+    title = 'External sample\nTemperature 298 K\nBuffer information'
+    (raw / 'title').write_text(title, encoding='utf-8')
+    path = tmp_path / 'spectra/d_001.ft2'
+    path.parent.mkdir()
+    _write_ft2(path)
+    tip = spectrum_tooltip(path)
+    assert title in tip and str(path) in tip
+    display_title = tooltip_title(title)
+    window = SpectrumWindow()
+    assert window.load_spectrum(path)
+    assert display_title in window.viewer.layer_list.item(0).toolTip()
+    assert display_title in window.recent_menu.actions()[0].toolTip()
+    assert display_title in window.statusBar().toolTip()
+    window.clear_spectra()
+    assert not window.statusBar().toolTip()
+    window.close()

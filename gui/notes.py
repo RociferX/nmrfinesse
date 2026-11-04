@@ -13,6 +13,7 @@ import re
 from pathlib import Path
 
 from ui_support.i18n import tr
+from ui_support.spectrum_metadata import bruker_title as bruker_title
 from viewer.axis_labels import infer_nucleus
 
 SAMPLE_FIELDS: tuple[tuple[str, str], ...] = (
@@ -435,31 +436,3 @@ def auto_fill_notes_from_metadata(
         if value:
             filled[f"data.{key}"] = value
     return filled
-
-
-def bruker_title(data, raw_dir: Path | None = None) -> str:
-    """Read the original or imported Bruker title without altering the data."""
-    source = str(getattr(data, 'source', '') or '')
-    roots = [Path(source)] if source else []
-    if raw_dir is not None:
-        roots.append(raw_dir)
-    for root in roots:
-        try:
-            candidates = [root / 'title']
-            pdata = root / 'pdata'
-            if pdata.is_dir():
-                candidates.extend(p / 'title' for p in sorted(
-                    (p for p in pdata.iterdir() if p.is_dir() and p.name.isdigit()),
-                    key=lambda p: int(p.name)))
-            for path in candidates:
-                if path.is_file():
-                    raw = path.read_bytes()
-                    try:
-                        text = raw.decode('utf-8-sig')
-                    except UnicodeDecodeError:
-                        text = raw.decode('latin-1')
-                    if text.strip():
-                        return text.replace('\r\n', '\n').replace('\r', '\n').strip()
-        except OSError:
-            continue
-    return ''

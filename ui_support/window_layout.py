@@ -70,7 +70,7 @@ def available_geometry(widget=None):
 
 def initial_window_size(area):
     """Use the available logical desktop rather than a fixed pixel canvas."""
-    return QSize(round(area.width() * .96), round(area.height() * .94))
+    return QSize(min(1920, area.width()), min(1080, area.height()))
 
 
 @lru_cache(maxsize=1)

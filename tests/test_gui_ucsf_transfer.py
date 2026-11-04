@@ -116,7 +116,7 @@ def test_project_page_exports_and_has_no_completion_metric_or_duplicate_menus(
     manager = _project(tmp_path)
     page = ProjectDashboard()
     page.set_context(manager)
-    assert page.export_ucsf_button.toolTip()
+    assert not hasattr(page, "export_ucsf_button")
     assert not hasattr(page, 'progress_label')
     window = MainWindow(manager=manager)
     menus = window.menuBar().actions()
@@ -124,5 +124,70 @@ def test_project_page_exports_and_has_no_completion_metric_or_duplicate_menus(
     assert tr('New project...') not in [action.text() for action in file_menu.actions()]
     assert tr('&experiment') not in [action.text() for action in menus]
     assert window.center_panel.welcome_page.new_button is not None
+    tools = next(action.menu() for action in menus if action.text() == tr('&Tools'))
+    action = next(action for action in tools.actions() if action.text() == tr('Export UCSF files…'))
+    assert action.isEnabled() and action.toolTip()
+    seen = []
+
+    class ExportDialog:
+        def __init__(self, selected_manager, parent):
+            seen.append((selected_manager, parent))
+
+        def exec(self):
+            seen.append('opened')
+
+    monkeypatch.setattr('gui.ucsf_export_dialog.UcsfExportDialog', ExportDialog)
+    action.trigger()
+    assert seen == [(manager, window), 'opened']
+    window.manager = ProjectManager()
+    tools.aboutToShow.emit()
+    assert not action.isEnabled()
+    window.manager = manager
     window.close()
     page.close()
+
+
+
+def test_ucsf_export_updates_after_open_switch_and_close_without_opening_tools(
+    tmp_path, qapp, monkeypatch,
+):
+    from core.project import JsonRecentProjectsStore
+    from core.workspace import WorkspaceManager
+    from gui.main_window import MainWindow
+
+    manager = _project(tmp_path)
+    manager.save()
+    monkeypatch.setattr('gui.main_window.WorkspaceManager', lambda: WorkspaceManager(tmp_path))
+    window = MainWindow(recent=JsonRecentProjectsStore(tmp_path / 'recent.json'))
+    action = window.export_ucsf_action
+    assert not action.isEnabled()
+    opened = []
+
+    class ExportDialog:
+        def __init__(self, selected_manager, parent):
+            assert parent is window
+            opened.append(selected_manager.root)
+
+        def exec(self):
+            pass
+
+    monkeypatch.setattr('gui.ucsf_export_dialog.UcsfExportDialog', ExportDialog)
+    # The application starts with no project, then opens one through its real handler.
+    # The action must work before any Tools aboutToShow signal is emitted.
+    window._open_root(manager.root)
+    assert len(window.manager.project.experiments) == 2
+    assert action.isEnabled()
+    action.trigger()
+    assert opened == [manager.root]
+    second = ProjectManager.create_project(tmp_path / 'second', 'second')
+    window._open_root(second.root)
+    assert action.isEnabled()
+    action.trigger()
+    assert opened == [manager.root, second.root]
+    window.manager = ProjectManager()
+    window._rebind_shared_manager()
+    window.refresh()
+    assert not action.isEnabled()
+    action.trigger()
+    assert opened == [manager.root, second.root]
+    window.close()

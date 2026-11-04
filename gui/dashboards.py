@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from qtcompat.QtCore import Qt
+from qtcompat.QtCore import QEvent, Qt, QTimer
 from qtcompat.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -80,13 +80,6 @@ class ProjectDashboard(QWidget):
         self.stats_label = QLabel("")
         self.stats_label.setObjectName("MutedText")
         layout.addWidget(self.stats_label)
-        self.export_ucsf_button = QPushButton(tr("Export UCSF files…"))
-        self.export_ucsf_button.setToolTip(tr(
-            "Choose one or more data sets by experiment, then copy their UCSF files "
-            "to a folder. Project files are kept."
-        ))
-        self.export_ucsf_button.clicked.connect(self._on_export_ucsf)
-        layout.addWidget(self.export_ucsf_button)
 
         recent_title = QLabel(tr("recently run"))
         recent_title.setObjectName("SectionTitle")
@@ -147,15 +140,44 @@ class ProjectDashboard(QWidget):
                 row, 3, QTableWidgetItem((run.finished_at or run.started_at)[:19])
             )
 
-    def _on_export_ucsf(self) -> None:
-        if self.manager is not None and self.manager.project is not None:
-            from gui.ucsf_export_dialog import UcsfExportDialog
-
-            dialog = UcsfExportDialog(self.manager, self)
-            dialog.exec()
-
     def _on_create(self) -> None:
         self.create_experiment_requested.emit(self.title_edit.text().strip())
+
+
+class _ImportHint(QLabel):
+    """Keep every wrapped instruction line visible at the actual column width."""
+
+    def __init__(self, text, parent=None):
+        super().__init__(text, parent)
+        self.setWordWrap(True)
+        self.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self._queue_height()
+
+    def _queue_height(self):
+        if not getattr(self, '_height_pending', False):
+            self._height_pending = True
+            QTimer.singleShot(0, self, self._fit_height)
+
+    def _fit_height(self):
+        self._height_pending = False
+        # QLabel includes its explicit minimum height in heightForWidth().
+        # Clear the previous constraint before measuring a wider column.
+        previous = self.height()
+        self.setMinimumHeight(0)
+        self.setMaximumHeight(16777215)
+        needed = max(self.fontMetrics().height(), self.heightForWidth(max(1, self.width())))
+        self.setFixedHeight(needed)
+        if previous != needed:
+            self.updateGeometry()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._queue_height()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.Type.FontChange, QEvent.Type.StyleChange):
+            self._queue_height()
 
 
 class ExperimentImportPanel(QWidget):
@@ -174,15 +196,25 @@ class ExperimentImportPanel(QWidget):
         self.copy_check = QCheckBox(tr("Link raw data to project (read only, copy if necessary)"))
         self.copy_check.setObjectName("MutedText")
         self.copy_check.setChecked(True)
+        self.copy_check.setToolTip(tr(
+                'Checked: link raw data into the project, copying when '
+                'needed. Unchecked: reference the source in place. Keep '
+                'source paths accessible when links or references are used; '
+                'generated processing files are separate.'
+            ))
         layout.addWidget(self.copy_check)
         layout.addSpacing(4)
 
+        import_columns = QHBoxLayout()
+        import_columns.setSpacing(8)
+        layout.addLayout(import_columns)
         self.single_group = QGroupBox(tr("single import"))
         self.single_group.setObjectName("SectionTitle")
         single_layout = QVBoxLayout(self.single_group)
+        single_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        single_layout.setSpacing(6)
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText(tr("sample data name (optional)"))
-        single_layout.addWidget(self.name_edit)
         form = QHBoxLayout()
         self.source_edit = QLineEdit()
         self.source_edit.setPlaceholderText(tr("Bruker dataset directory (including acqus)"))
@@ -199,15 +231,19 @@ class ExperimentImportPanel(QWidget):
         self.import_button.setEnabled(False)
         self.import_button.clicked.connect(self._on_import)
         single_layout.addWidget(self.import_button)
+        single_layout.addWidget(self.name_edit)
         self.source_edit.textChanged.connect(
             lambda _t: self.import_button.setEnabled(bool(self.source_edit.text().strip()))
         )
-        layout.addWidget(self.single_group)
+        import_columns.addWidget(self.single_group, 1)
 
-        self.segmented_group = QGroupBox(tr("segmented data or repeated experiment overlay import"))
+        self.segmented_group = QGroupBox(tr("Segments / repeats"))
+        self.segmented_group.setToolTip(tr("segmented data or repeated experiment overlay import"))
         self.segmented_group.setObjectName("SectionTitle")
         segmented_layout = QVBoxLayout(self.segmented_group)
-        segmented_hint = QLabel(
+        segmented_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        segmented_layout.setSpacing(6)
+        segmented_hint = _ImportHint(
             tr(
                 "For one acquisition split into several segments (complementary NUS points "
                 "completing the grid) or averaged repeat experiments (same parameters / sampling "
@@ -219,7 +255,6 @@ class ExperimentImportPanel(QWidget):
         )
         segmented_hint.setWordWrap(True)
         segmented_hint.setObjectName("MutedText")
-        segmented_layout.addWidget(segmented_hint)
         segmented_form = QHBoxLayout()
         self.segmented_source_edit = QLineEdit()
         self.segmented_source_edit.setPlaceholderText(
@@ -236,40 +271,44 @@ class ExperimentImportPanel(QWidget):
         segmented_browse.clicked.connect(self._on_segmented_browse)
         segmented_form.addWidget(segmented_browse)
         segmented_layout.addLayout(segmented_form)
-        self.segmented_import_button = QPushButton(
-            tr("segmented/repeated experiment overlay import")
-        )
+        self.segmented_import_button = QPushButton(tr("Import segments"))
+        self.segmented_import_button.setToolTip(tr("segmented/repeated experiment overlay import"))
         self.segmented_import_button.setObjectName("PrimaryAction")
         self.segmented_import_button.setEnabled(False)
         self.segmented_import_button.clicked.connect(self._on_segmented_import)
         segmented_layout.addWidget(self.segmented_import_button)
+        segmented_layout.addWidget(segmented_hint)
         self.segmented_source_edit.textChanged.connect(
             lambda _t: self.segmented_import_button.setEnabled(
                 bool(self.segmented_source_edit.text().strip())
             )
         )
-        layout.addWidget(self.segmented_group)
+        import_columns.addWidget(self.segmented_group, 1)
 
         self.batch_group = QGroupBox(tr("Batch processing"))
         self.batch_group.setObjectName("SectionTitle")
         batch_layout = QVBoxLayout(self.batch_group)
-        batch_hint = QLabel(
+        batch_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        batch_layout.setSpacing(6)
+        batch_hint = _ImportHint(
             tr(
                 "You may add an umbrella folder (Bruker data sets in its subfolders are detected "
-                "automatically) or several data directories. Data imported together share one "
-                "batch-group tag, and operations on the processing page then apply to the whole "
-                "group. Note: batching only supports 2D spectra for now; 3D data are skipped "
-                "(process them one at a "
-                "time).",
+                "automatically) or several data directories. Enable Group data (2D) to create "
+                "a group for later batch processing; otherwise import separate entries. "
+                "Batch import supports 2D only; process 3D data individually.",
             )
         )
         batch_hint.setWordWrap(True)
         batch_hint.setObjectName("MutedText")
-        batch_layout.addWidget(batch_hint)
         self.batch_list = QListWidget()
-        self.batch_list.setMinimumHeight(0)
-        batch_layout.addWidget(self.batch_list)
-        self.batch_group_check = QCheckBox(tr("Batch import and group (only supports 2D spectra)"))
+        self.batch_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.batch_list.setTextElideMode(Qt.TextElideMode.ElideMiddle)
+        self.batch_list.hide()
+        model = self.batch_list.model()
+        model.rowsInserted.connect(self._sync_batch_list)
+        model.rowsRemoved.connect(self._sync_batch_list)
+        model.modelReset.connect(self._sync_batch_list)
+        self.batch_group_check = QCheckBox(tr("Group data (2D)"))
         self.batch_group_check.setToolTip(
             tr(
                 "Checked: import into one data group and process them together later (2D spectra "
@@ -278,7 +317,6 @@ class ExperimentImportPanel(QWidget):
             )
         )
         self.batch_group_check.setChecked(False)
-        batch_layout.addWidget(self.batch_group_check)
         batch_buttons = QHBoxLayout()
         self.batch_add_button = QPushButton(tr("Browse..."))
         self.batch_add_button.setObjectName("SubtleAction")
@@ -295,13 +333,32 @@ class ExperimentImportPanel(QWidget):
         self.batch_import_button.setEnabled(False)
         self.batch_import_button.clicked.connect(self._on_batch_import)
         batch_layout.addWidget(self.batch_import_button)
-        layout.addWidget(self.batch_group)
+        batch_layout.addWidget(self.batch_list)
+        batch_layout.addWidget(self.batch_group_check)
+        batch_layout.addWidget(batch_hint)
+        import_columns.addWidget(self.batch_group, 1)
         layout.addStretch(1)
 
+    def _sync_batch_list(self, *_args):
+        count = self.batch_list.count()
+        self.batch_list.setVisible(count > 0)
+        if count:
+            row_height = max(self.fontMetrics().height(), self.batch_list.sizeHintForRow(0))
+            self.batch_list.setFixedHeight(
+                min(count, 4) * row_height + 2 * self.batch_list.frameWidth() + 4
+            )
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if (
+            event.type() in (QEvent.Type.FontChange, QEvent.Type.StyleChange)
+            and hasattr(self, 'batch_list')
+        ):
+            QTimer.singleShot(0, self, self._sync_batch_list)
+
     # ------------------------------------------------------------------
-
-
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def browse_single(self) -> None:
         'Select a single Bruker dataset directory.'
@@ -368,6 +425,7 @@ class ExperimentImportPanel(QWidget):
         for dataset_dir in found:
             if not self.batch_list.findItems(str(dataset_dir), Qt.MatchFlag.MatchExactly):
                 self.batch_list.addItem(str(dataset_dir))
+                self.batch_list.item(self.batch_list.count() - 1).setToolTip(str(dataset_dir))
         self.batch_import_button.setEnabled(self.batch_list.count() > 0)
 
     @staticmethod
@@ -504,7 +562,6 @@ class ExperimentDashboard(QWidget):
 
         data_title = QLabel(tr("sample data"))
         data_title.setObjectName("SectionTitle")
-        layout.addWidget(data_title)
         self.data_table = QTableWidget(0, 3)
         self.data_table.setHorizontalHeaderLabels([tr("sample data"), tr("name"), tr("state")])
         self.data_table.horizontalHeader().setStretchLastSection(True)
@@ -517,8 +574,6 @@ class ExperimentDashboard(QWidget):
         )
         self.data_table.itemChanged.connect(self._on_data_name_edited)
         self._loading_table = False
-        layout.addWidget(self.data_table)
-        layout.addSpacing(2)
 
 
         self.import_panel = ExperimentImportPanel(self.page_content)
@@ -540,6 +595,9 @@ class ExperimentDashboard(QWidget):
         self.batch_clear_button = self.import_panel.batch_clear_button
         self.batch_import_button = self.import_panel.batch_import_button
         layout.addWidget(self.import_panel)
+        layout.addSpacing(8)
+        layout.addWidget(data_title)
+        layout.addWidget(self.data_table)
         layout.addStretch(1)
 
     def set_context(self, manager: ProjectManager, exp_id: str, label: str) -> None:

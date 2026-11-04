@@ -55,7 +55,7 @@ def automatic_font_size(
     return min(high, max(low, system_size))
 
 
-def apply_interface_font(app, value: object = 0, screen=None) -> int:
+def apply_interface_font(app, value: object = 0, screen=None, *, fullscreen=False) -> int:
     """Apply a point size while preserving the application's current font family."""
     from qtcompat.QtGui import QFont
 
@@ -67,16 +67,24 @@ def apply_interface_font(app, value: object = 0, screen=None) -> int:
         if target_screen is None:
             target_screen = app.primaryScreen()
         height = target_screen.availableGeometry().height() if target_screen else 0
-        size = automatic_font_size(height, app._interface_system_font.pointSize())
+        base = automatic_font_size(1080, app._interface_system_font.pointSize())
+        size = (min(MAX_FONT_SIZE, max(MIN_FONT_SIZE, round(base * height / 1080)))
+                if fullscreen and height > 0 else base)
 
     font = QFont(app.font())
     font.setPointSize(size)
+    stylesheet = app.styleSheet()
+    applied = (font.toString(), stylesheet)
+    if (getattr(app, '_applied_interface_font', None) == applied
+            and font == app.font()):
+        return size
     app.setFont(font)
     # Qt's stylesheet engine caches inherited fonts on existing widgets. Reapply
     # the current rules so the live interface follows the new application font.
     stylesheet = app.styleSheet()
     if stylesheet:
         app.setStyleSheet(stylesheet)
+    app._applied_interface_font = applied
     return size
 
 

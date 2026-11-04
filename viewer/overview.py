@@ -27,7 +27,8 @@ class SpectrumOverview(QWidget):
             return
         ranges = vb.viewRange()
         zoom = max((hi - lo) / max(ranges[i][1] - ranges[i][0], 1e-30)
-                   for i, (lo, hi) in enumerate(bounds))
+                   for i, (lo, hi) in enumerate(bounds)
+                   if i == 0 or not self.viewer._mode_1d)
         if zoom <= 1.5 + 1e-6:
             self.hide()
             return

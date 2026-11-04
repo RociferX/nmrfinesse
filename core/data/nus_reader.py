@@ -56,9 +56,15 @@ def read_nuslist(path: Path) -> list[tuple[int, ...]]:
     return points
 
 
-_SCHEDULE_MAX_BYTES = 64 * 1024
+# Accept bounded high-density 3D schedule files.
+_SCHEDULE_MAX_BYTES = 16 * 1024 * 1024
+
+
+
 
 _SCHEDULE_MIN_ROWS = 2
+
+
 
 _SCHEDULE_MAX_COLUMNS = 3
 
@@ -220,11 +226,13 @@ def find_schedule_file(
             return None, ""
         return candidate, ""
 
+
     standard = directory / "nuslist"
     if standard.is_file():
         found, _ = _accept(standard)
         if found is not None:
             return found, tr("standard filename nuslist")
+
 
     declared = ""
     if acqus:
@@ -232,18 +240,20 @@ def find_schedule_file(
     if declared:
         declared_path = Path(declared)
         if declared_path.is_absolute() or declared_path.name != declared:
-            tried.append(tr("the acqus NUSLIST value is not a local filename: {p0}", p0=declared))
+            tried.append(
+                tr("the acqus NUSLIST value is not a local filename: {p0}", p0=declared)
+            )
         else:
             named = directory / declared_path.name
             if named.is_file():
                 found, _ = _accept(named)
                 if found is not None:
-                    return found, tr("named by the acqus NUSLIST parameter: {p0}", p0=declared)
+                    return found, tr(
+                        "named by the acqus NUSLIST parameter: {p0}", p0=declared
+                    )
 
-    detail = (
-        "; ".join(tried[:2])
-        if tried
-        else tr("neither nuslist nor a file named by the acqus NUSLIST parameter exists")
+    detail = "; ".join(tried[:2]) if tried else tr(
+        "neither nuslist nor a file named by the acqus NUSLIST parameter exists"
     )
     return None, tr("no usable sampling schedule found ({p0})", p0=detail)
 
@@ -299,7 +309,9 @@ def indirect_grid_2d(
         (
             dim
             for dim in dimensions
-            if str(getattr(getattr(dim, "role", ""), "value", "")).startswith("indirect")
+            if str(getattr(getattr(dim, "role", ""), "value", "")).startswith(
+                "indirect"
+            )
         ),
         None,
     )
@@ -332,6 +344,7 @@ def indirect_grid_2d(
     mult = hypercomplex_mult(fnmode if fnmode is not None else 0)
     grid = declared // mult if declared > 0 and declared % mult == 0 else 0
     return max(grid, 0), mult, max(int(getattr(direct, "td", 0) or 0), 0)
+
 
 
 def scan_dense_2d(
@@ -438,24 +451,33 @@ def scan_dense_2d(
         use_physical_padding = any(
             key in (acqus or {}) for key in ("DTYPE", "DTYPA", "PARMODE", "BYTORDA")
         )
-        padded_x_n = solve_row_points(x_n, int(dt.itemsize), size) if use_physical_padding else None
+        padded_x_n = (
+            solve_row_points(x_n, int(dt.itemsize), size)
+            if use_physical_padding
+            else None
+        )
         if padded_x_n and size >= padded_x_n * int(dt.itemsize):
             padded_per_row = int(dt.itemsize) * int(padded_x_n)
             padded_rows = size // padded_per_row
             logical_rows = size // per_row if per_row and size % per_row == 0 else 0
+
+
+
             if padded_rows >= declared_rows or logical_rows < declared_rows:
                 x_n = int(padded_x_n)
                 per_row = padded_per_row
         if per_row <= 0 or size % per_row:
             result["kind"] = "bad_layout"
-            result["detail"] = tr(
-                'ser size {p0} is not "direct dimension {p1} x {p2} bytes"({p3}); layout '
-                "unclear, so the dense model cannot be "
-                "decided",
-                p0=size,
-                p1=x_n,
-                p2=int(dt.itemsize),
-                p3=dt.str[1:],
+            result["detail"] = (
+                tr(
+                    "ser size {p0} is not \"direct dimension {p1} x {p2} bytes\"({p3}); layout "
+                    "unclear, so the dense model cannot be "
+                    "decided",
+                    p0=size,
+                    p1=x_n,
+                    p2=int(dt.itemsize),
+                    p3=dt.str[1:],
+                )
             )
             return result
         rows = size // per_row
@@ -473,7 +495,8 @@ def scan_dense_2d(
         if table.ndim < 2:
             result["kind"] = "bad_layout"
             result["detail"] = tr(
-                "the converted fid is not two-dimensional; the dense model cannot be judged",
+                "the converted fid is not two-dimensional; the dense model cannot be "
+                "judged",
             )
             return result
         rows = int(table.shape[0])
@@ -612,7 +635,11 @@ def scan_whole_trace_zeros(
         use_physical_padding = any(
             key in (acqus or {}) for key in ("DTYPE", "DTYPA", "PARMODE", "BYTORDA")
         )
-        padded_x_n = solve_row_points(x_n, int(dt.itemsize), size) if use_physical_padding else None
+        padded_x_n = (
+            solve_row_points(x_n, int(dt.itemsize), size)
+            if use_physical_padding
+            else None
+        )
         if padded_x_n and size >= padded_x_n * int(dt.itemsize):
             x_n = int(padded_x_n)
             per_row = int(dt.itemsize) * x_n
@@ -657,6 +684,7 @@ def scan_whole_trace_zeros(
     result["rows"] = int(rows)
     result["zero_rows"] = int(zero_mask.sum())
     result["nonzero_rows"] = int(rows - result["zero_rows"])
+
     blocks: list[tuple[int, int]] = []
     for index in np.flatnonzero(~zero_mask):
         position = int(index)
@@ -671,10 +699,15 @@ def scan_whole_trace_zeros(
 
 # ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 _AUTO_PROBE_FILES = ("acqus", "acqu2s", "acqu3s", "acqu", "acqu2", "acqu3", "ser")
 
 #: resolve_tool("bruker", settings)`` → ``probe_auto_sampling(..., bruker_cmd=...)``。
 _BRUKER_CANDIDATES = ("bruker",)
+
+
+
+
 
 _configured_bruker: str = ""
 
@@ -719,6 +752,8 @@ def _find_bruker(explicit: str = "") -> str | None:
     for value in (explicit, _configured_bruker):
         if value and value.strip():
             candidates.append(value.strip())
+
+
     shell = shutil.which("tcsh") or shutil.which("csh")
     if shell is not None and not candidates:
         try:
@@ -784,7 +819,10 @@ def parse_auto_sampling(text: str) -> dict[str, Any]:
 
     y_n, z_n = flag("yN"), flag("zN")
     y_t, z_t = flag("yT"), flag("zT")
+
     grid = y_n * z_n if y_n and z_n else y_n
+
+
     if y_t and z_t:
         sampled = y_t * z_t
     else:
@@ -891,7 +929,9 @@ def probe_auto_sampling(
                 check=False,
             )
         except (OSError, subprocess.TimeoutExpired) as exc:
-            result["detail"] = tr("bruker -AUTO failed ({p0})", p0=type(exc).__name__)
+            result["detail"] = tr(
+                "bruker -AUTO failed ({p0})", p0=type(exc).__name__
+            )
             return result
         generated = Path(temp_dir) / "fid.com"
         if completed.returncode != 0 or not generated.is_file():
@@ -900,7 +940,9 @@ def probe_auto_sampling(
                 p0=completed.returncode,
             )
             return result
-        parsed = parse_auto_sampling(generated.read_text(encoding="utf-8", errors="replace"))
+        parsed = parse_auto_sampling(
+            generated.read_text(encoding="utf-8", errors="replace")
+        )
         result.update(parsed)
         result["ok"] = parsed["grid"] > 0
         result["detail"] = executable

@@ -303,7 +303,7 @@ def _spectrum_color_labels(spectra):
 class OverlaySvgExportDialog(QDialog):
     """Range controls, SVG preview, and save action for overlay export."""
 
-    def __init__(self, viewer, parent=None, *, directory=None, spectra=None):
+    def __init__(self, viewer, parent=None, *, directory=None, spectra=None, tooltips=None):
         super().__init__(parent)
         self.viewer = viewer
         self.setProperty('wideDialog', True)
@@ -353,6 +353,7 @@ class OverlaySvgExportDialog(QDialog):
             self.spectrum_description = QLabel(tr('Spectra and colors: {p0}', p0='; '.join(labels)))
             self.spectrum_description.setWordWrap(True)
             self.spectrum_description.setObjectName('PanelSubtitle')
+            self.spectrum_description.setToolTip('\n\n'.join(tooltips or []))
             layout.addWidget(self.spectrum_description)
         layout.addLayout(form)
         preview_title = QLabel(tr('SVG preview'))

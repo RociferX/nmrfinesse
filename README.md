@@ -220,6 +220,30 @@ nmrfinesse-viewer                 # after an editable install
 python -m viewer
 ```
 
+### Current source interface
+
+Help → Usage tutorial has nine navigable sections with separate section and task headings.
+The experiment page has three horizontal import cards (single, segmented, batch), actions above
+their descriptions, and the sample-data table below. Import-and-group is off by default.
+Batch processing supports 2D only; process 3D data individually.
+Tools → Export UCSF files… becomes available after opening a project. Configure its destination
+through automatic POKY/Sparky discovery or Browse in Settings.
+Tools also provides read-only FID checks and an automatic/manual abnormal-FID selection tool for
+2D/3D uniform Bruker acquisitions. The latter exports a new NUS folder, omits complete phase groups,
+retains the source, and records its schedule and conversion report.
+
+The normal startup window uses a 1080p workspace baseline: smaller screens scroll, while larger
+screens retain the baseline window. Automatic fonts change on maximize/fullscreen, not ordinary resize.
+Pure 1D defaults to Aspect 0.02. In 2D/3D 1D-strip mode, hold the left button to move the strips;
+top and right strips have independent display phase controls. Comparison crosshairs share displayed
+ppm coordinates; overlay comparison retains contour settings. File/color tooltips include title text.
+Needs-update details identify missing paths or changed files; old records explicitly identify missing
+provenance. Picked/imported peak tables retain separate assignments. CSV restores the full table;
+GUI `.list` exports contain assignments and coordinates only.
+
+These instructions describe current source. The existing v1.0.11 AppImage does not change when
+source is updated; this update does not rebuild it. See the [GUI guide](docs/gui.md) for full instructions.
+
 ## CLI usage
 
 Register a dataset, build and freeze its reference, pick the reference peaks, then run explicit

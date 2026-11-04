@@ -266,10 +266,12 @@ class ImportExperimentDialog(QDialog):
         self.copy_check.setChecked(True)
         self.copy_check.setToolTip(
             tr(
-                "When checked, the Bruker data set is linked into the project raw/ directory and "
-                "an input fingerprint is computed; when unchecked it is only registered by "
-                "reference (the source directory must stay "
-                "accessible).",
+                (
+                    'Checked: link raw data into the project, copying when '
+                    'needed. Unchecked: reference the source in place. Keep '
+                    'source paths accessible when links or references are used; '
+                    'generated processing files are separate.'
+                ),
             )
         )
         form.addRow("", self.copy_check)
@@ -613,8 +615,10 @@ class ScriptEditorDialog(QDialog):
         )
         _name_button(self.run_btn, "PrimaryAction")
         self.run_btn.setToolTip(tr(
-            "Save the current script to the data directory and run (register "
-            "WorkflowRun)",
+            (
+                'Save the edited script to this data entry and run it. '
+                'Review the run log and report for the result.'
+            ),
         ))
         self.run_btn.clicked.connect(self._on_run)
         buttons.accepted.connect(self._on_save)
@@ -889,7 +893,7 @@ class SettingsDialog(QDialog):
         spectra_row.addWidget(spectra_browse)
         spectra_row.addWidget(spectra_auto)
         form.addRow(tr("POKY/Sparky spectra folder"), spectra_row)
-
+        # The language setting pins the UI language; the environment can override it for a run.
 
         self.language_combo = QComboBox()
         for _label, _code in (
@@ -915,8 +919,11 @@ class SettingsDialog(QDialog):
             settings.get('interface_font_size', 0)
         )))
         self.font_size_combo.setToolTip(tr(
-            'Automatic uses the available screen space. Manual sizes are limited to 8–18 pt. '
-            'The new size applies when you save.'
+
+                'Automatic uses the normal-window font baseline and adapts '
+                'on maximise/fullscreen; ordinary window resizing keeps the '
+                'font size. Manual sizes are 8–18 pt and apply on saving.'
+
         ))
         form.addRow(tr('Interface font size'), self.font_size_combo)
         form.addRow(_section_title(tr("Peak matching")))
@@ -945,9 +952,11 @@ class SettingsDialog(QDialog):
             )
             tol_spin.setToolTip(
                 tr(
-                    "Peak alignment / reference matching tolerance (ppm). The Poky kr default is "
-                    "0.02 for 1H and 0.2 for 15N/13C; smaller is "
-                    "stricter",
+                    (
+                        'Peak alignment and reference-matching tolerance for this '
+                        'nucleus, in ppm. Smaller values require a closer coordinate '
+                        'match.'
+                    ),
                 )
             )
             form.addRow(tr("{p0} alignment tolerance (ppm)", p0=nucleus), tol_spin)

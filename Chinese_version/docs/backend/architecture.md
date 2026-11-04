@@ -46,3 +46,6 @@
 (../external-dependencies.md)、[处理模型](../processing-model.md)和共享[架构](../architecture.md)。
 
 选峰检测器SNR写入.list可选S/N列及定位附件；附件保留noise_sigma、baseline_offset和完整精度峰高，采用原有全局MAD算法。
+
+
+GUI 的 `.list` 交换导出只包含指认和化学位移；内部/API 峰表与完整 CSV 保留已有指标，API 契约与数值计算不变。

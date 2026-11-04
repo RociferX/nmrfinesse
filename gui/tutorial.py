@@ -18,10 +18,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from qtcompat.QtCore import Qt
+from qtcompat.QtGui import QFont, QPalette, QTextCharFormat, QTextCursor
 from qtcompat.QtWidgets import (
     QDialog,
     QDialogButtonBox,
+    QLabel,
+    QSplitter,
     QTextBrowser,
+    QTreeWidget,
+    QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
 )
@@ -68,9 +74,23 @@ class TutorialDialog(QDialog):
     def __init__(self, parent: QWidget | None = None, language: str | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle(tr("NMRFinesse usage tutorial"))
-        self.resize(960, 720)
+        self.resize(1120, 760)
         layout = QVBoxLayout(self)
+        self.contents = QTreeWidget()
+        self.contents.setHeaderHidden(True)
+        self.contents.setMinimumWidth(180)
+        self.contents.setTextElideMode(Qt.TextElideMode.ElideRight)
+        self.contents.itemClicked.connect(self._navigate)
+        self.contents.itemActivated.connect(self._navigate)
+        sidebar = QWidget()
+        sidebar_layout = QVBoxLayout(sidebar)
+        sidebar_layout.setContentsMargins(0, 0, 0, 0)
+        heading = QLabel(tr("Contents"))
+        heading.setObjectName("SectionTitle")
+        sidebar_layout.addWidget(heading)
+        sidebar_layout.addWidget(self.contents, 1)
         self.view = QTextBrowser()
+        self.view.document().setDocumentMargin(14)
         self.view.setOpenExternalLinks(True)
         text = load_tutorial_text(language)
         if text:
@@ -79,8 +99,66 @@ class TutorialDialog(QDialog):
             self.view.setPlainText(
                 tr("The tutorial document is missing from this installation.")
             )
-        layout.addWidget(self.view, 1)
+        self._build_contents()
+        self.splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.splitter.addWidget(sidebar)
+        self.splitter.addWidget(self.view)
+        self.splitter.setStretchFactor(0, 0)
+        self.splitter.setStretchFactor(1, 1)
+        self.splitter.setSizes([250, 850])
+        layout.addWidget(self.splitter, 1)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
-        buttons.button(QDialogButtonBox.StandardButton.Close).setText(tr("close"))
+        buttons.button(QDialogButtonBox.StandardButton.Close).setText(tr("Close"))
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+
+
+    def _build_contents(self) -> None:
+        """Apply heading hierarchy and link the contents to document anchors."""
+        document = self.view.document()
+        base_size = self.view.font().pointSizeF()
+        if base_size <= 0:
+            base_size = 10
+        block = document.begin()
+        parent = None
+        number = 0
+        while block.isValid():
+            level = block.blockFormat().headingLevel()
+            if 1 <= level <= 3:
+                anchor = f"tutorial-section-{number}"
+                number += 1
+                cursor = QTextCursor(block)
+                cursor.movePosition(QTextCursor.MoveOperation.EndOfBlock,
+                                    QTextCursor.MoveMode.KeepAnchor)
+                style = QTextCharFormat()
+                style.setFontPointSize(base_size + {1: 8, 2: 4, 3: 2}[level])
+                style.setFontWeight(QFont.Weight.Bold if level < 3 else QFont.Weight.DemiBold)
+                style.setForeground(self.view.palette().color(QPalette.ColorRole.Text))
+                style.setAnchor(True)
+                style.setAnchorNames([anchor])
+                cursor.mergeCharFormat(style)
+                paragraph = block.blockFormat()
+                paragraph.setTopMargin(16 if level < 3 else 10)
+                paragraph.setBottomMargin(8 if level < 3 else 4)
+                if level == 2:
+                    paragraph.setBackground(
+                        self.view.palette().color(QPalette.ColorRole.AlternateBase))
+                cursor.setBlockFormat(paragraph)
+                if level == 2:
+                    parent = QTreeWidgetItem(self.contents, [block.text()])
+                    item = parent
+                elif level == 3:
+                    item = QTreeWidgetItem(parent or self.contents, [block.text()])
+                else:
+                    block = block.next()
+                    continue
+                item.setData(0, Qt.ItemDataRole.UserRole, anchor)
+                item.setToolTip(0, block.text())
+            block = block.next()
+        if self.contents.topLevelItemCount():
+            self.contents.topLevelItem(0).setExpanded(True)
+
+    def _navigate(self, item, _column=0) -> None:
+        anchor = item.data(0, Qt.ItemDataRole.UserRole)
+        if anchor:
+            self.view.scrollToAnchor(anchor)

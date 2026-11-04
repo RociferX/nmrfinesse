@@ -47,6 +47,7 @@ from qtcompat import Signal
 from ui_support.collapsible import CollapsibleSection
 from ui_support.i18n import tr
 from ui_support.numeric_inputs import CommitDoubleSpinBox, CommitSpinBox
+from ui_support.title_layout import spectrum_tooltip
 from viewer.contour_layer import ContourLayer
 from viewer.nmr_viewbox import NMRViewBox
 from viewer.overview import SpectrumOverview
@@ -54,6 +55,44 @@ from viewer.spectrum import Spectrum, Spectrum1D, SpectrumAxis
 
 _COLORS = ("#1f77b4", "#d62728", "#2ca02c", "#9467bd", "#ff7f0e", "#17becf")
 _DEFAULT_LEVELS = 8
+
+
+class _ReadoutLabel(QLabel):
+    """Reserve the actual wrapped height without the parent grid guessing it."""
+
+    def __init__(self, text=""):
+        super().__init__(text)
+        self.setWordWrap(True)
+        policy = self.sizePolicy()
+        policy.setHeightForWidth(False)
+        policy.setVerticalPolicy(QSizePolicy.Policy.Fixed)
+        self.setSizePolicy(policy)
+        self._queue_height()
+
+    def _queue_height(self):
+        if not getattr(self, '_height_pending', False):
+            self._height_pending = True
+            QTimer.singleShot(0, self, self._fit_height)
+
+    def _fit_height(self):
+        self._height_pending = False
+        self.setMinimumHeight(0)
+        self.setMaximumHeight(16777215)
+        height = max(self.fontMetrics().height(), self.heightForWidth(max(1, self.width())))
+        self.setFixedHeight(height)
+
+    def setText(self, text):  # noqa: N802 - Qt API
+        super().setText(text)
+        self._queue_height()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._queue_height()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.Type.FontChange, QEvent.Type.StyleChange):
+            self._queue_height()
 
 
 class _ContourControls(QWidget):
@@ -97,6 +136,14 @@ class _ContourControls(QWidget):
         super().resizeEvent(event)
         self._reflow()
 
+    def event(self, event):
+        result = super().event(event)
+        if event.type() == QEvent.Type.LayoutRequest and hasattr(self, '_grid'):
+            height = self._grid.minimumSize().height()
+            if self.minimumHeight() != height:
+                self.setMinimumHeight(height)
+        return result
+
     def changeEvent(self, event):
         super().changeEvent(event)
         if event.type() == QEvent.Type.FontChange and hasattr(self, "_grid"):
@@ -127,6 +174,9 @@ class _ContourSigns(QWidget):
         if self._box.direction() != direction:
             self._box.setDirection(direction)
             self.updateGeometry()
+        required_height = self._box.sizeHint().height()
+        if self.minimumHeight() != required_height:
+            self.setMinimumHeight(required_height)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -304,6 +354,9 @@ class _LabelOverlay(QWidget):
 class SpectrumViewer(QWidget):
     'A 2D spectrum viewer that supports multi-spectrum overlay.'
 
+    crosshair_moved = Signal(float, float)  # Displayed x/y ppm, including shifts.
+    crosshair_left = Signal()
+
     peak_clicked = Signal(int)
     manual_peak_requested = Signal(dict)
     delete_peak_requested = Signal(float, float)
@@ -314,12 +367,15 @@ class SpectrumViewer(QWidget):
         parent: QWidget | None = None,
         level_count: int = _DEFAULT_LEVELS,
         contour_zoom: float = 2.0,
+        default_1d_aspect: float = 0.02,
     ) -> None:
         super().__init__(parent)
+        self._aspect_1d_value = int(round(default_1d_aspect * 100))
+        self.spectrum_tooltip_provider = spectrum_tooltip
         self._peaks: list[dict] = []
         self._selected_peak: int | None = None
         self._click_mode = "select"  # select / add / delete
-
+        # select / add / delete
         self._box_select_enabled = False
         self._box_selecting = False
         self._box_press_scene: QPointF | None = None
@@ -359,7 +415,7 @@ class SpectrumViewer(QWidget):
         self._contour_start_fraction = (31 / 100.0) ** 3
 
 
-        self._peak_size = 1.5
+        self._peak_size = 0.5
         self._show_peak_labels = True
         self._flash_item: QGraphicsEllipseItem | None = None
         self.peak_item = pg.ScatterPlotItem(
@@ -444,16 +500,18 @@ class SpectrumViewer(QWidget):
         self.show_1d_button.setCheckable(True)
         self.show_1d_button.setToolTip(
             tr(
-                "After opening, a cross line appears with the mouse. Move the mouse to display two "
-                "one-dimensional spectra (TopSpin "
-                "type)",
+                (
+                    'Show top/right 1D cuts. Hold the left mouse button in the '
+                    'spectrum to move the crosshair and cuts; release to keep '
+                    'them fixed. Each cut has its own phase controls.'
+                ),
             )
         )
         self.show_1d_button.toggled.connect(self.set_1d_mode)
 
-        self.crosshair_label = QLabel("Move mouse to read ppm")
+        self.crosshair_label = _ReadoutLabel("Move mouse to read ppm")
         self.crosshair_label.setWordWrap(True)
-        self.peak_label = QLabel("")
+        self.peak_label = _ReadoutLabel("")
         self.peak_label.setWordWrap(True)
 
         controls = CollapsibleSection(tr('Display controls'))
@@ -520,7 +578,7 @@ class SpectrumViewer(QWidget):
         row2 = QHBoxLayout()
         row2.setSpacing(20)
         row2.addWidget(self.crosshair_label, 1)
-        row2.addWidget(self.peak_label, 1)
+        row2.addWidget(self.peak_label, 0)
         controls_layout.addLayout(row2, 2, 0, 1, 3)
 
 
@@ -530,6 +588,10 @@ class SpectrumViewer(QWidget):
         self.phase_panel.phase_changed.connect(self._on_phase_changed)
         controls_layout.addWidget(self.phase_panel, 3, 0, 1, 3)
         self.phase_panel.setVisible(False)
+        self.right_phase_panel = PhasePanel()
+        self.right_phase_panel.phase_changed.connect(self._on_phase_changed)
+        controls_layout.addWidget(self.right_phase_panel, 4, 0, 1, 3)
+        self.right_phase_panel.hide()
 
         self.controls_layout = controls_layout
         self._fit_contour_input_widths()
@@ -614,7 +676,7 @@ class SpectrumViewer(QWidget):
         )
         self.plot.scene().sigMouseMoved.connect(self._on_mouse_moved)
         self.plot.scene().sigMouseClicked.connect(self._on_plot_clicked)
-        self.set_aspect_ratio(None)
+        self.set_aspect_ratio(None)  # 0.2.133: contour state
         # 0.2.133: contour state
         self._contour_states: dict[str, tuple[float, int, bool, bool]] = {}
         self._mouse_left_pressed = False
@@ -623,6 +685,11 @@ class SpectrumViewer(QWidget):
 
     def _fit_controls_height(self) -> None:
         """Give unused control space to the plot while keeping deliberate splitter adjustments."""
+        # The outer grid's height-for-width pass can otherwise give row 0
+        # less than the reflowed contour controls' current natural height.
+        contour_height = self.contour_controls.minimumSizeHint().height()
+        if self.controls_layout.rowMinimumHeight(0) != contour_height:
+            self.controls_layout.setRowMinimumHeight(0, contour_height)
         if self.controls_section.parentWidget() is not self.view_splitter:
             return
         height = max(self.controls_section.natural_height(),
@@ -655,7 +722,14 @@ class SpectrumViewer(QWidget):
         self._display_ppm_shifts = {}
         self.plot.getViewBox().setAspectLocked(False)
         self.plot.getViewBox().wheel_y_exponent = 1.0
+        if self._mode_1d:
+            self._aspect_1d_value = self.aspect_slider.value()
+            with QSignalBlocker(self.aspect_slider):
+                self.aspect_slider.setValue(getattr(self, '_aspect_2d_value', 0))
         self._mode_1d = False
+        self._on_aspect_changed(self.aspect_slider.value())
+        from qtcompat.QtWidgets import QGraphicsView
+        self.plot.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.MinimalViewportUpdate)
         self._primary_1d = None
         if self._plot_1d is not None:
             self.plot.removeItem(self._plot_1d)
@@ -679,6 +753,7 @@ class SpectrumViewer(QWidget):
             self.plot.removeItem(self._data_bounds_item)
             self._data_bounds_item = None
         self.phase_panel.set_available(False)
+        self.right_phase_panel.set_available(False)
         self.set_peaks([])
 
     def add_spectrum(
@@ -717,6 +792,7 @@ class SpectrumViewer(QWidget):
         self.layer_spectra.append(spectrum)
 
         item = QListWidgetItem(name)
+        item.setToolTip(self.spectrum_tooltip_provider(spectrum.source))
         item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
         item.setCheckState(Qt.CheckState.Checked)
         self.layer_list.addItem(item)
@@ -753,6 +829,8 @@ class SpectrumViewer(QWidget):
         layer.setData(spectrum.data, self._levels_for(spectrum))
         self._primary = spectrum
         self.layer_spectra[0] = spectrum
+        if self.layer_list.count():
+            self.layer_list.item(0).setToolTip(self.spectrum_tooltip_provider(spectrum.source))
         if name is not None and self.layer_names:
             self.layer_names[0] = name
             if self.layer_list.count():
@@ -1063,7 +1141,14 @@ class SpectrumViewer(QWidget):
         """Display the one-dimensional spectrum (FID/2D row/column slicing) as a 1D trace and hide
         the 2D contour layer.
         """
+        if not self._mode_1d:
+            self._aspect_2d_value = self.aspect_slider.value()
         self._mode_1d = True
+        with QSignalBlocker(self.aspect_slider):
+            self.aspect_slider.setValue(getattr(self, '_aspect_1d_value', 2))
+        self._on_aspect_changed(self.aspect_slider.value())
+        from qtcompat.QtWidgets import QGraphicsView
+        self.plot.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.FullViewportUpdate)
         self._primary_1d = spectrum1d
         if self._plot_1d is None:
             self._plot_1d = pg.PlotDataItem(pen=pg.mkPen("#1f77b4", width=1))
@@ -1123,7 +1208,13 @@ class SpectrumViewer(QWidget):
         'Exit the 1D view and restore the 2D outline layer.'
         if not self._mode_1d:
             return
+        self._aspect_1d_value = self.aspect_slider.value()
         self._mode_1d = False
+        with QSignalBlocker(self.aspect_slider):
+            self.aspect_slider.setValue(getattr(self, '_aspect_2d_value', 0))
+        self._on_aspect_changed(self.aspect_slider.value())
+        from qtcompat.QtWidgets import QGraphicsView
+        self.plot.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.MinimalViewportUpdate)
         self._primary_1d = None
         if self._plot_1d is not None:
             self.plot.removeItem(self._plot_1d)
@@ -1149,7 +1240,16 @@ class SpectrumViewer(QWidget):
         """Enable the phase panel according to the current display: available for 1D spectra or 1D
         strips (only displays, does not change the data).
         """
-        self.phase_panel.set_visible_1d_mode(self._phase_target() != "")
+        target = self._phase_target()
+        self.phase_panel.set_visible_1d_mode(target != "")
+        self.right_phase_panel.set_visible_1d_mode(target == "strips")
+        self.phase_panel.axis_label.setVisible(target == "strips")
+        self.right_phase_panel.axis_label.setVisible(target == "strips")
+        if target == "strips":
+            self.phase_panel.axis_label.setText(tr(
+                'Top strip: {p0}', p0=self._primary.x_axis.label))
+            self.right_phase_panel.axis_label.setText(tr(
+                'Right strip: {p0}', p0=self._primary.y_axis.label))
 
     def _phase_target(self) -> str:
         'Current phaseable 1D targets: Primary 1D trace / 1D strip.'
@@ -1214,6 +1314,11 @@ class SpectrumViewer(QWidget):
         return ""
 
     def eventFilter(self, obj, event) -> bool:
+        if (obj is self._plot_viewport and event.type() == QEvent.Type.Leave
+                and not self._strips_active):
+            self._crosshair_v.hide()
+            self._crosshair_h.hide()
+            self.crosshair_left.emit()
         if obj is self._plot_viewport and event.type() == QEvent.Type.Resize:
             if self._box_overlay is not None:
                 self._box_overlay.setGeometry(self.plot.viewport().rect())
@@ -1378,6 +1483,8 @@ class SpectrumViewer(QWidget):
         p0, p1 = self.phase_panel.values()
         phased = self._display_phase(self._primary_1d.data, p0, p1)
         self._plot_1d.setData(self._primary_1d.x_values(), phased)
+        self.plot.viewport().update()
+        self._overview.update()
 
     def _refresh_strips_phase(self) -> None:
         'Recalculate two 1D strip traces according to the current phase (for display).'
@@ -1482,18 +1589,52 @@ class SpectrumViewer(QWidget):
         self._strip_pos = (row, col)
         p0, p1 = self.phase_panel.values()
         row_trace = self._display_phase(self._primary.data[row, :], p0, p1)
-        col_trace = self._display_phase(self._primary.data[:, col], p0, p1)
+        col_trace = self._display_phase(
+            self._primary.data[:, col], *self.right_phase_panel.values())
         self.strip_top_curve.setData(np.arange(cols), row_trace)
         self.strip_right_curve.setData(col_trace, np.arange(rows))
 
-    def _move_crosshair(self, x: float, y: float) -> None:
-        """Move the crosshair to the view coordinates (x=column, y=view y; view y is the data
-        row).
-        """
-        if not self._strips_active:
-            return
+    def _position_crosshair(self, x: float, y: float) -> None:
+        """Position lines without emitting a linked-view update."""
+        self._crosshair_v.show()
+        self._crosshair_h.show()
         self._crosshair_v.setPos(x)
         self._crosshair_h.setPos(y)
+
+    def _move_crosshair(self, x: float, y: float) -> None:
+        """Move local lines and publish continuous displayed ppm coordinates."""
+        if self._primary is None:
+            return
+        self._position_crosshair(x, y)
+        axes = (self._primary.x_axis, self._primary.y_axis)
+        if any(len(axis.ppm) < 2 for axis in axes):
+            return
+        ppm = [float(axis.ppm[0] + point * (axis.ppm[1] - axis.ppm[0]))
+               + self.display_shift_for_axis(axis)
+               for axis, point in zip(axes, (x, y))]
+        self.crosshair_moved.emit(*ppm)
+
+    def set_linked_crosshair_ppm(self, x_ppm: float, y_ppm: float) -> None:
+        """Receive displayed ppm without feedback, clamping, or changing zoom."""
+        if self._primary is None or self._mode_1d:
+            return
+        axes = (self._primary.x_axis, self._primary.y_axis)
+        native = [ppm - self.display_shift_for_axis(axis)
+                  for axis, ppm in zip(axes, (x_ppm, y_ppm))]
+        points = [(ppm - axis.ppm[0]) / (axis.ppm[1] - axis.ppm[0])
+                  for axis, ppm in zip(axes, native)]
+        self._position_crosshair(*points)
+        self.crosshair_label.setText(self._ppm_readout(*native))
+        x, y = points
+        rows, cols = self._primary.data.shape
+        if self._strips_active and 0 <= x < cols and 0 <= y < rows:
+            self._update_strips(int(round(y)), int(round(x)))
+
+    def hide_linked_crosshair(self) -> None:
+        """Keep a selected strip cut visible when the mouse leaves a peer."""
+        if not self._strips_active:
+            self._crosshair_v.hide()
+            self._crosshair_h.hide()
 
     def _restore_strips(self) -> None:
         'Hide bars and crosshairs.'
@@ -1620,7 +1761,11 @@ class SpectrumViewer(QWidget):
             if self._mode_1d and vb._min_rect is not None:
                 (x0, x1), (y0, y1) = vb._min_rect
                 ratio *= (y1 - y0) / max(x1 - x0, 1e-12)
+            ranges = vb.viewRange()
             vb.setAspectLocked(True, ratio=float(ratio))
+            if self._mode_1d and vb._min_rect is not None:
+                # Preserve the chosen X span when changing aspect or opening 1D.
+                vb._clamp_locked_1d(ranges)
 
     # ------------------------------------------------------------- peaks
 
@@ -1729,13 +1874,12 @@ class SpectrumViewer(QWidget):
 
     def set_peak_size(self, size: float) -> None:
         'Peak marker size (data coordinate units, scaled with spectrum); 0.2.199-patch29az.'
-        self._peak_size = max(0.5, float(size))
+        self._peak_size = max(0.1, float(size))
         self._apply_peak_items()
 
     # ----------------------------------------------------------------
-
-
-
+    # ----------------------------------------------------------------
+    # ----------------------------------------------------------------
     # ----------------------------------------------------------------
     @property
     def peak_labels_visible(self) -> bool:
@@ -2215,6 +2359,9 @@ class SpectrumViewer(QWidget):
                     tr("{p0} point {p1}", p0=axis.label, p1=int(round(xv)))
                 )
             return
+        # Strip inspection freezes its chosen cuts until another left drag.
+        if self._strips_active and not self._mouse_left_pressed:
+            return
         xi, yi = self._view_to_data(point)
         if xi < 0:
             if getattr(self, 'extend_axis_ticks', False):
@@ -2225,11 +2372,9 @@ class SpectrumViewer(QWidget):
                     self._ppm_readout(float(x_ppm), float(y_ppm))
                 )
             return
+        self._move_crosshair(float(point.x()), float(point.y()))
         if self._strips_active:
-            # 0.2.133: 1D crosshair only on left button hold
-            if self._mouse_left_pressed:
-                self._move_crosshair(float(point.x()), float(point.y()))
-                self._update_strips(yi, xi)
+            self._update_strips(yi, xi)
             x_axis = self._primary.x_axis
             y_axis = self._primary.y_axis
             self.crosshair_label.setText(
