@@ -593,3 +593,31 @@ def test_vmware_input_keeps_explicit_qt_override(monkeypatch):
     monkeypatch.setenv('QT_XCB_NO_XI2', 'user-value')
     layout.configure_native_file_dialogs()
     assert layout.os.environ['QT_XCB_NO_XI2'] == 'user-value'
+
+
+def test_settings_defaults_are_staged_and_cancel_does_not_save(qapp, monkeypatch):
+    import gui.settings as settings
+    from gui.dialogs import SettingsDialog
+    saved = []
+    monkeypatch.setattr(settings, "save_settings", lambda value: saved.append(value))
+    dialog = SettingsDialog()
+    dialog.nmrpipe_edit.setText("custom")
+    dialog.linewidth_spins["1H"].setValue(99)
+    dialog._restore_defaults()
+    assert dialog.nmrpipe_edit.text() == ""
+    assert dialog.linewidth_spins["1H"].value() == settings.DEFAULTS["linewidth_hz"]["1H"]
+    assert dialog.font_size_combo.currentData() == 0
+    assert not saved
+    dialog.reject()
+    assert not saved
+
+
+def test_settings_menu_action_opens_directly(qapp, monkeypatch):
+    from gui.main_window import MainWindow
+    opened = []
+    monkeypatch.setattr(MainWindow, "_open_settings", lambda self: opened.append(self))
+    window = MainWindow()
+    assert window.settings_action.menu() is None
+    window.settings_action.trigger()
+    assert opened == [window]
+    window.close()

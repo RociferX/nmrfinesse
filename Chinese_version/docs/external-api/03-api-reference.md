@@ -1,6 +1,6 @@
-# 03 · API 参考(v1.1.5)
+# 03 · API 参考(v1.1.6)
 
-顶层导出见`nmrfinesse_api/__init__.py`，API **1.1.5**仅在`nmrfinesse_api.session.API_VERSION`定义。软件**1.0.12**与API分别版本化，统一峰表为38列。
+顶层导出见`nmrfinesse_api/__init__.py`，API **1.1.6**仅在`nmrfinesse_api.session.API_VERSION`定义。软件**1.0.12**与API分别版本化，统一峰表为38列。
 
 ## 3.1 会话与数据集
 
@@ -392,3 +392,6 @@ python -m nmrfinesse_api compat --golden            # 顺带跑黄金向量自�
   不算进指纹);守卫 `tests/test_compat.py` 要求指纹与声明一致、分级与 `affected`
   自洽、`same` 时 token 不变、黄金向量可复现。改动用
   `python scripts/update_compat_declaration.py --level <分级> [--affected …]` 更新。
+
+
+建立参考返回的ReferenceSpectrum保留script_path/script_sha256（冻结process.com），新增fid_scripts列表，每项含path、sha256、source_path。转换成功后、处理开始前捕获实际fid.com字节并冻结到参考目录；分段转换保留全部子脚本。to_dict()/reference.json/CLI返回同样字段。旧JSON缺此字段时为[]；获得旧参考缺失的FID快照需force=True重建，不猜写历史脚本。

@@ -659,7 +659,8 @@ class SpectrumViewer(QWidget):
         splitter.setStretchFactor(0, 1)
         splitter.setSizes([620, controls.natural_height()])
         self.view_splitter = splitter
-        self.plot.setMinimumHeight(300)
+        # Keep the plot minimum in physical pixels, like the workspace canvas.
+        self.plot.setMinimumHeight(round(240 / self.devicePixelRatioF()))
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(splitter)

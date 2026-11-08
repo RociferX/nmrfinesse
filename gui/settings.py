@@ -44,9 +44,9 @@ DEFAULTS: dict = {
     "guide": {"first_import_hint_shown": False},
 
     "language": "auto",
-
+    # Zero follows the screen; manual values are in points.
     "interface_font_size": 0,
-    "pipeline": {"simple_mode": False},
+    "pipeline": {"simple_mode": False, "parallel_workers": 5},
     "smile": {"nthread": 2},
 }
 
@@ -86,6 +86,13 @@ def _language_value(raw: object) -> str:
         return "auto"
     code = normalize_language(text)
     return code if code in USER_CHOICES else "auto"
+
+
+def normalize_workers(value):
+    try:
+        return max(1, min(10, int(value)))
+    except (TypeError, ValueError):
+        return 5
 
 
 def _safe_nthread(raw: object) -> int:
@@ -148,6 +155,9 @@ def load_settings() -> dict:
             )
         },
         "pipeline": {
+            "parallel_workers": normalize_workers(
+                (raw.get("pipeline") or {}).get("parallel_workers", 5)
+                if isinstance(raw.get("pipeline"), dict) else 5),
             "simple_mode": bool(
                 (raw.get("pipeline") or {}).get("simple_mode", False)
                 if isinstance(raw.get("pipeline"), dict)

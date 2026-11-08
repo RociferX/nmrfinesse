@@ -1,4 +1,4 @@
-# 01 · Positioning and terminology (API v1.1.5)
+# 01 · Positioning and terminology (API v1.1.6)
 
 ## What it is
 

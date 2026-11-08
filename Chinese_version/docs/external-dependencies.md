@@ -30,8 +30,8 @@ NMRPipe 主程序由 `find_nmrpipe_bin` 查找,顺序如下:
 其它 NMRPipe companion 工具优先使用已配置且有效的单工具路径；否则先在 `csh` 环境中查找，
 再从已发现的安装目录及其父目录下的 `com/` 子目录查找。
 
-默认配置在 `nmrfinesse_data/config/nmrfinesse.yaml`。要做机器本地覆盖,就把它复制成
-`nmrfinesse_data/config/nmrfinesse.local.yaml`;该文件被 git 忽略,正是为了让机器路径永远不会进仓库。
+默认配置在 `nmrfinesse_data/config/nmrfinesse.yaml`。从源码运行时，可在同目录新建
+`nmrfinesse.local.yaml` 保存本机覆盖项，该文件由 Git 忽略。AppImage 使用当前用户的配置目录。
 
 ```yaml
 backend:

@@ -111,3 +111,21 @@ def test_group_panel_public_refresh(qapp: QApplication, host) -> None:
     page = GroupBatchPanel(host)
     assert page.current_group_id == ""
     page.refresh()
+
+
+
+def test_reference_phase_start_resets_previous_cancel(tmp_path, monkeypatch):
+    from backend.runtime import cancel_requested, clear_cancel, request_cancel
+    from gui.processing import ProcessingController
+    manager = ProjectManager.create_project(tmp_path / "phase-cancel", "test")
+    controller = ProcessingController(manager)
+    monkeypatch.setattr(controller, "_backend_instance", lambda: object())
+    def search(*args, **kwargs):
+        assert not cancel_requested()
+        return ({"F1": (0, 0)}, "report.json")
+    monkeypatch.setattr("workflow.reference_scripts.optimise_reference_phases", search)
+    request_cancel()
+    try:
+        assert controller.optimise_reference_phases("E1", "D1", "D2")[1] == "report.json"
+    finally:
+        clear_cancel()

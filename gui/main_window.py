@@ -58,6 +58,7 @@ from gui.tutorial import TutorialDialog
 from qtcompat import Signal
 from ui_support.i18n import tr
 
+# Prepare heavy modules behind the loading screen before workspace interaction.
 if TYPE_CHECKING:  # pragma: no cover
     from gui.spectrum_panel import SpectrumPanel
     from workflow.import_workflow import ImportResult
@@ -123,6 +124,8 @@ class MainWindow(QMainWindow):
     batch_import_finished = Signal(str, str, int, object)  # (exp_id, batch_id, count, results)
     # (exp_id, batch_id, count, results)
     # (exp_id, batch_id, count, results)
+    # (exp_id, batch_id, count, results)
+    # (exp_id, batch_id, count, results)
     batch_import_progress = Signal(str, str, str, bool, str)
 
     group_data_done = Signal(str, str, str)  # (exp_id, data_id, status)
@@ -133,7 +136,6 @@ class MainWindow(QMainWindow):
     log_append_requested = Signal(str, object)
     operation_feedback = Signal(str, str)
 
-    _spectrum_panel_ready = Signal()
 
     def __init__(
         self,
@@ -164,7 +166,6 @@ class MainWindow(QMainWindow):
 
         self.log_append_requested.connect(self._append_log)
         self.operation_feedback.connect(self._show_feedback)
-        self._spectrum_panel_ready.connect(self._on_spectrum_panel_ready)
         self._pending_data_names: dict[str, str] = {}
         # Keep script editors alive, keyed by (data_id, step).
         self._script_editors: dict[tuple[str, str], ScriptEditorDialog] = {}
@@ -206,6 +207,10 @@ class MainWindow(QMainWindow):
         self.refresh()
         self._show_startup_environment_status()
 
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
@@ -267,6 +272,10 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     def _apply_default_geometry(self) -> None:
         """Open the default geometry: the top is attached to the upper edge of the screen, and the
         height fills the available area (not covering the taskbar). The default column width is
@@ -280,19 +289,32 @@ class MainWindow(QMainWindow):
 
         from ui_support.window_layout import available_geometry, initial_window_size
 
-        cols = [22, 34, 44]
         screen = self.screen() or QGuiApplication.primaryScreen()
         avail = screen.availableGeometry() if screen is not None else available_geometry(self)
-        size = initial_window_size(avail)
+        size = initial_window_size(avail, screen.devicePixelRatio() if screen else 1.0)
         self.resize(size)
         self._initial_requested_size = size
-        self.main_splitter.setSizes([round(size.width() * value / 100) for value in cols])
-        QTimer.singleShot(0, self, self._fit_tree_width)
-        self.workflow_splitter.setSizes([round(size.height() * .72), round(size.height() * .28)])
+        self._set_initial_workspace_width(size.width())
+        self.workflow_splitter.setSizes([round(size.height() * .776), round(size.height() * .224)])
         if not QApplication.platformName().startswith('wayland'):
             self.setGeometry(QRect(avail.x() + (avail.width() - size.width()) // 2,
                                    avail.y() + (avail.height() - size.height()) // 2,
                                    size.width(), size.height()))
+
+    def _set_initial_workspace_width(self, window_width: int) -> None:
+        splitter = self.main_splitter
+        margins = self.workspace_scroll.parentWidget().layout().contentsMargins()
+        width = max(splitter.minimumWidth(), window_width - margins.left()
+                    - margins.right() - 2 * self.workspace_scroll.frameWidth())
+        columns = width - 2 * splitter.handleWidth()
+        sizes = [round(columns * weight / 24) for weight in (5, 10, 9)]
+        splitter.setSizes(sizes)
+        tree = self.project_tree.tree
+        margins = self.project_tree.layout().contentsMargins()
+        object_width = (sizes[0] - tree.columnWidth(1) - 2 * tree.frameWidth()
+                        - margins.left() - margins.right())
+        tree.setColumnWidth(0, object_width)
+        self._queue_tree_width()
 
     def _build_menus(self) -> None:
         bar = self.menuBar()
@@ -308,22 +330,6 @@ class MainWindow(QMainWindow):
         file_menu.addSeparator()
         file_menu.addAction(tr("quit"), self.close)
 
-
-        view_menu = bar.addMenu(tr("&View"))
-
-        view_menu.addSeparator()
-        self.view_left_action = QAction(tr("Project management on the left"), self, checkable=True)
-        self.view_left_action.setChecked(True)
-        self.view_left_action.toggled.connect(self._toggle_left)
-        view_menu.addAction(self.view_left_action)
-        self.view_pipeline_action = QAction(tr("Intermediate Pipeline"), self, checkable=True)
-        self.view_pipeline_action.setChecked(True)
-        self.view_pipeline_action.toggled.connect(self._toggle_pipeline)
-        view_menu.addAction(self.view_pipeline_action)
-        self.view_spectrum_action = QAction(tr("right spectrum"), self, checkable=True)
-        self.view_spectrum_action.setChecked(True)
-        self.view_spectrum_action.toggled.connect(self._toggle_spectrum)
-        view_menu.addAction(self.view_spectrum_action)
 
         tools_menu = bar.addMenu(tr("&Tools"))
         tools_menu.setToolTipsVisible(True)
@@ -365,8 +371,8 @@ class MainWindow(QMainWindow):
             lambda: self.export_ucsf_action.setEnabled(self.manager.project is not None)
         )
 
-        settings_menu = bar.addMenu(tr("&Settings"))
-        settings_menu.addAction(tr("Software settings..."), self._open_settings)
+        self.settings_action = bar.addAction(tr("&Settings"))
+        self.settings_action.triggered.connect(self._open_settings)
         help_menu = bar.addMenu(tr("&Help"))
         help_menu.addAction(tr("Usage tutorial..."), self.show_tutorial)
         help_menu.addAction(tr("about"), self.about)
@@ -395,9 +401,6 @@ class MainWindow(QMainWindow):
         self.project_tree.delete_requested.connect(self._delete_experiment_by_id)
         self.project_tree.delete_project_requested.connect(self._delete_project)
         self.project_tree.rename_project_requested.connect(self._rename_project)
-        self.project_tree.create_experiment_requested.connect(
-            self._create_experiment
-        )
         self.project_tree.import_data_requested.connect(self._import_data_for)
         self.project_tree.data_action_requested.connect(self._on_data_action)
         self.project_tree.data_rename_requested.connect(self._rename_data)
@@ -408,6 +411,8 @@ class MainWindow(QMainWindow):
             self._on_experiment_create_submitted
         )
         self.project_tree.group_add_data_requested.connect(self._group_add_data)
+        self.project_tree.group_create_requested.connect(self._create_selected_group)
+        self.project_tree.delete_selected_data_requested.connect(self._delete_selected_data)
         self.project_tree.group_remove_data_requested.connect(
             self._group_remove_data
         )
@@ -418,6 +423,11 @@ class MainWindow(QMainWindow):
         )
 
         self.center_panel = CenterPanel(self.manager, self.controller)
+        group_page = self.center_panel.group_page
+        group_page.temperature_sorts = self.project_tree.group_temperature_sorts
+        group_page.temperature_sort_changed.connect(
+            self.project_tree.apply_group_temperature_sort
+        )
         self.pipeline = self.center_panel.pipeline
         self.center_panel.log_message.connect(self._append_log)
 
@@ -445,6 +455,9 @@ class MainWindow(QMainWindow):
         )
         self.center_panel.edit_notes_requested.connect(self._edit_notes)
         self.center_panel.group_run_requested.connect(self._run_group_batch)
+        self.center_panel.pipeline.reference_run_requested.connect(
+            lambda *args: self._run_group_batch(*args, single=True)
+        )
         self.pipeline.run_target_finished.connect(self._on_pipeline_run_finished)
         self.pipeline.spectrum_results_changed.connect(self._on_spectrum_results_changed)
         self.pipeline.run_started.connect(self._on_pipeline_run_started)
@@ -478,8 +491,8 @@ class MainWindow(QMainWindow):
         self.project_tree.tree.header().sectionResized.connect(self._queue_tree_width)
         self.project_tree.tree.verticalScrollBar().rangeChanged.connect(self._queue_tree_width)
         self.main_splitter.setStretchFactor(0, 0)
-        self.main_splitter.setStretchFactor(1, 40)
-        self.main_splitter.setStretchFactor(2, 50)
+        self.main_splitter.setStretchFactor(1, 1)
+        self.main_splitter.setStretchFactor(2, 1)
         # Use a 1080p content canvas; smaller screens expose it through workspace scrolling.
 
         central = QWidget()
@@ -516,7 +529,12 @@ class MainWindow(QMainWindow):
         self.statusBar().hide()
         self.workspace_scroll = QScrollArea()
         self.workspace_scroll.setWidgetResizable(True)
-        self.main_splitter.setMinimumSize(1800, 850)
+        screen = self.screen() or QApplication.primaryScreen()
+        pixel_ratio = screen.devicePixelRatio() if screen else 1.0
+        self._workspace_design_height = round(850 / pixel_ratio)
+        self.main_splitter.setMinimumSize(
+            round(1800 / pixel_ratio), self._workspace_design_height
+        )
         self.workspace_scroll.setWidget(self.main_splitter)
         self._workspace_fit_pending = False
         self.main_splitter.installEventFilter(self)
@@ -552,7 +570,7 @@ class MainWindow(QMainWindow):
 
     def _fit_workspace_height(self) -> None:
         self._workspace_fit_pending = False
-        height = max(850, self.main_splitter.minimumSizeHint().height())
+        height = max(self._workspace_design_height, self.main_splitter.minimumSizeHint().height())
         if self.main_splitter.minimumHeight() != height:
             self.main_splitter.setMinimumHeight(height)
 
@@ -577,14 +595,12 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     def _build_spectrum_panel(self, apply_context: bool = False):
-        """Build the spectrum panel on the right (return directly if it has been built).
-        0.2.199-patch29ht: The panel import pyqtgraph/viewer is relatively heavy and can be
-        called after the window is displayed; when the user preemptively triggers the spectrum
-        operation, it is built synchronously by _ensure_spectrum_panel(). When
-        apply_context=True, the application context is selected according to the current tree
-        (delayed use of the build path).
-        """
+        """Build the viewer on the GUI thread; startup calls it before opening the workspace."""
         if self.spectrum_panel is not None:
             return self.spectrum_panel
         from gui.spectrum_panel import SpectrumPanel
@@ -628,51 +644,33 @@ class MainWindow(QMainWindow):
             apply_context=True
         )
 
-    def _on_spectrum_panel_ready(self) -> None:
-        'Background preheating is completed -> Main thread builds spectrum panel.'
-        try:
-            self._build_spectrum_panel(apply_context=True)
-        except Exception:  # noqa: BLE001
-            pass
+    def _finish_startup(self, progress=None) -> None:
+        """Prepare imports and Qt widgets on the GUI thread before exposing the workspace."""
+        self._fit_initial_frame()
+        import importlib
 
-    def _finish_startup(self) -> None:
-        """After the window is displayed: import the heavy module in the background, and then build
-        the spectrum panel after completion. 0.2.199-patch29ht(user): show first and then import
-        -- user can use other functions immediately, and the import is performed in the
-        background thread; after preheating nmrglue/scipy/matplotlib, there will be no
-        additional waiting for subsequent clicks on spectrum/peak selection (the cost is moved
-        from "when clicking spectrum" to "after the window is available").
-        """
-        import threading
-
-        def work() -> None:
-
-
-            try:
-                import gui.spectrum_panel  # noqa: F401
-            except Exception:  # noqa: BLE001
-                pass
-            self._spectrum_panel_ready.emit()
+        stages = [
+            (0, tr("Preparing spectrum viewer…"), ("gui.spectrum_panel", "nmrglue")),
+            (35, tr("Preparing data processing…"),
+             ("scipy.ndimage", "scipy.signal", "matplotlib.pyplot", "workflow.reference_scripts")),
+        ]
+        for percent, message, modules in stages:
+            if progress:
+                progress(message, percent)
+            for module in modules:
+                importlib.import_module(module)
+        if progress:
+            progress(tr("Opening workspace…"), 80)
+        self._build_spectrum_panel(apply_context=True)
+        self._fit_initial_frame()
+        if progress:
+            progress(tr("Opening workspace…"), 100)
 
 
-            for _mod in (
-                "nmrglue",
-                "scipy.ndimage",
-                "scipy.signal",
-                "matplotlib.pyplot",
-            ):
-                try:
-                    import importlib
-
-                    importlib.import_module(_mod)
-                except Exception:  # noqa: BLE001
-                    continue
-
-        self._prewarm_thread = threading.Thread(
-            target=work, daemon=True, name="nmrfinesse-prewarm"
-        )
-        self._prewarm_thread.start()
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
@@ -776,6 +774,10 @@ class MainWindow(QMainWindow):
                 lambda _checked=False, p=path: self._open_root(Path(p))
             )
 
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
@@ -977,6 +979,10 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     def _data_ndim(self, exp_id: str, data_id: str) -> int:
         """Read data dimension from metadata (3D batch is not supported yet); fallback if unable to
         read 2.
@@ -993,6 +999,26 @@ class MainWindow(QMainWindow):
         return 2
 
 
+    def _create_selected_group(self, exp_id: str, data_ids: list[str]) -> None:
+        try:
+            group = self.manager.create_data_group(exp_id, data_ids=data_ids)
+            for old in self.manager.project.experiment(exp_id).groups:
+                if old.id != group.id:
+                    for data_id in data_ids:
+                        self.manager.remove_from_group(exp_id, old.id, data_id)
+            self.manager.save()
+        except (ProjectError, OSError) as exc:
+            message = tr("Could not create the data group: {p0}", p0=describe_exception(exc))
+            self._append_log(message)
+            self._show_feedback(message, "error")
+            InfoDialog.show_info(self, tr("Create data group"), message)
+            return
+        self.refresh()
+        self.project_tree.select_group(exp_id, group.id)
+        message = tr("Created data group {p0}", p0=group.id)
+        self._append_log(message)
+        self._show_feedback(message, "success")
+
     def _group_add_data(self, exp_id: str, group_id: str, data_ids: list) -> None:
         """Add multiple data to the data group (project.json is the only source,
         0.2.164-patch1).
@@ -1005,18 +1031,6 @@ class MainWindow(QMainWindow):
             return
         for data_id in data_ids or []:
             try:
-
-
-                if self._data_ndim(exp_id, str(data_id)) >= 3:
-                    self._append_log(
-                        tr(
-                            "data {p0} It is a 3D spectrum. Batch only supports 2D for now and has "
-                            "not been added to the data "
-                            "group",
-                            p0=data_id,
-                        )
-                    )
-                    continue
                 self.manager.add_to_group(exp_id, group_id, str(data_id))
                 self._append_log(tr("data {p0} Joined data group {p1}", p0=data_id, p1=group_id))
             except Exception as exc:  # noqa: BLE001
@@ -1112,38 +1126,70 @@ class MainWindow(QMainWindow):
         steps: list,
         reference_data_id: str = "",
         params: dict | None = None,
+        *,
+        single: bool = False,
     ) -> None:
         'Data group batch processing: background thread execution, progress output via log.'
         if self.manager.project is None:
             return
-        group = self.manager.group(exp_id, group_id)
-        if group is None or not group.data_ids:
-            self._append_log(tr(
-                "data group {p0} Without member data, batch processing cannot be "
-                "performed",
-                p0=group_id,
-            ))
-            return
-        step_label = " → ".join(steps) if steps else tr("(null)")
-        ref_text = (
-            tr(", reference data {p0}", p0=reference_data_id) if reference_data_id else ""
-        )
-        group_scope = self.log_panel.scope_key("group", exp_id, "", group_id)
-        self._append_log(
-            tr(
-                "Start data group {p0} Batch processing: "
-                "{p1}{p2}",
-                p0=group_id,
-                p1=step_label,
-                p2=ref_text,
-            ),
-            scope=group_scope,
-        )
-        self.center_panel.group_page.set_progress(tr("Batch processing run..."))
-        self._show_feedback(tr('Batch processing: {p0}', p0=group_id), 'running')
+        if single:
+            try:
+                self.manager.data(exp_id, group_id)
+            except ProjectError:
+                return
+        from core.project.grouping import active_members
 
-        self.project_tree.clear_batch_status()
-        for data_id in group.data_ids:
+        data_ids = (
+            [group_id] if single else [d.id for d in active_members(self.manager, exp_id, group_id)]
+        )
+        if not data_ids:
+            self._append_log(
+                tr(
+                    "data group {p0} Without member data, batch processing cannot be performed",
+                    p0=group_id,
+                )
+            )
+            return
+        pipeline = self.center_panel.pipeline
+        claimed = []
+        for data_id in data_ids:
+            target = (exp_id, data_id, "reference_batch")
+            ndim = self._data_ndim(exp_id, data_id)
+            if ndim != 2 and not single:
+                # A serial 1D/3D group owns one representative target for the whole run.
+                if claimed:
+                    continue
+            message = pipeline._start_guard_message(target, ndim)
+            if message or not pipeline._register_running_target(target, ndim):
+                for previous in claimed:
+                    pipeline._finish_running_target(previous)
+                self._append_log(message or tr("This data already has a task running"))
+                return
+            claimed.append(target)
+        step_label = " → ".join(steps) if steps else tr("(null)")
+        ref_text = tr(", reference data {p0}", p0=reference_data_id) if reference_data_id else ""
+        if single:
+            run_scope = self.log_panel.scope_key("data", exp_id, group_id)
+            self._append_log(
+                tr("Start reference processing for {p0}: {p1}{p2}",
+                   p0=group_id, p1=step_label, p2=ref_text),
+                scope=run_scope,
+            )
+            self._feedback_tasks.add((exp_id, group_id))
+            self._show_feedback(
+                tr("Processing {p0} with reference scripts", p0=group_id), "running"
+            )
+        else:
+            run_scope = self.log_panel.scope_key("group", exp_id, "", group_id)
+            self._append_log(
+                tr("Start data group {p0} Batch processing: {p1}{p2}",
+                   p0=group_id, p1=step_label, p2=ref_text),
+                scope=run_scope,
+            )
+            self.center_panel.group_page.set_progress(tr("Batch processing run..."))
+            self._show_feedback(tr("Batch processing: {p0}", p0=group_id), "running")
+            self.project_tree.clear_batch_status()
+        for data_id in data_ids:
             self.project_tree.mark_running(exp_id, data_id)
 
         _done_map = {
@@ -1167,8 +1213,10 @@ class MainWindow(QMainWindow):
             to the main thread (not waiting for the entire batch).
             """
             data_id = per.get("data_id", "")
-            _st = _status_label(per.get("status", ""))
-            self.group_data_done.emit(exp_id, data_id, _st)
+            if not single:
+                self.group_data_done.emit(
+                    exp_id, data_id, _status_label(per.get("status", ""))
+                )
             if per.get("status") == "success" and "spectrum" in steps:
                 self.spectrum_results_changed.emit(exp_id, data_id)
             data_scope = self.log_panel.scope_key("data", exp_id, data_id)
@@ -1181,34 +1229,41 @@ class MainWindow(QMainWindow):
                 _t0 = time.monotonic()
                 result = self.controller.run_group_batch(
                     exp_id,
-                    group_id,
+                    [group_id] if single else group_id,
                     steps,
                     reference_data_id=reference_data_id,
                     params=params or {},
                     on_data_done=on_data_done,
-                    progress=lambda msg: self.log_append_requested.emit(
-                        msg, group_scope
-                    ),
+                    progress=lambda msg: self.log_append_requested.emit(msg, run_scope),
                 )
+                if single:
+                    member = (result.get("results") or {}).get(group_id, {})
+                    status = member.get("status")
+                    ok = status in ("success", "already_done")
+                    if ok:
+                        label = tr("Success")
+                    else:
+                        label = _status_label(
+                            status if status in ("skipped", "cancelled") else "failed"
+                        )
+                    message = tr("Reference processing for {p0}: {p1}", p0=group_id, p1=label)
+                    self.log_append_requested.emit(message, run_scope)
+                    self.operation_feedback.emit(message, "success" if ok else "error")
+                    return
                 summary = dict(result.get("summary") or {})
                 failed = list(result.get("failed") or [])
                 skipped = list(result.get("skipped") or [])
                 results = result.get("results") or {}
-                cancelled = [
-                    d for d, r in results.items() if r.get("status") == "cancelled"
-                ]
+                cancelled = [d for d, r in results.items() if r.get("status") == "cancelled"]
                 _elapsed = time.monotonic() - _t0
                 _success = int(summary.get("success", 0))
                 _total = int(summary.get("total", 0))
-                info = (
-                    tr(
-                        "Data group {p0} batch finished: {p1} ok, {p2} failed, "
-                        "{p3:.1f}s",
-                        p0=group_id,
-                        p1=_success,
-                        p2=len(failed),
-                        p3=_elapsed,
-                    )
+                info = tr(
+                    "Data group {p0} batch finished: {p1} ok, {p2} failed, {p3:.1f}s",
+                    p0=group_id,
+                    p1=_success,
+                    p2=len(failed),
+                    p3=_elapsed,
                 )
                 if _total:
                     info += tr("(common {p0})", p0=_total)
@@ -1231,16 +1286,21 @@ class MainWindow(QMainWindow):
                         }
                     )
                 self.center_panel.group_page.summary_requested.emit(
-                    {"info": info, "items": items, "log_scope": group_scope}
+                    {"info": info, "items": items, "log_scope": run_scope}
                 )
-                self.operation_feedback.emit(info, 'error' if failed or cancelled else 'success')
+                self.operation_feedback.emit(info, "error" if failed or cancelled else "success")
             except Exception as exc:  # noqa: BLE001
-                self.log_append_requested.emit(describe_exception(exc), group_scope)
-                self.operation_feedback.emit(describe_exception(exc), 'error')
+                self.log_append_requested.emit(describe_exception(exc), run_scope)
+                self.operation_feedback.emit(describe_exception(exc), "error")
             finally:
 
 
-                self.batch_run_done.emit()
+                for target in claimed:
+                    pipeline._finish_running_target(target)
+                if single:
+                    pipeline.run_target_finished.emit(exp_id, group_id)
+                else:
+                    self.batch_run_done.emit()
 
         import threading
 
@@ -1568,6 +1628,10 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     def _on_view_step_log(self, step_id: str) -> None:
         """Position the log panel: append the marked line and expand it (append automatically
         scrolls to the bottom).
@@ -1711,11 +1775,13 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(0, self, self._apply_interface_font)
 
     def _fit_initial_frame(self) -> None:
-        if not getattr(self, '_initial_geometry_managed', False):
+        if (not getattr(self, '_initial_geometry_managed', False)
+                or getattr(self, '_initial_geometry_ready', False)):
             return
         from ui_support.window_layout import available_geometry, initial_window_size
         area = available_geometry(self)
-        target = initial_window_size(area)
+        screen = self.screen() or QApplication.primaryScreen()
+        target = initial_window_size(area, screen.devicePixelRatio() if screen else 1.0)
         frame = self.frameGeometry().size() - self.size()
         width = max(1, target.width()-frame.width())
         height = max(1, target.height()-frame.height())
@@ -1724,7 +1790,8 @@ class MainWindow(QMainWindow):
         self.resize(width, height)
         self.move(area.x()+(area.width()-target.width())//2,
                   area.y()+(area.height()-target.height())//2)
-        self._queue_tree_width()
+        self._set_initial_workspace_width(width)
+        self._initial_geometry_ready = True
         if hasattr(self, '_initial_opacity'):
             QTimer.singleShot(0, self, self._reveal_initial_window)
 
@@ -2327,35 +2394,50 @@ class MainWindow(QMainWindow):
         self.project_tree.refresh()
 
     def _delete_data(self, exp_id: str, data_id: str) -> None:
-        """Delete sample data (do not delete experiments); confirm + manager.delete_data + save +
-        refresh.
-        """
-        if self.manager.project is None:
+        self._delete_selected_data([(exp_id, data_id)])
+
+    def _delete_selected_data(self, targets: list[tuple[str, str]]) -> None:
+        if self.manager.project is None or not targets:
             return
-        confirmed = ConfirmDialog.confirm(
-            self,
-            tr("delete sample data"),
-            tr(
+        if len(targets) == 1:
+            title = tr("delete sample data")
+            message = tr(
                 "delete sample data {p0} and its output files?\nIt will be moved to the system "
                 "trash and can be restored.\n(the WorkflowRun audit trail is "
                 "kept)",
-                p0=data_id,
-            ),
-        )
-        if not confirmed:
+                p0=targets[0][1],
+            )
+        else:
+            title = tr("Delete selected sample data…")
+            message = tr(
+                "Move {p0} selected data sets and their output files to the trash? "
+                "They can be restored.",
+                p0=len(targets),
+            )
+        if not ConfirmDialog.confirm(self, title, message):
             return
-        try:
-            self.manager.delete_data(exp_id, data_id)
-            self.manager.save()
-            self._append_log(tr(
-                "sample data {p0} Moved to system trash (can be restored from "
-                "trash)",
-                p0=data_id,
-            ))
-        except ProjectError as exc:
-            InfoDialog.show_info(self, tr("Delete sample data failed"), str(exc))
-            return
-        self.refresh()
+        errors = []
+        deleted = []
+        for exp_id, data_id in targets:
+            try:
+                self.manager.delete_data(exp_id, data_id)
+                deleted.append((exp_id, data_id))
+            except (ProjectError, OSError) as exc:
+                errors.append(f"{exp_id}/{data_id}: {describe_exception(exc)}")
+        if deleted:
+            try:
+                self.manager.save()
+            except (ProjectError, OSError) as exc:
+                errors.append(describe_exception(exc))
+            for exp_id, data_id in deleted:
+                self._append_log(
+                    tr("sample data {p0} Moved to system trash (can be restored from trash)",
+                       p0=data_id),
+                    scope=self.log_panel.scope_key("data", exp_id, data_id),
+                )
+            self.refresh()
+        if errors:
+            InfoDialog.show_info(self, tr("Delete sample data failed"), "\n".join(errors))
 
     def _create_experiment_with_title(self, title: str) -> None:
         'Embedded form in middle panel: Create a new blank experiment.'
@@ -2477,6 +2559,10 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     def _toggle_left(self, checked: bool) -> None:
         self.project_tree.setVisible(checked)
 
@@ -2493,10 +2579,12 @@ class MainWindow(QMainWindow):
         """
         for widget in (self.project_tree, self.workflow_splitter):
             visible = not expanded
-            if widget is self.project_tree:
-                visible = visible and self.view_left_action.isChecked()
             widget.setVisible(visible)
 
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
@@ -2736,6 +2824,10 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     def _current_experiment_id(self) -> str | None:
         exp_id = self.project_tree.current_experiment_id()
         return exp_id or None
@@ -2763,7 +2855,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(self._title_with_environment(f"NMRFinesse - {project.name}"))
 
         active_exps = [e for e in project.experiments if not getattr(e, "trashed", False)]
-        if active_exps and not self.center_panel.current_experiment_id():
+        if active_exps and not self.project_tree.current_experiment_id():
             self.project_tree.select_experiment(active_exps[0].id)
         self._update_context_bar()
 
@@ -2796,9 +2888,11 @@ class MainWindow(QMainWindow):
             app.setWindowIcon(_icon)
 
 
+        from gui.startup import show_startup
+
         window = MainWindow(defer_spectrum_panel=True)
-        window.show()
-        QTimer.singleShot(0, window._finish_startup)
+        show_startup(window, lambda status: window._finish_startup(progress=status))
+        window._set_initial_workspace_width(window.width())
         code = app.exec()
 
 

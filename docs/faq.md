@@ -13,7 +13,7 @@ editable repository checkout.
 ### Can I run it on Windows or macOS?
 
 Linux is the target runtime; Windows is an editing environment. macOS has not been validated.
-The current version is software 1.0.12 / API v1.1.5. Download the Linux AppImage from the
+The current version is software 1.0.12 / API v1.1.6. Download the Linux AppImage from the
 [1.0.12 release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12).
 API parameters and the
 38-column peak-table contract are documented in the [Python API](python-api.md).
@@ -33,13 +33,9 @@ Source-level cleanup of invalid or duplicate NUS points can rewrite acquisition 
 Yes, for both 2D and 3D, using SMILE reconstruction. SMILE parameter optimisation and ranked
 reruns are temporarily unavailable in the GUI.
 
-### Why is batch processing 2D-only?
+### Which dimensions does batch processing support?
 
-Because 3D (especially 3D NUS/SMILE) memory risk on target machines was not resolved, and a
-process that can take a host down is not something to run unattended. Non-2D datasets are skipped
-with a reason rather than processed with an approximation. Batch also only applies the group
-configuration; it does not pick per-dataset parameters, so differences between outputs reflect
-the data.
+1D/2D/3D with homogeneous groups. Automatic 2D processing defaults to five parallel data sets, configurable from 1 to 10. 3D runs sequentially.
 
 ### Why does it refuse to process when sampling is "uncertain"?
 
@@ -51,16 +47,16 @@ log states which rule fired.
 
 Yes - English is the interface's source language, so the menus, panel labels, statuses and
 messages are English by default. The same build also speaks Chinese: the interface follows the
-system language, or you can pin it with `NMRFinesse_LANG=zh` (the Chinese text lives in
+system language, or you can pin it with `NMRFINESSE_LANG=zh` (the Chinese text lives in
 `ui_support/locales/zh.json`). One code base, two languages; a Chinese edition of the
 **documentation** is in `Chinese_version/`.
 
-**You can also change it inside the GUI**: `Settings -> Software settings -> Interface
+**You can also change it inside the GUI**: `Settings -> Interface
 language`, choosing "Follow the system language / Chinese / English"; it is saved to the local
 override config and takes effect after a restart. The resolution order is "explicit setting,
-then the `NMRFinesse_LANG` environment variable, then the preference from the settings, then the
-system locale (QLocale / `LANG` / `LC_ALL`), then the default of this tree". `NMRFinesse_LANG`
-deliberately comes before the setting so that `NMRFinesse_LANG=zh ./NMRFinesse.AppImage` keeps
+then the `NMRFINESSE_LANG` environment variable, then the preference from the settings, then the
+system locale (QLocale / `LANG` / `LC_ALL`), then the default of this tree". `NMRFINESSE_LANG`
+deliberately comes before the setting so that `NMRFINESSE_LANG=zh ./NMRFinesse.AppImage` keeps
 overriding a stale setting for one run - while `LANG=en_US.UTF-8` is only the system locale and
 does **not** override the Chinese you picked in the settings.
 

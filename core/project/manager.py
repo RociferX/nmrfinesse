@@ -81,7 +81,9 @@ def atomic_write_text(path: Path, text: str) -> None:
     used to overwrite the file in place).
     """
     path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(prefix=path.stem + "-", suffix=path.suffix + ".tmp", dir=path.parent)
+    fd, tmp = tempfile.mkstemp(
+        prefix=path.stem + "-", suffix=path.suffix + ".tmp", dir=path.parent
+    )
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             fh.write(text)
@@ -116,11 +118,16 @@ class ProjectManager:
     def __init__(self, root: Path | str | None = None) -> None:
         self.root = Path(root).resolve() if root else None
         self.project: ProjectInfo | None = None
+
+
         self._write_lock = threading.RLock()
+
         self._run_logs: dict[str, Any] = {}
 
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # lifecycle
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     @classmethod
     def create_project(
@@ -193,7 +200,9 @@ class ProjectManager:
             # (ExperimentEntry.from_dict already migrated them)
             old = manager.project.schema_version
             manager.project.schema_version = SCHEMA_VERSION
-            manager.add_history("project_migrated", {"from": old, "to": SCHEMA_VERSION})
+            manager.add_history(
+                "project_migrated", {"from": old, "to": SCHEMA_VERSION}
+            )
             migrated = True
         if migrated:
             # MIG-010 (2026-09-12): migrating in memory only would lose the migration result and its
@@ -206,7 +215,8 @@ class ProjectManager:
             except OSError as exc:  # noqa: BLE001 - report explicitly, never drop the migration
                 raise ProjectError(
                     tr(
-                        "cannot write the migration result (the original file is unchanged): {p0}",
+                        "cannot write the migration result (the original file is unchanged): "
+                        "{p0}",
                         p0=exc,
                     )
                 ) from exc
@@ -228,8 +238,6 @@ class ProjectManager:
         migrated = False
         for entry in self.project.experiments or []:
             for group in entry.groups or []:
-                # the legacy titles written by older versions are Chinese: keep the
-                # literal exactly as stored on disk (never translate it)
                 legacy = f"数据组 {group.id}"  # i18n: keep(legacy title, compare as stored)
                 if group.title == legacy:
                     group.title = f"Group {group.id}"
@@ -260,7 +268,9 @@ class ProjectManager:
         self.project = None
 
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # directory resolution
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def dir_path(self, key: str) -> Path:
         """Resolve a project-level directory (project.directories; the same-named directory
@@ -275,6 +285,7 @@ class ProjectManager:
             raise ProjectError(tr("project not loaded"))
         rel = self.project.directories.get(key, key)
         return self.root / rel
+
 
     def run_dir(self, run_id: str) -> Path:
         """The run directory ``<processing>/<exp_id>/runs/<run_id>/`` (snapshots and run.log
@@ -300,9 +311,10 @@ class ProjectManager:
         append_run_log_line(
             path,
             tr(
-                "run {p0} Start: workflow={p1} inputs={p2}",
+                "run {p0} Start: workflow={p1} "
+                "inputs={p2}",
                 p0=run.run_id,
-                p1=run.workflow_ref or "-",
+                p1=run.workflow_ref or '-',
                 p2=sorted(run.inputs),
             ),
         )
@@ -331,14 +343,7 @@ class ProjectManager:
         """A subdirectory inside a data entry (contract §9.2):
         raw/process/spectra/peaks/figures/report.
         """
-        if key not in (
-            "raw",
-            "process",
-            "spectra",
-            "peaks",
-            "figures",
-            "report",
-            "smile_optimized",
+        if key not in ("raw", "process", "spectra", "peaks", "figures", "report", "smile_optimized"
         ):
             raise ProjectError(tr("Unknown data subdirectory: {p0}", p0=key))
         return self.data_base(exp_id, data_id) / key
@@ -357,6 +362,7 @@ class ProjectManager:
             self.dir_path("analysis") / exp_id,  # historical CSP output (the feature was removed)
         ]
 
+
     def _data_paths(self, exp_id: str, data_id: str) -> list[Path]:
         """Every artifact path of a single data entry (cleaned up when the data is deleted)."""
         return [
@@ -364,26 +370,30 @@ class ProjectManager:
             self.dir_path("analysis") / exp_id / data_id,  # historical CSP output
         ]
 
+
     def _ensure_inside_root(self, path: Path) -> Path:
         resolved = path.resolve()
         if self.root is None or not resolved.is_relative_to(self.root):
-            raise ProjectError(
-                tr(
-                    "the path leaves the project directory; refusing the operation: {p0}",
-                    p0=path,
-                )
-            )
+            raise ProjectError(tr(
+                "the path leaves the project directory; refusing the operation: "
+                "{p0}",
+                p0=path,
+            ))
         return resolved
 
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # audit history
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     @_write_locked
     def add_history(self, action: str, fields: dict[str, Any] | None = None) -> HistoryEntry:
         if self.project is None:
             raise ProjectError(tr("project not loaded"))
         entry = HistoryEntry(
-            id=_next_sequence_id([h.id for h in self.project.processing_history], "H", width=3),
+            id=_next_sequence_id(
+                [h.id for h in self.project.processing_history], "H", width=3
+            ),
             timestamp=now_iso(),
             action=action,
             fields=dict(fields or {}),
@@ -392,7 +402,9 @@ class ProjectManager:
         return entry
 
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # experiments
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def create_experiment(
         self,
@@ -410,9 +422,13 @@ class ProjectManager:
         # a deleted number is never reused -- otherwise a new experiment would inherit the notes and
         # run records of the old one
         used_exp = {e.id for e in self.project.experiments}
-        used_exp.update(str(r.experiment_id) for r in (self.project.workflow_runs or []))
         used_exp.update(
-            str(h.fields.get("experiment_id", "")) for h in (self.project.processing_history or [])
+            str(r.experiment_id)
+            for r in (self.project.workflow_runs or [])
+        )
+        used_exp.update(
+            str(h.fields.get("experiment_id", ""))
+            for h in (self.project.processing_history or [])
         )
         entry = ExperimentEntry(
             id=_next_sequence_id(sorted(used_exp), "exp_"),
@@ -470,7 +486,9 @@ class ProjectManager:
         base = self.data_base(exp_id, data_id)
         if not base.is_dir():
             return False
-        return any((base / name).exists() for name in self._REAL_ARTIFACT_NAMES)
+        return any(
+            (base / name).exists() for name in self._REAL_ARTIFACT_NAMES
+        )
 
     def recover_trashed(self) -> int:
         """Recover soft-deleted entries whose files are back at their original path; returns how
@@ -546,7 +564,9 @@ class ProjectManager:
         return data_entry
 
     @_write_locked
-    def set_data_fid(self, exp_id: str, data_id: str, fid_path: Path | str) -> DataEntry:
+    def set_data_fid(
+        self, exp_id: str, data_id: str, fid_path: Path | str
+    ) -> DataEntry:
         """Record that a FID has been generated for this data entry."""
         data_entry = self.data(exp_id, data_id)
         data_entry.fid_path = str(fid_path)
@@ -558,7 +578,9 @@ class ProjectManager:
         return data_entry
 
     @_write_locked
-    def set_data_spectrum(self, exp_id: str, data_id: str, spectrum_path: Path | str) -> DataEntry:
+    def set_data_spectrum(
+        self, exp_id: str, data_id: str, spectrum_path: Path | str
+    ) -> DataEntry:
         """Record that a spectrum has been generated for this data entry."""
         data_entry = self.data(exp_id, data_id)
         data_entry.spectrum_path = str(spectrum_path)
@@ -611,7 +633,9 @@ class ProjectManager:
             target = self._ensure_inside_root(path)
             if not target.exists():
                 continue
-            dest = send_to_trash(target, self._trash_dir(), target.relative_to(self.root))
+            dest = send_to_trash(
+                target, self._trash_dir(), target.relative_to(self.root)
+            )
             removed.append(str(dest))
         data_entry.trashed = True
         data_entry.trashed_at = now_iso()
@@ -632,9 +656,11 @@ class ProjectManager:
         return removed
 
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # data groups (schema 1.4): the batch-processing unit, whose member data_ids are ordered;
     # deleting
     # a group does not disband its data
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def data_groups(self, exp_id: str) -> list[DataGroupEntry]:
         """Every data group of an experiment (an empty experiment yields an empty list)."""
@@ -683,6 +709,8 @@ class ProjectManager:
         unknown = [d for d in members if d not in existing]
         if unknown:
             raise ProjectError(tr("data does not exist: {p0}/{p1}", p0=exp_id, p1=unknown[0]))
+        from core.project.grouping import validate_dimensions
+        validate_dimensions(self, exp_id, members)
         group = DataGroupEntry(
             id=group_id,
             title=title or f"Group {group_id}",
@@ -728,7 +756,9 @@ class ProjectManager:
             {"experiment_id": exp_id, "group_id": group_id},
         )
 
-    def delete_data_group_with_members(self, exp_id: str, group_id: str) -> list[str]:
+    def delete_data_group_with_members(
+        self, exp_id: str, group_id: str
+    ) -> list[str]:
         """Delete a data group together with all its data (each artifact goes to the system
         trash and is
         soft-deleted).
@@ -770,6 +800,9 @@ class ProjectManager:
         if group is None:
             raise ProjectError(tr("data group does not exist: {p0}/{p1}", p0=exp_id, p1=group_id))
         self.data(exp_id, data_id)
+        from core.project.grouping import active_members, validate_dimensions
+        validate_dimensions(self, exp_id,
+                            [d.id for d in active_members(self, exp_id, group_id)] + [data_id])
         if data_id not in group.data_ids:
             group.data_ids.append(data_id)
             self.add_history(
@@ -812,7 +845,9 @@ class ProjectManager:
         entry
         (create_experiment + import_data).
         """
-        entry = self.create_experiment(title=title, sample_id=sample_id, metadata=metadata)
+        entry = self.create_experiment(
+            title=title, sample_id=sample_id, metadata=metadata
+        )
         self.import_data(entry.id, source, segments=segments, imported_at=imported_at)
         return entry
 
@@ -842,7 +877,9 @@ class ProjectManager:
             target = self._ensure_inside_root(path)
             if not target.exists():
                 continue
-            dest = send_to_trash(target, self._trash_dir(), target.relative_to(self.root))
+            dest = send_to_trash(
+                target, self._trash_dir(), target.relative_to(self.root)
+            )
             removed.append(str(dest))
         entry.trashed = True
         entry.trashed_at = now_iso()
@@ -903,7 +940,9 @@ class ProjectManager:
                 status = candidate
         return status
 
+
     # samples
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def add_sample(
         self,
@@ -917,7 +956,9 @@ class ProjectManager:
         if self.project is None:
             raise ProjectError(tr("project not loaded"))
         sample = SampleEntry(
-            sample_id=_next_sequence_id([s.sample_id for s in self.project.samples], "S", width=3),
+            sample_id=_next_sequence_id(
+                [s.sample_id for s in self.project.samples], "S", width=3
+            ),
             name=name,
             protein_name=protein_name,
             sequence=sequence,
@@ -927,7 +968,9 @@ class ProjectManager:
             created=now_iso(),
         )
         self.project.samples.append(sample)
-        self.add_history("sample_added", {"sample_id": sample.sample_id, "name": name})
+        self.add_history(
+            "sample_added", {"sample_id": sample.sample_id, "name": name}
+        )
         return sample
 
     def delete_sample(self, sample_id: str) -> None:
@@ -939,9 +982,10 @@ class ProjectManager:
         if referenced:
             raise ProjectError(
                 tr(
-                    "sample {p0} is referenced by an experiment; refusing to delete: {p1}",
+                    "sample {p0} is referenced by an experiment; refusing to delete: "
+                    "{p1}",
                     p0=sample_id,
-                    p1=", ".join(referenced),
+                    p1=', '.join(referenced),
                 )
             )
         self.project.samples.remove(sample)
@@ -1097,6 +1141,7 @@ class ProjectManager:
         return snapshot
 
     # internal helpers
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _require_experiment(self, exp_id: str) -> ExperimentEntry:
         if self.project is None:

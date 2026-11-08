@@ -6,7 +6,7 @@
 python -m nmrfinesse_api --help
 ```
 
-当前命令行属于 API v1.1.5，统一峰表为38列。安装源码或wheel后使用命令行入口。
+当前命令行属于 API v1.1.6，统一峰表为38列。安装源码或wheel后使用命令行入口。
 Linux AppImage 与源码可从 [1.0.12 Release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12) 获取；见
 [installation.md](installation.md)。
 

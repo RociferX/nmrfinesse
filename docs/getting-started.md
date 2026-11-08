@@ -43,13 +43,14 @@ Synthetic data are for software checks and walkthroughs only, not scientific con
 ## Configure external engines
 
 NMRPipe is resolved from the explicit `backend.nmrpipe.path` or
-`backend.nmrpipe.nmrpipe_bin` configuration first, then `PATH`, the environment available
-through `csh`, and supported common locations. SMILE is located with the NMRPipe installation.
+`backend.nmrpipe.nmrpipe_bin` configuration first, then the environment available through
+`csh` or `tcsh`, then `PATH`. SMILE is located with the NMRPipe installation.
 Missing engines are reported when an operation needs them; the application does not silently
 substitute a different processing engine.
 
-Use the tracked defaults in `nmrfinesse_data/config/nmrfinesse.yaml`. For a machine-local path, copy
-the file to the ignored `nmrfinesse_data/config/nmrfinesse.local.yaml` and edit the local copy:
+The repository defaults are in `nmrfinesse_data/config/nmrfinesse.yaml`. In a source checkout,
+create a sibling file named `nmrfinesse.local.yaml` and put machine-specific overrides there.
+For the AppImage, use **Settings** to save the override to your user configuration.
 
 ```yaml
 backend:
@@ -81,27 +82,11 @@ parabolic only.
 
 ## Current source interface
 
-Help → Usage tutorial has nine navigable sections with separate section and task headings.
-The experiment page has three horizontal import cards (single, segmented, batch), actions above
-their descriptions, and the sample-data table below. Import-and-group is off by default.
-Batch processing supports 2D only; process 3D data individually.
-Tools → Export UCSF files… becomes available after opening a project. Configure its destination
-through automatic POKY/Sparky discovery or Browse in Settings.
-Tools also provides read-only FID checks and an automatic/manual abnormal-FID selection tool for
-2D/3D uniform Bruker acquisitions. The latter exports a new NUS folder, omits complete phase groups,
-retains the source, and records its schedule and conversion report.
+Open **Help → Usage tutorial** or read the [GUI guide](gui.md). Its nine sections explain each action, the required inputs, where to find the results and how to diagnose common issues.
 
-The normal startup window uses a 1080p workspace baseline: smaller screens scroll, while larger
-screens retain the baseline window. Automatic fonts change on maximize/fullscreen, not ordinary resize.
-Pure 1D defaults to Aspect 0.02. In 2D/3D 1D-strip mode, hold the left button to move the strips;
-top and right strips have independent display phase controls. Comparison crosshairs share displayed
-ppm coordinates; overlay comparison retains contour settings. File/color tooltips include title text.
-Needs-update details identify missing paths or changed files; old records explicitly identify missing
-provenance. Picked/imported peak tables retain separate assignments. CSV restores the full table;
-GUI `.list` exports contain assignments and coordinates only.
+For a first run, create a project and experiment, import one Bruker acquisition, and run **Generate FID → Generate spectrum → Peak picking** for 2D/3D data. Use **Reference scripts** when processing comparable data with a shared script. In batch import, **All** checks every visible path for removal. **Batch import** uses the full filtered list.
 
-The v1.0.12 AppImage includes these features. Subsequent source changes and rebuilt
-AppImages are published separately. See the [GUI guide](gui.md) for full instructions.
+The guide follows the current source. To check an installed version's features, use **Help → About** and its release notes.
 
 ## Where to go next
 

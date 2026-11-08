@@ -1,4 +1,4 @@
-# 06 · 输出与记录(v1.1.5)
+# 06 · 输出与记录(v1.1.6)
 
 ## 6.1 目录布局
 
@@ -86,7 +86,7 @@ print(reference.optimization_scores["path"])
 本次增加的评分列追加在既有CSV列之后，CSV旧列顺序不变；JSON结构化行沿用相同字段集合，schema仍为`v1`。
 有效旧CSV按原文件复用，可能仍是旧列；旧JSON行未保存的新字段保持缺键。
 CSV丢失或损坏后按当前表头从冻结行恢复，缺失项写空列，不从旧参考谱追算或回填。
-需要完整新子项时用`force=True`重建参考。统一峰表仍为38列，API仍为v1.1.5。
+需要完整新子项时用`force=True`重建参考。统一峰表仍为38列，API仍为v1.1.6。
 
 ## 6.2 统一峰表字段(当前 **38 列**)
 
@@ -328,3 +328,6 @@ SHA-256 和 provenance 对应；修改载频需强制重建参考，原始 `acqu
 
 每个 `workflow.json` 的 `condition_records[]` 也包含该条件的 `stage_times_s`，与单条件
 `run.json` 阶段计时一致；它是该 run 分阶段用时的副本，不是 workflow 汇总总时长。
+
+
+建立参考返回的ReferenceSpectrum保留script_path/script_sha256（冻结process.com），新增fid_scripts列表，每项含path、sha256、source_path。转换成功后、处理开始前捕获实际fid.com字节并冻结到参考目录；分段转换保留全部子脚本。to_dict()/reference.json/CLI返回同样字段。旧JSON缺此字段时为[]；获得旧参考缺失的FID快照需force=True重建，不猜写历史脚本。

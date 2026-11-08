@@ -15,6 +15,7 @@ from qtcompat.QtCore import QEvent, QPoint, QRect, Qt
 from qtcompat.QtGui import QColor, QFont, QFontMetrics, QIcon, QKeyEvent, QPalette
 from qtcompat.QtWidgets import (
     QAbstractItemDelegate,
+    QAbstractItemView,
     QHBoxLayout,
     QHeaderView,
     QLabel,
@@ -65,6 +66,13 @@ class _ProjectTree(QTreeWidget):
             rect = QRect(rect)
             rect.setHeight(self.fontMetrics().height() + 6)
         super().drawBranches(painter, rect, index)
+
+
+class _GroupMemberItem(QTreeWidgetItem):
+    display_order = 0
+
+    def __lt__(self, other):
+        return self.display_order < other.display_order
 
 
 class _TreeLevelDelegate(QStyledItemDelegate):
@@ -331,6 +339,8 @@ class ProjectTreePanel(QWidget):
     group_remove_data_requested = Signal(str, str, str)  # (exp_id, group_id, data_id)
     group_rename_requested = Signal(str, str, str)  # (exp_id, group_id, new_title)
     group_delete_requested = Signal(str, str)  # (exp_id, group_id)
+    group_create_requested = Signal(str, list)
+    delete_selected_data_requested = Signal(list)
     group_delete_with_members_requested = Signal(str, str)
 
     rename_requested = Signal(str, str)
@@ -345,6 +355,7 @@ class ProjectTreePanel(QWidget):
         super().__init__(parent)
         self.manager = manager or ProjectManager()
         self.workspace = workspace
+        self.group_temperature_sorts: dict[tuple, int] = {}
 
         self._running: set[tuple[str, str]] = set()
 
@@ -371,6 +382,7 @@ class ProjectTreePanel(QWidget):
         selection_hint.setStyleSheet(f"color: {TEXT_SECONDARY}; padding: 0 2px;")
         layout.addWidget(selection_hint)
         self.tree = _ProjectTree()
+        self.tree.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.tree.setItemDelegateForColumn(0, _TreeLevelDelegate(self.tree))
         self.tree.setColumnCount(2)
         self.tree.setHeaderLabels([tr("object"), tr("state")])
@@ -407,6 +419,10 @@ class ProjectTreePanel(QWidget):
         layout.addWidget(self.tree)
         self.refresh()
 
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
@@ -558,7 +574,7 @@ class ProjectTreePanel(QWidget):
         """
         group_id = getattr(group, "id", "")
         by_id = {getattr(d, "id", ""): d for d in self._data_of(exp)}
-        members = [m for m in (getattr(group, "data_ids", None) or []) if m in by_id]
+        members = self._group_member_ids(exp.id, group, by_id)
         title = getattr(group, "title", "") or f"Group {group_id}"
         group_item.setText(0, title)
         group_item.setText(1, tr("{p0} data", p0=len(members)))
@@ -591,6 +607,37 @@ class ProjectTreePanel(QWidget):
                 group_item.addChild(data_item)
             else:
                 self._update_data_item(data_item, exp, data_node)
+        self._sort_group_children(group_item, members)
+
+    def _group_member_ids(self, exp_id, group, available) -> list[str]:
+        members = [data_id for data_id in group.data_ids if data_id in available]
+        mode = self.group_temperature_sorts.get((self.manager.root, exp_id, group.id), 0)
+        if mode:
+            from gui.notes import data_note_fields, temperature_sort_key
+
+            members.sort(key=lambda data_id: temperature_sort_key(
+                data_note_fields(self.manager.project, exp_id, data_id).get("temperature"), mode
+            ))
+        return members
+
+    def _sort_group_children(self, item, ordered_ids) -> None:
+        children = {
+            self._data_id_of(item.child(index)): item.child(index)
+            for index in range(item.childCount())
+        }
+        if list(children) == ordered_ids:
+            return
+        for index, data_id in enumerate(ordered_ids):
+            children[data_id].display_order = index
+        item.sortChildren(0, Qt.SortOrder.AscendingOrder)
+
+    def apply_group_temperature_sort(self, exp_id: str, group_id: str) -> None:
+        item = self._find_group_item(exp_id, group_id)
+        group = self.manager.group(exp_id, group_id)
+        if item is None or group is None:
+            return
+        shown = {self._data_id_of(item.child(index)) for index in range(item.childCount())}
+        self._sort_group_children(item, self._group_member_ids(exp_id, group, shown))
 
     def _update_data_item(
         self, data_item: QTreeWidgetItem, exp, data_node
@@ -686,6 +733,10 @@ class ProjectTreePanel(QWidget):
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     def _workspace_path(self) -> str:
         from core.workspace import default_workspace_path
 
@@ -752,7 +803,7 @@ class ProjectTreePanel(QWidget):
         group_id = getattr(group, "id", "")
         title = getattr(group, "title", "") or f"Group {group_id}"
         by_id = {getattr(d, "id", ""): d for d in self._data_of(exp)}
-        members = [m for m in (getattr(group, "data_ids", None) or []) if m in by_id]
+        members = self._group_member_ids(exp.id, group, by_id)
         group_item = QTreeWidgetItem([title, tr("{p0} data", p0=len(members))])
         group_item.setIcon(0, self._icon("group"))
         group_item.setToolTip(
@@ -798,7 +849,8 @@ class ProjectTreePanel(QWidget):
         title = getattr(data_node, "title", "") or ""
         label = title or data_id
 
-        data_item = QTreeWidgetItem([label, status])
+        item_type = _GroupMemberItem if in_group else QTreeWidgetItem
+        data_item = item_type([label, status])
         self._set_data_subtitle(data_item, data_node)
         data_item.setIcon(0, self._icon("data"))
         data_item.setData(
@@ -982,6 +1034,10 @@ class ProjectTreePanel(QWidget):
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     def current_experiment_id(self) -> str:
         """Returns the experiment id to which the currently selected node belongs (normalized to
         the experiment when selecting sample data nodes).
@@ -1036,6 +1092,24 @@ class ProjectTreePanel(QWidget):
             if parent is not None and parent is not exp_item:
                 parent.setExpanded(True)
             self.tree.setCurrentItem(target)
+
+    def _find_group_item(self, exp_id: str, group_id: str) -> QTreeWidgetItem | None:
+        experiment = self._find_experiment_item(exp_id)
+        if experiment is not None:
+            for index in range(experiment.childCount()):
+                child = experiment.child(index)
+                info = child.data(0, Qt.ItemDataRole.UserRole)
+                if isinstance(info, dict) and info.get("group_id") == group_id:
+                    return child
+        return None
+
+    def select_group(self, exp_id: str, group_id: str) -> None:
+        item = self._find_group_item(exp_id, group_id)
+        if item is not None:
+            item.parent().setExpanded(True)
+            item.setExpanded(True)
+            self.tree.setCurrentItem(item)
+            self.tree.scrollToItem(item)
 
     def select_experiment(self, exp_id: str) -> None:
         """Recursively locate and select the experiment node by id (Workspace -> Project ->
@@ -1226,6 +1300,10 @@ class ProjectTreePanel(QWidget):
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     def _on_context_menu(self, pos) -> None:
         item = self.tree.itemAt(pos)
         menu = self._on_context_menu_impl(QMenu(self), item, pos)
@@ -1237,13 +1315,35 @@ class ProjectTreePanel(QWidget):
         actions); pos is the coordinate within the viewport, used for pop-up window positioning.
         """
         anchor = self.tree.viewport().mapToGlobal(pos) if pos is not None else None
+        selected = self.tree.selectedItems()
+        if item in selected and len(selected) > 1:
+            entries = [node.data(0, Qt.ItemDataRole.UserRole) for node in selected]
+            if all(isinstance(entry, dict) and entry.get("kind") == "data" for entry in entries):
+                targets = list(dict.fromkeys(
+                    (self._experiment_id_of(node), self._data_id_of(node)) for node in selected
+                ))
+                experiments = {exp_id for exp_id, _ in targets}
+                action = menu.addAction(tr("Create data group"))
+                can_group = len(experiments) == 1 and len(targets) > 1
+                action.setEnabled(can_group)
+                if can_group:
+                    exp_id = targets[0][0]
+                    data_ids = [data_id for _, data_id in targets]
+                    action.triggered.connect(
+                        lambda: self.group_create_requested.emit(exp_id, data_ids)
+                    )
+                else:
+                    menu.setToolTipsVisible(True)
+                    action.setToolTip(
+                        tr("Select data with the same dimensionality in one experiment")
+                    )
+                menu.addAction(
+                    tr("Delete selected sample data…"),
+                    lambda: self.delete_selected_data_requested.emit(targets),
+                )
+            return menu
         if item is None:
-
-            if self.manager.project is not None:
-                menu.addAction(tr(
-                    "Create a new blank "
-                    "experiment...",
-                ), self.create_experiment_requested.emit)
+            pass
         else:
             data = item.data(0, Qt.ItemDataRole.UserRole)
             kind = data.get("kind") if isinstance(data, dict) else None
@@ -1261,10 +1361,6 @@ class ProjectTreePanel(QWidget):
                         lambda p=str(data["path"]): self.open_project_requested.emit(p),
                     )
                 else:
-                    menu.addAction(tr(
-                        "Create a new blank "
-                        "experiment...",
-                    ), self.create_experiment_requested.emit)
                     menu.addAction(
                         tr("rename project..."),
                         lambda _checked=False: self._begin_rename("project", item, anchor),
@@ -1370,6 +1466,10 @@ class ProjectTreePanel(QWidget):
             return path
         return path.parent if path.exists() else None
 
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
@@ -1491,6 +1591,10 @@ class ProjectTreePanel(QWidget):
                 continue
         return workspace_item.child(0) if workspace_item.childCount() else None
 
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------

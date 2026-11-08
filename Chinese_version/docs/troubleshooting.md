@@ -10,8 +10,8 @@ NMRFinesse 的错误信息应该说明「缺什么、该怎么办」。如果在
 处理步骤也会在需要时检查其能力。
 
 1. 确认 NMRPipe 已安装,且它的 `bin` 目录里有 `nmrPipe`;
-2. 在 `nmrfinesse_data/config/nmrfinesse.yaml`(或 `nmrfinesse_data/config/nmrfinesse.local.yaml`)里
-   显式指定:
+2. 在桌面版「设置」中填入 NMRPipe 路径。从源码运行时，也可在
+   `nmrfinesse_data/config/nmrfinesse.yaml` 的同目录新建 `nmrfinesse.local.yaml`，写入以下配置。
 
    ```yaml
    backend:
@@ -119,3 +119,7 @@ QT_QPA_PLATFORM=offscreen python -m pytest -q
 - 运行:每个 `WorkflowRun` 在项目记录里带自己的消息与告警列表;
 - 参数扫描:研究根下每个 run 一个目录,里面有脚本、候选谱、峰表与 run 记录;研究根下有
   `manifest.json` 与 `runs.json`。
+
+## 桌面端参考脚本下拉框为空
+
+候选必须是同一实验内的其它有效数据，维度、各维核素顺序和采样模式均须匹配，并有保存的处理脚本或成功运行快照。例如 ¹H–¹⁵N–¹³C 与 ¹H–¹⁵N–¹⁵N 的 3D NUS 谱属于不同签名。操作见 [GUI 指南](gui.md) 的参考脚本一节。

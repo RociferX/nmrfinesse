@@ -23,6 +23,7 @@ from qtcompat.QtWidgets import (
     QDialogButtonBox,
     QFormLayout,
     QFrame,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLayout,
@@ -577,7 +578,8 @@ def _format_params(params: dict) -> str:
 
 
         return report_text
-    skip = {"peak_pick_report"}
+    skip = {"peak_pick_report", "execution_log", "reference_processing",
+            "reference_processing_report"}
     parts = [f"{key}={value}" for key, value in sorted(params.items()) if key not in skip]
     rendered = ", ".join(parts)
     return rendered
@@ -749,6 +751,8 @@ class _FlowLayout(QLayout):
         return y + line_height + m.bottom() - rect.y()
 
 
+# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
@@ -994,6 +998,8 @@ class PipelineStepRow(QWidget):
     """
 
     run_requested = Signal(str)  # step_id
+    # step_id
+    # step_id
     # step_id
     # step_id
     rerun_final_requested = Signal(str, dict)
@@ -1333,7 +1339,7 @@ class PipelineStepRow(QWidget):
         if self.step_id == "spectrum":
             button_row.add_break()
         button_row.addWidget(self.show_spectrum_button)
-        self.manual_button = QPushButton(tr("Manual"))
+        self.manual_button = QPushButton(tr("Script editor"))
         self.manual_button.setToolTip(
             tr(
                 "Script editor: open this step's script, edit it, then run it",
@@ -1493,7 +1499,11 @@ class PipelineStepRow(QWidget):
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
@@ -1642,6 +1652,7 @@ class PipelinePanel(QWidget):
     progress_updated = Signal(str)
     operation_feedback = Signal(str, str)
     batch_summary_requested = Signal(object)
+    reference_run_requested = Signal(str, str, list, str, dict)
     rank1_run_requested = Signal(str)
 
     def __init__(
@@ -1781,7 +1792,50 @@ class PipelinePanel(QWidget):
         scroll.viewport().setAutoFillBackground(False)
         content = QWidget()
         content.setAutoFillBackground(False)
-        content.setLayout(steps_box)
+        modes = QHBoxLayout(content)
+        automatic = QGroupBox(tr("Automatic processing"))
+        automatic.setLayout(steps_box)
+        modes.addWidget(automatic, 3)
+        self.reference_box = QGroupBox(tr("Reference scripts"))
+        reference_layout = QVBoxLayout(self.reference_box)
+        reference_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        from gui.reference_phase_dialog import WrappedHintLabel
+        note = WrappedHintLabel(tr(
+            "Reuse the reference scripts without optimisation. "
+            "Only the direct-axis range and phase can be overridden."
+        ))
+        self.reference_hint = note
+        reference_layout.addWidget(note)
+        self.script_reference_combo = QComboBox()
+        self.script_reference_combo.setMinimumWidth(0)
+        self.script_reference_combo.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.script_reference_combo.setMinimumContentsLength(4)
+        reference_layout.addWidget(self.script_reference_combo)
+        reference_layout.addWidget(QLabel(tr("Processed to:")))
+        self.reference_stop_combo = QComboBox()
+        self.reference_stop_combo.addItem(tr("FID"), "fid")
+        self.reference_stop_combo.addItem(tr("Spectrum"), "spectrum")
+        self.reference_stop_combo.addItem(tr("Peak picking"), "peaks")
+        self.reference_stop_combo.setCurrentIndex(1)
+        reference_layout.addWidget(self.reference_stop_combo)
+        self.reference_range_button = QPushButton(tr("Direct range"))
+        self.reference_range_button.setToolTip(tr("direct dimension range"))
+        self.reference_phase_button = QPushButton(tr("Phase"))
+        self.script_reference_button = QPushButton(tr("Run"))
+        self.script_reference_button.setObjectName("PrimaryAction")
+        reference_layout.addWidget(self.reference_range_button)
+        reference_layout.addWidget(self.reference_phase_button)
+        reference_layout.addWidget(self.script_reference_button)
+        self.reference_override_label = WrappedHintLabel("")
+        reference_layout.addWidget(self.reference_override_label)
+        self.reference_range_button.clicked.connect(lambda: self._edit_reference_override("range"))
+        self.reference_phase_button.clicked.connect(lambda: self._edit_reference_override("phase"))
+        self.script_reference_button.clicked.connect(self._run_using_data)
+        self.script_reference_combo.currentIndexChanged.connect(self._refresh_reference_enabled)
+        self.reference_stop_combo.currentIndexChanged.connect(self._refresh_reference_enabled)
+        self._reference_overrides = {}
+        modes.addWidget(self.reference_box, 1)
         scroll.setWidget(content)
         layout.addWidget(scroll, 1)
         self.refresh()
@@ -1789,7 +1843,11 @@ class PipelinePanel(QWidget):
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
@@ -2130,8 +2188,108 @@ class PipelinePanel(QWidget):
         if row is not None:
             row.setVisible(self._smile_step_visible)
 
+    def _refresh_reference_enabled(self) -> None:
+        ready = bool(self.script_reference_combo.currentData())
+        self.script_reference_button.setEnabled(ready)
+        spectrum = self.reference_stop_combo.currentData() != "fid"
+        self.reference_range_button.setEnabled(ready and spectrum)
+        self.reference_phase_button.setEnabled(ready and spectrum)
+
+    def _refresh_script_references(self) -> None:
+        from workflow.reference_scripts import reference_candidates
+
+        combo = self.script_reference_combo
+        exp = (self.manager.project.experiment(self._current_exp_id)
+               if self.manager.project else None)
+        token = (
+            id(self.manager.project),
+            self._current_exp_id,
+            self._current_data_id,
+            len(self.manager.project.workflow_runs) if self.manager.project else 0,
+            tuple((d.id, d.title, d.trashed, d.status, d.fid_path, d.spectrum_path)
+                  for d in exp.data)
+            if exp
+            else (),
+        )
+        if token != getattr(self, "_script_candidate_token", None):
+            previous = combo.currentData()
+            combo.blockSignals(True)
+            combo.clear()
+            candidates = reference_candidates(
+                self.manager, self._current_exp_id, self._current_data_id, "spectrum"
+            )
+            combo.addItem(tr("Select…"), "")
+            for data_id, label in candidates:
+                combo.addItem(label, data_id)
+            combo.setCurrentIndex(max(0, combo.findData(previous)))
+            combo.blockSignals(False)
+            self._script_candidate_token = token
+        self.reference_box.setVisible(bool(self._current_data_id))
+        one_d = (
+            bool(self._current_data_id)
+            and self._data_ndim(self._current_exp_id, self._current_data_id) == 1
+        )
+        self.reference_stop_combo.model().item(2).setEnabled(not one_d)
+        if one_d and self.reference_stop_combo.currentData() == "peaks":
+            self.reference_stop_combo.setCurrentIndex(1)
+        current = self._reference_overrides.get((self._current_exp_id, self._current_data_id), {})
+        self.reference_override_label.setText(
+            tr(
+                "Range: {p0}\nPhase: {p1}",
+                p0=str(current["range"]) if "range" in current else tr("Use reference"),
+                p1=(
+                    tr("Automatic phase after FID")
+                    if current.get("auto_phase")
+                    else str(current.get("phases", current.get("phase", tr("Use reference"))))
+                ),
+            )
+        )
+        self._refresh_reference_enabled()
+
+    def _edit_reference_override(self, kind: str) -> None:
+        from gui.reference_phase_dialog import ReferenceOptionsDialog
+        from workflow.reference_scripts import reference_defaults
+
+        exp, data = self._current_exp_id, self._current_data_id
+        reference = self.script_reference_combo.currentData()
+        if not reference:
+            return
+        try:
+            defaults = reference_defaults(self.manager, exp, reference)
+            key = (exp, data)
+            current = {data: self._reference_overrides.get(key, {})}
+            dialog = ReferenceOptionsDialog(
+                self,
+                [(data, self.manager.data(exp, data).title or data)],
+                defaults,
+                current,
+                "range" if kind == "range" else "phases",
+            )
+            if dialog.exec():
+                self._reference_overrides[key] = dialog.values()[data]
+                self._refresh_script_references()
+        except Exception as exc:
+            self.log_message.emit(str(exc))
+
+    def _run_using_data(self) -> None:
+        ref = self.script_reference_combo.currentData()
+        if ref:
+            stop = self.reference_stop_combo.currentData()
+            order = ["fid", "spectrum", "peaks"]
+            overrides = dict(
+                self._reference_overrides.get((self._current_exp_id, self._current_data_id), {})
+            )
+            self.reference_run_requested.emit(
+                self._current_exp_id,
+                self._current_data_id,
+                order[: order.index(stop) + 1],
+                ref,
+                overrides,
+            )
+
     def refresh(self) -> None:
         """Refresh contextual labels and step status."""
+        self._refresh_script_references()
         project = self.manager.project
         if project is None or not self._current_exp_id:
             self.context_label.setText(tr("project not open"))
@@ -2259,7 +2417,11 @@ class PipelinePanel(QWidget):
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
@@ -2654,7 +2816,11 @@ class PipelinePanel(QWidget):
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
@@ -2899,6 +3065,10 @@ class PipelinePanel(QWidget):
             ))
             if manual_report and manual_report not in "\n".join(lines):
                 lines.append(manual_report)
+        if run is not None:
+            reference_report = (run.params or {}).get("reference_processing_report")
+            if reference_report:
+                lines.append(reference_report)
         if artifact is not None:
             lines.append(tr("Result file: {p0}", p0=artifact))
         return "\n".join(lines) if lines else tr("No details"), params, failed
@@ -2915,7 +3085,11 @@ class PipelinePanel(QWidget):
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------

@@ -9,6 +9,7 @@ in line by line; the write operation is called by the caller before manager.save
 from __future__ import annotations
 
 import json
+import math
 import re
 from pathlib import Path
 
@@ -241,6 +242,18 @@ def data_note_fields(project, exp_id: str, data_id: str) -> dict:
         if title:
             fields["notes"] = title
     return fields
+
+
+def temperature_sort_key(value: object, mode: int) -> tuple[int, float]:
+    """Compare numeric Celsius notes, leaving unknown values last in either direction."""
+    text = str(value).strip().removesuffix("°C").removesuffix("℃").strip()
+    try:
+        temperature = float(text)
+    except ValueError:
+        return (1, 0.0)
+    if not math.isfinite(temperature):
+        return (1, 0.0)
+    return (0, temperature if mode == 1 else -temperature)
 
 
 def set_data_note_fields(project, exp_id: str, data_id: str, fields: dict) -> None:

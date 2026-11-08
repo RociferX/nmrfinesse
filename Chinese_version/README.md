@@ -10,7 +10,7 @@ NMRFinesse读取Bruker数据集，识别实验类型与采样方式，规划处�
 数据检查、自动与人工处理、参数优化、质量控制、选峰和查看在同一工作流中完成，
 实际采用的参数、脚本、告警和输出与结果一同留档，便于复现和核查。
 
-**软件版本：1.0.12 · Python/CLI API：1.1.5 · 目标平台：Linux**
+**软件版本：1.0.12 · 源码 Python/CLI API：1.1.6 · 目标平台：Linux**
 
 **Linux桌面用户最简单的使用方式是AppImage。**
 下载[1.0.12 AppImage](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.12/NMRFinesse-1.0.12-x86_64.AppImage)
@@ -19,7 +19,7 @@ NMRFinesse读取Bruker数据集，识别实验类型与采样方式，规划处�
 真实谱图处理仍需单独安装NMRPipe，NUS重构还需要SMILE。
 
 桌面程序可通过AppImage或源码安装使用，Python/CLI API通过源码或Python包安装提供。
-API **v1.1.5**输出**38列**峰表；二进制的`BUILD_INFO.txt`记录版本、源码修订与依赖。
+源码 API **v1.1.6** 输出 **38 列**峰表。已发布的 1.0.12 AppImage 内含 API 1.1.5，安装包中的 `BUILD_INFO.txt` 记录版本、源码修订与依赖。
 
 作者：**李宣锋（Xuanfeng Li），中国科学技术大学**。
 源码许可：[Apache-2.0](../LICENSE)，署名见[NOTICE](../NOTICE)。
@@ -202,7 +202,7 @@ python -m viewer
 
 `帮助 → 使用教程` 提供九个分区的可点击目录；主分区与操作小节有独立标题层级。
 实验页上方横排单个、分段和批量三个导入区，按钮在上、说明在下，样品数据表在导入区下面。
-批量导入的“导入并成组”默认关闭；批量处理限 2D，3D 请单独处理。
+批量导入的“导入并成组”默认关闭；批量支持1D/2D/3D，同维度成组；2D可并行、3D依次处理。
 UCSF 复制入口在 `工具 → 导出 UCSF 文件…`，打开项目后可用；目标目录可在设置中自动寻找或手动指定。
 `工具` 也提供只读 FID 诊断，以及 2D/3D 均匀采样异常 FID 的自动检测、手动勾选和 NUS 副本导出。
 后者保留输入目录，删除完整采样点的相位组，在新目录写入采样表与转换报告。
@@ -214,7 +214,7 @@ UCSF 复制入口在 `工具 → 导出 UCSF 文件…`，打开项目后可用�
 待更新状态会给出缺失路径或变化文件；旧记录证据不足时会说明无法细分原因。
 拾取峰表和导入峰表可切换、各自保留指认；CSV 用于完整恢复，GUI 的 `.list` 只导出指认和坐标。
 
-v1.0.12 AppImage 包含本节功能；后续源码更新与安装包重建分别发布。
+本节描述当前源码。已发布的 v1.0.12 AppImage 所含功能见对应发布说明。
 完整操作见 [GUI 指南](docs/gui.md)。
 
 ## 命令行用法
@@ -263,7 +263,7 @@ for run in result.runs:
 也不计算下游统计。参考阶段转换原始输入，组合只读复用冻结FID。
 显式多段导入通过`segmented=True`开启；参考证据缺失或不兼容时需用`force=True`重建。
 
-API单独版本化，当前为**v1.1.5**。跨版本比较前可检查`compat_manifest()`；
+API单独版本化，当前源码为 **v1.1.6**。跨版本比较前可检查 `compat_manifest()`。
 统一峰表为38列。详见[API指南](docs/external-api/README.md)、
 [Python参考](docs/python-api.md)及[输出与记录](docs/external-api/06-outputs-and-records.md)。
 

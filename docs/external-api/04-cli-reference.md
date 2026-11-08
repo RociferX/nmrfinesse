@@ -1,9 +1,9 @@
-# 04 · Command line reference (v1.1.5)
+# 04 · Command line reference (v1.1.6)
 
 Entry:`python -m nmrfinesse_api <Order> --study <Research roots>`.
 Public parameter:`--study`(required), `--name`(new research name), `--condition <A|B|…>`.
 (Default = all conditions).
-The CLI uses API **1.1.5** and software **1.0.12**, with the retained 38-column peak-table contract.
+The CLI uses API **1.1.6** and software **1.0.12**, with the retained 38-column peak-table contract.
 Install the source or wheel to use this entry point; see [installation](../installation.md).
 
 ## Init -- Create the study and import the dataset

@@ -1414,3 +1414,33 @@ def test_2d_seed_direct_residual_and_cache_are_absolute(tmp_path, monkeypatch, b
         assert final["phases"]["F1"] == [90.0, 0.0]
         assert "_initialize_2d_nus_phase" not in final
     assert len(calls) == 1
+
+
+def test_phase_only_uses_normal_search_without_processing_optimisation(
+    tmp_path, monkeypatch, bruker_dir
+):
+    from types import SimpleNamespace
+
+    import pytest
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("phase-only route entered processing-parameter optimisation")
+    monkeypatch.setattr(routes, "_optimize_uniform_processing", forbidden)
+    monkeypatch.setattr(routes, "_optimize_nus_processing", forbidden)
+    monkeypatch.setattr("workflow.direct_diagnostics.load_or_run_direct_diagnostics", forbidden)
+    monkeypatch.setattr(routes, "_read_complex_preview", lambda *a, **k: np.ones((16,16),complex))
+    monkeypatch.setattr(routes, "_read_real_ft3", lambda *a, **k: np.ones((16,16)))
+    monkeypatch.setattr(routes, "_load_preview_with_memory_guard",
+                        lambda *a, **k: np.ones((16,16),complex))
+    monkeypatch.setattr(routes, "_load_recon_planes", lambda *a, **k: np.ones((16,16),complex))
+    monkeypatch.setattr("workflow.memory_phase_search.search_axis_memory",
+                        lambda *a, **k: SimpleNamespace(phase=(15.,0.), score=80., logs=[]))
+    monkeypatch.setattr("core.optimization.phase_consensus.search_direct_phase_real_ht",
+                        lambda *a, **k: (20.,0.,80.))
+    for name in ("hsqc_2d", "hnca_3d", "nus_2d", "nus_3d"):
+        experiment = read_dataset(bruker_dir/name)
+        backend = _FakeBackend(tmp_path/name)
+        result = routes.unified_route(experiment, backend, work_dir=backend.work,
+                                      base_params={"_phase_only":True})
+        assert set(result["phases"]) == {f"F{i}" for i in range(1,experiment.ndim+1)}
+        assert "spectrum_path" not in result

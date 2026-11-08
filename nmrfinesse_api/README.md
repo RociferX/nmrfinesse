@@ -1,11 +1,11 @@
 # nmrfinesse_api/
 
-The API v1.1.5 scripting surface builds independent reference spectra and peak tables, then
+The API v1.1.6 scripting surface builds independent reference spectra and peak tables, then
 generates candidate spectra and tables from user-specified parameter combinations for downstream
 analysis. It does not match peaks across spectra or compute relationships between tables.
 It can be imported without pulling in Qt or touching GUI state.
 
-API v1.1.5 defines its parameters and retains the 38-column table contract. The current software version is 1.0.9; the API is versioned separately
+API v1.1.6 defines its parameters and retains the 38-column table contract. The current software version is 1.0.9; the API is versioned separately
 from the software.
 
 Import defaults to a single directory. Explicit `segmented=True` accepts the complete ordered

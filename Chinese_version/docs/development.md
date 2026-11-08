@@ -26,7 +26,7 @@ AppImage 均不包含这两个工具。资源安装和引擎发现方式见[安�
 python -m pytest tests/test_full_paths.py
 ```
 
-该测试覆盖 2D/3D、均匀采样/NUS 的自动与手动入口。批处理目前覆盖 2D。常规测试在引擎边界使用
+该测试覆盖 2D/3D、均匀采样/NUS 的自动与手动入口。GUI 批量处理覆盖 1D、2D 和 3D，同维度成组。常规测试在引擎边界使用
 fake 或 mock，不需要安装 NMRPipe、SMILE；真实引擎检查应单独报告。无显示器时，Qt 测试可设置
 `QT_QPA_PLATFORM=offscreen`。Lint 检查命令为 `python -m ruff check .`。
 
@@ -81,7 +81,7 @@ CI 元数据，不是运行时语言包。运行时目录使用 `default.json`�
 
 ## 公开接口与文档
 
-软件版本 **1.0.12** 与脚本 API 版本 **1.1.5** 分别版本化。修改 API 时，同步更新实现、测试、兼容性声明、
+软件版本 **1.0.12** 与脚本 API 版本 **1.1.6** 分别版本化。修改 API 时，同步更新实现、测试、兼容性声明、
 API 契约及相关外部 API 页面。示例应使用受支持的参数和输出。参见[贡献指南](../../CONTRIBUTING.md)、
 [API 契约](API_CONTRACT.md)、[外部 API 指南](external-api/README.md)和[总体架构](architecture.md)。
 

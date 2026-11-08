@@ -894,7 +894,6 @@ class SettingsDialog(QDialog):
         spectra_row.addWidget(spectra_auto)
         form.addRow(tr("POKY/Sparky spectra folder"), spectra_row)
         # The language setting pins the UI language; the environment can override it for a run.
-
         self.language_combo = QComboBox()
         for _label, _code in (
             (tr("Follow the system language"), "auto"),
@@ -982,6 +981,10 @@ class SettingsDialog(QDialog):
         )
         form.addRow(tr("SMILE Number of threads"), self.smile_thread_spin)
         pipeline = settings.get("pipeline") or {}
+        self.parallel_worker_spin = QSpinBox()
+        self.parallel_worker_spin.setRange(1, 10)
+        self.parallel_worker_spin.setValue(int(pipeline.get("parallel_workers", 5)))
+        form.addRow(tr("Maximum parallel 2D data"), self.parallel_worker_spin)
         self.simple_mode_check = QCheckBox(
             tr("Simple mode (just press the previous step product file to determine the status)")
         )
@@ -1022,6 +1025,9 @@ class SettingsDialog(QDialog):
         hint.setWordWrap(True)
         hint.setObjectName("MutedText")
         layout.addWidget(hint)
+        self.restore_defaults_button = QPushButton(tr("Restore defaults"))
+        self.restore_defaults_button.clicked.connect(self._restore_defaults)
+        layout.addWidget(self.restore_defaults_button, 0, Qt.AlignmentFlag.AlignLeft)
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok
             | QDialogButtonBox.StandardButton.Cancel
@@ -1033,6 +1039,24 @@ class SettingsDialog(QDialog):
         buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(tr('Cancel'))
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+
+    def _restore_defaults(self) -> None:
+        """Reset editable controls; Save applies them and Cancel discards them."""
+        from gui.settings import DEFAULTS
+
+        for key in ("nmrpipe", "bruker", "proj3d", "pipe2ucsf"):
+            getattr(self, key + "_edit").setText(DEFAULTS[key + "_path"])
+        self.data_root_edit.setText(DEFAULTS["data_root"])
+        self.spectrum_directory_edit.setText(DEFAULTS["spectrum_directory"])
+        self.language_combo.setCurrentIndex(self.language_combo.findData(DEFAULTS["language"]))
+        self.font_size_combo.setCurrentIndex(self.font_size_combo.findData(DEFAULTS["interface_font_size"]))
+        for nucleus, spin in self.linewidth_spins.items():
+            spin.setValue(DEFAULTS["linewidth_hz"][nucleus])
+        for nucleus, spin in self.tolerance_spins.items():
+            spin.setValue(DEFAULTS["alignment_tolerance_ppm"][nucleus])
+        self.simple_mode_check.setChecked(DEFAULTS["pipeline"]["simple_mode"])
+        self.parallel_worker_spin.setValue(DEFAULTS["pipeline"]["parallel_workers"])
+        self.smile_thread_spin.setValue(DEFAULTS["smile"]["nthread"])
 
     def _build_smile_status(self, settings: dict) -> QWidget:
         """Show read-only SMILE plugin availability rather than an editable path.
@@ -1132,6 +1156,7 @@ class SettingsDialog(QDialog):
             },
             "pipeline": {
                 "simple_mode": self.simple_mode_check.isChecked(),
+                "parallel_workers": self.parallel_worker_spin.value(),
             },
             "smile": {
                 "nthread": self.smile_thread_spin.value(),

@@ -51,13 +51,13 @@ from ui_support.i18n import tr
 
 STUDY_DIRNAME = "study"
 STUDY_STATE_FILENAME = "study.json"
-# Public API version (single definition point, 2026-10-13): v1.1.5 retains the
+# Public API version (single definition point, 2026-11-05): v1.1.6 retains the
 # independent-reference model, the 38-column peak table, and the complete cache-input
 # contract. v1.0/0.2 callers should follow the migration notes for columns, audits, and
 # reference caches. This is the **contract** version, not the package version (see
 # `core.__version__`); it is written into study.json, records/manifest.json, and
 # records/workflows.json, so this is its only definition.
-API_VERSION = "1.1.5"
+API_VERSION = "1.1.6"
 #: order in which condition labels are assigned (A/B/C...)
 CONDITION_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -108,7 +108,9 @@ class DatasetRef:
     @property
     def token(self) -> str:
         """Subdirectory name for this condition (falls back to the data key when untagged)."""
-        return condition_token(self.condition, fallback=f"{self.exp_id}_{self.data_id}")
+        return condition_token(
+            self.condition, fallback=f"{self.exp_id}_{self.data_id}"
+        )
 
     def to_dict(self) -> dict[str, Any]:
         result = {
@@ -312,7 +314,8 @@ def _validate_dataset_tokens(refs: list[DatasetRef]) -> None:
         if previous is not None and previous.key != ref.key:
             raise DatasetError(
                 tr(
-                    "condition directory token collision: {p0!r} and {p1!r} both map to {p2!r}",
+                    "condition directory token collision: {p0!r} and {p1!r} both map to "
+                    "{p2!r}",
                     p0=previous.condition or previous.key,
                     p1=ref.condition or ref.key,
                     p2=ref.token,
@@ -378,12 +381,11 @@ def open_study(
     elif create:
         manager = ProjectManager.create_project(root_path, name or root_path.name)
     else:
-        raise DatasetError(
-            tr(
-                "study root does not exist or is not an NMRFinesse project: {p0}",
-                p0=root_path,
-            )
-        )
+        raise DatasetError(tr(
+            "study root does not exist or is not an NMRFinesse project: "
+            "{p0}",
+            p0=root_path,
+        ))
     if backend is None:
         from backend.config import load_config
         from backend.factory import create_backend
@@ -553,7 +555,9 @@ def add_dataset(
     return session.add_dataset_ref(ref)
 
 
-def dataset_info(session: StudySession, dataset: DatasetRef | None = None) -> dict[str, Any]:
+def dataset_info(
+    session: StudySession, dataset: DatasetRef | None = None
+) -> dict[str, Any]:
     """Dataset summary (dimensions, nuclei, sampling, origin) for downstream write-ups."""
     ref = dataset or session.dataset
     if ref is None:

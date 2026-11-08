@@ -1,6 +1,6 @@
 # Shared interfaces and API contract
 
-Software **1.0.12** · Python/CLI API **1.1.5** · Project schema **1.4**.
+Software **1.0.12** · Python/CLI API **1.1.6** · Project schema **1.4**.
 
 ## 1. Acquisition data model
 
@@ -163,15 +163,14 @@ are resolved by the manager, separately from the per-dataset tree. Group members
 ## 10. Three-dimensional views
 
 A full 3D result and a plane directory are both supported storage forms. `Spectrum3D` maps storage
-axes from the header, reads/caches requested planes and supplies 2D slices. The GUI defaults to the
-F3–F2 view with F1 fixed, and can retain a selected plane. Projections summarize a volume;
+axes from the header, reads/caches requested planes and supplies 2D slices. Selecting 3D data first opens an available 2D projection. After opening the full spectrum, the initial view is F3–F2 with F1 fixed, and the GUI can retain a selected plane. Projections summarize a volume;
 they do not establish independent 3D peak identities or resolve every overlap.
 
 ## 11. Public nmrfinesse_api contract
 
 ### 11.1 Workflow semantics
 
-API **v1.1.5** is defined once by `nmrfinesse_api.session.API_VERSION`. A study has labelled conditions,
+API **v1.1.6** is defined once by `nmrfinesse_api.session.API_VERSION`. A study has labelled conditions,
 each with an independent reference spectrum/table. Reference construction imports/converts/merges
 the specified sources and freezes the FID, schedule and conversion evidence.
 
@@ -187,7 +186,7 @@ Public calls include session/dataset management, `build_reference`, `detect_and_
 functions. Exact signatures and return records are in the [API reference](external-api/03-api-reference.md).
 The [CLI reference](external-api/04-cli-reference.md) documents `python -m nmrfinesse_api`.
 The API builds 3D NUS references; 3D NUS combination execution raises `SweepError`.
-Desktop batch operations are 2D-only; the [API support matrix](external-api/09-limitations-and-roadmap.md)
+Desktop batch groups support homogeneous 1D/2D/3D data; the [API support matrix](external-api/09-limitations-and-roadmap.md)
 describes scripting combinations separately.
 
 ### 11.3 Parameters, identity and calibration
@@ -278,3 +277,10 @@ Internal project saves retain metrics. GUI direct and aligned exports contain as
 
 
 GUI exchange exports (`.list`) contain assignments and chemical shifts only. Internal/API peak products and full-precision CSV retain their documented metrics; the API schema and numerical calculation are unchanged.
+
+
+ReferenceSpectrum retains script_path/script_sha256 for its frozen process.com. API 1.1.6 adds
+fid_scripts: a list of path, sha256 and source_path records for frozen fid.com conversion scripts.
+Scripts are captured after conversion and before processing, including segmented inputs.
+The JSON/CLI representation includes this field. Legacy records load with an empty list; rebuild
+with force=True to capture missing scripts. Calculations and the peak-table schema are unchanged.

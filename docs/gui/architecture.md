@@ -8,9 +8,7 @@ Normal 2D/3D NUS reconstruction and internal optimisation implementations are re
 The desktop application is assembled by `gui/main_window.py`. `MainWindow` owns the active
 `ProjectManager`, `ProcessingController`, project tree, pipeline/center panels, log panel, and the
 spectrum panel. Project selection changes the manager's active project; project JSON and data-entry
-updates go through `core.project` services. The spectrum panel is built after startup prewarming in
-the normal application entry path so the window can appear before the heavier plotting modules are
-loaded.
+updates go through `core.project` services. A loading page inside the default main window remains visible while required dependencies and the spectrum panel are prepared on the GUI thread. The normal workspace opens after readiness.
 
 ## Control and processing
 
@@ -99,3 +97,13 @@ Project-level UCSF export copies selected data by experiment, retains sources an
 
 
 The tutorial uses nine main sections, task subsections and an anchored contents tree. The experiment data table follows the horizontal import cards. UCSF export is a Tools action enabled for an open project.
+
+
+Settings opens directly from the menu bar. Restore defaults stages this page's editable defaults;
+Save applies them and Cancel discards them. View and the project/blank-area experiment-creation
+context actions are removed; use the project page to create an experiment. Unversioned legacy
+marker size 1.5 migrates to 0.5 once; other sizes and newly saved custom values are retained.
+
+Reference menus read the saved import metadata; actual execution still validates raw inputs.
+
+The initial window frame is capped at 1920×1080 physical pixels, converted to Qt logical coordinates. System font scaling is retained. Initial geometry settles once before dependency loading; late startup timers cannot enlarge the ready workspace.

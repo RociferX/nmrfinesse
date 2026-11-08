@@ -79,9 +79,9 @@ def test_manual_scripts_nus_renders_latest_and_prefers_existing(
     assert list(scripts) == ["nus.com"]
     content = scripts["nus.com"]
     assert "nmrPipe -fn SMILE -nDim 3" in content
-    assert "-xApod" not in content
-    assert "-xP0 0 -xP1 0" in content
-    assert "-yP0 0 -yP1 0" in content
+    assert "-xApod" not in content  # Windowing is applied in step 3
+    assert "-xP0 0 -xP1 0" in content  # F2 defaults to explicit zero phase
+    assert "-yP0 0 -yP1 0" in content  # F1 defaults to explicit zero phase
     assert "-xAlt" in content
     assert "-xNeg" not in content
     assert "-maxIter 1500" in content
@@ -136,7 +136,7 @@ class FakeRuntime:
         target = Path(cwd) / self.spectrum_rel
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(b"FT2")
-        return SimpleNamespace(returncode=0, stderr="")
+        return SimpleNamespace(returncode=0, stderr="", stdout="engine output")
 
 
 def test_run_manual_spectrum_uses_first_script_key(
@@ -214,8 +214,11 @@ def test_manual_script_audit_persists_params_and_actual_script(
     (work / "process.com").write_text(edited, encoding="utf-8")
     runtime = FakeRuntime(Path("d_001.ft2"))
     if failed:
-        monkeypatch.setattr(runtime, "run", lambda *a, **k:
-                            SimpleNamespace(returncode=1, stderr="runtime failed"))
+        monkeypatch.setattr(
+            runtime, "run", lambda *a, **k: SimpleNamespace(
+                returncode=1, stderr="runtime failed", stdout="engine output"
+            )
+        )
     monkeypatch.setattr("workflow.manual.CshRuntime", lambda: runtime)
     monkeypatch.setattr("workflow.manual._run_quality_check", lambda *a: None)
     monkeypatch.setattr("workflow.optimization_report.spectrum_quality_report_lines",

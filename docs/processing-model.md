@@ -166,6 +166,6 @@ spectrum. The API writes independent tables without assigning cross-spectrum ide
 | 3D uniform | Conventional NMRPipe FT with logical/storage-axis mapping |
 | 3D NUS | SMILE reconstruction/finalisation without the 2D seed |
 
-Desktop batch processing is 2D-only. API 3D NUS supports reference construction but rejects
+Desktop batch groups support homogeneous 1D/2D/3D data. API 3D NUS supports reference construction but rejects
 parameter-combination execution. See [shared interfaces](API_CONTRACT.md), [quality control](qc-system.md),
 [backend architecture](backend/architecture.md) and [API boundaries](external-api/09-limitations-and-roadmap.md).

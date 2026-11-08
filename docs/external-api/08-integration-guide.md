@@ -1,4 +1,4 @@
-# 08 · Handover to a downstream analysis program (v1.1.5)
+# 08 · Handover to a downstream analysis program (v1.1.6)
 
 This software ends at "spectrum + peak table + processing record". **Statistical inference and
 significance judgement belong to your own independent analysis program**, which should read the

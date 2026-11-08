@@ -74,3 +74,20 @@ def test_2d_crosshair_follows_without_pressed_button(qapp):
     viewer.close()
     viewer.deleteLater()
     qapp.processEvents()
+
+
+def test_legacy_peak_default_migrates_but_custom_values_survive(tmp_path, qapp, monkeypatch):
+    from gui.per_data_records import update_ui_state
+    from gui.spectrum_panel import SpectrumPanel
+    from tests.test_gui_layout import _manager_with_experiment
+    manager = _manager_with_experiment(tmp_path, monkeypatch)
+    update_ui_state(manager, "exp_001", "d_001", "spectrum", {"peak_size": 1.5})
+    panel = SpectrumPanel(manager)
+    panel.set_context("exp_001", "d_001")
+    panel._restore_display_state()
+    assert panel.peak_size_spin.value() == 0.5
+    panel.peak_size_spin.setValue(1.5)
+    panel._display_states.clear()
+    panel._restore_display_state()
+    assert panel.peak_size_spin.value() == 1.5
+    panel.close()

@@ -533,6 +533,26 @@ class Spectrum3D:
             return 0
 
     @classmethod
+    def axes_from_ft3_header(cls, path: Path | str) -> list[SpectrumAxis]:
+        """Read projection axis metadata from the 2048-byte header, without volume data."""
+        from types import SimpleNamespace
+
+        import nmrglue as ng
+
+        dic = ng.pipe.fdata2dic(ng.pipe.get_fdata(str(path)))
+        if cls._header_int(dic, "FDDIMCOUNT") != 3:
+            raise ValueError("Expected a 3D NMRPipe header")
+        shape = tuple(int(value) for value in ng.pipe.find_shape(dic))
+        if len(shape) == 2:
+            count = cls._header_int(dic, "FDF3SIZE")
+            if count <= 0 or shape[0] % count:
+                raise ValueError("Invalid 3D NMRPipe header shape")
+            shape = (count, shape[0] // count, shape[1])
+        # Axis construction consults shape only; reuse the normal lazy axis mapping.
+        header = SimpleNamespace(shape=shape)
+        return cls._build_lazy(path, dic, header, ("F1", "F2", "F3"), None).axes
+
+    @classmethod
     def load_from_ft3(
         cls,
         path: Path | str,

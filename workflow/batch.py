@@ -1,23 +1,7 @@
-"""Batch processing engine: Execute specified steps sequentially for a set of data in the
-experiment (aligned with GUI batch group semantics). Entry ``run_batch(manager, exp_id, targets,
-steps, backend)``: - When ``targets`` is batch_id/group id (such as "B1"), first press the
-project.json data group (schema 1.4,core/project) to parse the members, and then press the batch
-of.pipeline_state.json if it fails. Key resolution (old batch group tags are compatible with
-reading; 0.2.164-patch1 and GUI are write-only data groups); - When ``reference_data_id`` is not
-empty, take the valid parameter (WorkflowRun.params) of the most recent successful spectrum run
-as the spectrum step parameter base to implement "script processing of the entire group
-according to reference data processing"; explicit params overwrites the reference parameter; -
-When ``targets`` is a data_id list, execute as an explicit list; - ``steps`` Execute import in
-sequence (idempotent confirmation) -> fid -> spectrum -> peaks; fid/spectrum reuse
-workflow.stepwise.generate_fid/generate_spectrum, peaks reuse workflow.pick_peaks.pick_peaks; -
-**Capability boundary (BATCH-012, officially determined on 2026-09-12)**: Batch only supports 2D
-data; non-2D data mark skipped And give the reason (no steps to run, no implicit downgrade); -
-Single data failure does not interrupt the entire group: continue to the next data after failed
-data record failed_step/error, summarize failed list and summary. Return dict: {
-"experiment_id": str, "batch_id": str, # The group number when targets is batch_id, otherwise ""
-"data_ids": list[str], "steps": list[str], "results": {data_id: {"data_id", "status", "steps",
-"failed_step", "error", "logs"}}, "failed": list[str], "summary": {"total", "success",
-"failed"}, }.
+"""Process homogeneous 1D/2D/3D groups with separate per-data records.
+
+Automatic 2D groups support bounded parallelism (max_workers=1 by default, capped at 10).
+1D/3D and reference-script groups run sequentially. One failed member does not abort the group.
 """
 
 from __future__ import annotations
@@ -37,15 +21,15 @@ from ui_support.i18n import tr
 # steps (aligned with gui/pipeline_panel.PIPELINE_STEPS; Engine does not import Qt).
 BATCH_STEPS = ("import", "fid", "spectrum", "peaks")
 
-# BATCH-012: Formal capability boundary for batch processing = 2D only. Basis: The resource risk of
-# 3D (especially 3D NUS/SMILE) on the target host has not been resolved (see docs/problems.md power
-# outage record). The original implementation skipped by data; here, "skip" is upgraded to a formal,
-# testable boundary, and the documentation and testing have the same source.
-BATCH_SUPPORTED_NDIM = 2
 
-# 0.2.199-patch29hd: Cooling seconds between batches of adjacent data -- Continuous SMILE back-to-
-# back high load will cause unstable host (power supply/Heat dissipation) power outage (problems.md
-# record); add intervals to allow the host to cool down.
+
+
+
+# Homogeneous groups support all three dimensions.
+BATCH_SUPPORTED_NDIM = (1, 2, 3)
+
+
+
 BATCH_COOLDOWN_SECONDS = 2.0
 
 STATE_FILENAME = ".pipeline_state.json"
@@ -58,8 +42,7 @@ class BatchError(Exception):
 def _data_exists(manager: ProjectManager, exp_id: str, data_id: str) -> bool:
     """Whether the data entry exists (members in the group may have been deleted)."""
     try:
-        manager.data(exp_id, data_id)
-        return True
+        return not manager.data(exp_id, data_id).trashed
     except Exception:  # noqa: BLE001 - ProjectError Unified as non-existence.
         return False
 
@@ -92,15 +75,18 @@ def _resolve_data_ids(
         # compatible.
         group = manager.group(exp_id, batch)
         if group is not None:
-            data_ids = [d for d in group.data_ids if _data_exists(manager, exp_id, d)]
+            data_ids = [
+                d
+                for d in group.data_ids
+                if _data_exists(manager, exp_id, d)
+            ]
             if not data_ids:
-                raise BatchError(
-                    tr(
-                        "data group {p0} in experiment {p1} There is no data in",
-                        p0=batch,
-                        p1=exp_id,
-                    )
-                )
+                raise BatchError(tr(
+                    "data group {p0} in experiment {p1} There is no data "
+                    "in",
+                    p0=batch,
+                    p1=exp_id,
+                ))
             return data_ids, batch
         data_ids = [
             data.id
@@ -109,13 +95,12 @@ def _resolve_data_ids(
             and _batch_id_of(manager, exp_id, data.id) == batch
         ]
         if not data_ids:
-            raise BatchError(
-                tr(
-                    "batch group {p0} in experiment {p1} There is no data in",
-                    p0=batch,
-                    p1=exp_id,
-                )
-            )
+            raise BatchError(tr(
+                "batch group {p0} in experiment {p1} There is no data "
+                "in",
+                p0=batch,
+                p1=exp_id,
+            ))
         return data_ids, batch
     data_ids = [str(d) for d in targets]
     if not data_ids:
@@ -184,7 +169,9 @@ def _run_step(
     if step == "fid":
         from workflow.stepwise import generate_fid
 
-        return generate_fid(manager, exp_id, data_id, backend, progress=progress)
+        return generate_fid(
+            manager, exp_id, data_id, backend, progress=progress
+        )
     if step == "spectrum":
         from workflow.stepwise import generate_spectrum
 
@@ -203,12 +190,13 @@ def _run_step(
     raise BatchError(tr("Unsupported batch steps: {p0}", p0=step))
 
 
+
+
 def _step_already_done(manager: object, exp_id: str, data_id: str, step: str) -> bool:
     """This data specifies whether the step has been completed (the output file exists) and is used
     to skip processed data in batches.
     """
     if step == "import":
-        # Idempotent confirmation step, no skipping (maintaining existing return value semantics).
         return False
     try:
         data = manager.data(exp_id, data_id)
@@ -223,7 +211,6 @@ def _step_already_done(manager: object, exp_id: str, data_id: str, step: str) ->
     if step == "peaks":
         try:
             peaks_dir = manager.data_dir(exp_id, data_id, "peaks")
-        # If the directory cannot be resolved, it will be processed as incomplete.
         except Exception:  # noqa: BLE001 -
             return False
         for pat in (f"{exp_id}-{data_id}.list", f"{exp_id}-{data_id}.csv"):
@@ -247,7 +234,6 @@ def _data_fingerprint(manager: object, exp_id: str, data_id: str):
     frequency), used to compare types/condition.
     """
     from core.data.bruker_reader import read_dataset
-
     exp = read_dataset(_data_source_path(manager, exp_id, data_id))
     dims = tuple(
         (d.nucleus, round(float(d.sw or 0.0), 3), round(float(d.o1 or 0.0), 3))
@@ -269,13 +255,15 @@ def _fingerprints_match(ref, member):
             return False, tr("The core is different ({p0} vs {p1})", p0=rn, p1=mn)
         if abs(rsw - msw) > 1e-3 * max(abs(rsw), abs(msw), 1.0):
             return False, tr(
-                "The spectrum width varies greatly ({p0:.1f} vs {p1:.1f})",
+                "The spectrum width varies greatly ({p0:.1f} vs "
+                "{p1:.1f})",
                 p0=rsw,
                 p1=msw,
             )
         if abs(ro1 - mo1) > 1e-3 * max(abs(ro1), abs(mo1), 1.0):
             return False, tr(
-                "The carrier frequency difference is large ({p0:.1f} vs {p1:.1f})",
+                "The carrier frequency difference is large ({p0:.1f} vs "
+                "{p1:.1f})",
                 p0=ro1,
                 p1=mo1,
             )
@@ -292,6 +280,7 @@ def run_batch(
     params: dict[str, Any] | None = None,
     progress: Callable[[str], None] | None = None,
     reference_data_id: str | None = None,
+    max_workers: int = 1,
     on_data_done: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Execute the specified steps in order for each data in the group. Failure of a single data
@@ -346,16 +335,60 @@ def run_batch(
         raise BatchError(tr("Unsupported batch steps: {p0}", p0=unknown))
     data_ids, batch = _resolve_data_ids(manager, exp_id, targets)
     step_params = dict(params or {})
-    ref_params = (
-        _reference_spectrum_params(manager, exp_id, reference_data_id) if reference_data_id else {}
-    )
+    per_data_options = step_params.pop("_data_options", {})
+    from core.project.grouping import validate_dimensions
+
+    dimension = validate_dimensions(manager, exp_id, data_ids)
+    max_workers = max(1, min(10, int(max_workers))) if dimension == 2 else 1
+    if max_workers > 1 and len(data_ids) > 1 and not reference_data_id:
+        import copy
+        from concurrent.futures import ThreadPoolExecutor
+
+        def run_member(key):
+            options = dict(step_params)
+            options.update(per_data_options.get(key, {}))
+            return run_batch(
+                manager,
+                exp_id,
+                [key],
+                steps,
+                copy.copy(backend),
+                params=options,
+                progress=(lambda message: progress(f"[{key}] {message}")) if progress else None,
+                on_data_done=on_data_done,
+            )
+
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            batches = list(pool.map(run_member, data_ids))
+        results = {
+            key: value for batch_result in batches for key, value in batch_result["results"].items()
+        }
+        failed = [key for key in data_ids if results[key]["status"] == "failed"]
+        skipped = [key for key in data_ids if results[key]["status"] == "skipped"]
+        cancelled = [key for key in data_ids if results[key]["status"] == "cancelled"]
+        return {
+            "experiment_id": exp_id,
+            "batch_id": batch,
+            "data_ids": data_ids,
+            "steps": steps,
+            "results": results,
+            "failed": failed,
+            "skipped": skipped,
+            "cancelled": cancelled,
+            "summary": {
+                "total": len(data_ids),
+                "success": len(data_ids) - len(failed) - len(skipped) - len(cancelled),
+                "failed": len(failed),
+            },
+        }
+    ref_params = {}
+
     # 0.2.199-patch29pq: When processing with reference to the entire group, First take the
     # reference data spectrum fingerprint for type/condition check.
     ref_fp = None
     if reference_data_id and "spectrum" in steps:
         try:
             ref_fp = _data_fingerprint(manager, exp_id, reference_data_id)
-        # If the reference data cannot be identified, it will not be skipped.
         except Exception:  # noqa: BLE001 -
             ref_fp = None
     total = len(data_ids)
@@ -395,7 +428,6 @@ def run_batch(
         if ref_fp is not None and data_id != reference_data_id:
             try:
                 member_fp = _data_fingerprint(manager, exp_id, data_id)
-            # If the parameter cannot be read, it will be regarded as unapplicable.
             except Exception:  # noqa: BLE001 -
                 member_fp = None
             if member_fp is not None:
@@ -425,10 +457,9 @@ def run_batch(
 
             _exp = _read_experiment(manager, exp_id, data_id)
             _ndim = int(getattr(_exp, "ndim", 2) or 2)
-        # Unable to read dimension, treat it as 2D and relax (do not block by mistake).
         except Exception:  # noqa: BLE001 -
             _ndim = 2
-        if _ndim != BATCH_SUPPORTED_NDIM:
+        if _ndim not in BATCH_SUPPORTED_NDIM:
             per_data["status"] = "skipped"
             _msg = tr(
                 "Batch only supports {p0}D spectra, so {p1}D data are skipped (see the "
@@ -445,9 +476,12 @@ def run_batch(
                 progress(f"{data_id}: {_msg}")
             continue
         for step in steps:
+            if _ndim == 1 and step == "peaks":
+                per_data["steps"][step] = "not_applicable"
+                continue
             # 0.2.199-patch29gt: Group the batch and directly skip the steps that have been done (to
             # avoid re-running the processed data).
-            if _step_already_done(manager, exp_id, data_id, step):
+            if not reference_data_id and _step_already_done(manager, exp_id, data_id, step):
                 per_data["steps"][step] = "already_done"
                 per_data["logs"].append(tr("{p0} Completed, skip", p0=step))
                 if progress is not None:
@@ -458,9 +492,7 @@ def run_batch(
             step_logs: list[str] = []
 
             def _collect_log(_msg: str) -> None:
-                """This data log is collected and forwarded to the group scope synchronously
-                (output in detail in sequence).
-                """
+                """Collect member output and forward it to the group log."""
                 step_logs.append(_msg)
                 if progress is not None:
                     progress(_msg)
@@ -468,7 +500,24 @@ def run_batch(
             try:
                 merged = dict(ref_params) if step == "spectrum" else {}
                 merged.update(step_params)
-                value = _run_step(
+                merged.update(per_data_options.get(data_id, {}))
+                runner = _run_step
+                if reference_data_id and step in ("fid", "spectrum", "peaks"):
+                    from workflow.reference_scripts import run_reference_step
+
+                    def runner(manager, exp, data, step, backend, params, progress):
+                        return run_reference_step(
+                            manager,
+                            exp,
+                            data,
+                            reference_data_id,
+                            step,
+                            backend,
+                            progress,
+                            overrides=params,
+                        )
+
+                value = runner(
                     manager,
                     exp_id,
                     data_id,
@@ -477,7 +526,6 @@ def run_batch(
                     merged,
                     progress=_collect_log,
                 )
-            # Single data failure does not interrupt the entire group.
             except Exception as exc:  # noqa: BLE001 -
                 if cancel_requested():
                     per_data["status"] = "cancelled"

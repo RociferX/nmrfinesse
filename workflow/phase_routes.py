@@ -466,6 +466,7 @@ def _append_final_summary(
     lines: list[str] = [spectrum_report_title()]
     # 2D (F1,F2);3D (F2,F1,F3)
     # 2D (F1,F2);3D (F2,F1,F3)
+    # 2D (F1,F2);3D (F2,F1,F3)
     storage_axes = ["F1", "F2"] if direct_axis == "F2" else ["F2", "F1", "F3"]
     # Data-quality diagnostics belong to the "Generate FID" stage, not this step.
     # They were removed from the spectrum report and now appear in the Generate FID
@@ -692,20 +693,22 @@ def unified_route(    experiment: Experiment,
     # and reused -- the spectrum step no longer re-runs or announces it. When the record is
     diagnostics: dict[str, Any] = {}
     diag_logs: list[str] = []
-    try:
-        from workflow.direct_diagnostics import load_or_run_direct_diagnostics
+    if not params.get("_phase_only"):
+        try:
+            from workflow.direct_diagnostics import load_or_run_direct_diagnostics
 
-        diag_result = load_or_run_direct_diagnostics(work, experiment, progress=progress)
-        diagnostics = {
-            "reports": list(diag_result.reports),
-            "metrics": dict(diag_result.metrics),
-            "apply_poly_time": diag_result.apply_poly_time,
-            "repaired_badpoints": diag_result.repaired_badpoints,
-            "backup_dir": diag_result.backup_dir,
-            "clean": bool(getattr(diag_result, "clean", False)),
-        }
-    except Exception as exc:  # noqa: BLE001 - a failed diagnostic must not block
-        diag_logs = [tr("data quality diagnosis failed: {p0}", p0=exc)]
+            diag_result = load_or_run_direct_diagnostics(work, experiment, progress=progress)
+            diagnostics = {
+                "reports": list(diag_result.reports),
+                "metrics": dict(diag_result.metrics),
+                "apply_poly_time": diag_result.apply_poly_time,
+                "repaired_badpoints": diag_result.repaired_badpoints,
+                "backup_dir": diag_result.backup_dir,
+                "clean": bool(getattr(diag_result, "clean", False)),
+            }
+        except Exception as exc:  # noqa: BLE001 - a failed diagnostic must not block
+            diag_logs = [tr("data quality diagnosis failed: {p0}", p0=exc)]
+
     # 0.2.162-patch15: the user's final-run direct-dimension range
     # (final_ext_lo/final_ext_hi); 0.2.199-patch3: with "apply this range to the
     # optimisation" on it also enters the complex preview/optimisation evaluation,
@@ -902,6 +905,8 @@ def unified_route(    experiment: Experiment,
             )
     # 0.2.166: with auto_phase=False the direct dimension took no part in the
     fixed.setdefault(direct_axis, (0.0, 0.0))
+    if params.get("_phase_only"):
+        return {"phases": fixed, "logs": logs, "backend_runs": backend_runs}
     # 0.2.163-patch6: processing-parameter optimisation (baseline / direct-dimension
     # window / zero fill + indirect windows), symmetric with NUS; uniform has no
     if progress is not None:
@@ -1660,21 +1665,23 @@ def _unified_nus(
     # re-runs or announces it. When the record is missing or does not match the current fid the
     diagnostics: dict[str, Any] = {}
     diag_logs: list[str] = []
-    try:
-        from workflow.direct_diagnostics import load_or_run_direct_diagnostics
+    if not (base_params or {}).get("_phase_only"):
+        try:
+            from workflow.direct_diagnostics import load_or_run_direct_diagnostics
 
-        diag_result = load_or_run_direct_diagnostics(work, experiment, progress=progress)
-        diagnostics = {
-            "reports": list(diag_result.reports),
-            "metrics": dict(diag_result.metrics),
-            "apply_poly_time": diag_result.apply_poly_time,
-            "repaired_badpoints": diag_result.repaired_badpoints,
-            "backup_dir": diag_result.backup_dir,
-            "clean": bool(getattr(diag_result, "clean", False)),
-        }
-    except Exception as exc:  # noqa: BLE001 - a failed diagnostic must not block
-        diag_logs = [tr("data quality diagnosis failed: {p0}", p0=exc)]
+            diag_result = load_or_run_direct_diagnostics(work, experiment, progress=progress)
+            diagnostics = {
+                "reports": list(diag_result.reports),
+                "metrics": dict(diag_result.metrics),
+                "apply_poly_time": diag_result.apply_poly_time,
+                "repaired_badpoints": diag_result.repaired_badpoints,
+                "backup_dir": diag_result.backup_dir,
+                "clean": bool(getattr(diag_result, "clean", False)),
+            }
+        except Exception as exc:  # noqa: BLE001 - a failed diagnostic must not block
+            diag_logs = [tr("data quality diagnosis failed: {p0}", p0=exc)]
     params_first = dict(base_params or {})
+
     # 0.2.162-patch15: the final-run direct-dimension range
     # (final_ext_lo/final_ext_hi) only enters the final run by default;
     # 0.2.199-patch3: with "apply this range to the optimisation" on it also enters
@@ -2125,6 +2132,9 @@ def _unified_nus(
                     p0=_round + 2,
                 ))
                 break
+    if (base_params or {}).get("_phase_only"):
+        return {"phases": {**fixed, direct_axis: direct_phase},
+                "logs": logs, "backend_runs": backend_runs}
     # Processing-parameter optimisation (baseline / zero fill / window functions):
     # after the per-axis phase search and before the final run; the final phase of
     # every dimension goes into the initial script together with the optimised

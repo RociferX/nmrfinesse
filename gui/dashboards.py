@@ -9,16 +9,18 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from qtcompat.QtCore import QEvent, Qt, QTimer
+from qtcompat.QtCore import QEvent, QSignalBlocker, Qt, QTimer
 from qtcompat.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
+    QComboBox,
     QFrame,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QListWidget,
+    QListWidgetItem,
     QPushButton,
     QScrollArea,
     QTableWidget,
@@ -292,15 +294,17 @@ class ExperimentImportPanel(QWidget):
         batch_layout.setSpacing(6)
         batch_hint = _ImportHint(
             tr(
-                "You may add an umbrella folder (Bruker data sets in its subfolders are detected "
-                "automatically) or several data directories. Enable Group data (2D) to create "
-                "a group for later batch processing; otherwise import separate entries. "
-                "Batch import supports 2D only; process 3D data individually.",
+                "Browse to a top-level folder to detect Bruker data in its subfolders, then filter "
+                "by dimensionality. Grouping creates separate groups for 1D, 2D and 3D data. "
+                "2D groups can run in parallel; 3D groups run sequentially.",
             )
         )
         batch_hint.setWordWrap(True)
         batch_hint.setObjectName("MutedText")
+        self._batch_candidates = {}
+        self._batch_updating = False
         self.batch_list = QListWidget()
+        self.batch_list.installEventFilter(self)
         self.batch_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.batch_list.setTextElideMode(Qt.TextElideMode.ElideMiddle)
         self.batch_list.hide()
@@ -308,20 +312,21 @@ class ExperimentImportPanel(QWidget):
         model.rowsInserted.connect(self._sync_batch_list)
         model.rowsRemoved.connect(self._sync_batch_list)
         model.modelReset.connect(self._sync_batch_list)
-        self.batch_group_check = QCheckBox(tr("Group data (2D)"))
+        self.batch_list.itemChanged.connect(self._on_batch_item_changed)
+        self.batch_group_check = QCheckBox(tr("Group data by dimensionality"))
         self.batch_group_check.setToolTip(
             tr(
-                "Checked: import into one data group and process them together later (2D spectra "
-                "only). Unchecked: no grouping, equivalent to several single "
-                "imports.",
+                "Checked: create one group per dimensionality for later processing. "
+                "Unchecked: import separate data entries.",
             )
         )
         self.batch_group_check.setChecked(False)
         batch_buttons = QHBoxLayout()
+        batch_buttons.setContentsMargins(0, 0, 0, 0)
         self.batch_add_button = QPushButton(tr("Browse..."))
         self.batch_add_button.setObjectName("SubtleAction")
         self.batch_add_button.clicked.connect(self._on_batch_add_folder)
-        self.batch_clear_button = QPushButton(tr("Clear list"))
+        self.batch_clear_button = QPushButton(tr("Remove checked"))
         self.batch_clear_button.setObjectName("SubtleAction")
         self.batch_clear_button.clicked.connect(self._on_batch_clear)
         batch_buttons.addWidget(self.batch_clear_button)
@@ -333,20 +338,80 @@ class ExperimentImportPanel(QWidget):
         self.batch_import_button.setEnabled(False)
         self.batch_import_button.clicked.connect(self._on_batch_import)
         batch_layout.addWidget(self.batch_import_button)
+        self.dimension_filter = QComboBox()
+        for text, dimensions in (
+            (tr("Import all"), (1,2,3)), (tr("Import 1D only"), (1,)), (tr("Import 2D only"), (2,)),
+            (tr("Import 3D only"), (3,)), (tr("Import 1D/2D only"), (1,2)),
+            (tr("Import 2D/3D only"), (2,3)), (tr("Import 1D/3D only"), (1,3)),
+        ):
+            self.dimension_filter.addItem(text, dimensions)
+        self.dimension_filter.currentIndexChanged.connect(self._apply_batch_filter)
+        batch_layout.addWidget(self.dimension_filter)
         batch_layout.addWidget(self.batch_list)
         batch_layout.addWidget(self.batch_group_check)
         batch_layout.addWidget(batch_hint)
         import_columns.addWidget(self.batch_group, 1)
+        self._align_import_controls()
         layout.addStretch(1)
 
+    def _align_import_controls(self):
+        controls = [self.browse_button, self.segmented_browse_button,
+                    self.batch_add_button, self.batch_clear_button]
+        height = max(widget.sizeHint().height() for widget in
+                     [*controls, self.source_edit, self.segmented_source_edit])
+        for button in controls:
+            button.setFixedHeight(height)
+
+    def _batch_all_item(self) -> QListWidgetItem | None:
+        first = self.batch_list.item(0)
+        return first if first and first.data(Qt.ItemDataRole.UserRole) is True else None
+
+    def _batch_path_items(self) -> list[QListWidgetItem]:
+        first_path = int(self._batch_all_item() is not None)
+        return [self.batch_list.item(index)
+                for index in range(first_path, self.batch_list.count())]
+
+    def _on_batch_item_changed(self, item: QListWidgetItem) -> None:
+        if self._batch_updating:
+            return
+        if item is self._batch_all_item():
+            self._set_batch_checks(item.checkState())
+        else:
+            self._sync_batch_all_state()
+
+    def _set_batch_checks(self, state: Qt.CheckState) -> None:
+        with QSignalBlocker(self.batch_list):
+            for item in self._batch_path_items():
+                item.setCheckState(state)
+        self._sync_batch_all_state()
+
+    def _sync_batch_all_state(self) -> None:
+        item = self._batch_all_item()
+        if item is None:
+            return
+        paths = self._batch_path_items()
+        checked = sum(path.checkState() == Qt.CheckState.Checked for path in paths)
+        state = Qt.CheckState.Unchecked
+        if checked:
+            state = (
+                Qt.CheckState.Checked if checked == len(paths) else Qt.CheckState.PartiallyChecked
+            )
+        with QSignalBlocker(self.batch_list):
+            item.setCheckState(state)
+
     def _sync_batch_list(self, *_args):
-        count = self.batch_list.count()
+        if self._batch_updating:
+            return
+        count = len(self._batch_path_items())
         self.batch_list.setVisible(count > 0)
+        self.batch_import_button.setEnabled(count > 0)
         if count:
+            header = int(self._batch_all_item() is not None)
             row_height = max(self.fontMetrics().height(), self.batch_list.sizeHintForRow(0))
             self.batch_list.setFixedHeight(
-                min(count, 4) * row_height + 2 * self.batch_list.frameWidth() + 4
+                (min(count, 4) + header) * row_height + 2 * self.batch_list.frameWidth() + 4
             )
+            self._sync_batch_all_state()
 
     def changeEvent(self, event):
         super().changeEvent(event)
@@ -355,7 +420,12 @@ class ExperimentImportPanel(QWidget):
             and hasattr(self, 'batch_list')
         ):
             QTimer.singleShot(0, self, self._sync_batch_list)
+            QTimer.singleShot(0, self, self._align_import_controls)
 
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
@@ -400,6 +470,14 @@ class ExperimentImportPanel(QWidget):
         if path:
             self.source_edit.setText(path)
 
+    def eventFilter(self, watched, event):
+        if watched is self.batch_list and event.type() == QEvent.Type.KeyPress:
+            if (event.key() == Qt.Key.Key_A
+                    and event.modifiers() & Qt.KeyboardModifier.ControlModifier):
+                self._set_batch_checks(Qt.CheckState.Checked)
+                return True
+        return super().eventFilter(watched, event)
+
     def _on_batch_add_folder(self) -> None:
         """Add data file folders to the batch list (automatically check Bruker datasets in sub-file
         folders). 0.2.199-patch29gg: Browse starting point = data directory.
@@ -411,6 +489,9 @@ class ExperimentImportPanel(QWidget):
         )
         if not path:
             return
+        self._add_batch_path(path)
+
+    def _add_batch_path(self, path: str) -> None:
         found = self._bruker_datasets_under(Path(path))
         if not found:
             InfoDialog.show_info(
@@ -422,11 +503,34 @@ class ExperimentImportPanel(QWidget):
                 ),
             )
             return
-        for dataset_dir in found:
-            if not self.batch_list.findItems(str(dataset_dir), Qt.MatchFlag.MatchExactly):
-                self.batch_list.addItem(str(dataset_dir))
-                self.batch_list.item(self.batch_list.count() - 1).setToolTip(str(dataset_dir))
-        self.batch_import_button.setEnabled(self.batch_list.count() > 0)
+        from core.project.grouping import raw_ndim
+        for path in found:
+            self._batch_candidates[str(path)] = raw_ndim(path)
+        self._apply_batch_filter()
+
+    def _apply_batch_filter(self, *_args):
+        previous = {item.text(): item.checkState() for item in self._batch_path_items()}
+        dimensions = self.dimension_filter.currentData()
+        paths = [path for path, ndim in self._batch_candidates.items() if ndim in dimensions]
+        self._batch_updating = True
+        self.batch_list.setUpdatesEnabled(False)
+        self.batch_list.clear()
+        if paths:
+            header = QListWidgetItem(tr("All"))
+            header.setData(Qt.ItemDataRole.UserRole, True)
+            header.setFlags(header.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            header.setCheckState(Qt.CheckState.Unchecked)
+            header.setToolTip(tr("Check or uncheck all paths shown by the current filter"))
+            self.batch_list.addItem(header)
+        for path in paths:
+            item = QListWidgetItem(path)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(previous.get(path, Qt.CheckState.Unchecked))
+            item.setToolTip(path)
+            self.batch_list.addItem(item)
+        self._batch_updating = False
+        self.batch_list.setUpdatesEnabled(True)
+        self._sync_batch_list()
 
     @staticmethod
     def _bruker_datasets_under(root: Path) -> list[Path]:
@@ -441,31 +545,27 @@ class ExperimentImportPanel(QWidget):
             candidates = [root]
         for cand in candidates:
             if (cand / "acqus").is_file():
-
-
-                if (
-                    not (cand / "acqu2s").is_file()
-                    or (cand / "acqu3s").is_file()
-                    or (cand / "acqu3").is_file()
-                ):
-                    continue
                 datasets.add(cand.resolve())
         return sorted(datasets)
 
     def _on_batch_clear(self) -> None:
-        self.batch_list.clear()
-        self.batch_import_button.setEnabled(False)
+        self._batch_updating = True
+        for item in reversed(self._batch_path_items()):
+            if item.checkState() == Qt.CheckState.Checked:
+                removed = self.batch_list.takeItem(self.batch_list.row(item))
+                self._batch_candidates.pop(removed.text(), None)
+        if not self._batch_path_items():
+            self.batch_list.clear()
+        self._batch_updating = False
+        self._sync_batch_list()
 
     def _on_batch_import(self) -> None:
-        """Import multiple data directories in the list into the current experiment; group=True is
-        the same batch group.
-        """
-        if not self._exp_id or self.batch_list.count() == 0:
+        folders = [item.text() for item in self._batch_path_items()]
+        if not self._exp_id or not folders:
             return
-        folders = [self.batch_list.item(index).text() for index in range(self.batch_list.count())]
         self.batch_import_requested.emit(self._exp_id, folders, self.batch_group_check.isChecked())
-
-        self._on_batch_clear()
+        self.batch_list.clear()
+        self._batch_candidates.clear()
 
     def _on_import(self) -> None:
         source = self.source_edit.text().strip()

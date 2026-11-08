@@ -16,10 +16,12 @@ from qtcompat.QtWidgets import (
     QComboBox,
     QGridLayout,
     QGroupBox,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
     QPushButton,
     QScrollArea,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -42,6 +44,8 @@ class GroupBatchPanel(QWidget):
     """Data group batch processing panel (displayed when the group node is selected)."""
 
     log_message = Signal(str)
+    context_changed = Signal(str)
+    temperature_sort_changed = Signal(str, str)
     run_group_batch_requested = Signal(str, str, list, str, dict)
     # (exp_id, group_id, steps, reference_data_id)
     summary_requested = Signal(dict)
@@ -51,6 +55,18 @@ class GroupBatchPanel(QWidget):
         self._manager = None
         self._exp_id = ""
         self._group_id = ""
+        self.temperature_sorts: dict[tuple, int] = {}
+        self._notes_columns: list[tuple[str, str, dict[str, str]]] = []
+        self.temperature_sort_button = QToolButton(self)
+        self.temperature_sort_button.setAutoRaise(True)
+        self.temperature_sort_button.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.temperature_sort_button.setStyleSheet("padding: 0 4px;")
+        self.temperature_sort_button.setAccessibleName(tr("Sort by temperature"))
+        self.temperature_sort_button.setToolTip(tr(
+            "Sort columns by temperature: · original order, > low to high, < high to low."
+        ))
+        self.temperature_sort_button.clicked.connect(self._cycle_temperature_sort)
+        self.temperature_sort_button.hide()
 
         # 0.2.199-patch29hd: The whole page can be scrolled up and down -- member/Contextual #
         # annotation content is no longer squashed when it is long.
@@ -71,25 +87,6 @@ class GroupBatchPanel(QWidget):
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(6)
 
-        title = QLabel(tr("data group batch processing"))
-        title.setObjectName("PanelTitle")
-        layout.addWidget(title)
-
-        self.context_label = QLabel("")
-        self.context_label.setWordWrap(True)
-        self.context_label.setObjectName("PanelSubtitle")
-        layout.addWidget(self.context_label)
-
-        self.member_label = QLabel("")
-        self.member_label.setWordWrap(True)
-        self.member_label.setObjectName("MutedText")
-        layout.addWidget(self.member_label)
-        # 0.2.199-patch29gw: Data annotation within the group (field x data grid), placed above
-        # # "Process by reference data".
-        self.notes_label = QLabel(tr("In-group data annotation"))
-        self.notes_label.setObjectName("SectionTitle")
-        self.notes_label.setVisible(False)
-        layout.addWidget(self.notes_label)
         self.notes_scroll = QScrollArea()
         self.notes_scroll.setWidgetResizable(True)
         self.notes_scroll.setHorizontalScrollBarPolicy(
@@ -110,7 +107,7 @@ class GroupBatchPanel(QWidget):
         ref_hint = QLabel(
             tr(
                 "Pick a data set of this experiment that already has a spectrum; its processing "
-                "parameters are applied to every data set in the group. You may also stop at a "
+                "scripts are reused without automatic optimisation. You may also stop at a "
                 "chosen step (for example, generate the FID "
                 "only).",
             )
@@ -119,55 +116,67 @@ class GroupBatchPanel(QWidget):
         ref_hint.setObjectName("MutedText")
         ref_layout.addWidget(ref_hint)
 
-        row1 = QVBoxLayout()
-        row1.addWidget(QLabel(tr("Reference data:")))
+        reference_form = QGridLayout()
+        reference_form.addWidget(QLabel(tr("Reference data:")), 0, 0)
         self.reference_combo = QComboBox()
-        self.reference_combo.setMinimumWidth(0)
-        row1.addWidget(self.reference_combo, 1)
-        ref_layout.addLayout(row1)
-
-        row2 = QVBoxLayout()
-        row2.addWidget(QLabel(tr("Processed to:")))
+        self.reference_combo.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        )
+        self.reference_combo.setMinimumContentsLength(10)
+        reference_form.addWidget(self.reference_combo, 0, 1)
+        reference_form.addWidget(QLabel(tr("Processed to:")), 1, 0)
         self.stop_combo = QComboBox()
         for _value, label in STOP_STEP_OPTIONS:
             self.stop_combo.addItem(label)
         fit_combo_width(self.stop_combo)
-        row2.addWidget(self.stop_combo)
-        row2.addStretch(1)
-        ref_layout.addLayout(row2)
+        reference_form.addWidget(self.stop_combo, 1, 1)
+        reference_form.setColumnStretch(1, 1)
+        ref_layout.addLayout(reference_form)
 
-        self.run_ref_button = QPushButton(tr("Process entire group by reference data"))
+        self.reference_data_options = {}
+        self.reference_range_button = QPushButton(tr("direct dimension range"))
+        self.reference_phase_button = QPushButton(tr("Phase"))
+        self.reference_range_button.clicked.connect(lambda: self._edit_reference_options("range"))
+        self.reference_phase_button.clicked.connect(lambda: self._edit_reference_options("phases"))
+        self.run_ref_button = QPushButton(tr("Run"))
+        self.run_ref_button.setToolTip(tr("Process entire group by reference data"))
         self.run_ref_button.setObjectName("PrimaryAction")
         self.run_ref_button.setEnabled(False)
         self.run_ref_button.clicked.connect(self._on_run_reference)
-        ref_layout.addWidget(self.run_ref_button)
+        self.reference_combo.currentIndexChanged.connect(self._refresh_reference_enabled)
+        self.stop_combo.currentIndexChanged.connect(self._refresh_reference_enabled)
+        self._refresh_reference_enabled()
+        actions = QHBoxLayout()
+        actions.addWidget(self.reference_range_button, 1)
+        actions.addWidget(self.reference_phase_button, 1)
+        actions.addWidget(self.run_ref_button, 1)
+        ref_layout.addLayout(actions)
         layout.addWidget(ref_box)
 
         # ---- Mode B: optimise the data within the group in sequence ----.
-        opt_box = QGroupBox(tr("optimise the data within the group in turn"))
+        opt_box = QGroupBox(tr("Parallel optimisation of 2D data"))
+        self.optimisation_box = opt_box
         opt_box.setObjectName("SectionTitle")
         opt_layout = QVBoxLayout(opt_box)
         opt_layout.setContentsMargins(8, 10, 8, 8)
         opt_layout.setSpacing(6)
         opt_hint = QLabel(
             tr(
-                "Runs the automatic pipeline (FID -> spectrum -> peak picking) for every data set "
-                "in the group in turn; one failure does not abort the whole "
-                "group.",
+                "2D data run in parallel up to the configured limit. 1D and 3D data run "
+                "sequentially; one failure does not abort the group.",
             )
         )
         opt_hint.setWordWrap(True)
         opt_hint.setObjectName("MutedText")
         opt_layout.addWidget(opt_hint)
 
-        opt_row = QVBoxLayout()
+        opt_row = QHBoxLayout()
         opt_row.addWidget(QLabel(tr("Processed to:")))
         self.opt_stop_combo = QComboBox()
         for _value, _label in STOP_STEP_OPTIONS:
             self.opt_stop_combo.addItem(_label)
         fit_combo_width(self.opt_stop_combo)
-        opt_row.addWidget(self.opt_stop_combo)
-        opt_row.addStretch(1)
+        opt_row.addWidget(self.opt_stop_combo, 1)
         opt_layout.addLayout(opt_row)
         # Direct dimension range setting (displayed when processing to spectrum/peaks).
         self.ext_group = QGroupBox(tr("direct dimension range setting"))
@@ -221,44 +230,65 @@ class GroupBatchPanel(QWidget):
         self, manager, exp_id: str, group_id: str
     ) -> None:
         """Bind project context and refresh group information/Reference data drop-down."""
+        if (manager, exp_id, group_id) != (self._manager, self._exp_id, self._group_id):
+            self._notes_columns = []
         self._manager = manager
         self._exp_id = exp_id
         self._group_id = group_id
         self._refresh()
-        self._refresh_notes()
 
-    def _refresh_notes(self) -> None:
-        """Data annotation within the group: Annotation fields are rows (field names in the first
-        column), and each data is a column."""
-        from gui.notes import DATA_FIELDS, data_note_fields
+    def _refresh_notes(self, members) -> None:
+        from gui.notes import data_note_fields
 
-        manager = self._manager
-        exp_id, group_id = self._exp_id, self._group_id
-        self.notes_label.setVisible(False)
-        self.notes_scroll.setVisible(False)
-        if manager is None or manager.project is None:
+        columns = [
+            (d.id, d.title or f"Data {d.id}", {
+                key: str(value) for key, value in
+                data_note_fields(self._manager.project, self._exp_id, d.id).items()
+                if value is not None and str(value).strip()
+            })
+            for d in members
+        ]
+        if columns == self._notes_columns and self.notes_scroll.widget() is not None:
+            self.notes_scroll.setVisible(any(fields for _, _, fields in columns))
             return
-        exp = manager.project.experiment(exp_id)
-        group = manager.group(exp_id, group_id) if exp is not None else None
-        if group is None:
+        self._notes_columns = columns
+        self._render_notes()
+
+    def _temperature_sort_context(self) -> tuple:
+        return self._manager.root, self._exp_id, self._group_id
+
+    def _cycle_temperature_sort(self) -> None:
+        context = self._temperature_sort_context()
+        mode = (self.temperature_sorts.get(context, 0) + 1) % 3
+        if mode:
+            self.temperature_sorts[context] = mode
+        else:
+            self.temperature_sorts.pop(context, None)
+        self._render_notes()
+        self.temperature_sort_changed.emit(self._exp_id, self._group_id)
+
+    def _render_notes(self) -> None:
+        from gui.notes import DATA_FIELDS, temperature_sort_key
+
+        columns = self._notes_columns
+        present = {key for _, _, fields in columns for key in fields}
+        self.notes_scroll.setVisible(bool(present))
+        if not present:
             return
-        member_ids = (group.data_ids or [])
-        if not member_ids:
-            return
-        cols_data: list[tuple[str, str, dict]] = []
-        for data_id in member_ids:
-            d = next((x for x in exp.data if x.id == data_id), None)
-            label_text = (d.title or f"Data {data_id}") if d else f"Data {data_id}"
-            cols_data.append(
-                (data_id, label_text, data_note_fields(manager.project, exp_id, data_id))
-            )
-        row_keys: list[str] = [k for k, _ in DATA_FIELDS]
-        display = {k: v for k, v in DATA_FIELDS}
-        for _di, _lb, fields in cols_data:
-            for k in fields:
-                if k not in row_keys:
-                    row_keys.append(k)
-                    display[k] = k
+        mode = self.temperature_sorts.get(self._temperature_sort_context(), 0)
+        if mode:
+            columns = sorted(columns, key=lambda column: temperature_sort_key(
+                column[2].get("temperature"), mode
+            ))
+        display = dict(DATA_FIELDS)
+        keys = ["notes", *(key for key in display if key != "notes")]
+        keys.extend(sorted(present - display.keys()))
+        row_keys = [key for key in keys if key in present]
+
+        button = self.temperature_sort_button
+        restore_focus = button.hasFocus()
+        scroll_position = self.notes_scroll.verticalScrollBar().value()
+        button.setParent(self)
         container = QWidget()
         grid = QGridLayout(container)
         grid.setContentsMargins(6, 4, 6, 4)
@@ -266,7 +296,7 @@ class GroupBatchPanel(QWidget):
         head0 = QLabel(tr("data"))
         head0.setObjectName("SectionTitle")
         grid.addWidget(head0, 0, 0)
-        for ci, (_data_id, label_text, _f) in enumerate(cols_data, start=1):
+        for ci, (_data_id, label_text, _f) in enumerate(columns, start=1):
             head = QLabel(f"◆ {label_text}")
             head.setWordWrap(True)
             head.setObjectName("SectionTitle")
@@ -274,65 +304,102 @@ class GroupBatchPanel(QWidget):
         for ri, key in enumerate(row_keys, start=1):
             fname = QLabel(display.get(key, key))
             fname.setObjectName("SectionTitle")
-            grid.addWidget(fname, ri, 0)
-            for ci, (_di, _lb, fields) in enumerate(cols_data, start=1):
-                val = fields.get(key)
-                val_lb = QLabel(str(val) if val not in (None, "") else "—")
+            if key == "temperature":
+                header = QHBoxLayout()
+                header.setSpacing(3)
+                header.addWidget(fname)
+                button.setText(("·", ">", "<")[mode])
+                header.addWidget(button)
+                grid.addLayout(header, ri, 0)
+                grid.setAlignment(header, Qt.AlignmentFlag.AlignLeft)
+                button.show()
+            else:
+                grid.addWidget(fname, ri, 0)
+            for ci, (_di, _lb, fields) in enumerate(columns, start=1):
+                val_lb = QLabel(fields.get(key, "—"))
                 val_lb.setWordWrap(True)
-                val_lb.setMinimumWidth(0)
                 val_lb.setObjectName("MutedText")
                 grid.addWidget(val_lb, ri, ci)
-        grid.setColumnStretch(0, 0)
-        grid.setColumnStretch(len(cols_data) + 1, 0)
+        grid.setRowStretch(len(row_keys) + 1, 1)
         self.notes_scroll.setWidget(container)
-        self.notes_label.setVisible(True)
-        self.notes_scroll.setVisible(True)
+        # Limit the viewport to two thirds of the previous full set of rows.
+        margins = grid.contentsMargins()
+        full_height = (len(DATA_FIELDS) + 1) * head0.sizeHint().height()
+        full_height += len(DATA_FIELDS) * grid.verticalSpacing()
+        full_height += margins.top() + margins.bottom() + 2 * self.notes_scroll.frameWidth()
+        self.notes_scroll.setMaximumHeight(
+            min(self.notes_scroll.sizeHint().height(), round(full_height * 2 / 3))
+        )
+        self.notes_scroll.verticalScrollBar().setValue(scroll_position)
+        if restore_focus and "temperature" in present:
+            button.setFocus()
 
     def _refresh(self) -> None:
         manager = self._manager
         exp_id, group_id = self._exp_id, self._group_id
-        if manager is None or manager.project is None:
-            return
-        exp = manager.project.experiment(exp_id)
+        project = manager.project if manager is not None else None
+        exp = project.experiment(exp_id) if project is not None else None
         group = manager.group(exp_id, group_id) if exp is not None else None
-        if exp is None or group is None:
-            self.context_label.setText(tr("Group {p0}(does not exist)", p0=group_id))
+        if group is None:
+            self.context_changed.emit(tr("Group {p0}(does not exist)", p0=group_id))
+            self.notes_scroll.hide()
             self.run_ref_button.setEnabled(False)
             self.run_optimize_button.setEnabled(False)
             return
-        title = group.title or f"Group {group_id}"
-        self.context_label.setText(tr(
-            "experiment: {p0} · Group: "
-            "{p1}",
+        member_ids = set(group.data_ids or [])
+        members = [d for d in exp.data if not d.trashed and d.id in member_ids]
+        context = tr(
+            "experiment: {p0} · Group: {p1}",
             p0=exp.title or exp_id,
-            p1=title,
-        ))
-        members = [
-            d
-            for d in exp.data
-            if d.id in (group.data_ids or [])
-        ]
-        names = "、".join(
-            f"{d.title or 'Data ' + d.id}" for d in members
+            p1=group.title or f"Group {group_id}",
         )
-        self.member_label.setText(
-            tr(
-                "Data within the group ({p0} indivual): "
-                "{p1}",
-                p0=len(members),
-                p1=names or '(empty group)',
-            )
-        )
+        count = tr("Group members: {p0}", p0=len(members))
+        self.context_changed.emit(f"{context}  ·  {count}")
+        by_id = {data.id: data for data in members}
+        self._refresh_notes([by_id[key] for key in group.data_ids if key in by_id])
         self.run_optimize_button.setEnabled(bool(members))
+        from core.project.grouping import data_ndim
+        ndim = data_ndim(manager, exp_id, members[0].id) if members else 2
+        text = (tr("Parallel optimisation of 2D data") if ndim == 2
+                else tr("Sequential optimisation"))
+        self.optimisation_box.setTitle(text)
+        self.run_optimize_button.setText(text)
+        self.opt_stop_combo.model().item(2).setEnabled(ndim != 1)
+        self.stop_combo.model().item(2).setEnabled(ndim != 1)
+        if ndim == 1:
+            for combo in (self.opt_stop_combo, self.stop_combo):
+                if combo.currentIndex() == 2:
+                    combo.setCurrentIndex(1)
         self._refresh_reference_combo(exp, members)
+        self._refresh_reference_enabled()
 
     def _refresh_reference_combo(self, exp, members) -> None:
         """Reference data drop-down: spectrum data generated in the experiment (including group
         members)."""
+        token = (id(exp), self._group_id,
+                 tuple((d.id, d.title, d.trashed, d.spectrum_path, d.fid_path) for d in exp.data),
+                 tuple(d.id for d in members), len(self._manager.project.workflow_runs))
+        if token == getattr(self, "_reference_token", None):
+            self.run_ref_button.setEnabled(bool(self.reference_combo.currentData()))
+            return
+        self._reference_token = token
+        previous = self.reference_combo.currentData()
         self.reference_combo.clear()
-        candidates: list[tuple[str, str]] = []
+        candidates = []
+        from core.project import ProjectError
+        from workflow.reference_scripts import candidate_signature
+        try:
+            signatures = {candidate_signature(self._manager, self._exp_id, d.id) for d in members}
+        except (OSError, ValueError, RuntimeError, ProjectError):
+            signatures = set()
         for data in exp.data:
-            if not data.spectrum_path:
+            if data.trashed or not data.spectrum_path:
+                continue
+            try:
+                signature = candidate_signature(self._manager, self._exp_id, data.id)
+                if signatures and signatures != {signature}:
+                    continue
+            except (OSError, ValueError, RuntimeError, ProjectError):
                 continue
             label = data.title or f"Data {data.id}"
             candidates.append((data.id, f"{label} ({data.id})"))
@@ -343,12 +410,40 @@ class GroupBatchPanel(QWidget):
         for data_id, label in candidates:
             self.reference_combo.addItem(label, data_id)
         self.run_ref_button.setEnabled(True)
+        index = self.reference_combo.findData(previous)
+        if index >= 0:
+            self.reference_combo.setCurrentIndex(index)
 
     def _stop_steps(self) -> list[str]:
         """BATCH_STEPS prefix subset (starting from fid) corresponding to the cutoff step."""
         value = STOP_STEP_OPTIONS[self.stop_combo.currentIndex()][0]
         order = ("fid", "spectrum", "peaks")
         return list(order[: order.index(value) + 1])
+
+    def _refresh_reference_enabled(self, *args):
+        ready = bool(self.reference_combo.currentData()) and self.run_ref_button.isEnabled()
+        spectrum = self.stop_combo.currentIndex() > 0
+        self.reference_range_button.setEnabled(ready and spectrum)
+        self.reference_phase_button.setEnabled(ready and spectrum)
+
+    def _edit_reference_options(self, kind):
+        from core.project.grouping import active_members
+        from gui.reference_phase_dialog import ReferenceOptionsDialog
+        from workflow.reference_scripts import reference_defaults
+        ref = self.reference_combo.currentData()
+        if not ref:
+            return
+        key = (self._exp_id, self._group_id, ref)
+        rows = [(d.id, d.title or d.id) for d in active_members(
+            self._manager, self._exp_id, self._group_id)]
+        try:
+            defaults = reference_defaults(self._manager, self._exp_id, ref)
+            dialog = ReferenceOptionsDialog(self, rows, defaults,
+                self.reference_data_options.get(key, {}), kind)
+            if dialog.exec():
+                self.reference_data_options[key] = dialog.values()
+        except Exception as exc:
+            self.log_message.emit(str(exc))
 
     def _on_run_reference(self) -> None:
         ref_id = str(self.reference_combo.currentData() or "")
@@ -357,7 +452,15 @@ class GroupBatchPanel(QWidget):
             return
         steps = self._stop_steps()
         self.run_group_batch_requested.emit(
-            self._exp_id, self._group_id, steps, ref_id, {}
+            self._exp_id,
+            self._group_id,
+            steps,
+            ref_id,
+            {
+                "_data_options": self.reference_data_options.get(
+                    (self._exp_id, self._group_id, ref_id), {}
+                )
+            },
         )
 
     def _opt_steps(self) -> list[str]:

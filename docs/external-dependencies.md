@@ -34,9 +34,9 @@ For other NMRPipe companion tools, a configured and valid per-tool path takes pr
 the application checks the `csh` environment first, then searches `com/` subdirectories under the
 discovered installation directory and its parent directories.
 
-Default configuration lives in `nmrfinesse_data/config/nmrfinesse.yaml`. Copy it to
-`nmrfinesse_data/config/nmrfinesse.local.yaml` for machine-local overrides; that file is git-ignored precisely so
-that machine paths never end up in the repository.
+Default configuration lives in `nmrfinesse_data/config/nmrfinesse.yaml`. In a source checkout,
+create a sibling `nmrfinesse.local.yaml` for machine-specific overrides. Git ignores this local
+file. The AppImage saves local settings in the user's configuration directory.
 
 ```yaml
 backend:

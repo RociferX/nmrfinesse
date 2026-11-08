@@ -200,76 +200,67 @@ def test_run_batch_empty_group_raises(tmp_path: Path) -> None:
         run_batch(manager, exp_id, "G1", ["fid"], backend)
 
 
-def test_run_batch_reference_data_params(tmp_path: Path, bruker_dir: Path) -> None:
-    """reference_data_id: the spectrum step reuses the effective parameters of the
-    reference data's most recent successful run."""
+def test_run_batch_reference_data_params(tmp_path, bruker_dir, monkeypatch):
+    """Reference mode executes the saved script instead of invoking optimisation."""
     manager, exp_id, data_ids = _manager_with_data(
         tmp_path, n=2, source=str(bruker_dir / "hsqc_2d")
     )
-    manager.create_data_group(exp_id, data_ids=data_ids[:2])
-    backend = _FakeBackend(tmp_path / "work")
-
-    # First let the reference data (data_ids[0]) run spectrum once, registering a
-    # WorkflowRun that carries params
-    from workflow.stepwise import generate_spectrum
-
-    generate_spectrum(
-        manager,
-        exp_id,
-        data_ids[0],
-        backend,
-        params={"phase_route": "none", "baseline": "poly"},
+    group = manager.create_data_group(exp_id, data_ids=data_ids)
+    script = (
+        "nmrPipe -fn SP -off 0.5 -pow 2 \\\n"
+        "| nmrPipe -fn PS -p0 10 -p1 20 -di \\\n"
+        "| nmrPipe -fn TP \\\n"
+        "| nmrPipe -fn PS -p0 30 -p1 40 -di\n"
     )
-    # The reference params live in WorkflowRun.params (phase_route is consumed, baseline kept)
-    ref_run = next(
-        r
-        for r in manager.project.workflow_runs
-        if (r.inputs or {}).get("data_id") == data_ids[0] and r.workflow_ref == "process"
-    )
-    assert ref_run.params.get("baseline") == "poly"
+    work = manager.data_dir(exp_id, data_ids[0], "process")
+    work.mkdir(parents=True, exist_ok=True)
+    (work / "process.com").write_text(script)
+    calls = []
 
+    def run_script(manager, exp, data, scripts, **kwargs):
+        calls.append((data, scripts["process.com"]))
+        return "/spectrum.ft2"
+
+    monkeypatch.setattr("workflow.manual.run_manual_spectrum", run_script)
     result = run_batch(
-        manager,
-        exp_id,
-        "G1",
-        ["fid", "spectrum"],
-        backend,
-        reference_data_id=data_ids[0],
-        params={"phase_route": "none"},
+        manager, exp_id, group.id, ["spectrum"], object(), reference_data_id=data_ids[0]
     )
     assert result["summary"] == {"total": 2, "success": 2, "failed": 0}
-    # The group's second data item uses the reference data's baseline parameter
-    assert backend.spectrum_params[data_ids[1]].get("baseline") == "poly"
+    assert calls == [(data_id, script) for data_id in data_ids]
 
 
-def test_run_batch_explicit_params_override_reference(tmp_path: Path, bruker_dir: Path) -> None:
-    """Explicit params override the reference params (which serve as the base)."""
+def test_run_batch_explicit_params_override_reference(tmp_path, bruker_dir, monkeypatch):
+    """Only requested phase changes are applied; the reference window remains fixed."""
     manager, exp_id, data_ids = _manager_with_data(
         tmp_path, n=2, source=str(bruker_dir / "hsqc_2d")
     )
-    manager.create_data_group(exp_id, data_ids=data_ids[:2])
-    backend = _FakeBackend(tmp_path / "work")
-
-    from workflow.stepwise import generate_spectrum
-
-    generate_spectrum(
-        manager,
-        exp_id,
-        data_ids[0],
-        backend,
-        params={"phase_route": "none", "baseline": "poly"},
+    script = (
+        "nmrPipe -fn SP -off 0.5 -pow 2 \\\n"
+        "| nmrPipe -fn PS -p0 10 -p1 20 -di \\\n"
+        "| nmrPipe -fn TP \\\n"
+        "| nmrPipe -fn PS -p0 30 -p1 40 -di\n"
     )
+    work = manager.data_dir(exp_id, data_ids[0], "process")
+    work.mkdir(parents=True, exist_ok=True)
+    (work / "process.com").write_text(script)
+    calls = []
+
+    def run_script(manager, exp, data, scripts, **kwargs):
+        calls.append(scripts["process.com"])
+        return "/spectrum.ft2"
+
+    monkeypatch.setattr("workflow.manual.run_manual_spectrum", run_script)
     result = run_batch(
         manager,
         exp_id,
-        "G1",
-        ["fid", "spectrum"],
-        backend,
+        [data_ids[1]],
+        ["spectrum"],
+        object(),
         reference_data_id=data_ids[0],
-        params={"phase_route": "none", "baseline": "manual"},
+        params={"phases": {"F2": (50, 60)}},
     )
     assert result["summary"]["failed"] == 0
-    assert backend.spectrum_params[data_ids[1]].get("baseline") == "manual"
+    assert calls == [script.replace("-p0 10 -p1 20", "-p0 50 -p1 60")]
 
 
 def test_delete_data_group_with_members(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

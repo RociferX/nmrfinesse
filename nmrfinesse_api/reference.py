@@ -129,8 +129,7 @@ class ReferenceSpectrum:
     peak_table_path: str = ""
     peak_table_sha256: str = ""
     peak_count: int = 0
-    # auto (peaks picked by NMRFinesse) or external; shared:* is legacy only
-    peak_source: str = ""
+    peak_source: str = ""          # auto | external; shared:* is legacy only
     peak_params: dict[str, Any] = field(default_factory=dict)
     peak_created_at: str = ""
     peak_tables: dict[str, dict[str, Any]] = field(default_factory=dict)
@@ -144,6 +143,7 @@ class ReferenceSpectrum:
     processing_audit: dict[str, Any] = field(default_factory=dict)
     conversion_provenance: dict[str, Any] = field(default_factory=dict)
     optimization_scores: dict[str, Any] = field(default_factory=dict)
+    fid_scripts: list[dict[str, str]] = field(default_factory=list)
 
     @property
     def sweep_supported(self) -> bool:
@@ -191,6 +191,7 @@ class ReferenceSpectrum:
             "spectrum_path": self.spectrum_path,
             "frozen_spectrum": self.frozen_spectrum,
             "script_path": self.script_path,
+            "fid_scripts": [dict(item) for item in self.fid_scripts],
             "script_sha256": self.script_sha256,
             "spectrum_sha256": self.spectrum_sha256,
             "params": self.params,
@@ -236,6 +237,7 @@ class ReferenceSpectrum:
             spectrum_path=str(data.get("spectrum_path", "")),
             frozen_spectrum=str(data.get("frozen_spectrum", "")),
             script_path=str(data.get("script_path", "")),
+            fid_scripts=[dict(item) for item in data.get("fid_scripts", [])],
             script_sha256=str(data.get("script_sha256", "")),
             spectrum_sha256=str(data.get("spectrum_sha256", "")),
             params=dict(data.get("params") or {}),
@@ -819,6 +821,11 @@ def build_reference(
         manager, exp_id, data_id, session.backend,
         work_dir=work, progress=_log, params=run_params,
     )
+    fid_snapshots = {
+        path.relative_to(work): path.read_bytes()
+        for path in sorted(work.rglob("fid.com"))
+        if "raw" not in path.relative_to(work).parts[:-1]
+    }
     converted = time.perf_counter()
     _log(tr("reference [{p0}]: generating the spectrum (optimisation)", p0=target_ref.condition))
     from workflow.optimization_candidates import CandidateSelectionError
@@ -855,6 +862,15 @@ def build_reference(
         script.read_text(encoding="utf-8"), encoding="utf-8", newline="\n"
     )
 
+    fid_scripts = []
+    for relative, body in fid_snapshots.items():
+        frozen = target_dir / (relative if relative == Path("fid.com")
+                               else Path("fid_scripts") / relative)
+        frozen.parent.mkdir(parents=True, exist_ok=True)
+        frozen.write_bytes(body)
+        fid_scripts.append({"path": str(frozen), "sha256": sha256_file(frozen),
+                            "source_path": relative.as_posix()})
+
     experiment = read_experiment(manager, exp_id, data_id)
     # Sampling detection classifies data labeled NUS but fully sampled as uniform.
     # Fully sampled data use standard uniform FT without SMILE; evidence is retained.
@@ -873,6 +889,7 @@ def build_reference(
         spectrum_path=str(spectrum_path),
         frozen_spectrum=str(frozen_spectrum),
         script_path=str(frozen_script),
+        fid_scripts=fid_scripts,
         script_sha256=sha256_file(frozen_script),
         spectrum_sha256=sha256_file(frozen_spectrum),
         params=effective,

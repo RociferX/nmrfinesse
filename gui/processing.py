@@ -173,9 +173,10 @@ class ProcessingController:
 
 
     # ------------------------------------------------------------------
-
-
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def import_data(self, entry: ExperimentEntry, source: str, copy: bool = True) -> dict:
         """Step 1: Import sample data (read-only parameter + copy raw) and return ImportResult
@@ -247,8 +248,7 @@ class ProcessingController:
 
 
         batch = ""
-        if group:
-            batch = self._manager.create_data_group(exp_id).id
+        groups = {}
         results: list[dict] = []
         for folder in folders:
             item: dict = {
@@ -258,22 +258,6 @@ class ProcessingController:
                 "error": "",
             }
             _f = Path(str(folder))
-
-
-
-            if group and (
-                not (_f / "acqu2s").is_file()
-                or (_f / "acqu3s").is_file()
-                or (_f / "acqu3").is_file()
-            ):
-                item["error"] = tr(
-                    "Non-2D spectrum, batch only supports 2D for now, has been "
-                    "skipped",
-                )
-                results.append(item)
-                if on_progress is not None:
-                    on_progress(str(folder), "", False, item["error"])
-                continue
             try:
 
 
@@ -286,7 +270,13 @@ class ProcessingController:
                 data_id = str(result.get("data_id", "") or "")
                 item["data_id"] = data_id
                 if data_id and group:
-                    self._manager.add_to_group(exp_id, batch, data_id)
+                    from core.project.grouping import data_ndim
+                    dimension = data_ndim(self._manager, exp_id, data_id)
+                    if dimension not in groups:
+                        groups[dimension] = self._manager.create_data_group(exp_id).id
+                    batch = batch or groups[dimension]
+                    self._manager.add_to_group(exp_id, groups[dimension], data_id)
+                    item["group_id"] = groups[dimension]
                 item["ok"] = True
             except Exception as exc:  # noqa: BLE001
                 item["error"] = describe_exception(exc)
@@ -305,7 +295,18 @@ class ProcessingController:
             except Exception:  # noqa: BLE001
                 pass
         self._manager.save()
-        return {"batch_id": batch if group else "", "results": results}
+        return {"batch_id": batch if group else "", "batch_ids": list(groups.values()),
+                "results": results}
+
+    def optimise_reference_phases(self, exp_id, data_id, reference_data_id,
+                                  overrides=None, progress=None):
+        """Run a phase-only preview through the controller's backend boundary."""
+        from backend.runtime import clear_cancel
+        from workflow.reference_scripts import optimise_reference_phases
+        self._require_manager()
+        clear_cancel()
+        return optimise_reference_phases(self._manager, exp_id, data_id, reference_data_id,
+                                         self._backend_instance(), overrides, progress)
 
     def run_group_batch(
         self,
@@ -326,17 +327,26 @@ class ProcessingController:
         from workflow.batch import run_batch
 
         self._require_manager()
-        return run_batch(
+        from gui.settings import load_settings
+        workers = load_settings().get("pipeline", {}).get("parallel_workers", 5)
+        result = run_batch(
             self._manager,
             exp_id,
             group_id,
             steps,
             self._backend_instance(),
             reference_data_id=reference_data_id or None,
+            max_workers=1 if reference_data_id else workers,
             progress=progress,
             params=params,
             on_data_done=on_data_done,
         )
+        for data_id, per in result.get("results", {}).items():
+            if per.get("status") == "success":
+                for step in steps:
+                    record_step_success(self._manager, exp_id, data_id, step)
+        self._manager.save()
+        return result
 
     def generate_fid(
         self,
@@ -478,7 +488,10 @@ class ProcessingController:
         return spectrum_path
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def pick_peaks(
         self,
@@ -520,7 +533,8 @@ class ProcessingController:
         self._manager.save()
         return result
 
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def manual_fid_com(self, data, exp_id: str | None = None, data_id: str | None = None) -> str:
         'Get/generate fid.com Content (for viewing and modification).'
@@ -625,6 +639,10 @@ class ProcessingController:
             self._snapshot_step(
                 exp_id, data_id, MANUAL_SPECTRUM_RUN_REFS, scripts
             )
+        if Path(result).suffix.lower() == ".ft3":
+            projections = self.regenerate_3d_projections(exp_id, data_id, progress=progress)
+            if projections.get("error") and progress:
+                progress(tr("3D projection regeneration failed: {p0}", p0=projections["error"]))
         self._manager.save()
         return result
 
@@ -1066,7 +1084,10 @@ class ProcessingController:
 
 
     # ------------------------------------------------------------------
-
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     def _snapshot_step(
         self,

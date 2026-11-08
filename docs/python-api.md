@@ -1,10 +1,10 @@
 # Python API
 
-The public scripting API version is `API_VERSION = "1.1.5"`; the software version is 1.0.12. API
+The public scripting API version is `API_VERSION = "1.1.6"`; the software version is 1.0.12. API
 parameters and the retained 38-column peak-table contract are defined by this API. Desktop users
 can use the [1.0.12 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12).
 For scripting, follow [source installation](installation.md). Install source containing
-API v1.1.5 and check `compat_manifest()` before reusing results.
+API v1.1.6 and check `compat_manifest()` before reusing results.
 
 | Surface | Import | Stability |
 | --- | --- | --- |
@@ -131,3 +131,5 @@ stable cross-version interfaces.
 - [API reference](external-api/03-api-reference.md)
 - [Inputs and parameter axes](external-api/05-inputs-and-data.md)
 - [Limitations](external-api/09-limitations-and-roadmap.md)
+
+The GitHub main branch provides API 1.1.6. Install from source to use the added reference-script field. The published v1.0.12 AppImage bundles API 1.1.5.

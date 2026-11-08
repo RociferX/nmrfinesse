@@ -1,4 +1,4 @@
-"""Regression coverage for the nmrfinesse_api v1.1.5 release (2026-10-15).
+"""Regression coverage for the nmrfinesse_api v1.1.6 release (2026-10-15).
 
 Covers reference workflows, workflow IDs, parameter records, caller-selected combined
 peak tables, three-state statuses, complete logs and versions, independent condition
@@ -543,12 +543,12 @@ def test_error_hierarchy() -> None:
 
 
 def test_api_version_is_1_1_3_with_a_single_definition() -> None:
-    """The current API version is 1.1.5 and has one definition point."""
+    """The current API version is 1.1.6 and has one definition point."""
     import nmrfinesse_api
     import nmrfinesse_api.records as records_module
     import nmrfinesse_api.session as session_module
 
-    assert API_VERSION == "1.1.5"
+    assert API_VERSION == "1.1.6"
     # Single definition point: the public surface re-exports the same object from session
     assert nmrfinesse_api.API_VERSION is session_module.API_VERSION
     # The record templates must use this constant, not a hard-coded version literal
@@ -575,6 +575,12 @@ def test_reference_workflow_writes_script_and_one_peak_table(
     ref = result.reference
     assert ref is not None
     assert Path(ref.script_path).is_file() and ref.script_sha256
+    assert Path(ref.script_path).name == "process.com"
+    assert ref.fid_scripts
+    assert Path(ref.fid_scripts[0]["path"]).name == "fid.com"
+    assert Path(ref.fid_scripts[0]["path"]).read_text().startswith("#!/bin/csh")
+    assert ref.to_dict()["fid_scripts"] == ref.fid_scripts
+    assert ReferenceSpectrum.from_dict(ref.to_dict()).fid_scripts == ref.fid_scripts
     parabolic_path = Path(ref.peak_table_parabolic_path)
     assert parabolic_path.is_file()
     header = parabolic_path.read_text(encoding="utf-8").splitlines()[0].split(",")

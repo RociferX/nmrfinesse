@@ -53,4 +53,4 @@ def test_current_distribution_and_api_names() -> None:
     assert set(metadata["project"]["scripts"]) == {"nmrfinesse-viewer"}
     assert COMPAT_SCHEMA == "nmrfinesse_api.compat.v1"
     assert SCORE_SCHEMA == "nmrfinesse_api.reference_optimization_scores.v1"
-    assert nmrfinesse_api.API_VERSION == "1.1.5"
+    assert nmrfinesse_api.API_VERSION == "1.1.6"

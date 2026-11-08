@@ -126,16 +126,22 @@ def test_ungrouped_data_has_no_remove_option(tmp_path: Path, qapp: QApplication)
     panel.close()
 
 
-def test_group_batch_panel_context(tmp_path: Path, qapp: QApplication) -> None:
+def test_group_batch_panel_context(tmp_path: Path, qapp: QApplication, monkeypatch) -> None:
     """Group batch panel: members are shown, and the reference drop-down lists only data whose
     spectrum has been generated."""
+    from ui_support.i18n import tr
+
+    monkeypatch.setattr("workflow.reference_scripts.candidate_signature",
+                        lambda *a: (2, "uniform", ("1H", "15N")))
     manager, exp_id, data_ids, group_id = _manager_with_group(tmp_path)
     entry = manager.project.experiment(exp_id)
     entry.data[0].spectrum_path = "/tmp/a.ft2"  # d1 already processed
     manager.save()
     panel = GroupBatchPanel()
+    context = []
+    panel.context_changed.connect(context.append)
     panel.set_context(manager, exp_id, group_id)
-    assert "2 个" in panel.member_label.text()
+    assert tr("Group members: {p0}", p0=2) in context[-1]
     assert panel.run_optimize_button.isEnabled()
     refs = [panel.reference_combo.itemData(i) for i in range(panel.reference_combo.count())]
     assert data_ids[0] in refs

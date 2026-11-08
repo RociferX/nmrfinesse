@@ -1,7 +1,7 @@
 # 打包
 
-v1.0.12 源码与 AppImage 发布使用 NMRFinesse 软件 **1.0.12** 和脚本 API **1.1.5**，两者分别版本化。
-AppImage 是最便捷的桌面安装方式；NMRPipe 与 SMILE 需要另行获取和安装。
+v1.0.12 源码与 AppImage 发布时使用 API **1.1.5**；当前源码为软件 **1.0.12**、API **1.1.6**，两者分别版本化。
+本次源码更新未重建已发布的安装包。AppImage 是最便捷的桌面安装方式；NMRPipe 与 SMILE 需要另行获取和安装。
 NMRPipe 用于转换和处理，SMILE 用于 NUS 重构。
 
 ## Linux AppImage

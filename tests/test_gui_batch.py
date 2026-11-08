@@ -263,7 +263,7 @@ def test_batch_subfolder_scan(tmp_path: Path) -> None:
     found = ExperimentDashboard._bruker_datasets_under(root)
     names = {p.name for p in found}
 
-    assert names == {"hsqc", "hnca"}
+    assert names == {"hsqc", "hnca", "canh"}
 
     direct = ExperimentDashboard._bruker_datasets_under(root / "hsqc")
     assert [p.name for p in direct] == ["hsqc"]
@@ -589,6 +589,9 @@ def test_import_explanations_grow_and_shrink_with_column_width(qapp, language, f
         for index in range(6):
             panel.batch_list.addItem(f'/data/{index}')
         assert one_row_height < panel.batch_list.height() <= 4 * one_row_height
+        from qtcompat.QtCore import Qt
+        for index in range(panel.batch_list.count()):
+            panel.batch_list.item(index).setCheckState(Qt.CheckState.Checked)
         panel.clear_batch_list()
         qapp.processEvents()
         assert panel.batch_list.isHidden()
@@ -605,3 +608,98 @@ def test_import_explanations_grow_and_shrink_with_column_width(qapp, language, f
         panel.deleteLater()
         qapp.processEvents()
         i18n.set_language(previous)
+
+
+def test_batch_checked_removal_and_control_a(tmp_path, qapp):
+    from qtcompat.QtCore import Qt
+    from qtcompat.QtTest import QTest
+
+    from gui.dashboards import ExperimentImportPanel
+
+    panel = ExperimentImportPanel()
+    paths = []
+    for name in ("a", "b", "c"):
+        path = tmp_path / name
+        path.mkdir()
+        (path / "acqus").touch()
+        if name != "c":
+            (path / "acqu2s").touch()
+        paths.append(str(path.resolve()))
+    for path in paths:
+        panel._add_batch_path(path)
+    panel._add_batch_path(paths[0])
+    filters = panel.dimension_filter
+    filters.setCurrentIndex(next(i for i in range(filters.count())
+                                 if filters.itemData(i) == (2,)))
+    listing = panel.batch_list
+    checked = Qt.CheckState.Checked
+    unchecked = Qt.CheckState.Unchecked
+    assert listing.count() == 3
+    header = listing.item(0)
+    assert header.text() == "All"
+    assert header.checkState() == unchecked
+    listing.item(1).setCheckState(checked)
+    assert header.checkState() == Qt.CheckState.PartiallyChecked
+    header.setCheckState(checked)
+    assert all(listing.item(i).checkState() == checked for i in (1, 2))
+    header.setCheckState(unchecked)
+    assert all(listing.item(i).checkState() == unchecked for i in (1, 2))
+    panel.show()
+    listing.setFocus()
+    QTest.keyClick(listing, Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier)
+    assert header.checkState() == checked
+    panel._on_batch_clear()
+    assert listing.count() == 0 and listing.isHidden()
+    assert not panel.batch_import_button.isEnabled()
+    panel.dimension_filter.setCurrentIndex(0)
+    assert listing.count() == 2
+    assert listing.item(1).text() == paths[2]
+    requested = []
+    panel.set_context("exp")
+    panel.batch_import_requested.connect(lambda _exp, folders, _group: requested.append(folders))
+    panel._on_batch_import()
+    assert requested == [[paths[2]]]
+    assert listing.count() == 0
+    panel.close()
+
+
+def test_tree_multi_selection_group_action(tmp_path, qapp):
+    from qtcompat.QtCore import Qt
+    from qtcompat.QtWidgets import QMenu, QTreeWidgetItem
+
+    from gui.project_tree import ProjectTreePanel
+
+    panel = ProjectTreePanel()
+    panel.tree.clear()
+    parent = QTreeWidgetItem(panel.tree)
+    parent.setData(0, Qt.ItemDataRole.UserRole, {"kind": "experiment", "exp_id": "E1"})
+    nodes = []
+    for key in ("D1", "D2"):
+        node = QTreeWidgetItem(parent)
+        node.setData(0, Qt.ItemDataRole.UserRole, {"kind": "data", "exp_id": "E1", "data_id": key})
+        node.setSelected(True)
+        nodes.append(node)
+    received = []
+    panel.group_create_requested.connect(lambda exp, ids: received.append((exp, ids)))
+    menu = panel._on_context_menu_impl(QMenu(), nodes[0])
+    assert len(menu.actions()) == 2 and menu.actions()[0].isEnabled()
+    menu.actions()[0].trigger()
+    assert received == [("E1", ["D1", "D2"])]
+    panel.close()
+
+
+def test_reference_panel_is_separate_and_emits_stop_prefix(tmp_path, qapp):
+    manager, exp = _manager_with_experiment(tmp_path)
+    panel = PipelinePanel(manager)
+    data = manager.project.experiment(exp).data[0].id
+    panel._current_exp_id, panel._current_data_id = exp, data
+    panel.script_reference_combo.addItem("Reference", "DREF")
+    panel.script_reference_combo.setCurrentIndex(panel.script_reference_combo.count() - 1)
+    panel.reference_stop_combo.setCurrentIndex(1)
+    panel._reference_overrides[(exp, data)] = {"phase": (10, 20)}
+    received = []
+    panel.reference_run_requested.connect(lambda *args: received.append(args))
+    panel._run_using_data()
+    assert received == [(exp, data, ["fid", "spectrum"], "DREF", {"phase": (10, 20)})]
+    assert all(not hasattr(row, "script_reference_combo") for row in panel._rows.values())
+    panel.close()

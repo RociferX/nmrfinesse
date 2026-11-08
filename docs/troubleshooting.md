@@ -10,8 +10,9 @@ Cause: the backend could not locate the NMRPipe executable. Linux is the target 
 probes external tools at startup, and processing steps check their capabilities when needed.
 
 1. Check that NMRPipe is installed and that its `bin` directory contains `nmrPipe`.
-2. Point NMRFinesse at it explicitly in `nmrfinesse_data/config/nmrfinesse.yaml` (or
-   `nmrfinesse_data/config/nmrfinesse.local.yaml`):
+2. Set **NMRPipe path** in the desktop **Settings** dialog. In a source checkout, you can
+   also create `nmrfinesse.local.yaml` next to the repository defaults in
+   `nmrfinesse_data/config/nmrfinesse.yaml` and set the following value.
 
    ```yaml
    backend:
@@ -128,3 +129,7 @@ QT_QPA_PLATFORM=offscreen python -m pytest -q
 - Parameter sweeps: per-run directories under the study root hold the script, the candidate
   spectrum, the peak table and the run record; the study root holds `manifest.json` and
   `runs.json`.
+
+## The desktop reference-script list is empty
+
+The selector looks for another active data set in the same experiment. It compares dimensionality, the ordered nuclei and the sampling mode, then checks for a saved processing script or successful run snapshot. For example, a 3D NUS spectrum with ¹H–¹⁵N–¹³C and one with ¹H–¹⁵N–¹⁵N have different signatures. See the [reference-script section of the GUI guide](gui.md).

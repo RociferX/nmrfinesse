@@ -12,7 +12,7 @@
 ### 能在 Windows 或 macOS 上跑吗?
 
 Linux 是目标运行平台，Windows 仅作为编辑环境；macOS 未验证。
-当前软件版本为 1.0.12，公开 API 版本为 v1.1.5。Linux AppImage 与源码可从 [1.0.12 Release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12) 获取；API 参数和 38 列峰表契约见 [Python API](python-api.md)。
+当前软件版本为 1.0.12，公开 API 版本为 v1.1.6。Linux AppImage 与源码可从 [1.0.12 Release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12) 获取；API 参数和 38 列峰表契约见 [Python API](python-api.md)。
 
 ### NMRFinesse 会把我的数据发到什么地方吗?
 
@@ -27,12 +27,9 @@ Linux 是目标运行平台，Windows 仅作为编辑环境；macOS 未验证。
 
 支持，2D 与 3D NUS 都使用 SMILE 重构。GUI 暂不提供 SMILE 参数优化、排序与按名次重跑。
 
-### 为什么批量处理只支持 2D?
+### 批量处理支持哪些维度？
 
-因为 3D(尤其是 3D NUS/SMILE)在目标机器上的内存风险尚未解决,
-而一个可能把主机拖垮的进程不适合无人值守地跑。非 2D 数据集会被跳过并给出原因,
-而不是用一个近似去处理。批量也只施加分组配置,不替每个数据集挑参数,
-因此两次输出之间的差异反映的是数据本身的差异。
+支持1D/2D/3D，同组成员必须同维度。2D自动处理默认最多5份并行，可在设置调为1–10；3D依次处理。
 
 ### 采样判为「uncertain」时它为什么拒绝处理?
 
@@ -46,7 +43,7 @@ Linux 是目标运行平台，Windows 仅作为编辑环境；macOS 未验证。
 `ui_support/locales/zh.json`)。一份代码、两种语言;公开仓的中文文档在
 `Chinese_version/docs/`。
 
-**也可以直接在 GUI 里改**:`设置 → 软件设置 → 界面语言`,选「跟随系统语言 / 中文 / 英文」,
+**也可以直接在 GUI 里改**:`设置 → 界面语言`,选「跟随系统语言 / 中文 / 英文」,
 保存到本地覆盖配置(重启后生效)。解析顺序是「显式设置 → `NMRFINESSE_LANG` 环境变量 →
 设置里的偏好 → 系统区域(QLocale / `LANG` / `LC_ALL`)→ 本树默认语言」。`NMRFINESSE_LANG`
 排在设置之前(所以 `NMRFINESSE_LANG=zh ./NMRFinesse.AppImage` 这类临时钉死不会被陈旧设置压掉),

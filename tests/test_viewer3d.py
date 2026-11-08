@@ -464,7 +464,14 @@ def test_projection_contour_return_to_3d_starts_at_full_view(
     _write_ft2(projection, np.ones((12, 20)))
     panel = SpectrumPanel(manager)
     monkeypatch.setattr(panel, "_ASYNC_FT3_MIN_BYTES", 0 if async_load else 1_000_000_000)
+    original_load = Spectrum3D.load_from_ft3
+    def forbid_volume(*args, **kwargs):
+        pytest.fail("Default projection must not load FT3 volume data")
+    monkeypatch.setattr(Spectrum3D, "load_from_ft3", forbid_volume)
     panel.set_context(exp.id, data.id)
+    assert panel._current_spectrum == projection
+    monkeypatch.setattr(Spectrum3D, "load_from_ft3", original_load)
+    assert panel.load_current_spectrum()
     assert _process_until(lambda: panel._spectrum3d_panel.spectrum3d is not None)
 
     panel._spectrum3d_panel.plane_combo.setCurrentIndex(0)

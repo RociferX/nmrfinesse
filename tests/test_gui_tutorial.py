@@ -74,7 +74,7 @@ def test_tutorial_uses_the_names_the_interface_shows() -> None:
     catalogue = load_catalogue("zh")
     to_english = {value: key for key, value in catalogue.items()}
     fixed = (
-        "Software settings...",
+        "Software settings",
         "Data quality inspection...",
         "spectrum quality assessment...",
         "Remove abnormal FIDs and export NUS…",
@@ -153,7 +153,7 @@ def test_help_menu_opens_the_tutorial(
     window = MainWindow()
     try:
         bar_menus = [action.menu() for action in window.menuBar().actions()]
-        assert all(menu is not None for menu in bar_menus)
+        assert window.settings_action.menu() is None
         help_menu = bar_menus[-1]
         tutorial_action = help_menu.actions()[0]
         assert tutorial_action.text() == tr("Usage tutorial...")

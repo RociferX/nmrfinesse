@@ -29,8 +29,7 @@ with `python -m pytest -q`. The full processing-route regression is:
 python -m pytest tests/test_full_paths.py
 ```
 
-It exercises automatic and manual entry points for 2D and 3D uniform and NUS data. Batch processing
-currently covers 2D. The ordinary tests use fake or mocked engine boundaries and do not require
+It exercises automatic and manual entry points for 2D and 3D uniform and NUS data. Batch groups support homogeneous 1D/2D/3D data; automatic 2D processing can run in parallel, while 3D runs sequentially. The ordinary tests use fake or mocked engine boundaries and do not require
 NMRPipe or SMILE; report real-engine checks separately. Set `QT_QPA_PLATFORM=offscreen` when a test
 needs Qt without a display. Run `python -m ruff check .` for lint checks.
 
@@ -92,7 +91,7 @@ catalogues are `default.json`, `en.json`, and `zh.json`; packaging lists resourc
 
 ## Public interfaces and documentation
 
-Software version **1.0.12** and scripting API version **1.1.5** are versioned separately. For API
+Software version **1.0.12** and scripting API version **1.1.6** are versioned separately. For API
 changes, update the implementation, tests, compatibility declaration, API contract, and relevant
 external API pages together. Keep examples aligned with the supported arguments and outputs. See
 the [contributing guide](../CONTRIBUTING.md), [API contract](API_CONTRACT.md),

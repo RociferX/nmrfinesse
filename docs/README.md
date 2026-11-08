@@ -1,6 +1,6 @@
 # NMRFinesse documentation
 
-Software **1.0.12** · Python/CLI API **1.1.5**.
+Software **1.0.12** · Python/CLI API **1.1.6**.
 Start with the [project README](../README.md) for features, workflow, examples and evidence.
 For Linux desktop use, the AppImage is the simplest route; see [installation](installation.md)
 for the current release-artifact status. NMRPipe and SMILE are installed separately.
@@ -8,7 +8,7 @@ for the current release-artifact status. NMRPipe and SMILE are installed separat
 ## Installation and use
 
 - [Getting started](getting-started.md), [Installation](installation.md) and [GUI guide](gui.md).
-- [GUI Tools](gui.md): read-only FID checks, 2D/3D abnormal-FID-to-NUS export and UCSF transfer.
+- [Desktop tutorial](gui.md): workflows, controls, data groups, viewer, peak tables and tools.
 - [CLI reference](cli.md) and [Python API](python-api.md).
 - [External dependencies](external-dependencies.md): engine discovery, configuration and execution.
 - [Troubleshooting](troubleshooting.md) and [FAQ](faq.md).
@@ -19,7 +19,8 @@ for the current release-artifact status. NMRPipe and SMILE are installed separat
   and manual routes.
 - [Quality control](qc-system.md): diagnostics, corrections, metrics and audit records.
 - [Peak picking](peak-picking.md): detection, parabolic localisation and peak-table export.
-- [Batch processing](batch-processing.md): data groups and 2D batch execution.
+- [Peak-picker compatibility](picker-compatibility.md): verified POKY/iPick batch concordance.
+- [Batch processing](batch-processing.md): dimensional filters, groups and execution modes.
 - [Capabilities and limitations](roadmap.md): supported operations and their boundaries.
 
 ## Architecture and interfaces

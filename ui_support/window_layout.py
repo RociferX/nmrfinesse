@@ -68,9 +68,10 @@ def available_geometry(widget=None):
     return screen.availableGeometry() if screen is not None else QRect(0, 0, 1024, 768)
 
 
-def initial_window_size(area):
-    """Use the available logical desktop rather than a fixed pixel canvas."""
-    return QSize(min(1920, area.width()), min(1080, area.height()))
+def initial_window_size(area, pixel_ratio=1.0):
+    """Convert the physical 1080p cap to Qt coordinates while retaining desktop bounds."""
+    return QSize(min(round(1920 / pixel_ratio), area.width()),
+                 min(round(1080 / pixel_ratio), area.height()))
 
 
 @lru_cache(maxsize=1)

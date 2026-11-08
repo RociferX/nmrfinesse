@@ -220,6 +220,7 @@ def test_3d_viewer_state_memory(tmp_path: Path, qapp: QApplication, plane_index:
     manager.save()
     panel = SpectrumPanel(manager)
     panel.set_context(entry.id, data1.id)
+    panel.load_current_spectrum()
     assert panel._spectrum3d_panel.slice_axis == 0
     panel._spectrum3d_panel.plane_combo.setCurrentIndex(plane_index)
     panel._render_3d_view()
@@ -227,6 +228,7 @@ def test_3d_viewer_state_memory(tmp_path: Path, qapp: QApplication, plane_index:
 
     panel.set_context(entry.id, data2.id)
     panel.set_context(entry.id, data1.id)
+    panel.load_current_spectrum()
     assert panel._spectrum3d_panel.plane_combo.currentIndex() == plane_index
     assert panel._spectrum3d_panel._mode == "slice"
     panel.close()
@@ -456,6 +458,8 @@ def test_processing_signal_reloads_same_path_and_rejects_old_results(
     monkeypatch.setattr(panel, "_ensure_plane_stream", lambda: None)
     _defer_panel_threads(monkeypatch)
     panel.set_context(exp_id, data_id)
+    if ndim == 3:
+        panel.load_current_spectrum()
     if background:
         _DeferredThread.instances[-1].target()
     old = panel.viewer.primary_spectrum if ndim == 2 else panel._spectrum3d_panel.spectrum3d
@@ -471,6 +475,9 @@ def test_processing_signal_reloads_same_path_and_rejects_old_results(
     panel.refresh_after_processing(exp_id, "other-data")
     assert panel._ft3_load_token == old_token
     panel.refresh_after_processing(exp_id, data_id)
+    if ndim == 3:
+        assert panel._current_spectrum is None
+        panel.load_current_spectrum()
     new_token = panel._ft3_load_token
     assert new_token != old_token
     if background:
@@ -597,7 +604,7 @@ def test_group_member_reload_uses_raw_success_status(tmp_path, qapp, monkeypatch
     window.close()
 
 
-def test_data_selection_prefers_3d_main_spectrum(
+def test_data_selection_loads_3d_only_after_explicit_request(
     tmp_path: Path,
     qapp: QApplication,
 ) -> None:
@@ -609,6 +616,8 @@ def test_data_selection_prefers_3d_main_spectrum(
     _write_ft3(path)
     panel = SpectrumPanel(manager)
     panel.set_context(exp_id, data_id)
+    assert panel._current_spectrum is None
+    panel.load_current_spectrum()
     assert panel._current_spectrum == path
     assert panel._spectrum3d_panel.slice_axis == 0
     assert panel.viewer.layer_list.count() == 1
@@ -659,6 +668,7 @@ def test_old_async_3d_result_cannot_replace_new_selection(
     )
     monkeypatch.setattr(panel, "_ensure_plane_stream", lambda: None)
     panel.set_context(exp_id, data_id)
+    panel.load_current_spectrum()
     old_token, old_path = requests[-1]
     result = Spectrum3D.load_from_ft3(path, lazy=True)
     panel.set_context(exp_id, second.id)
@@ -667,6 +677,7 @@ def test_old_async_3d_result_cannot_replace_new_selection(
     assert panel._spectrum3d_panel.spectrum3d is None
 
     panel.set_context(exp_id, data_id)
+    panel.load_current_spectrum()
     panel._on_ft3_ready(old_token, old_path, result)
     assert panel._spectrum3d_panel.spectrum3d is None
     panel._on_ft3_ready(*requests[-1], result)
@@ -676,3 +687,102 @@ def test_old_async_3d_result_cannot_replace_new_selection(
     panel.refresh()
     assert panel._stream_token == stream_token
     panel.close()
+
+
+
+def test_startup_prepares_imports_before_building_viewer(qapp, monkeypatch):
+    calls = []
+    monkeypatch.setattr("importlib.import_module", lambda name: calls.append(name))
+
+    class Window:
+        def _build_spectrum_panel(self, apply_context=False):
+            assert apply_context
+            calls.append("viewer-ready")
+
+        def _fit_initial_frame(self):
+            calls.append("geometry-ready")
+
+    messages = []
+    MainWindow._finish_startup(Window(), progress=lambda text, percent: messages.append(percent))
+    assert calls[0] == "geometry-ready"
+    assert calls[-2:] == ["viewer-ready", "geometry-ready"]
+    assert "scipy.signal" in calls and "workflow.reference_scripts" in calls
+    assert messages == [0, 35, 80, 100]
+
+
+def test_startup_uses_main_window_geometry_and_restores_workspace(qapp):
+    from qtcompat.QtWidgets import QMainWindow, QWidget
+
+    from gui.startup import StartupScreen, show_startup
+
+    window = QMainWindow()
+    window.setGeometry(50, 60, 720, 480)
+    workspace = QWidget()
+    window.setCentralWidget(workspace)
+    before = window.geometry()
+    seen = []
+    def prepare(status):
+        loading = window.centralWidget()
+        assert isinstance(loading, StartupScreen)
+        assert loading.window() is window
+        assert not window.isFullScreen() and not window.isMaximized()
+        assert window.geometry() == before
+        assert not window.isEnabled()
+        assert loading.progress.value() == 0
+        values = []
+        loading.progress.valueChanged.connect(values.append)
+        status("Preparing viewer", 35)
+        assert loading.status.text() == "Preparing viewer"
+        status("Opening workspace", 100)
+        assert values == sorted(values)
+        assert len(values) > 2 and values[-1] == 100
+        seen.append(True)
+    show_startup(window, prepare)
+    assert seen and window.centralWidget() is workspace
+    assert window.geometry() == before and window.isEnabled()
+    window.close()
+
+
+
+def test_startup_window_cap_uses_display_pixel_ratio():
+    from qtcompat.QtCore import QRect, QSize
+
+    from ui_support.window_layout import initial_window_size
+    assert initial_window_size(QRect(0,0,2300,1277), 1.0) == QSize(1920,1080)
+    assert initial_window_size(QRect(0,0,1837,949), 1.25) == QSize(1536,864)
+    assert initial_window_size(QRect(0,0,800,600), 1.0) == QSize(800,600)
+
+
+def test_initial_geometry_fit_is_not_repeated_after_startup():
+    class Window:
+        _initial_geometry_managed=True
+        _initial_geometry_ready=True
+        def screen(self):
+            raise AssertionError("late startup callback must not resize the ready window")
+    MainWindow._fit_initial_frame(Window())
+
+
+def test_reference_hint_refits_after_narrowing_and_widening(qapp):
+    from qtcompat.QtTest import QTest
+    from qtcompat.QtWidgets import QVBoxLayout, QWidget
+
+    from gui.reference_phase_dialog import WrappedHintLabel
+
+    card = QWidget()
+    layout = QVBoxLayout(card)
+    label = WrappedHintLabel("Reuse the reference scripts. Set the direct-axis range and phase.")
+    layout.addWidget(label)
+    card.show()
+    word_width = label.fontMetrics().horizontalAdvance("reference")
+
+    def fitted_height(width):
+        card.resize(width, card.height())
+        QTest.qWait(20)
+        assert label.height() == label.heightForWidth(label.width())
+        return label.height()
+
+    wide = fitted_height(8 * word_width)
+    narrow = fitted_height(3 * word_width)
+    assert narrow > wide
+    assert fitted_height(8 * word_width) == wide
+    card.close()

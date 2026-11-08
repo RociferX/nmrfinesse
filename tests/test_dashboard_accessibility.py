@@ -182,3 +182,57 @@ def test_tree_level_selection_explains_the_center_panel_tools(
     assert tree.findChild(QLabel, "TreeSelectionHint").text()
     tree.close()
     center.close()
+
+
+def test_group_header_and_notes_track_active_members(qapp, tmp_path):
+    from gui.notes import set_data_note_fields
+    from ui_support.i18n import tr
+
+    workspace = WorkspaceManager(tmp_path / "workspace")
+    manager = workspace.create_project("demo")
+    experiment = manager.create_experiment("HSQC")
+    first = manager.import_data(experiment.id, tmp_path / "first")
+    second = manager.import_data(experiment.id, tmp_path / "second")
+    group = manager.create_data_group(experiment.id, "Batch", [first.id, second.id])
+    empty = manager.create_data_group(experiment.id, "Empty")
+    set_data_note_fields(manager.project, experiment.id, first.id, {"notes": "remark"})
+    set_data_note_fields(
+        manager.project, experiment.id, second.id, {"condition": "salt", "temperature": " "}
+    )
+    center = CenterPanel(manager)
+    center.resize(680, 600)
+    center.show()
+    center.set_selection("group", experiment.id, group_id=group.id)
+    qapp.processEvents()
+    assert tr("Group members: {p0}", p0=2) in center.selection_guide_label.text()
+    assert "HSQC" in center.selection_guide_label.text()
+    assert "Batch" in center.selection_guide_label.text()
+    page = center.group_page
+    notes = page.notes_scroll
+    assert notes.isVisible()
+    grid = notes.widget().layout()
+    assert grid.itemAtPosition(1, 1).widget().text() == "remark"
+    assert grid.itemAtPosition(2, 2).widget().text() == "salt"
+    assert grid.itemAtPosition(3, 0) is None
+    assert notes.height() <= notes.sizeHint().height()
+    buttons = (page.reference_range_button, page.reference_phase_button, page.run_ref_button)
+    centers = [button.geometry().center().y() for button in buttons]
+    assert max(centers) - min(centers) <= 1
+    assert [button.x() for button in buttons] == sorted(button.x() for button in buttons)
+
+    stop_label = next(
+        label for label in page.optimisation_box.findChildren(QLabel)
+        if label.text() == tr("Processed to:")
+    )
+    assert stop_label.geometry().right() < page.opt_stop_combo.geometry().left()
+    stop_y = page.opt_stop_combo.geometry().center().y()
+    assert abs(stop_label.geometry().center().y() - stop_y) <= 1
+    center.set_selection("group", experiment.id, group_id=empty.id)
+    assert notes.isHidden()
+    center.set_selection("group", experiment.id, group_id=group.id)
+    assert not notes.isHidden()
+    group.data_ids.remove(second.id)
+    center.refresh()
+    assert tr("Group members: {p0}", p0=1) in center.selection_guide_label.text()
+    assert notes.widget().layout().itemAtPosition(2, 0) is None
+    center.close()

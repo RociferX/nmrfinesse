@@ -1,4 +1,4 @@
-# 07 · Methods and QC criteria (v1.1.5)
+# 07 · Methods and QC criteria (v1.1.6)
 
 > This page describes what the software **executed** and what QC records were left. Any
 > cross-combination or cross-condition statistic

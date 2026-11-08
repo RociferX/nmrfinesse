@@ -1,4 +1,4 @@
-# 09 · Support and execution boundaries (v1.1.5)
+# 09 · Support and execution boundaries (v1.1.6)
 
 ## 9.1 Support matrix
 

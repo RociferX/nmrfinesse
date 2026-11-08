@@ -1,0 +1,1 @@
+Verified: 24 tables; 5175 unique within-table pairs; 8084/8088 availability flags agree; 1 member-run disagreement.

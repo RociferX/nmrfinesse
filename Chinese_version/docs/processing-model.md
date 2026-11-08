@@ -123,5 +123,5 @@ GUI与API不同操作没有统一的一张优先级表，具体输入见[API输�
 | 3D uniform | 常规NMRPipe FT，解释逻辑/存储轴映射 |
 | 3D NUS | SMILE重建/finalize，不使用2D seed |
 
-桌面批量仅2D，API的3D NUS支持参考构建、拒绝参数组合执行。
+桌面批量支持1D/2D/3D，同维度成组，API的3D NUS支持参考构建、拒绝参数组合执行。
 详见[共享接口](API_CONTRACT.md)、[质量控制](qc-system.md)、[Backend架构](backend/architecture.md)和[API边界](external-api/09-limitations-and-roadmap.md)。

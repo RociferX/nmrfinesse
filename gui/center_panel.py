@@ -13,11 +13,9 @@ from pathlib import Path
 from qtcompat.QtCore import QRect, QSize, Qt
 from qtcompat.QtWidgets import (
     QBoxLayout,
-    QGridLayout,
     QLabel,
     QLayout,
     QPushButton,
-    QScrollArea,
     QSizePolicy,
     QStackedWidget,
     QVBoxLayout,
@@ -207,6 +205,7 @@ class CenterPanel(QWidget):
         )
 
         self.group_page = GroupBatchPanel()
+        self.group_page.context_changed.connect(self._set_group_guide)
         self.group_page.log_message.connect(self.log_message.emit)
         self.group_page.run_group_batch_requested.connect(
             self.group_run_requested.emit
@@ -229,16 +228,6 @@ class CenterPanel(QWidget):
         self.notes_label = _NotesLabel("")
         self.notes_label.setObjectName("MutedText")
 
-        self.group_notes_scroll = QScrollArea()
-        self.group_notes_scroll.setWidgetResizable(True)
-        self.group_notes_scroll.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAsNeeded
-        )
-        self.group_notes_scroll.setVerticalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAsNeeded
-        )
-        self.group_notes_scroll.setVisible(False)
-        self.notes_header.addWidget(self.group_notes_scroll, 1)
         self.edit_notes_button = QPushButton(tr("Editor's note"))
         self.edit_notes_button.setObjectName("SubtleAction")
         self.edit_notes_button.setToolTip(
@@ -283,7 +272,8 @@ class CenterPanel(QWidget):
         """Press the tree selection level to switch to the middle page and refresh the top comment
         bar.
         """
-        self._update_selection_guide(kind, exp_id)
+        if kind != "group":
+            self._update_selection_guide(kind, exp_id)
         self._update_notes(kind, exp_id, data_id, group_id)
         if kind == "workspace":
             self.stack.setCurrentIndex(0)
@@ -311,7 +301,6 @@ class CenterPanel(QWidget):
             "workspace": (tr("Workspace"), tr("Create or open projects")),
             "project": (tr("Project"), tr("Create experiments")),
             "experiment": (tr("Experiment"), tr("Import sample data")),
-            "group": (tr("Group"), tr("Process group data in batches")),
         }
         if kind in ("data", "folder"):
             project = self._manager.project if self._manager is not None else None
@@ -333,6 +322,11 @@ class CenterPanel(QWidget):
         self.selection_guide_label.setToolTip("")
 
     # ------------------------------------------------------------------
+    def _set_group_guide(self, context: str) -> None:
+        text = f"{tr('Group')}  ·  {tr('Process group data in batches')}  ·  {context}"
+        self.selection_guide_label.setText(text)
+        self.selection_guide_label.setToolTip(text)
+
     def set_manager(self, manager) -> None:
         'Binding/renew ProjectManager (called by the main window when switching projects).'
         self._manager = manager
@@ -361,7 +355,6 @@ class CenterPanel(QWidget):
 
         self.notes_label.setVisible(show and kind != "group")
         self.notes_area.setVisible(show and kind != "group")
-        self.group_notes_scroll.setVisible(False)
         self.edit_notes_button.setVisible(show and kind != "group")
         if not show or kind == "group":
             return
@@ -397,73 +390,6 @@ class CenterPanel(QWidget):
 
                 pass
         self.notes_label.setText(text, title=title)
-
-    def _set_group_notes(self, project, exp_id: str, group_id: str) -> None:
-        """Data group annotation: Annotation fields are rows (field names in the first column), and
-        each data is a column.
-        """
-        from gui.notes import DATA_FIELDS, data_note_fields
-
-        exp = project.experiment(exp_id) if project is not None else None
-        group = None
-        if exp is not None:
-            group = next(
-                (g for g in (getattr(exp, "groups", None) or []) if g.id == group_id),
-                None,
-            )
-        member_ids = (group.data_ids or []) if group is not None else []
-        cols_data: list[tuple[str, str, dict]] = []
-        for data_id in member_ids:
-            d = (
-                next((x for x in exp.data if x.id == data_id), None)
-                if exp is not None
-                else None
-            )
-            label_text = (d.title or f"Data {data_id}") if d else f"Data {data_id}"
-            cols_data.append(
-                (
-                    data_id,
-                    label_text,
-                    data_note_fields(project, exp_id, data_id),
-                )
-            )
-
-        row_keys: list[str] = [k for k, _ in DATA_FIELDS]
-        display = {k: v for k, v in DATA_FIELDS}
-        for _di, _lb, fields in cols_data:
-            for k in fields:
-                if k not in row_keys:
-                    row_keys.append(k)
-                    display[k] = k
-
-        container = QWidget()
-        grid = QGridLayout(container)
-        grid.setContentsMargins(6, 4, 6, 4)
-        grid.setSpacing(2)
-
-        head0 = QLabel(tr("data"))
-        head0.setObjectName("SectionTitle")
-        grid.addWidget(head0, 0, 0)
-        for ci, (data_id, label_text, _f) in enumerate(cols_data, start=1):
-            head = QLabel(f"◆ {label_text}\n({data_id})")
-            head.setWordWrap(True)
-            head.setObjectName("SectionTitle")
-            grid.addWidget(head, 0, ci)
-
-        for ri, key in enumerate(row_keys, start=1):
-            fname = QLabel(display.get(key, key))
-            fname.setObjectName("SectionTitle")
-            grid.addWidget(fname, ri, 0)
-            for ci, (_di, _lb, fields) in enumerate(cols_data, start=1):
-                val = fields.get(key)
-                val_lb = QLabel(str(val) if val not in (None, "") else "—")
-                val_lb.setWordWrap(True)
-                val_lb.setMinimumWidth(0)
-                val_lb.setObjectName("MutedText")
-                grid.addWidget(val_lb, ri, ci)
-        grid.setColumnStretch(0, 0)
-        grid.setColumnStretch(len(cols_data) + 1, 0)
-        self.group_notes_scroll.setWidget(container)
 
     def _on_group_summary(self, summary: dict) -> None:
         'Summary of group batch processing completion: log output + panel clearing progress.'

@@ -1,6 +1,6 @@
 # 共享接口与API契约
 
-软件 **1.0.12** · Python/CLI API **1.1.5** · 项目schema **1.4**。
+软件 **1.0.12** · Python/CLI API **1.1.6** · 项目schema **1.4**。
 
 ## 1. 采集数据模型
 
@@ -133,13 +133,13 @@ project/
 ## 10. 三维视图
 
 完整三维结果与平面目录都是支持的存储形态。`Spectrum3D`按谱头映射存储轴，读取/缓存所需平面并提供二维切片。
-GUI默认F3–F2视图、固定F1，也可保留选定平面。投影汇总三维体，不建立独立三维峰身份，也不能消除全部重叠。
+GUI选中3D数据时优先显示已有2D投影。显式打开完整谱后，初始为F3–F2视图并固定F1，也可保留选定平面。投影汇总三维体，不建立独立三维峰身份，也不能消除全部重叠。
 
 ## 11. 对外nmrfinesse_api契约
 
 ### 11.1 工作流语义
 
-API **v1.1.5**仅在`nmrfinesse_api.session.API_VERSION`定义。研究按条件标签组织，每条件有独立参考谱/峰表。
+API **v1.1.6**仅在`nmrfinesse_api.session.API_VERSION`定义。研究按条件标签组织，每条件有独立参考谱/峰表。
 参考构建导入、转换、合并指定源，并冻结FID、采样表和转换证据。
 
 组合研究只读复用冻结FID，执行显式参数组合/网格，逐workflow和条件独立检测/定位峰；
@@ -151,7 +151,7 @@ API **v1.1.5**仅在`nmrfinesse_api.session.API_VERSION`定义。研究按条件
 公开入口包括会话/数据集管理、`build_reference`、`detect_and_localize`、`run_reference_study`、
 `run_combination_study`、`run_parameter_study`、状态/报告和兼容函数。精确签名/返回结构见
 [API参考](external-api/03-api-reference.md)，`python -m nmrfinesse_api`见[CLI参考](external-api/04-cli-reference.md)。
-API可构建3D NUS参考，3D NUS组合执行抛`SweepError`。桌面批量操作仅2D，脚本组合支持矩阵见
+API可构建3D NUS参考，3D NUS组合执行抛`SweepError`。桌面批量支持1D/2D/3D，同维度成组，脚本组合支持矩阵见
 [API支持范围](external-api/09-limitations-and-roadmap.md)。
 
 ### 11.3 参数、身份与校准
@@ -187,19 +187,26 @@ targeted定位只精修所选峰，不改变检出/行ID；其它检出峰保留
 以及`study/records/manifest.json`、`study/records/workflows.json`、逐run记录与统一峰表。记录保留请求/采用参数、转换/脚本来源、warnings与引擎版本。
 续跑复用成功工作前核对workflow/条件输入、参数和参考证据。CLI的`--study`与`--reference`必须解析到同一根目录。
 
-参考构建可通过`optimization_candidates`接收基线/窗函数显式候选池。显式列表完整替代对应默认池，
-最高有效分候选实际用于生成参考；全部无效时报错。未指定阶段/方向保留默认策略。
-每条件的`optimization_scores.csv`记录候选参数与评分、选择及实际采用状态，以及跳过或否决原因。
-这些记录是观察性元数据，不改变workflow组合参数。
+API v1.1.6构建参考时另写每条件`optimization_scores.csv`，保存基线/窗逐候选参数、分数、逻辑轴、
+选择与实际采用标志，以及跳过/否决原因。窗行拆分保存`raw_score`、检测/分峰/对称/旁瓣分项、
+连续`resolution_score`、`width_ratio`、参考FWHM和指数；`raw_score`是逐迹四因子乘积的中位数，
+各分项是相同迹集合各自的中位数，分项乘积不必等于原始分。分辨率采用
+`score = raw_score * (candidate_fwhm / min_valid_fwhm)^(-2)`，所有逻辑轴一致；较宽候选保留连续非零的分辨率因子，
+原分仍可因其它质量项为零。没有有效参考信号或全部最终分不为正时不产生赢家。
+基线行附带同一次评估的原始指标和0–100分项，`raw_score`等于总分。
+`ReferenceSpectrum.optimization_scores`保存路径、哈希和行。该观察数据不进入组合参数。
+未提供`optimization_candidates`时仍使用默认候选池；窗评分采用上述连续分辨率公式。
+显式候选池完整替代对应默认池，选中最高有效分并实际用于参考，全无效时报错。字段和缓存口径见
+[参考评分表](external-api/06-outputs-and-records.md#611-参考自动优化评分表)。
 
-窗评分对所有候选共用参考峰和代表迹线。每条迹的原始分是检测、分峰、对称和旁瓣四项的乘积；
-`raw_score`是这些逐迹乘积的中位数，各分项也按同一迹集合分别取中位数，因此分项中位数的乘积不一定等于原始分。
-最终分为`score = raw_score * resolution_score`，其中`resolution_score = width_ratio^-2`，
-`width_ratio = candidate_fwhm / min_valid_fwhm`且至少为1。所有逻辑轴采用连续分辨率因子，不设硬宽度淘汰线；
-有效的较宽候选保留非零分辨率分，其他质量项仍可使原始分为零。缺少有效参考信号或所有最终分非正时不选赢家。
-正式评分最多共用12条代表迹，探测最多扫描256条；仅扫描池没有合格的12σ参考时才尝试6σ，并要求跨迹支持。
-53列`optimization_scores.csv`保留评分分项、基线原始指标及0–100分项，以及探测预算、迹线索引和阈值诊断；
-schema仍为`v1`，已有有效CSV原样复用。评分附件不进入组合参数，峰表仍为38列。
+评分附件沿用schema `v1`；CSV保留既有列顺序并在末尾追加评分子项，JSON结构化行使用相同字段。
+有效旧CSV原样复用，旧JSON行缺少的新增字段不补键；CSV需恢复时按当前表头写出，缺失项留空，
+不从缓存参考谱重算。完整新子项需force重建。峰表保持38列，参考/组合入口签名保持。
+
+窗评分采用有界、确定性的代表迹采样：正式候选评分最多使用12条相同迹线，探测最多256条，
+并受缓存大小上限约束。候选窗共用同一批参考峰与迹线索引；若参考迹没有可用峰，该迹的评分为零，
+不会从各候选谱分别重建评分目标。参考峰先按12σ筛选；仅当没有合格参考时才尝试6σ，并要求
+跨迹支持。`sampling_json`记录探测预算、迹线索引和阈值诊断。此实现变化不改变参数/API签名或38列峰表。
 
 ### 11.6 兼容元数据
 
@@ -207,9 +214,9 @@ schema仍为`v1`，已有有效CSV原样复用。评分附件不进入组合参�
 `token_digest`去掉注释/docstring后比较可执行代码。声明分为`same`、`additive`、`behavior_changed`或`contract_changed`，
 affected步骤说明重算范围。黄金向量的谱图/表哈希标识确定性一致性输出。维护操作见[开发说明](development.md)。
 
-项目.list可追加S/N列，缺值nan，导入接受SNR/SN别名；内部SN与38列API表保持。定位附件保存SNR/Intensity、noise_sigma和baseline_offset。
+项目内部峰表.list可在Assignment、w轴及可选指标后追加S/N，缺值为nan，导入兼容SNR/SN表头。GUI导出使用include_metrics=False，只写指认与ppm坐标；这与内部保存/API表格式分开。内部SN键和38列API峰表保持，定位附件保存完整精度SNR/Intensity及noise_sigma/baseline_offset，数值口径见[选峰说明](peak-picking.md#噪音与信噪比)。
 
 项目内部保存保留峰指标；界面直接/对齐后导出仅指认和坐标，Shared Contract `export_peaks_poky(..., include_metrics=False)`省略指标，默认True兼容原内部调用。
 
 
-GUI 的 `.list` 交换导出只包含指认和化学位移；内部/API 峰表与完整 CSV 保留已有指标，API 契约与数值计算不变。
+建立参考返回的ReferenceSpectrum保留script_path/script_sha256（冻结process.com），新增fid_scripts列表，每项含path、sha256、source_path。转换成功后、处理开始前捕获实际fid.com字节并冻结到参考目录；分段转换保留全部子脚本。to_dict()/reference.json/CLI返回同样字段。旧JSON缺此字段时为[]；获得旧参考缺失的FID快照需force=True重建，不猜写历史脚本。

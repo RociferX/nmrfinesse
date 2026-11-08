@@ -1,4 +1,4 @@
-# nmrfinesse_api 使用指南（API 1.1.5）
+# nmrfinesse_api 使用指南（API 1.1.6）
 
 `nmrfinesse_api`是软件**1.0.12**中不依赖Qt的Python/CLI接口，导入Bruker数据，逐条件建立并冻结独立参考谱/峰表，
 运行显式参数组合，逐谱独立检测并写入三点抛物线峰表、来源及QC记录。

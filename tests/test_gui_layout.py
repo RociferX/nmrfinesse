@@ -679,7 +679,8 @@ def test_main_window_three_column_layout(
 
     assert window.log_panel.minimumWidth() <= 400
     assert window.log_panel.maximumWidth() >= 10000
-    assert window.project_tree.minimumWidth() <= 1  # Scroll smaller screens.
+    assert window.project_tree.minimumWidth() <= 1
+    # Small screens retain the 1080p canvas with whole-page scrolling.
     from qtcompat.QtGui import QGuiApplication
 
     screen = window.screen() or QGuiApplication.primaryScreen()
@@ -788,9 +789,7 @@ def test_spectrum_panel_file_help_menus(
     for action in window.menuBar().actions():
         if action.text() == "查看(&V)":
             view_menu = action.menu()
-    assert view_menu is not None
-    texts = [a.text() for a in view_menu.actions()]
-    assert not any("谱图查看器" in t for t in texts)
+    assert view_menu is None
     window.close()
 
 
@@ -945,7 +944,7 @@ def test_tools_menu_standalone_quality_entries(
     menus = [a.text() for a in window.menuBar().actions()]
     assert "工具(&T)" in menus
     idx = menus.index("工具(&T)")
-    assert menus[idx - 1] == "查看(&V)"
+    assert menus[idx - 1] == "文件(&F)"
     assert menus[idx + 1] == "设置(&S)"
     tools_menu = next(a.menu() for a in window.menuBar().actions() if a.text() == "工具(&T)")
     labels = [a.text() for a in tools_menu.actions()]
@@ -1002,7 +1001,7 @@ def test_menu_mnemonics_unique_and_activate(
         by_letter[letter] = action.menu()
     assert len(set(letters)) == len(letters), f"助记键重复: {letters}"
 
-    for key, title in ((Qt.Key.Key_T, "工具(&T)"), (Qt.Key.Key_S, "设置(&S)")):
+    for key, title in ((Qt.Key.Key_T, "工具(&T)"),):
         target = next(a.menu() for a in bar.actions() if a.text() == title)
         bar.setFocus()
         QTest.keyClick(bar, key, Qt.KeyboardModifier.AltModifier)
@@ -1305,31 +1304,17 @@ def test_tree_subfolder_context_menu_has_open_path(
     panel.close()
 
 
-def test_create_blank_experiment_action(
-    tmp_path: Path, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    'Right-clicking blank space/Project creates a blank experiment type.'
+def test_create_blank_experiment_action(tmp_path, qapp, monkeypatch):
+    from qtcompat.QtWidgets import QMenu
     manager = _manager_with_experiment(tmp_path, monkeypatch)
     window = MainWindow(manager=manager)
-
-    class _FakeNotesDialog:
-        DialogCode = QDialog.DialogCode
-
-        def __init__(self, parent, title, kind="", values=None):
-            pass
-
-        def exec(self):
-            return QDialog.DialogCode.Accepted
-
-        def result_fields(self):
-            return {}
-
-    monkeypatch.setattr("gui.main_window.NotesDialog", _FakeNotesDialog)
-    window._create_experiment()
-    assert window.project_tree._pending_kind == "experiment"
-    window.project_tree._commit_pending_create("T4")
-    assert manager.project is not None
-    assert any(e.title == "T4" for e in manager.project.experiments)
+    panel = window.project_tree
+    project = panel._current_project_item()
+    for item in (project, None):
+        menu = panel._on_context_menu_impl(QMenu(), item)
+        assert all("新建" not in action.text() for action in menu.actions())
+    assert window.settings_action.menu() is None
+    assert all(action.text() != "查看(&V)" for action in window.menuBar().actions())
     window.close()
 
 
@@ -3293,4 +3278,131 @@ def test_spectrum_tooltip_external_and_standalone_keep_multiline_title(tmp_path,
     assert display_title in window.statusBar().toolTip()
     window.clear_spectra()
     assert not window.statusBar().toolTip()
+    window.close()
+
+
+def test_multi_data_context_menu_creates_group_and_deletes_selection(tmp_path, qapp, monkeypatch):
+    from qtcompat.QtWidgets import QMenu
+
+    from gui.dialogs import ConfirmDialog
+
+    manager = _manager_with_experiment(tmp_path, monkeypatch)
+    exp_id = "exp_001"
+    second = manager.import_data(exp_id, "/data/second")
+    unselected = manager.import_data(exp_id, "/data/unselected")
+    window = MainWindow(manager=manager, defer_spectrum_panel=True)
+    panel = window.project_tree
+    panel.select_experiment(exp_id)
+    experiment = panel.tree.currentItem()
+    first_node, second_node = experiment.child(0), experiment.child(1)
+    panel.tree.clearSelection()
+    first_node.setSelected(True)
+    second_node.setSelected(True)
+    menu = panel._on_context_menu_impl(QMenu(), second_node)
+    menu.actions()[0].trigger()
+    qapp.processEvents()
+    group = manager.data_groups(exp_id)[0]
+    assert set(group.data_ids) == {"d_001", second.id}
+    assert window.center_panel.group_page.current_group_id == group.id
+    assert panel.tree.currentItem().isExpanded()
+
+    group_node = panel.tree.currentItem()
+    panel.tree.clearSelection()
+    for index in range(group_node.childCount()):
+        group_node.child(index).setSelected(True)
+    prompts = []
+
+    def confirm(_parent, _title, message):
+        prompts.append(message)
+        return True
+
+    monkeypatch.setattr(ConfirmDialog, "confirm", staticmethod(confirm))
+    monkeypatch.setattr("core.project.manager.send_to_trash", lambda path, *_a: path)
+    menu = panel._on_context_menu_impl(QMenu(), group_node.child(0))
+    menu.actions()[1].trigger()
+    assert len(prompts) == 1
+    assert [entry.id for entry in manager.active_data(exp_id)] == [unselected.id]
+    assert len(manager.group_data_ids(exp_id, group.id)) == 2
+    window.close()
+
+
+@pytest.mark.parametrize(
+    ("status", "label"), [("success", "Success"), ("failed", "Failed"), ("skipped", "Skipped")]
+)
+def test_single_reference_run_reports_in_its_data_scope(tmp_path, qapp, monkeypatch, status, label):
+    from ui_support.i18n import tr
+
+    DeferredThread.pending.clear()
+    monkeypatch.setattr("threading.Thread", DeferredThread)
+    manager = _manager_with_experiment(tmp_path, monkeypatch)
+    exp_id, data_id = "exp_001", "d_001"
+    reference = manager.import_data(exp_id, "/data/reference")
+    controller = FakeProcessingController()
+    targets = []
+
+    def run(_exp, selected, _steps, **_kwargs):
+        targets.append(selected)
+        return {"results": {data_id: {"status": status}}}
+
+    controller.run_group_batch = run
+    window = MainWindow(manager=manager, controller=controller, defer_spectrum_panel=True)
+    window.project_tree.select_data(exp_id, data_id)
+    window.pipeline.reference_run_requested.emit(exp_id, data_id, ["fid"], reference.id, {})
+    running = tr("Processing {p0} with reference scripts", p0=data_id)
+    assert running in window.feedback_label.text()
+    DeferredThread.pending.pop(0)()
+    qapp.processEvents()
+    assert targets == [[data_id]]
+    message = tr("Reference processing for {p0}: {p1}", p0=data_id, p1=tr(label))
+    assert message in window.feedback_label.text()
+    assert message in window.log_panel.text.toPlainText()
+    assert window.center_panel.group_page.progress_label.isHidden()
+    window.close()
+
+
+def test_group_temperature_sort_orders_notes_and_tree(tmp_path, qapp, monkeypatch):
+    from gui.notes import set_data_note_fields
+
+    manager = _manager_with_experiment(tmp_path, monkeypatch)
+    exp_id = "exp_001"
+    warm = manager.data(exp_id, "d_001")
+    cold = manager.import_data(exp_id, "/data/cold")
+    unknown = manager.import_data(exp_id, "/data/unknown")
+    set_data_note_fields(manager.project, exp_id, warm.id, {"temperature": "27"})
+    set_data_note_fields(manager.project, exp_id, cold.id, {"temperature": "9.5 °C"})
+    original = [unknown.id, warm.id, cold.id]
+    group = manager.create_data_group(exp_id, "Temperatures", original)
+    window = MainWindow(manager=manager, defer_spectrum_panel=True)
+    panel = window.project_tree
+    panel.select_group(exp_id, group.id)
+    group_node = panel.tree.currentItem()
+    group_node.child(1).setExpanded(True)
+    page = window.center_panel.group_page
+    button = page.temperature_sort_button
+    assert all(symbol in button.toolTip() for symbol in "·><")
+    labels = {d.id: f"◆ {d.title or f'Data {d.id}'}" for d in (warm, cold, unknown)}
+
+    def check(symbol, expected):
+        assert button.text() == symbol
+        grid = page.notes_scroll.widget().layout()
+        assert [
+            grid.itemAtPosition(0, index).widget().text()
+            for index in range(1, 4)
+        ] == [labels[data_id] for data_id in expected]
+        assert [
+            panel._data_id_of(group_node.child(index)) for index in range(3)
+        ] == expected
+        assert panel.tree.currentItem() is group_node
+
+    check("·", original)
+    button.click()
+    check(">", [cold.id, warm.id, unknown.id])
+    assert group_node.child(1).isExpanded()
+    window.refresh()
+    check(">", [cold.id, warm.id, unknown.id])
+    button.click()
+    check("<", [warm.id, cold.id, unknown.id])
+    button.click()
+    check("·", original)
+    assert group.data_ids == original
     window.close()

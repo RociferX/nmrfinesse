@@ -1,66 +1,19 @@
 # Batch processing
 
-Batch processing applies the same steps to several datasets in one pass. It exists to make routine
-work repeatable, and it is honest about its boundary: **batch processing is 2D-only.**
+Batch import and groups support 1D, 2D and 3D. Browse a top-level folder, then filter all dimensions, one dimension or any pair. Grouping creates separate groups by dimensionality. Manual creation and adding members require homogeneous dimensions.
 
-## What it does
+The **All** row checks or unchecks the paths visible after dimensionality filtering. **Remove checked** removes those paths. **Batch import** uses all paths still shown.
 
-`workflow/batch.py::run_batch` takes a set of data entries (typically all members of a data
-group, or everything in an experiment) and runs the pipeline steps on each of them.
+Select a group in the project tree, choose automatic or reference-script processing and a stopping step in the centre panel. Automatic 2D groups run in parallel, defaulting to five simultaneous data sets; Settings permits 1–10. 1D/3D and reference-script groups run sequentially. 1D skips peak picking. Deleted members are excluded.
 
-Key behaviours:
-
-- **Group consistency is checked before running.** The reference spectrum's parameters are
-  compared across the group, and a dataset whose processing parameters do not match the group
-  reference is reported rather than silently processed with different settings.
-- **Steps already completed are skipped.** Each step records an input fingerprint; a dataset whose
-  step is already `DONE` with a matching fingerprint is not recomputed, which makes a batch
-  re-runnable after an interruption.
-- **Failures are isolated.** One failing dataset does not abort the batch; the failure is recorded
-  for that dataset and the run continues.
-- **Non-2D datasets are skipped with a reason.** They are not processed with a 2D approximation.
-  This is decision BATCH-012 in the internal audit log.
-
-## Using it
-
-GUI: select the data group in the project tree and start batch processing from its centre page.
-Progress appears in the group log; each member keeps its own processing status.
-
-Python:
+Automatic processing skips completed steps whose inputs and products remain valid. Each member retains separate status, logs and reports. One failure does not abort other members; stopping cancels pending work. Reference scripts support per-member direct-axis ranges and phases, including automatic phase search after FID conversion. See the [GUI guide](gui.md).
 
 ```python
 from workflow.batch import run_batch
 
-result = run_batch(
-    manager,
-    "exp_001",
-    ["data_001", "data_002"],      # targets: explicit ids, or "group:<id>" / "all"
-    ["fid", "spectrum", "peaks"],  # steps, in order
-    backend,
-    progress=lambda message: print(message),
-)
+result = run_batch(manager, "exp_001", "G1", ["fid", "spectrum"], backend, max_workers=5)
 ```
 
-## Relationship to parameter sweeps
+The programmatic `max_workers` default is 1 and maximum is 10, used only for automatic 2D processing. Each member uses a separate backend copy and work directory.
 
-They solve different problems, and it is worth not confusing them:
-
-| | Batch | Parameter sweep (`nmrfinesse_api`) |
-| --- | --- | --- |
-| Varies | the dataset | the processing parameters |
-| Constant | the method | the dataset and the reference |
-| Question | "process all of these" | "how sensitive is the result to these parameters?" |
-| Output | per-dataset spectra and peak tables | per-combination spectra, peak positions and uncertainties |
-| Dimensionality | 2D only | 2D and 3D |
-
-If what you want is a grid of processing parameters on one dataset, use `nmrfinesse_api`; see
-[external-api/README.md](external-api/README.md).
-
-## Boundaries
-
-- 2D only. Non-2D members are skipped and reported.
-- Batch does not attempt "smart" per-dataset parameter selection: it applies the group
-  configuration, so that differences between outputs reflect differences between datasets rather
-  than differences between parameter sets.
-- Batch output is recorded per dataset, not as a single batch-level run record, so a partial batch
-  remains interpretable.
+Batch processing varies the data set; API parameter sweeps vary processing parameters for one data set. Existing API 3D NUS sweep limits remain unchanged; see the [API support matrix](external-api/09-limitations-and-roadmap.md).

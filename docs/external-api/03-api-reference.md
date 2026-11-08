@@ -1,6 +1,6 @@
-# 03 · API reference (v1.1.5)
+# 03 · API reference (v1.1.6)
 
-Top-level exports are defined in `nmrfinesse_api/__init__.py`; `nmrfinesse_api.session.API_VERSION` defines API **1.1.5**. Software **1.0.12** and the API have separate version identifiers. The unified peak table retains 38 columns.
+Top-level exports are defined in `nmrfinesse_api/__init__.py`; `nmrfinesse_api.session.API_VERSION` defines API **1.1.6**. Software **1.0.12** and the API have separate version identifiers. The unified peak table retains 38 columns.
 
 ## 3.1 Sessions and Datasets
 
@@ -359,3 +359,10 @@ python -m nmrfinesse_api compat --golden            # also run the golden vector
   fingerprint to match the declaration, the level to be consistent with `affected`, `same` to
   keep the tokens unchanged and the golden vector to reproduce. Update it with
   `python scripts/update_compat_declaration.py --level <level> [--affected ...]`.
+
+
+ReferenceSpectrum retains script_path/script_sha256 for its frozen process.com. API 1.1.6 adds
+fid_scripts: a list of path, sha256 and source_path records for frozen fid.com conversion scripts.
+Scripts are captured after conversion and before processing, including segmented inputs.
+The JSON/CLI representation includes this field. Legacy records load with an empty list; rebuild
+with force=True to capture missing scripts. Calculations and the peak-table schema are unchanged.

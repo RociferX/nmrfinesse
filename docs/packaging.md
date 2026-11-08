@@ -1,9 +1,10 @@
 # Packaging
 
-The v1.0.12 source and AppImage release uses NMRFinesse software **1.0.12** and scripting API **1.1.5**,
-which have separate version numbers. The AppImage is the simplest desktop installation path;
-NMRPipe and SMILE must be obtained and installed separately. NMRPipe handles conversion and
-processing, while SMILE performs NUS reconstruction.
+The v1.0.12 source and AppImage release bundled API **1.1.5**. Current source uses
+NMRFinesse software **1.0.12** and scripting API **1.1.6**, which have separate version numbers.
+This source update does not rebuild the published binary. The AppImage is the simplest desktop
+installation path; NMRPipe and SMILE must be obtained and installed separately.
+NMRPipe handles conversion and processing, while SMILE performs NUS reconstruction.
 
 ## Linux AppImage
 

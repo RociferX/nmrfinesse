@@ -690,7 +690,7 @@ class SpectrumPanel(QWidget):
 
     def _load_auto_spectrum(self) -> None:
         if self._current_exp_id and self._current_data_id and self._current_spectrum is None:
-            self.load_current_spectrum()
+            self.load_default_spectrum()
 
     def _sync_peak_ui_visibility(self) -> None:
         """Peak Correlation UI Visibility: 1D View or Projection File Open Hide all
@@ -724,6 +724,7 @@ class SpectrumPanel(QWidget):
                 "level_count": int(self.viewer.count_slider.value()),
                 "aspect": int(self.viewer.aspect_slider.value()),
                 "peak_size": float(self.peak_size_spin.value()),
+                "peak_size_default_version": 1,
                 "hide_positive": self.viewer.hide_positive.isChecked(),
                 "hide_negative": self.viewer.hide_negative.isChecked(),
             }
@@ -774,6 +775,9 @@ class SpectrumPanel(QWidget):
                 for field in defaults:
                     if file_state.get(field) is not None:
                         defaults[field] = file_state[field]
+                if (not file_state.get("peak_size_default_version")
+                        and file_state.get("peak_size") == 1.5):
+                    defaults["peak_size"] = 0.5
             except Exception:  # noqa: BLE001
                 pass
             state = defaults
@@ -859,7 +863,21 @@ class SpectrumPanel(QWidget):
             self._clear_current_spectrum()
         if (has_context and (reload_current or self._current_spectrum is None)
                 and not self._autoload_timer.isActive()):
-            self.load_current_spectrum()
+            self.load_default_spectrum()
+
+    def load_default_spectrum(self) -> bool:
+        paths = self._spectrum_paths()
+        if any(path.suffix.lower() == ".ft3" for path in paths):
+            projections = [p for p in paths if p.suffix.lower() == ".ft2"
+                           and self._is_projection_name(p.name)]
+            if projections:
+                if self.open_spectrum(projections[0]):
+                    self._current_spectrum = projections[0]
+                    return True
+                return False
+            self._clear_current_spectrum()
+            return False
+        return self.load_current_spectrum()
 
     def load_current_spectrum(self) -> bool:
         """Load the main spectrum of the current sample data (the projection file can be viewed
@@ -1167,6 +1185,8 @@ class SpectrumPanel(QWidget):
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     def _show_loading_indicator(
         self, text: str = "", ready: int = 0, total: int = 0
     ) -> None:
@@ -1422,8 +1442,8 @@ class SpectrumPanel(QWidget):
         import nmrglue as ng
         import numpy as np
 
-        from viewer.axis_labels import nucleus_symbol
-        from viewer.spectrum import Spectrum, SpectrumAxis
+        from viewer.axis_labels import infer_nucleus, nucleus_symbol
+        from viewer.spectrum import Spectrum, Spectrum3D, SpectrumAxis
 
         def _norm(nuc: str) -> str:
             return _re.sub(r"[^A-Za-z0-9]", "", str(nuc or "")).upper()
@@ -1440,6 +1460,21 @@ class SpectrumPanel(QWidget):
         name = path.name
         data_id = self._current_data_id or ""
         nuclei = self._axis_nuclei(3) or []
+        s3d = self._spectrum3d_panel.spectrum3d
+        s3d_axes = list(getattr(s3d, "axes", []) or []) if s3d is not None else []
+        if len(s3d_axes) != 3:
+            candidates = [path.parent / f"{data_id}.ft3", *path.parent.glob("*.ft3")]
+            for ft3 in dict.fromkeys(candidates):
+                if not ft3.is_file():
+                    continue
+                try:
+                    s3d_axes = Spectrum3D.axes_from_ft3_header(ft3)
+                except (OSError, ValueError, KeyError):
+                    continue
+                if len(s3d_axes) == 3:
+                    break
+        if len(nuclei) != 3 and len(s3d_axes) == 3:
+            nuclei = [infer_nucleus(axis.obs_mhz) or axis.label for axis in s3d_axes]
         a = b = None
 
 
@@ -1484,37 +1519,13 @@ class SpectrumPanel(QWidget):
             return None
         na, nb = _base_norm(a), _base_norm(b)
         same_nucleus = na == nb
-        fixed_axis = -1
-        if len(nuclei) == 3:
+        if not logical_mapped:
+            fixed_axis = -1
+        if not logical_mapped and len(nuclei) == 3:
             for i, nuc in enumerate(nuclei):
                 if _base_norm(nuc) not in (na, nb):
                     fixed_axis = i
                     break
-        s3d = self._spectrum3d_panel.spectrum3d
-        s3d_axes = list(getattr(s3d, "axes", []) or []) if s3d is not None else []
-
-
-
-        if len(s3d_axes) != 3:
-            from viewer.spectrum import Spectrum3D  # noqa: PLC0415
-
-            parent = path.parent
-            ft3_candidates = []
-            if data_id:
-                ft3_candidates.append(parent / f"{data_id}.ft3")
-            ft3_candidates += list(parent.glob("*.ft3"))
-            for ft3 in ft3_candidates:
-                if not ft3.is_file() or not ft3.name.endswith(".ft3"):
-                    continue
-                try:
-                    s3d_axes = list(Spectrum3D.load_from_ft3(ft3, lazy=True).axes or [])
-                except Exception:  # noqa: BLE001
-                    s3d_axes = []
-                if len(s3d_axes) == 3:
-                    break
-
-
-
         labels3 = None
         if len(nuclei) == 3:
             from viewer.axis_labels import axis_labels_from_nuclei as _alfn
@@ -1702,6 +1713,8 @@ class SpectrumPanel(QWidget):
             self._current_spectrum = paths[0]
         self._load_peaks(paths[0])
 
+    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------
     # ------------------------------------------------------------------

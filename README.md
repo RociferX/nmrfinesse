@@ -11,7 +11,7 @@ strategy, and drives NMRPipe and SMILE to produce spectra. It brings data inspec
 manual processing, optimisation, quality control, peak picking and viewing into one workflow, with
 the resolved parameters, scripts, warnings and outputs saved alongside the result.
 
-**Software: 1.0.12 · Python/CLI API: 1.1.5 · Target platform: Linux**
+**Software: 1.0.12 · Python/CLI API: 1.1.6 · Target platform: Linux**
 
 **For desktop use on Linux, the simplest option is the AppImage.**
 Download the [1.0.12 AppImage](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.12/NMRFinesse-1.0.12-x86_64.AppImage)
@@ -21,7 +21,7 @@ from the release; no separate Python or Qt setup is needed. Follow
 requires a separate NMRPipe installation; NUS reconstruction also needs SMILE.
 
 Desktop users can use the AppImage or a source installation; the Python/CLI API uses a source
-or package installation. API **v1.1.5** retains the **38-column** peak-table contract and records
+or package installation. API **v1.1.6** retains the **38-column** peak-table contract and records
 bounded reference-window scoring, including shared representative traces and reference peaks.
 The packaged binary's `BUILD_INFO.txt` identifies its version, source revision and dependencies.
 
@@ -32,7 +32,7 @@ Repository: [RociferX/NMRFinesse](https://github.com/RociferX/nmrfinesse).
 > **Language:** the public code comments and documentation are in English, with a
 > [Chinese documentation edition](Chinese_version/README.md). The same application supports
 > English and Chinese: it follows the system language, accepts `NMRFinesse_LANG=en|zh` for a run,
-> and offers a persistent choice in Settings → Software settings → Interface language.
+> and offers a persistent choice in Settings → Interface language.
 
 The desktop application and the Qt-free Python/CLI API use the same processing backend. The API
 can build references and run explicit parameter combinations or grids, with an independent peak
@@ -225,7 +225,7 @@ python -m viewer
 Help → Usage tutorial has nine navigable sections with separate section and task headings.
 The experiment page has three horizontal import cards (single, segmented, batch), actions above
 their descriptions, and the sample-data table below. Import-and-group is off by default.
-Batch processing supports 2D only; process 3D data individually.
+Batch supports 1D/2D/3D in homogeneous groups; 2D can run in parallel and 3D runs sequentially.
 Tools → Export UCSF files… becomes available after opening a project. Configure its destination
 through automatic POKY/Sparky discovery or Browse in Settings.
 Tools also provides read-only FID checks and an automatic/manual abnormal-FID selection tool for
@@ -241,8 +241,7 @@ Needs-update details identify missing paths or changed files; old records explic
 provenance. Picked/imported peak tables retain separate assignments. CSV restores the full table;
 GUI `.list` exports contain assignments and coordinates only.
 
-The v1.0.12 AppImage includes these features. Subsequent source changes and rebuilt
-AppImages are published separately. See the [GUI guide](docs/gui.md) for full instructions.
+This section describes the current source. Check the v1.0.12 release notes for the features in the published AppImage. See the [GUI guide](docs/gui.md) for full instructions.
 
 ## CLI usage
 
@@ -292,7 +291,7 @@ statistics. Reference construction converts the raw inputs; combinations reuse t
 read-only. Explicit multi-segment import is opt-in with `segmented=True`; missing or incompatible
 reference evidence requires rebuilding with `force=True`.
 
-The separately versioned API is currently **v1.1.5**. Use `compat_manifest()` to inspect processing fingerprints and the retained 38-column table contract. Reference construction records bounded window-scoring diagnostics in per-condition `optimization_scores.csv` files. Explicit candidate pools replace the corresponding defaults, and a selected valid candidate is applied to the reference. The [API guide](docs/external-api/README.md) documents the scoring defaults, CSV fields and boundaries.
+The separately versioned API is currently **v1.1.6**. Use `compat_manifest()` to inspect processing fingerprints and the retained 38-column table contract. Reference construction records bounded window-scoring diagnostics in per-condition `optimization_scores.csv` files. Explicit candidate pools replace the corresponding defaults, and a selected valid candidate is applied to the reference. The [API guide](docs/external-api/README.md) documents the scoring defaults, CSV fields and boundaries.
 See the [API guide](docs/external-api/README.md), [Python reference](docs/python-api.md),
 and [outputs and records](docs/external-api/06-outputs-and-records.md).
 
@@ -339,7 +338,7 @@ dynamically, so the package version and the version written into run records can
 
 ## Limitations
 
-- Processing supports **2D and 3D, uniform and NUS**. Batch processing is **2D-only**.
+- Processing supports **2D and 3D, uniform and NUS**. Batch groups support homogeneous 1D/2D/3D data.
 - SMILE parameter optimisation and ranked reruns are temporarily unavailable in the GUI.
   Normal 2D/3D NUS reconstruction with SMILE remains available.
 - Real processing requires external NMRPipe, and NUS reconstruction additionally requires SMILE.
@@ -458,3 +457,16 @@ What this means in practice:
   binaries, `packaging/linux/THIRD_PARTY_LICENSES/NOTICE.md`.
 
 Nothing here is legal advice.
+
+
+Settings opens directly from the menu bar. Restore defaults stages this page's editable defaults;
+Save applies them and Cancel discards them. View and the project/blank-area experiment-creation
+context actions are removed; use the project page to create an experiment. Unversioned legacy
+marker size 1.5 migrates to 0.5 once; other sizes and newly saved custom values are retained.
+
+The current source provides API 1.1.6. The published 1.0.12 AppImage bundles API 1.1.5.
+
+Reference scripts use approximately 25% of the processing pane. Range and phase tables start
+from reference values. Optional automatic phase search runs after FID conversion. Selecting
+3D data opens an available 2D projection, with the full spectrum available on request.
+Automatic 2D groups default to five simultaneous data sets, configurable from 1 to 10.

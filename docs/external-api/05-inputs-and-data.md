@@ -1,4 +1,4 @@
-# 05 · Input: data, condition and parameter combination table (v1.1.5)
+# 05 · Input: data, condition and parameter combination table (v1.1.6)
 
 ## 5.1 Raw data
 

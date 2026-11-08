@@ -1,4 +1,4 @@
-# 06 · Output and records (v1.1.5)
+# 06 · Output and records (v1.1.6)
 
 ## 6.1 directory layout
 
@@ -99,7 +99,7 @@ authentication. Legacy references without this evidence require an explicit `for
 calling reference mode again with its default cache policy is not enough. Resume fingerprints include
 the frozen FID evidence and strict input policy, so older permissive runs are not silently reused.
 
-The unified API v1.1.5 table has **38 columns**, in the order below. Reference peak tables must
+The unified API v1.1.6 table has **38 columns**, in the order below. Reference peak tables must
 match `nmrfinesse_api.peak_tables.PEAK_TABLE_COLUMNS`. Both modes use three-point parabolic refinement
 and write one table. `rebuild_reference_peak_tables()` can rebuild tables from the frozen spectrum;
 a missing or invalid input fingerprint requires explicit reference rebuilding with `force=True`.
@@ -327,3 +327,10 @@ floating-point header readback.
 `stage_times_s` contains per-stage elapsed times, not one total that includes all API overhead. Each
 `workflow.json` `condition_records[]` also contains that condition's `stage_times_s`, copied from its
 single-condition `run.json`; it is not an aggregate workflow duration.
+
+
+ReferenceSpectrum retains script_path/script_sha256 for its frozen process.com. API 1.1.6 adds
+fid_scripts: a list of path, sha256 and source_path records for frozen fid.com conversion scripts.
+Scripts are captured after conversion and before processing, including segmented inputs.
+The JSON/CLI representation includes this field. Legacy records load with an empty list; rebuild
+with force=True to capture missing scripts. Calculations and the peak-table schema are unchanged.

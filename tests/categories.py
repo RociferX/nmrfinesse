@@ -28,6 +28,7 @@ __all__ = ["CATEGORIES", "CATEGORY_MARKERS", "category_of"]
 
 
 CATEGORIES: dict[str, str] = {
+    "test_reference_group_revision.py": "integration",
     "test_uniform_nus.py": "integration",
     "test_gui_uniform_nus.py": "integration",
     "test_ui_requests_20261103.py": "integration",

@@ -274,36 +274,29 @@ def test_bad_point_log_does_not_claim_false_deletion(tmp_path: Path) -> None:
 
 
 # ----------------------------------------------------------------- BATCH-012
-def test_batch_boundary_constant_is_2d() -> None:
+def test_batch_boundary_supports_all_dimensions() -> None:
     from workflow.batch import BATCH_SUPPORTED_NDIM
 
-    assert BATCH_SUPPORTED_NDIM == 2
+    assert BATCH_SUPPORTED_NDIM == (1, 2, 3)
 
 
-def test_batch_skips_3d_with_documented_reason(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """BATCH-012: 3D data is skipped at the formal boundary; no step runs and the reason
-    is readable."""
+def test_batch_runs_3d_sequentially(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
     from workflow import batch as batch_mod
-
     manager, entry, data = _manager(tmp_path)
+    monkeypatch.setattr("workflow.stepwise._read_experiment",
+                        lambda *a, **k: SimpleNamespace(ndim=3))
+    calls = []
+    def run(manager, exp, key, step, backend, params, progress):
+        calls.append((key, step))
+        return "converted3d"
+    monkeypatch.setattr(batch_mod, "_run_step", run)
+    result = batch_mod.run_batch(manager, entry.id, [data.id], ["fid"], object(), max_workers=5)
+    assert result["results"][data.id]["status"] == "success"
+    assert calls == [(data.id, "fid")]
+    assert result["skipped"] == []
 
-    class _Exp3D:
-        ndim = 3
-
-    monkeypatch.setattr(
-        "workflow.stepwise._read_experiment", lambda *a, **k: _Exp3D()
-    )
-    result = batch_mod.run_batch(
-        manager, entry.id, [data.id], ["fid"], backend=object()
-    )
-    per = result["results"][data.id]
-    assert per["status"] == "skipped"
-    assert per["steps"] == {}
-    assert "仅支持 2D" in per["error"]
-    assert "能力边界" in per["error"]
-    assert result["skipped"] == [data.id]
 
 
 # ------------------------------------------------------------------ STUB-013
