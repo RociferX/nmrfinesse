@@ -379,36 +379,8 @@ their references are listed in [THIRD_PARTY.md](THIRD_PARTY.md).
 
 ## Evidence
 
-The [four-route comparison report](docs/evidence/real-data-comparison.md) presents results obtained
-with the current data-processing workflow, including spectra, processing scripts, parameter comparisons,
-candidate statistics and explanations of the differences:
-
-| Processing route | Input and reference | Reference-candidate matches |
-| --- | --- | --- |
-| 2D uniform | BMRB 27493 HSQC; author-supplied Bruker spectrum | 125/126 (99.21%) |
-| Controlled 2D NUS | BMRB 27493 uniform raw data downsampled at 75% requested, 68/90 increments (75.56%) actual; author-supplied Bruker spectrum | 123/126 (97.62%) |
-| 3D uniform | BMRB 15750 HNCO; full 3D reference rebuilt with the author's scripts | HN 80/84; HC 72/81; NC 64/71 |
-| Acquired 3D NUS | BMRB 52533 HNCO, 25% acquired sampling; deposited full 3D reference | HN 89/89; HC 93/93; NC 79/79 |
-
-The report compares main-signal positions, phase residuals, ALT/NEG encoding, resolved sweep
-widths and the scripts used by the automatic and reference processing routes.
-
-The 2D NUS example uses **controlled artificial downsampling of uniform raw data**, retaining
-75.56% of the increments and comparing directly with the author's Bruker spectrum. Local signal
-remains at the unmatched positions: the 2D differences involve an author-picked strong-peak
-sidelobe, overlapping peaks and weak shoulders below the 10% detection threshold. For 3D uniform,
-nearby candidates also compete in one-to-one matching, while the author's additional LP improves
-N-dimension line widths and weak-peak separation. Disabling only LP in the same author script
-increases local N line widths by about 1.94 times. The acquired 3D NUS case matches all reference
-candidates in its three projections.
-
-The automatic workflow independently produces spectra that agree well with the authors' results,
-resolves ALT/NEG encoding and sweep-width conflicts correctly, and obtains phases close to the
-authors' settings. For BMRB 52533 the joint-sign-equivalent H/N/C residuals are 0.969°/2.50°/0°;
-BMRB 15750 has N/C residuals of 2.50° each. These results demonstrate reliable automatic processing.
-Three-dimensional comparisons crop a common full 3D window before independently matching signed
-HN, HC and NC projections. The match rate is matched pairs divided by reference candidates.
-See the full report for methods, per-case explanations and processing scripts.
+[Validation](docs/evidence/real-data-comparison.md) shows spectrum comparisons and candidate matches for four
+automatic processing routes, together with the POKY/iPick peak-picking comparison.
 
 ## Tests
 

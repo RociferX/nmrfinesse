@@ -38,8 +38,7 @@ Detection thresholds, noise, phase and line shape affect candidate selection and
 
 Engineering tests exercise orchestration and records with mocked engines. Real-engine comparisons
 record inputs, reference provenance, commands, parameters and resulting spectra separately.
-[Four-route evidence](evidence/real-data-comparison.md) includes an author 2D uniform spectrum,
-controlled 2D NUS at 68/90 retained increments, an author-script full 3D uniform reference and acquired
-3D NUS at 25%. Its candidate coverage measures matched pairs/reference candidates; it does not count
+[Validation](evidence/real-data-comparison.md) compares four processing routes. Candidate coverage is
+the fraction of reference candidates that match; it does not count
 assigned 3D peak identities. See the [API support details](external-api/09-limitations-and-roadmap.md),
 [processing model](processing-model.md) and [peak picking](peak-picking.md).

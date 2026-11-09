@@ -13,7 +13,7 @@
 
 ## 检查与证据
 
-模拟引擎测试检查工作流与记录行为，真实NMRPipe/SMILE对照在[证据报告](../evidence/real-data-comparison.md)保存输入、命令/参数来源与终谱。
+模拟引擎测试检查工作流与记录行为。[实测证据](../evidence/real-data-comparison.md)展示 NMRPipe 和 SMILE 的处理结果。
 检出/定位QC与候选匹配描述对应测量，不建立已指认峰身份。详见[支持范围与执行边界](09-limitations-and-roadmap.md)。
 
 ## 阅读顺序

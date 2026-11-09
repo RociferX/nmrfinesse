@@ -276,4 +276,4 @@ GUI 的 `.list` 由 `Assignment w1 w2 [w3]` 列组成。要恢复强度、体积
 | UCSF 条目不可选 | 对应数据的 `spectra` 里是否已有 UCSF |
 | 显示待更新 | 查看原因以区分路径失效、文件变化或上游脚本更新 |
 
-反馈问题时附「关于」版本、桌面会话、复现步骤和对应日志。详细错误处理见 [排查指南](https://github.com/RociferX/nmrfinesse/blob/main/docs/troubleshooting.md)，实采验证范围见 [实采证据](https://github.com/RociferX/nmrfinesse/blob/main/docs/evidence/real-data-comparison.md)。
+反馈问题时附「关于」版本、桌面会话、复现步骤和对应日志。详细错误处理见 [排查指南](https://github.com/RociferX/nmrfinesse/blob/main/docs/troubleshooting.md)，实采验证范围见 [实测证据](https://github.com/RociferX/nmrfinesse/blob/main/Chinese_version/docs/evidence/real-data-comparison.md)。

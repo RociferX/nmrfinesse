@@ -5,8 +5,7 @@
 - [批量处理](batch-processing.md)：1D/2D/3D同维度分组，2D可并行处理。
 - [处理模型](processing-model.md)
 - [选峰方法](peak-picking.md)
-- [选峰兼容性证据](picker-compatibility.md)
-- [真实数据证据](evidence/real-data-comparison.md)
+- [实测证据](evidence/real-data-comparison.md)：四路径谱图对照和 POKY/iPick 选峰结果。
 - [API契约](API_CONTRACT.md)
 - [外部API](external-api/README.md)
 - [安装说明](installation.md)

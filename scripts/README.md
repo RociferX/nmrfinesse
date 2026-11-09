@@ -1,7 +1,6 @@
 # Command-line tools
 
-Current measurements, reference sources, and reproduction commands are on the
-[four-route evidence page](../docs/evidence/real-data-comparison.md).
+See [validation](../docs/evidence/real-data-comparison.md) for the processing comparisons.
 
 | Tool | Purpose |
 | --- | --- |

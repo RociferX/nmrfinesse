@@ -49,8 +49,7 @@ and executed scripts when checking a parameter effect.
 
 The ordinary pytest suite checks orchestration and records with mocked engine boundaries.
 Real-engine comparisons separately record input, tool versions, script/parameter provenance and
-resulting spectra. [Four-route evidence](../evidence/real-data-comparison.md) includes controlled
-2D downsampling at 68/90 increments and acquired 3D NUS at 25%, alongside uniform author references.
+resulting spectra. [Validation](../evidence/real-data-comparison.md) shows four processing comparisons.
 Candidate coverage measures detected/matched candidates, not assigned-peak recovery. Three-dimensional
 projection counts do not establish independent peak identities or resolve every overlap.
 

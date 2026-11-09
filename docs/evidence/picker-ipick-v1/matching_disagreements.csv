@@ -1,5 +1,0 @@
-context,matcher,scenario,execution_id,member,api_valid,ipick_valid
-weak/A,original,HH,weak/A/00bae6a12784d587b95d46e8c2c2336e8a03d0896dc5968063f977a0dac2fa11,synthetic:O009,False,True
-weak/A,original,HL,weak/A/00bae6a12784d587b95d46e8c2c2336e8a03d0896dc5968063f977a0dac2fa11,synthetic:O009,False,True
-weak/A,original,LH,weak/A/00bae6a12784d587b95d46e8c2c2336e8a03d0896dc5968063f977a0dac2fa11,synthetic:O009,False,True
-weak/A,original,LL,weak/A/00bae6a12784d587b95d46e8c2c2336e8a03d0896dc5968063f977a0dac2fa11,synthetic:O009,False,True

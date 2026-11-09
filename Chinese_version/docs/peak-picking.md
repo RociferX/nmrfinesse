@@ -93,9 +93,4 @@ API 见 [接口参考](external-api/03-api-reference.md)。解析/导出已有�
 
 ## POKY/iPick 兼容性证据
 
-**核心机制相近、本批输出高度一致。** NMRFinesse二维正峰选峰采用阈值约束的邻域局部极大值检测，再逐轴三点抛物线细化，与本次POKY/iPick UCSFtool路线核心机制相近。
-12张保留的¹H–¹⁵N谱形成24组高/低阈值比较，全部候选数一致，5175条表内候选记录在逐轴一个网格步范围内唯一一一对应。weak/A两档相同的4表复用，实际独立有效iPick调用20次；5175不是独立物理峰数。
-坐标差典型约0.00025 ppm、最大约0.00050 ppm，与iPick三位小数输出量级相符。下游可用性8088格中8084格一致，4格来自同一成员/运行在四控制中的重复；此统计区别于候选峰配对。
-该证据采用传输修正后的ipick_transfer_v2，原协议的历史API版本为1.0.8/API1.1.4，后续诊断和机制核对为1.0.9/API1.1.5。它是历史表级复核，不重标为当前发行版输出，也不证明整个POKY/SPARKY实现、3D/负峰/平台峰或峰身份完全等价。
-阈值须换算：API去中位数后的T×1.4826×MAD，对应iPick原谱绝对阈值median+T×1.4826×MAD；本项目现有噪音/阈值算法不因引用证据而改变。
-私有原包CSV与manifest保持原样；公开版CSV不变、来源元数据脱敏并记录原文件哈希，见[使用说明](../../docs/evidence/picker-ipick-v1/README.md)、[表级核验输出](../../docs/evidence/picker-ipick-v1/verification.txt)与[兼容性核验](picker-compatibility.md)。原始谱/FID和第三方源码不在证据包中。
+见[选峰结果对照](evidence/real-data-comparison.md#与-pokyipick-的选峰结果对照)。

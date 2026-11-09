@@ -32,7 +32,6 @@ API逐workflow/条件独立检测峰，写入38列峰表；峰ID只在单谱内�
 ## 检查与证据
 
 工程测试通过模拟引擎检查编排与记录；真实引擎对照另行保存输入、参考来源、命令、参数及终谱。
-[四路径证据](evidence/real-data-comparison.md)包括作者二维uniform参考、保留68/90增量的受控人工二维NUS、
-作者脚本重建完整三维uniform参考，以及实采25%的三维NUS。
+[实测证据](evidence/real-data-comparison.md)对照四条自动处理路径。
 候选覆盖率为匹配对数/参考候选数，不统计已指认三维峰身份。
 详见[API支持细节](external-api/09-limitations-and-roadmap.md)、[处理模型](processing-model.md)和[选峰](peak-picking.md)。

@@ -16,8 +16,8 @@ Cross-spectrum matching, assignment and statistical inference belong to downstre
 
 ## Checks and evidence
 
-Mocked-engine tests check workflow and record behaviour. Real NMRPipe/SMILE comparisons retain
-input, command/parameter provenance and resulting spectra in the [evidence report](../evidence/real-data-comparison.md).
+Mocked-engine tests check workflow and record behaviour. The [validation report](../evidence/real-data-comparison.md)
+shows real NMRPipe and SMILE processing results.
 Detection/localisation QC and candidate matching describe those measurements, rather than assigned
 peak identities. See [support and execution boundaries](09-limitations-and-roadmap.md).
 

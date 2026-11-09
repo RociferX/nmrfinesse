@@ -19,7 +19,6 @@ for the current release-artifact status. NMRPipe and SMILE are installed separat
   and manual routes.
 - [Quality control](qc-system.md): diagnostics, corrections, metrics and audit records.
 - [Peak picking](peak-picking.md): detection, parabolic localisation and peak-table export.
-- [Peak-picker compatibility](picker-compatibility.md): verified POKY/iPick batch concordance.
 - [Batch processing](batch-processing.md): dimensional filters, groups and execution modes.
 - [Capabilities and limitations](roadmap.md): supported operations and their boundaries.
 
@@ -37,11 +36,8 @@ for the current release-artifact status. NMRPipe and SMILE are installed separat
 
 ## Evidence
 
-[Four-route comparisons](evidence/real-data-comparison.md) present spectra obtained with the current
-processing workflow, scripts, parameters and candidate statistics. The cases include 2D uniform,
-controlled artificial 2D NUS, 3D uniform and acquired 3D NUS.
-[BMRB15750 script comparison](evidence/script-comparisons_20261020.json) gives the author and
-automatic processing commands.
+[Validation](evidence/real-data-comparison.md) covers four automatic processing routes and peak-picking
+concordance with POKY/iPick.
 
 ## Development and distribution
 
