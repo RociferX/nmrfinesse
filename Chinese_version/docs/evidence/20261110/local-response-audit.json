@@ -1,0 +1,461 @@
+{
+  "date": "2026-11-10",
+  "software_version": "1.0.12",
+  "api_version": "1.1.6",
+  "cases": {
+    "uniform2d": {
+      "dimensions": [
+        {
+          "axis": "F2",
+          "nucleus": "1H",
+          "sw_hz": 9578.54406130268,
+          "sf_mhz": 599.50281765
+        },
+        {
+          "axis": "F1",
+          "nucleus": "15N",
+          "sw_hz": 2187.22659667542,
+          "sf_mhz": 60.7539755632779
+        }
+      ],
+      "sampling": "uniform",
+      "sampling_fraction_reader_summary": 1.0,
+      "unmatched_count": 5,
+      "observations": {
+        "local_response_without_independent_candidate": 4,
+        "below_10_percent": 1
+      },
+      "candidates": [
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 64,
+            "ppm": {
+              "H": 6.846801078687686,
+              "N": 112.28356637183072
+            },
+            "intensity": 125263.0107421875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.6052288049139326,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "local_response_without_independent_candidate"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 94,
+            "ppm": {
+              "H": 9.275114128130578,
+              "N": 118.05760136245794
+            },
+            "intensity": 97134.1591796875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.6381965806358735,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "local_response_without_independent_candidate"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 104,
+            "ppm": {
+              "H": 8.66930277146053,
+              "N": 123.41797198280138
+            },
+            "intensity": 82268.23828125,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.4718767220683071,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "local_response_without_independent_candidate"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 120,
+            "ppm": {
+              "H": 7.003591520798619,
+              "N": 111.3504362395977
+            },
+            "intensity": 59302.3935546875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.4080801986128341,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "local_response_without_independent_candidate"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 126,
+            "ppm": {
+              "H": 8.543705039745257,
+              "N": 129.7483741652692
+            },
+            "intensity": 29501.9521484375,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.0945076776132607,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        }
+      ]
+    },
+    "nus75": {
+      "dimensions": [
+        {
+          "axis": "F2",
+          "nucleus": "1H",
+          "sw_hz": 9578.54406130268,
+          "sf_mhz": 599.50281765
+        },
+        {
+          "axis": "F1",
+          "nucleus": "15N",
+          "sw_hz": 2187.22659667542,
+          "sf_mhz": 60.7539755632779
+        }
+      ],
+      "sampling": "nus",
+      "sampling_fraction_reader_summary": 0.75,
+      "unmatched_count": 3,
+      "observations": {
+        "local_response_without_independent_candidate": 1,
+        "below_10_percent": 2
+      },
+      "candidates": [
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 94,
+            "ppm": {
+              "H": 9.275114128130578,
+              "N": 118.05760136245794
+            },
+            "intensity": 97133.44482421875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.5007779001919704,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "local_response_without_independent_candidate"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 125,
+            "ppm": {
+              "H": 8.131289764517504,
+              "N": 118.61218976568716
+            },
+            "intensity": 32220.64208984375,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.08072423755378143,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 126,
+            "ppm": {
+              "H": 8.543705039745257,
+              "N": 129.7483741652692
+            },
+            "intensity": 29501.23779296875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.091682334340326,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        }
+      ]
+    },
+    "uniform3d": {
+      "dimensions": [
+        {
+          "axis": "F3",
+          "nucleus": "1H",
+          "sw_hz": 12755.1020408163,
+          "sf_mhz": 850.10399616
+        },
+        {
+          "axis": "F2",
+          "nucleus": "15N",
+          "sw_hz": 2500.0,
+          "sf_mhz": 86.15004950643
+        },
+        {
+          "axis": "F1",
+          "nucleus": "13C",
+          "sw_hz": 3636.3636363636438,
+          "sf_mhz": 213.795329496533
+        }
+      ],
+      "sampling": "uniform",
+      "sampling_fraction_reader_summary": 1.0,
+      "unmatched_count": 15,
+      "observations": {
+        "below_10_percent": 6,
+        "candidate_competition": 8,
+        "local_response_without_independent_candidate": 1
+      },
+      "candidates": [
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 83,
+            "ppm": {
+              "H": 9.892971013021548,
+              "N": 130.38422208340563
+            },
+            "intensity": 39644007.6875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.08954801124885009,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 84,
+            "ppm": {
+              "H": 9.009091147118186,
+              "N": 118.74459573555723
+            },
+            "intensity": 38609103.6875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.08384621461802143,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HC",
+          "reference_candidate": {
+            "candidate_index_1based": 9,
+            "ppm": {
+              "H": 7.225773786979872,
+              "C": 178.98296025170532
+            },
+            "intensity": 211832807.90625,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.6247577191790828,
+          "automatic_candidates_within_tolerance": 1,
+          "observation": "candidate_competition"
+        },
+        {
+          "projection": "HC",
+          "reference_candidate": {
+            "candidate_index_1based": 32,
+            "ppm": {
+              "H": 7.115321162586878,
+              "C": 176.3256144552109
+            },
+            "intensity": 149275607.90625,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.43742240965848517,
+          "automatic_candidates_within_tolerance": 1,
+          "observation": "candidate_competition"
+        },
+        {
+          "projection": "HC",
+          "reference_candidate": {
+            "candidate_index_1based": 37,
+            "ppm": {
+              "H": 8.281199272777627,
+              "C": 172.9975258305316
+            },
+            "intensity": 144203879.90625,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.3686762219442621,
+          "automatic_candidates_within_tolerance": 1,
+          "observation": "candidate_competition"
+        },
+        {
+          "projection": "HC",
+          "reference_candidate": {
+            "candidate_index_1based": 50,
+            "ppm": {
+              "H": 8.558436650613645,
+              "C": 176.70177135703483
+            },
+            "intensity": 121203375.90625,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.33879973598862134,
+          "automatic_candidates_within_tolerance": 1,
+          "observation": "candidate_competition"
+        },
+        {
+          "projection": "HC",
+          "reference_candidate": {
+            "candidate_index_1based": 77,
+            "ppm": {
+              "H": 8.139413836605527,
+              "C": 175.0784586871997
+            },
+            "intensity": 44271907.90625,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.08899694329716781,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HC",
+          "reference_candidate": {
+            "candidate_index_1based": 80,
+            "ppm": {
+              "H": 9.892971013021548,
+              "C": 172.6314984787685
+            },
+            "intensity": 39454099.90625,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.08987848472148573,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "HC",
+          "reference_candidate": {
+            "candidate_index_1based": 81,
+            "ppm": {
+              "H": 9.009091147118186,
+              "C": 176.40306007180544
+            },
+            "intensity": 38419195.90625,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.08417875771382899,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        },
+        {
+          "projection": "NC",
+          "reference_candidate": {
+            "candidate_index_1based": 9,
+            "ppm": {
+              "N": 113.17953921568788,
+              "C": 178.98303320960008
+            },
+            "intensity": 211782384.875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.6237475164666536,
+          "automatic_candidates_within_tolerance": 1,
+          "observation": "candidate_competition"
+        },
+        {
+          "projection": "NC",
+          "reference_candidate": {
+            "candidate_index_1based": 32,
+            "ppm": {
+              "N": 106.48511632846702,
+              "C": 176.3256144552109
+            },
+            "intensity": 149225184.875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.4359078750850582,
+          "automatic_candidates_within_tolerance": 1,
+          "observation": "candidate_competition"
+        },
+        {
+          "projection": "NC",
+          "reference_candidate": {
+            "candidate_index_1based": 36,
+            "ppm": {
+              "N": 114.25392717607599,
+              "C": 172.9975258305316
+            },
+            "intensity": 144153456.875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.36697661338304743,
+          "automatic_candidates_within_tolerance": 1,
+          "observation": "candidate_competition"
+        },
+        {
+          "projection": "NC",
+          "reference_candidate": {
+            "candidate_index_1based": 47,
+            "ppm": {
+              "N": 121.67897349871068,
+              "C": 176.70177135703483
+            },
+            "intensity": 121152952.875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.33701969590704545,
+          "automatic_candidates_within_tolerance": 1,
+          "observation": "candidate_competition"
+        },
+        {
+          "projection": "NC",
+          "reference_candidate": {
+            "candidate_index_1based": 67,
+            "ppm": {
+              "N": 110.26610771878654,
+              "C": 173.93363656593286
+            },
+            "intensity": 55317892.875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.1450118067589568,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "local_response_without_independent_candidate"
+        },
+        {
+          "projection": "NC",
+          "reference_candidate": {
+            "candidate_index_1based": 71,
+            "ppm": {
+              "N": 130.38422208340563,
+              "C": 172.6314984787685
+            },
+            "intensity": 39403676.875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.08742831513674933,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "below_10_percent"
+        }
+      ]
+    },
+    "acquired3d": {
+      "dimensions": [
+        {
+          "axis": "F3",
+          "nucleus": "1H",
+          "sw_hz": 11160.7142857143,
+          "sf_mhz": 799.863759342
+        },
+        {
+          "axis": "F2",
+          "nucleus": "15N",
+          "sw_hz": 2269.63231956423,
+          "sf_mhz": 81.0585930599067
+        },
+        {
+          "axis": "F1",
+          "nucleus": "13C",
+          "sw_hz": 2816.9014084507,
+          "sf_mhz": 201.159852152
+        }
+      ],
+      "sampling": "nus",
+      "sampling_fraction_reader_summary": 0.25,
+      "unmatched_count": 0,
+      "observations": {},
+      "candidates": []
+    }
+  }
+}

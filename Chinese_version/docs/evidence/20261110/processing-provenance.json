@@ -1,0 +1,1675 @@
+{
+  "date": "2026-11-10",
+  "software_version": "1.0.12",
+  "api_version": "1.1.6",
+  "behavior_digest": "809d89d0dd26253c94f6b1236c40be64219ca07490c8f4346274d3b5cefd929e",
+  "token_digest": "367535dd154c9f12cbf0bc5884cd6818185f437ca17cf4188e3f3229c9d0ed64",
+  "source_hashes": {
+    "phase_routes.py": "80df9fe153620c1bb3f308ddddc5d017230663e21c7de53dd6c35f84f7e69d0a",
+    "window_optimize.py": "89cfb056784b963ec78e59d293f93688c2e89f6d07bef3c6fadcbc904cdcf1ff",
+    "optimization_scores.py": "1c8e1063ef6513c725febc52d2f50ce9fa3b17e3b0c057c47361691a9d518606"
+  },
+  "cases": {
+    "uniform2d": {
+      "shape": [
+        512,
+        1028
+      ],
+      "wall_time_s": 38.31839413201669,
+      "spectrum_sha256": "db0968ca11531afa967c7b461394a02a0f34b5727ba446e7f1bd40c73bab254d",
+      "raw_sha256": {
+        "ser": "81564f263cb8d13f176adb2cc044cbdc79f672fb7147b45c5bd37b344ae2775e",
+        "pulseprogram": "9280d045d0a4d127e4d5866f230b63fd3e5102cf3d938720f0b57041b9ec0560",
+        "acqus": "c422d7ab064a4c7a2aaa841390f8ebdd90909b21c3fcb81b26a5db4566928dfc",
+        "acqu2s": "61740de8bfc09baa1ad9c21e5467cdbd635dd3237470e18a189a97d98dca78ab"
+      },
+      "author_reference_sha256": "3d4e1041c085b05e14cdf1bfb889670daa5d5caacaeeda5c1f58ce35dccb15d5",
+      "params_requested": {
+        "ext_lo": "10.5",
+        "ext_hi": "6.5",
+        "final_ext_lo": "10.5",
+        "final_ext_hi": "6.5",
+        "apply_ext_to_opt": true
+      },
+      "params_used": {
+        "ext_lo": "10.5",
+        "ext_hi": "6.5",
+        "final_ext_lo": "10.5",
+        "final_ext_hi": "6.5",
+        "apply_ext_to_opt": true,
+        "phase_route": "unified",
+        "phases": {
+          "F1": [
+            265.0,
+            0.0
+          ],
+          "F2": [
+            0.0,
+            0.0
+          ]
+        },
+        "baseline": {
+          "F2": {
+            "enabled": true,
+            "mode": "order",
+            "order": 3
+          },
+          "F1": {
+            "enabled": true,
+            "mode": "order",
+            "order": 3
+          }
+        },
+        "zero_fill": {
+          "F2": {
+            "mode": "auto"
+          },
+          "F1": {
+            "mode": "auto"
+          }
+        },
+        "window": {
+          "F2": {
+            "type": "sine_bell",
+            "off": 0.45,
+            "end": 0.98,
+            "pow": 2,
+            "c": 0.5
+          },
+          "F1": {
+            "type": "sine_bell",
+            "off": 0.65,
+            "end": 1.0,
+            "pow": 2,
+            "c": 0.5
+          }
+        },
+        "backend_runs": 5,
+        "direct_phase": [
+          0.0,
+          0.0
+        ],
+        "diagnostics": {
+          "reports": [
+            "直接维存在直流偏置(FID 均值约为最强幅度的 37%),已启用 POLY -time 自动纠正",
+            "场漂筛查：转换后 FID 非空迹前段与后段的直接维表观峰位变化约 170.0 点（34.0 个线宽），明显超出线宽，两段谱峰基本不重叠。请核对温控、锁场和原始数据；若确认是场漂，建议重新采谱"
+          ],
+          "metrics": {
+            "dc_ratio": 0.3713432252407074,
+            "first_point_ratio": 0.0,
+            "broad_peak": false,
+            "fwhm_pts": 5.0,
+            "drift_pts": 170.0,
+            "n_direct": 1024.0,
+            "energy_top20_frac": 0.6951054930686951,
+            "nan_inf_count": 0,
+            "zero_traces": 0,
+            "high_energy_traces": 0
+          },
+          "apply_poly_time": true,
+          "repaired_badpoints": 0,
+          "backup_dir": "<VM>/fid_diag_bak",
+          "clean": false
+        }
+      },
+      "phase_header": {
+        "FDF1P0": 265.0,
+        "FDF1P1": 0.0,
+        "FDF1CAR": 118.0770034790039,
+        "FDF1LABEL": "15N",
+        "FDF2P0": 0.0,
+        "FDF2P1": 0.0,
+        "FDF2CAR": 4.770999908447266,
+        "FDF2LABEL": "1H",
+        "FDF3P0": 0.0,
+        "FDF3P1": 0.0,
+        "FDF3CAR": 0.0,
+        "FDF3LABEL": "Z"
+      },
+      "tool_versions": {
+        "nmrfinesse": "1.0.12",
+        "python": "3.12.13",
+        "numpy": "2.4.6",
+        "scipy": "1.18.0",
+        "nmrglue": "0.11",
+        "matplotlib": "3.11.1",
+        "pyside6": "6.11.2",
+        "pyyaml": "6.0.3",
+        "software_commit": "63c63c4231f58fcc33d9ce67a49eba3e9ed2c0b1",
+        "git_commit": "63c63c4231f58fcc33d9ce67a49eba3e9ed2c0b1",
+        "git_commit_dirty": "1"
+      },
+      "automatic_conversion": {
+        "text": "#!/bin/csh\n\nbruk2pipe -verb -in ./ser \\\n  -bad 0.0 -ext -aswap -AMX -decim 2088 -dspfvs 20 -grpdly 67.9876556396484  \\\n  -xN              2048  -yN               180  \\\n  -xT              1024  -yT                90  \\\n  -xMODE            DQD  -yMODE  Echo-AntiEcho  \\\n  -xSW         9578.544  -ySW         2187.227  \\\n  -xOBS         599.503  -yOBS          60.754  \\\n  -xCAR           4.771  -yCAR         118.077  \\\n  -xLAB 1H  -yLAB             15N  \\\n  -ndim               2  -aq2D         Complex  \\\n| nmrPipe -fn MULT -c 9.76562e-01 \\\n  -out ./d_001.fid -ov\n\n",
+        "sha256": "cdf04368145409ada04819ffee693803a90d243c773349ea792d4968ff32796d"
+      },
+      "automatic_final": {
+        "text": "#!/bin/csh\n# NMRFinesse processing script\n# experiment: d_001\nxyz2pipe -in d_001.fid -x \\\n| nmrPipe -fn POLY -time \\\n| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -size 4096 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 0 -p1 0 -di \\\n| nmrPipe -fn POLY -ord 3 -auto \\\n| nmrPipe -fn EXT -x1 10.5ppm -xn 6.5ppm -sw -round 2 \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn SP -off 0.65 -end 1 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -size 512 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 265 -p1 0 -di \\\n| nmrPipe -fn POLY -ord 3 -auto \\\n| nmrPipe -fn TP \\\n| pipe2xyz -out d_001.ft2 -x\n",
+        "sha256": "0c59f28c77445e139a505d73f279556455a0a8982a07e88d475e9a194abef6d3"
+      },
+      "selected_optimization_rows": [
+        {
+          "stage": "baseline",
+          "axis": "F2",
+          "source": "joint_spectrum",
+          "candidate": "order:3",
+          "parameters": {
+            "enabled": true,
+            "mode": "order",
+            "order": 3
+          },
+          "score": 98.58418944661884,
+          "score_metric": "baseline_quality",
+          "selected": true,
+          "applied": true,
+          "status": "scored",
+          "reason": "",
+          "raw_score": 98.58418944661884,
+          "baseline_slope": 0.0007260913315912654,
+          "baseline_offset": -0.0002728752853306666,
+          "baseline_curvature": 0.001784664939464209,
+          "baseline_stripe": 0.0,
+          "baseline_slope_score": 99.7095634673635,
+          "baseline_offset_score": 99.94542494293387,
+          "baseline_curvature_score": 98.92920103632147,
+          "baseline_stripe_score": 100.0
+        },
+        {
+          "stage": "baseline",
+          "axis": "F1",
+          "source": "joint_spectrum",
+          "candidate": "order:3",
+          "parameters": {
+            "enabled": true,
+            "mode": "order",
+            "order": 3
+          },
+          "score": 96.60110134686401,
+          "score_metric": "baseline_quality",
+          "selected": true,
+          "applied": true,
+          "status": "scored",
+          "reason": "",
+          "raw_score": 96.60110134686401,
+          "baseline_slope": 0.0063379477739332205,
+          "baseline_offset": 0.0036225039864841947,
+          "baseline_curvature": 0.00023203124377643022,
+          "baseline_stripe": 0.0,
+          "baseline_slope_score": 97.46482089042671,
+          "baseline_offset_score": 99.27549920270316,
+          "baseline_curvature_score": 99.86078125373415,
+          "baseline_stripe_score": 100.0
+        },
+        {
+          "stage": "window",
+          "axis": "F2",
+          "source": "direct_preview",
+          "candidate": "SP off=0.45 end=0.98 pow=2 c=0.5",
+          "parameters": {
+            "type": "sine_bell",
+            "off": 0.45,
+            "end": 0.98,
+            "pow": 2,
+            "c": 0.5
+          },
+          "score": 0.5518176158964919,
+          "score_metric": "direct_peak_valley",
+          "selected": true,
+          "applied": true,
+          "status": "scored",
+          "reason": "",
+          "fwhm": null,
+          "snr": 32.28532028198242,
+          "shape": null,
+          "merged": null,
+          "n_ref": null,
+          "sampling": {
+            "reference_sigma": 12.0,
+            "total_traces": 180,
+            "scanned_traces": 12,
+            "used_traces": 12,
+            "trace_indices": [
+              32,
+              0,
+              2,
+              5,
+              11,
+              7,
+              4,
+              6,
+              33,
+              10,
+              3,
+              1
+            ],
+            "probe_budget": 180,
+            "qualified_12": 12,
+            "qualified_6": 0,
+            "sampling_reason": "energy_fast_path",
+            "budget_exhausted": false,
+            "max_height_sigma": 368.8222303801008,
+            "score_profile": "direct_peak_valley",
+            "pair_count": 18,
+            "baseline_window": "SP off=0.45 end=0.98 pow=2 c=0.5",
+            "candidate_evidence": [
+              {
+                "label": "SP off=0.5 end=0.98 pow=2 c=0.5",
+                "valley": 0.4967860984781444,
+                "bridged_pairs": 8,
+                "noise": 25.95560668258667,
+                "snr": 32.704036712646484
+              },
+              {
+                "label": "无窗(线性)",
+                "valley": 0.3335852275561001,
+                "bridged_pairs": 7,
+                "noise": 36.67436851730346,
+                "snr": 25.742080688476562
+              },
+              {
+                "label": "SP off=0.3 end=0.98 pow=1 c=0.5",
+                "valley": 0.2946936542053759,
+                "bridged_pairs": 7,
+                "noise": 27.66683714904785,
+                "snr": 29.020051956176758
+              },
+              {
+                "label": "SP off=0.45 end=0.98 pow=1 c=0.5",
+                "valley": 0.4154880580128038,
+                "bridged_pairs": 7,
+                "noise": 28.725887545108794,
+                "snr": 30.772098541259766
+              },
+              {
+                "label": "SP off=0.45 end=0.9 pow=1 c=0.5",
+                "valley": 0.39521225658863557,
+                "bridged_pairs": 7,
+                "noise": 30.252335955905913,
+                "snr": 29.681869506835938
+              },
+              {
+                "label": "SP off=0.45 end=0.98 pow=2 c=0.5",
+                "valley": 0.4481823841035081,
+                "bridged_pairs": 8,
+                "noise": 26.716813227653503,
+                "snr": 32.28532028198242
+              },
+              {
+                "label": "SP off=0.65 end=1 pow=2 c=0.5",
+                "valley": 0.606258414112852,
+                "bridged_pairs": 9,
+                "noise": 18.539819851112366,
+                "snr": 33.8701286315918
+              },
+              {
+                "label": "GM g1=8 g2=15",
+                "valley": 0.43065778827628304,
+                "bridged_pairs": 8,
+                "noise": 27.675319593858717,
+                "snr": 34.76312255859375
+              },
+              {
+                "label": "GM g1=4 g2=8",
+                "valley": 0.3246856552228246,
+                "bridged_pairs": 7,
+                "noise": 33.09501010351181,
+                "snr": 29.90757179260254
+              },
+              {
+                "label": "EM lb=3",
+                "valley": 0.5054220099562772,
+                "bridged_pairs": 8,
+                "noise": 26.577486500072478,
+                "snr": 31.4365234375
+              },
+              {
+                "label": "EM lb=5",
+                "valley": 0.597713806181533,
+                "bridged_pairs": 9,
+                "noise": 23.5479907207489,
+                "snr": 35.4100456237793
+              },
+              {
+                "label": "EM lb=10",
+                "valley": 0.7633544856962919,
+                "bridged_pairs": 10,
+                "noise": 20.0835986492157,
+                "snr": 43.87528991699219
+              },
+              {
+                "label": "EM lb=20",
+                "valley": 0.9505527974726787,
+                "bridged_pairs": 16,
+                "noise": 17.850791322183607,
+                "snr": 41.434173583984375
+              },
+              {
+                "label": "SP off=0.55 end=0.98 pow=1 c=0.5",
+                "valley": 0.46142507117238835,
+                "bridged_pairs": 7,
+                "noise": 27.147520789146423,
+                "snr": 31.325300216674805
+              },
+              {
+                "label": "SP off=0.6 end=0.98 pow=1 c=0.5",
+                "valley": 0.478194378757709,
+                "bridged_pairs": 7,
+                "noise": 25.611671240615845,
+                "snr": 31.530519485473633
+              },
+              {
+                "label": "SP off=0.65 end=0.98 pow=1 c=0.5",
+                "valley": 0.491548829544841,
+                "bridged_pairs": 8,
+                "noise": 23.646149825191497,
+                "snr": 31.64445686340332
+              }
+            ]
+          },
+          "raw_score": 0.5518176158964919,
+          "separation_score": 0.5518176158964919
+        },
+        {
+          "stage": "window",
+          "axis": "F1",
+          "source": "fid",
+          "candidate": "SP off=0.65 end=1 pow=2 c=0.5",
+          "parameters": {
+            "type": "sine_bell",
+            "off": 0.65,
+            "end": 1.0,
+            "pow": 2,
+            "c": 0.5
+          },
+          "score": 0.711793398505319,
+          "score_metric": "window_detection",
+          "selected": true,
+          "applied": true,
+          "status": "scored",
+          "reason": "",
+          "fwhm": 4.241134430426085,
+          "snr": 33.236482229650036,
+          "shape": 0.6666666666666666,
+          "merged": 0.0,
+          "n_ref": 3.5,
+          "sampling": {
+            "reference_sigma": 12.0,
+            "total_traces": 1025,
+            "scanned_traces": 12,
+            "used_traces": 12,
+            "trace_indices": [
+              926,
+              776,
+              503,
+              476,
+              777,
+              775,
+              679,
+              502,
+              477,
+              501,
+              678,
+              478
+            ],
+            "probe_budget": 256,
+            "qualified_12": 12,
+            "qualified_6": 0,
+            "sampling_reason": "energy_fast_path",
+            "budget_exhausted": false,
+            "max_height_sigma": 62.27308241118721,
+            "score_profile": "indirect_sidelobe_valley"
+          },
+          "raw_score": 0.8112625876507165,
+          "detection_score": 23.97105414459091,
+          "separation_score": 0.8981929904920392,
+          "symmetry_score": 0.6666666666666666,
+          "sidelobe_score": 1.0,
+          "resolution_score": 0.8773896508238548,
+          "width_ratio": 1.687446336028406,
+          "resolution_reference_fwhm": 2.513344774215499,
+          "resolution_weight": 0.25
+        }
+      ]
+    },
+    "nus75": {
+      "shape": [
+        256,
+        1028
+      ],
+      "wall_time_s": 17.26946035597939,
+      "spectrum_sha256": "d2cc7af402808467bf83fbce5aa1656ba5be11a70871651847033c48ef484baa",
+      "raw_sha256": {
+        "ser": "3024d049c1b4d472c0b4ee8f7c2bb1ec6812b9b573460e0b98c9ab36b381e6de",
+        "pulseprogram": "9280d045d0a4d127e4d5866f230b63fd3e5102cf3d938720f0b57041b9ec0560",
+        "acqus": "c2d97469988681c35c4bcbd142db3a4164d5ba442766091bfdc511fcf9fc1e85",
+        "nuslist": "38c50d3c83cf89082f91b81908488f58bb92696cba842ca7084b3da2448ab46e",
+        "acqu2s": "61740de8bfc09baa1ad9c21e5467cdbd635dd3237470e18a189a97d98dca78ab"
+      },
+      "author_reference_sha256": "3d4e1041c085b05e14cdf1bfb889670daa5d5caacaeeda5c1f58ce35dccb15d5",
+      "params_requested": {
+        "ext_lo": "10.5",
+        "ext_hi": "6.5",
+        "final_ext_lo": "10.5",
+        "final_ext_hi": "6.5",
+        "apply_ext_to_opt": true
+      },
+      "params_used": {
+        "ext_lo": "10.5",
+        "ext_hi": "6.5",
+        "final_ext_lo": "10.5",
+        "final_ext_hi": "6.5",
+        "apply_ext_to_opt": true,
+        "phase_route": "unified",
+        "phases": {
+          "F1": [
+            85.0,
+            0.0
+          ]
+        },
+        "baseline": {
+          "F2": {
+            "enabled": true,
+            "mode": "order",
+            "order": 3
+          },
+          "F1": {
+            "enabled": true,
+            "mode": "order",
+            "order": 2
+          }
+        },
+        "zero_fill": {
+          "F2": {
+            "mode": "auto"
+          },
+          "F1": {
+            "mode": "auto"
+          }
+        },
+        "window": {
+          "F1": {
+            "type": "exp",
+            "lb": 3.0,
+            "c": 1.0
+          }
+        },
+        "backend_runs": 6,
+        "direct_phase": [
+          173.55945363260423,
+          -0.0
+        ],
+        "diagnostics": {
+          "reports": [
+            "直接维存在直流偏置(FID 均值约为最强幅度的 36%),已启用 POLY -time 自动纠正",
+            "场漂筛查：转换后 FID 非空迹前段与后段的直接维表观峰位变化约 185.5 点（37.1 个线宽），明显超出线宽，两段谱峰基本不重叠。请核对温控、锁场和原始数据；若确认是场漂，建议重新采谱"
+          ],
+          "metrics": {
+            "dc_ratio": 0.3643191456794739,
+            "first_point_ratio": 0.0,
+            "broad_peak": false,
+            "fwhm_pts": 5.0,
+            "drift_pts": 185.5,
+            "n_direct": 1024.0,
+            "energy_top20_frac": 0.7126372456550598,
+            "nan_inf_count": 0,
+            "zero_traces": 44,
+            "high_energy_traces": 0
+          },
+          "apply_poly_time": true,
+          "repaired_badpoints": 0,
+          "backup_dir": "<VM>/fid_diag_bak",
+          "clean": false
+        },
+        "phase_seed": {
+          "accepted": true,
+          "method": "zero_increment_quadrature",
+          "reason": "",
+          "phases": {
+            "F1": [
+              87.12538675314092,
+              0.0
+            ]
+          },
+          "direct_phase": [
+            173.7219662652111,
+            0.0
+          ],
+          "rank_fraction": 0.9993839505775459,
+          "phase_concentration": 0.5471109232915446,
+          "direct_peak_count": 16,
+          "first_order_inferred": false,
+          "backend_runs": 1,
+          "version": 1,
+          "log": "2D NUS 初始零阶相位：F1=87.13°，F2=173.72°；一阶相位暂为零，重构后继续精修"
+        }
+      },
+      "phase_header": {
+        "FDF1P0": 85.0,
+        "FDF1P1": 0.0,
+        "FDF1CAR": 118.0770034790039,
+        "FDF1LABEL": "15N",
+        "FDF2P0": 173.5590057373047,
+        "FDF2P1": 0.0,
+        "FDF2CAR": 4.770999908447266,
+        "FDF2LABEL": "1H",
+        "FDF3P0": 0.0,
+        "FDF3P1": 0.0,
+        "FDF3CAR": 0.0,
+        "FDF3LABEL": "Z"
+      },
+      "tool_versions": {
+        "nmrfinesse": "1.0.12",
+        "python": "3.12.13",
+        "numpy": "2.4.6",
+        "scipy": "1.18.0",
+        "nmrglue": "0.11",
+        "matplotlib": "3.11.1",
+        "pyside6": "6.11.2",
+        "pyyaml": "6.0.3",
+        "software_commit": "63c63c4231f58fcc33d9ce67a49eba3e9ed2c0b1",
+        "git_commit": "63c63c4231f58fcc33d9ce67a49eba3e9ed2c0b1",
+        "git_commit_dirty": "1"
+      },
+      "automatic_conversion": {
+        "text": "#!/bin/csh\n\nnusExpand.tcl -yT 90 -mode bruker -sampleCount 68 -avg -off 0 \\\n -in ./ser -out ./ser_full -sample ./nuslist\n\nbruk2pipe -verb -in ./ser_full \\\n  -bad 0.0 -ext -aswap -AMX -decim 2088 -dspfvs 20 -grpdly 67.9876556396484  \\\n  -xN              2048  -yN               180  \\\n  -xT              1024  -yT                90  \\\n  -xMODE            DQD  -yMODE  Echo-AntiEcho  \\\n  -xSW         9578.544  -ySW         2187.227  \\\n  -xOBS         599.503  -yOBS          60.754  \\\n  -xCAR           4.771  -yCAR         118.077  \\\n  -xLAB 1H  -yLAB             15N  \\\n  -ndim               2  -aq2D         Complex  \\\n| nmrPipe -fn MULT -c 9.76562e-01 \\\n  -out ./d_001.fid -ov\n\n\n",
+        "sha256": "176c0dfb22b93e74e33ab554af8209bfa5008f9223920f7fce3f4e7544955452"
+      },
+      "automatic_final": {
+        "text": "#!/bin/csh\n# NMRFinesse 2D NUS SMILE reconstruction (two-stage)\n# experiment: d_001\nmkdir -p nus2d\n# stage 1: direct dim (F2) FT + EXT + POLY, SMILE reconstruct F1\nnmrPipe -in d_001.fid \\\n| nmrPipe -fn POLY -time \\\n| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 1 -c 0.5 \\\n| nmrPipe -fn ZF -zf -size 4096 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn EXT -x1 10.5ppm -xn 6.5ppm -sw -round 2 \\\n| nmrPipe -fn PS -p0 173.559 -p1 -0 -di \\\n| nmrPipe -fn POLY -ord 3 -auto \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn SMILE -nDim 2 \\\n           -sample nuslist -nThread 2 \\\n           -sampleCount 68 -nSigma 5 -off 0 0 -report 1 \\\n           -maxMem 8.89097 \\\n           -scaling 1 \\\n           -maxIter 300 \\\n           -xT 90 \\\n           -xP0 85 -xP1 0 \\\n           -thresh 0.95 \\\n| pipe2xyz -out nus2d/recon.ft1 -x -ov\n\n# stage 2: indirect dim (F1) window + ZF + FT -alt + PS + POLY\nnmrPipe -in nus2d/recon.ft1 \\\n| nmrPipe -fn EM -lb 3 \\\n| nmrPipe -fn ZF -size 256 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 85 -p1 0 -di \\\n| nmrPipe -fn POLY -ord 2 -auto \\\n| nmrPipe -fn TP \\\n  -out d_001.ft2 -ov\n",
+        "sha256": "a86f7825057c4d0b828dde3ce2df67227dd1bfcec9176b50b1dd4998fa7fadb9"
+      },
+      "selected_optimization_rows": [
+        {
+          "stage": "baseline",
+          "axis": "F2",
+          "source": "joint_spectrum",
+          "candidate": "order:3",
+          "parameters": {
+            "enabled": true,
+            "mode": "order",
+            "order": 3
+          },
+          "score": 98.5855627812166,
+          "score_metric": "baseline_quality",
+          "selected": true,
+          "applied": true,
+          "status": "scored",
+          "reason": "",
+          "raw_score": 98.5855627812166,
+          "baseline_slope": 0.00016393930637509645,
+          "baseline_offset": 0.003532986742233341,
+          "baseline_curvature": 0.0010704402463111709,
+          "baseline_stripe": 0.0,
+          "baseline_slope_score": 99.93442427744996,
+          "baseline_offset_score": 99.29340265155334,
+          "baseline_curvature_score": 99.3577358522133,
+          "baseline_stripe_score": 100.0
+        },
+        {
+          "stage": "baseline",
+          "axis": "F1",
+          "source": "joint_spectrum",
+          "candidate": "order:2",
+          "parameters": {
+            "enabled": true,
+            "mode": "order",
+            "order": 2
+          },
+          "score": 68.7803261848527,
+          "score_metric": "baseline_quality",
+          "selected": true,
+          "applied": true,
+          "status": "scored",
+          "reason": "",
+          "raw_score": 68.7803261848527,
+          "baseline_slope": 5.2966034154145916e-05,
+          "baseline_offset": 0.0046757869956866255,
+          "baseline_curvature": 0.050438883337247185,
+          "baseline_stripe": 0.0,
+          "baseline_slope_score": 99.97881358633835,
+          "baseline_offset_score": 99.06484260086268,
+          "baseline_curvature_score": 69.73666999765169,
+          "baseline_stripe_score": 100.0
+        },
+        {
+          "stage": "window",
+          "axis": "F2",
+          "source": "fid",
+          "candidate": "无窗(线性)",
+          "parameters": {
+            "type": "none"
+          },
+          "score": 69.68380928045275,
+          "score_metric": "window_detection",
+          "selected": true,
+          "applied": false,
+          "status": "scored",
+          "reason": "nus_direct_window_fixed",
+          "fwhm": 1.7943481840630966,
+          "snr": 283.8217944082637,
+          "shape": 0.4839431886322758,
+          "merged": 0.0,
+          "n_ref": 3.0,
+          "sampling": {
+            "reference_sigma": 12.0,
+            "total_traces": 180,
+            "scanned_traces": 12,
+            "used_traces": 12,
+            "trace_indices": [
+              32,
+              0,
+              52,
+              2,
+              5,
+              11,
+              8,
+              4,
+              33,
+              10,
+              3,
+              1
+            ],
+            "probe_budget": 180,
+            "qualified_12": 12,
+            "qualified_6": 0,
+            "sampling_reason": "energy_fast_path",
+            "budget_exhausted": false,
+            "max_height_sigma": 368.8222303801008
+          },
+          "raw_score": 69.68380928045275,
+          "detection_score": 120.85941069723488,
+          "separation_score": 1.0,
+          "symmetry_score": 0.75,
+          "sidelobe_score": 1.0,
+          "resolution_score": 1.0,
+          "width_ratio": 1.0,
+          "resolution_reference_fwhm": 1.7943481840630966,
+          "resolution_weight": 0.25
+        },
+        {
+          "stage": "window",
+          "axis": "F1",
+          "source": "reconstruction",
+          "candidate": "EM lb=3",
+          "parameters": {
+            "type": "exp",
+            "lb": 3.0,
+            "c": 1.0
+          },
+          "score": 0.9114794193738469,
+          "score_metric": "window_detection",
+          "selected": true,
+          "applied": true,
+          "status": "scored",
+          "reason": "",
+          "fwhm": 3.312250282705416,
+          "snr": 58.97358117179709,
+          "shape": 0.8333333333333333,
+          "merged": 0.0,
+          "n_ref": 3.0,
+          "sampling": {
+            "reference_sigma": 12.0,
+            "total_traces": 1028,
+            "scanned_traces": 12,
+            "used_traces": 12,
+            "trace_indices": [
+              754,
+              777,
+              576,
+              644,
+              676,
+              928,
+              776,
+              778,
+              574,
+              575,
+              678,
+              677
+            ],
+            "probe_budget": 256,
+            "qualified_12": 12,
+            "qualified_6": 0,
+            "sampling_reason": "energy_fast_path",
+            "budget_exhausted": false,
+            "max_height_sigma": 52.34104368860257,
+            "score_profile": "indirect_sidelobe_valley"
+          },
+          "raw_score": 0.9226839151274853,
+          "detection_score": 45.87681826432758,
+          "separation_score": 0.9379401067842201,
+          "symmetry_score": 1.0,
+          "sidelobe_score": 1.0,
+          "resolution_score": 0.9878566261208853,
+          "width_ratio": 1.0500847005506224,
+          "resolution_reference_fwhm": 3.154269632695919,
+          "resolution_weight": 0.25
+        }
+      ]
+    },
+    "uniform3d": {
+      "shape": [
+        128,
+        128,
+        548
+      ],
+      "wall_time_s": 58.743942864995915,
+      "spectrum_sha256": "2a64dfcf351d25f54ee73bd07125afc774239ddd7ae8b92f3a1b0254ffff62cd",
+      "raw_sha256": {
+        "ser": "9a6f384bbe6adc94a003d499d266197c45f57f861a70edf6cd36ba1c91b40e9d",
+        "proc.com": "d91babc22a361ccd8237eecf435cf78381da15766e684ed03203caad59e4ba1d",
+        "acqus": "c844504a36088ce45b50e0e239f168e4dff5a454e53714ee64d77e0596fcf709",
+        "fid.com": "d3da4a6286132fc7a205b1ffbe9894354134298c5e54f00ad0b45d6ceab24aad",
+        "acqu2s": "6cca226af2bd9df08c15368a2ee450952c78006b1c9c5679d6251f772e05c429",
+        "acqu3s": "15d47cdba4fb51d0048cb3e5cea9f9ef3c0e2d10a6da38008d6d489e86908c1d"
+      },
+      "author_reference_sha256": "034e7ae682db4f98792b04980680e8a3d1226b7342eba53b333983a3b6acd9ac",
+      "params_requested": {
+        "ext_lo": "10",
+        "ext_hi": "6",
+        "final_ext_lo": "10",
+        "final_ext_hi": "6",
+        "apply_ext_to_opt": true
+      },
+      "params_used": {
+        "ext_lo": "10",
+        "ext_hi": "6",
+        "final_ext_lo": "10",
+        "final_ext_hi": "6",
+        "apply_ext_to_opt": true,
+        "phase_route": "unified",
+        "phases": {
+          "F2": [
+            267.5,
+            0.0
+          ],
+          "F1": [
+            2.5,
+            0.0
+          ],
+          "F3": [
+            15.0,
+            0.0
+          ]
+        },
+        "baseline": {
+          "F3": {
+            "enabled": false,
+            "mode": "auto",
+            "order": 0
+          },
+          "F2": {
+            "enabled": false,
+            "mode": "auto",
+            "order": 0
+          },
+          "F1": {
+            "enabled": false,
+            "mode": "auto",
+            "order": 0
+          }
+        },
+        "zero_fill": {
+          "F3": {
+            "mode": "auto"
+          },
+          "F2": {
+            "mode": "auto"
+          },
+          "F1": {
+            "mode": "auto"
+          }
+        },
+        "window": {
+          "F3": {
+            "type": "none"
+          },
+          "F2": {
+            "type": "none"
+          },
+          "F1": {
+            "type": "sine_bell",
+            "off": 0.45,
+            "end": 0.9,
+            "pow": 1,
+            "c": 0.5
+          }
+        },
+        "backend_runs": 7,
+        "direct_phase": [
+          15.0,
+          0.0
+        ],
+        "diagnostics": {
+          "reports": [
+            "直接维存在直流偏置(FID 均值约为最强幅度的 52%),已启用 POLY -time 自动纠正"
+          ],
+          "metrics": {
+            "dc_ratio": 0.5202769637107849,
+            "first_point_ratio": 0.0,
+            "broad_peak": false,
+            "fwhm_pts": 5.0,
+            "drift_pts": 0.0,
+            "n_direct": 512.0,
+            "energy_top20_frac": 0.605435311794281,
+            "nan_inf_count": 0,
+            "zero_traces": 0,
+            "high_energy_traces": 0
+          },
+          "apply_poly_time": true,
+          "repaired_badpoints": 0,
+          "backup_dir": "<VM>/fid_diag_bak",
+          "clean": false
+        },
+        "projections": {
+          "F3": "<VM>/d_001_13C-15N.ft2",
+          "F2": "<VM>/d_001_1H-13C.ft2",
+          "F1": "<VM>/d_001_1H-15N.ft2"
+        }
+      },
+      "phase_header": {
+        "FDF1P0": 267.5,
+        "FDF1P1": 0.0,
+        "FDF1CAR": 118.125,
+        "FDF1LABEL": "15N",
+        "FDF2P0": 15.0,
+        "FDF2P1": 0.0,
+        "FDF2CAR": 4.818999767303467,
+        "FDF2LABEL": "1H",
+        "FDF3P0": 2.5,
+        "FDF3P1": 0.0,
+        "FDF3CAR": 178.25100708007812,
+        "FDF3LABEL": "13C"
+      },
+      "tool_versions": {
+        "nmrfinesse": "1.0.12",
+        "python": "3.12.13",
+        "numpy": "2.4.6",
+        "scipy": "1.18.0",
+        "nmrglue": "0.11",
+        "matplotlib": "3.11.1",
+        "pyside6": "6.11.2",
+        "pyyaml": "6.0.3",
+        "software_commit": "63c63c4231f58fcc33d9ce67a49eba3e9ed2c0b1",
+        "git_commit": "63c63c4231f58fcc33d9ce67a49eba3e9ed2c0b1",
+        "git_commit_dirty": "1"
+      },
+      "automatic_conversion": {
+        "text": "#!/bin/csh\n\nbruk2pipe -verb -in ./ser \\\n  -bad 0.0 -ext -aswap -AMX -decim 1568 -dspfvs 20 -grpdly 67.9841461181641  \\\n  -xN              1024  -yN                64  -zN                64  \\\n  -xT               512  -yT                32  -zT                32  \\\n  -xMODE            DQD  -yMODE Echo-AntiEcho  -zMODE States-TPPI  \\\n  -xSW        12755.102  -ySW         2500.000  -zSW 3636.364  \\\n  -xOBS         850.104  -yOBS          86.150  -zOBS         213.795  \\\n  -xCAR           4.819  -yCAR         118.125  -zCAR         178.251  \\\n  -xLAB 1H  -yLAB             15N  -zLAB             13C  \\\n  -ndim               3  -aq2D         Complex                         \\\n| nmrPipe -fn MULT -c 1.95312e+00 \\\n| pipe2xyz -x -out ./fid/test%03d.fid -ov\n\n",
+        "sha256": "a729754a4d46fbe7798e5c693caa49b003f7b7b634a659382dd7e81f237bb3e8"
+      },
+      "automatic_final": {
+        "text": "#!/bin/csh\n# NMRFinesse processing script\n# experiment: d_001\nxyz2pipe -in fid/test%03d.fid -x \\\n| nmrPipe -fn POLY -time \\\n| nmrPipe -fn ZF -size 2048 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 15 -p1 0 -di \\\n| nmrPipe -fn EXT -x1 10ppm -xn 6ppm -sw -round 2 \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn ZF -size 128 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 267.5 -p1 0 -di \\\n| nmrPipe -fn ZTP \\\n| nmrPipe -fn SP -off 0.45 -end 0.9 -pow 1 -c 0.5 \\\n| nmrPipe -fn ZF -size 128 \\\n| nmrPipe -fn FT -alt \\\n| nmrPipe -fn PS -p0 2.5 -p1 0 -di \\\n| nmrPipe -fn TP \\\n| pipe2xyz -out d_001.ft3 -x\n",
+        "sha256": "52da23119a2ceac6914ad2094f0a292f42084e73da1722e6c39722402ebe00b3"
+      },
+      "selected_optimization_rows": [
+        {
+          "stage": "baseline",
+          "axis": "F3",
+          "source": "joint_spectrum",
+          "candidate": "off:0",
+          "parameters": {
+            "enabled": false,
+            "mode": "off",
+            "order": 0
+          },
+          "score": 98.75134236031073,
+          "score_metric": "baseline_quality",
+          "selected": true,
+          "applied": true,
+          "status": "scored",
+          "reason": "baseline_good",
+          "raw_score": 98.75134236031073,
+          "baseline_slope": -0.001140602283089118,
+          "baseline_offset": 0.0006532239697609278,
+          "baseline_curvature": 0.0011029532208357484,
+          "baseline_stripe": 0.0,
+          "baseline_slope_score": 99.54375908676435,
+          "baseline_offset_score": 99.86935520604781,
+          "baseline_curvature_score": 99.33822806749855,
+          "baseline_stripe_score": 100.0
+        },
+        {
+          "stage": "baseline",
+          "axis": "F2",
+          "source": "joint_spectrum",
+          "candidate": "off:0",
+          "parameters": {
+            "enabled": false,
+            "mode": "off",
+            "order": 0
+          },
+          "score": 95.6696006361439,
+          "score_metric": "baseline_quality",
+          "selected": true,
+          "applied": true,
+          "status": "scored",
+          "reason": "baseline_good",
+          "raw_score": 95.6696006361439,
+          "baseline_slope": -0.0009633385649914335,
+          "baseline_offset": -0.000592188798821672,
+          "baseline_curvature": 0.006377710296825311,
+          "baseline_stripe": 0.0,
+          "baseline_slope_score": 99.61466457400343,
+          "baseline_offset_score": 99.88156224023567,
+          "baseline_curvature_score": 96.17337382190482,
+          "baseline_stripe_score": 100.0
+        },
+        {
+          "stage": "baseline",
+          "axis": "F1",
+          "source": "joint_spectrum",
+          "candidate": "off:0",
+          "parameters": {
+            "enabled": false,
+            "mode": "off",
+            "order": 0
+          },
+          "score": 98.10067219028636,
+          "score_metric": "baseline_quality",
+          "selected": true,
+          "applied": true,
+          "status": "scored",
+          "reason": "baseline_good",
+          "raw_score": 98.10067219028636,
+          "baseline_slope": -0.0005770350923963887,
+          "baseline_offset": -0.0004638216259443584,
+          "baseline_curvature": 0.002626249079277013,
+          "baseline_stripe": 0.0,
+          "baseline_slope_score": 99.76918596304144,
+          "baseline_offset_score": 99.90723567481112,
+          "baseline_curvature_score": 98.42425055243379,
+          "baseline_stripe_score": 100.0
+        },
+        {
+          "stage": "window",
+          "axis": "F3",
+          "source": "direct_preview",
+          "candidate": "无窗(线性)",
+          "parameters": {
+            "type": "none"
+          },
+          "score": 0.9978772551888503,
+          "score_metric": "direct_peak_valley",
+          "selected": true,
+          "applied": true,
+          "status": "scored",
+          "reason": "",
+          "fwhm": null,
+          "snr": 11.84770393371582,
+          "shape": null,
+          "merged": null,
+          "n_ref": null,
+          "sampling": {
+            "reference_sigma": 12.0,
+            "total_traces": 4096,
+            "scanned_traces": 12,
+            "used_traces": 12,
+            "trace_indices": [
+              3199,
+              3215,
+              2544,
+              3198,
+              2169,
+              2468,
+              2642,
+              3227,
+              2469,
+              3222,
+              2175,
+              2683
+            ],
+            "probe_budget": 256,
+            "qualified_12": 12,
+            "qualified_6": 0,
+            "sampling_reason": "energy_fast_path",
+            "budget_exhausted": false,
+            "max_height_sigma": 53.893308442629724,
+            "score_profile": "direct_peak_valley",
+            "pair_count": 1,
+            "baseline_window": "GM g1=4 g2=8",
+            "candidate_evidence": [
+              {
+                "label": "SP off=0.5 end=0.98 pow=2 c=0.5",
+                "valley": 0.029148934647211407,
+                "bridged_pairs": 0,
+                "noise": 381.02342661437984,
+                "snr": 16.403411865234375
+              },
+              {
+                "label": "无窗(线性)",
+                "valley": 0.002122744811149705,
+                "bridged_pairs": 0,
+                "noise": 774.6533420288085,
+                "snr": 11.84770393371582
+              },
+              {
+                "label": "SP off=0.3 end=0.98 pow=1 c=0.5",
+                "valley": 0.011552751720811586,
+                "bridged_pairs": 0,
+                "noise": 475.061305005455,
+                "snr": 16.49826431274414
+              },
+              {
+                "label": "SP off=0.45 end=0.98 pow=1 c=0.5",
+                "valley": 0.05799525889701444,
+                "bridged_pairs": 0,
+                "noise": 461.6154369873047,
+                "snr": 16.34482192993164
+              },
+              {
+                "label": "SP off=0.45 end=0.9 pow=1 c=0.5",
+                "valley": 0.04011488441213884,
+                "bridged_pairs": 0,
+                "noise": 535.1793220776558,
+                "snr": 15.067831993103027
+              },
+              {
+                "label": "SP off=0.45 end=0.98 pow=2 c=0.5",
+                "valley": 0.038806592100816516,
+                "bridged_pairs": 0,
+                "noise": 396.84884963335986,
+                "snr": 16.929819107055664
+              },
+              {
+                "label": "SP off=0.65 end=1 pow=2 c=0.5",
+                "valley": 0.006773906251750489,
+                "bridged_pairs": 0,
+                "noise": 264.7815327850342,
+                "snr": 14.81445026397705
+              },
+              {
+                "label": "GM g1=8 g2=15",
+                "valley": 0.03179304449960937,
+                "bridged_pairs": 0,
+                "noise": 775.8505298268735,
+                "snr": 13.293197631835938
+              },
+              {
+                "label": "GM g1=4 g2=8",
+                "valley": 0.0073381327421286535,
+                "bridged_pairs": 0,
+                "noise": 890.0235878604411,
+                "snr": 11.58110237121582
+              },
+              {
+                "label": "EM lb=3",
+                "valley": 0.011902210744551311,
+                "bridged_pairs": 0,
+                "noise": 615.9281578216552,
+                "snr": 12.956438064575195
+              },
+              {
+                "label": "EM lb=5",
+                "valley": 0.016336461966939782,
+                "bridged_pairs": 0,
+                "noise": 537.6154277709961,
+                "snr": 13.587615013122559
+              },
+              {
+                "label": "EM lb=10",
+                "valley": 0.02217478768797637,
+                "bridged_pairs": 0,
+                "noise": 406.51407464346886,
+                "snr": 14.625186920166016
+              },
+              {
+                "label": "EM lb=20",
+                "valley": 0.02530565767857338,
+                "bridged_pairs": 0,
+                "noise": 299.61725989837646,
+                "snr": 13.85512638092041
+              },
+              {
+                "label": "SP off=0.55 end=0.98 pow=1 c=0.5",
+                "valley": 0.04902928842192121,
+                "bridged_pairs": 0,
+                "noise": 425.0032073181152,
+                "snr": 16.140005111694336
+              },
+              {
+                "label": "SP off=0.6 end=0.98 pow=1 c=0.5",
+                "valley": 0.04548877669157035,
+                "bridged_pairs": 0,
+                "noise": 397.9036146220922,
+                "snr": 16.030540466308594
+              },
+              {
+                "label": "SP off=0.65 end=0.98 pow=1 c=0.5",
+                "valley": 0.04240623568332227,
+                "bridged_pairs": 0,
+                "noise": 365.02984744262693,
+                "snr": 15.924454689025879
+              }
+            ]
+          },
+          "raw_score": 0.9978772551888503,
+          "separation_score": 0.9978772551888503
+        },
+        {
+          "stage": "window",
+          "axis": "F2",
+          "source": "fid",
+          "candidate": "无窗(线性)",
+          "parameters": {
+            "type": "none"
+          },
+          "score": 0.18170359791317722,
+          "score_metric": "window_detection",
+          "selected": true,
+          "applied": true,
+          "status": "scored",
+          "reason": "",
+          "fwhm": 3.004812247733753,
+          "snr": 110.19292595888236,
+          "shape": 0.3333333333333333,
+          "merged": 0.0,
+          "n_ref": 9.0,
+          "sampling": {
+            "reference_sigma": 12.0,
+            "total_traces": 4096,
+            "scanned_traces": 12,
+            "used_traces": 12,
+            "trace_indices": [
+              3198,
+              3199,
+              3227,
+              2642,
+              2468,
+              2175,
+              2544,
+              2469,
+              2169,
+              3215,
+              3222,
+              2683
+            ],
+            "probe_budget": 256,
+            "qualified_12": 12,
+            "qualified_6": 0,
+            "sampling_reason": "energy_fast_path",
+            "budget_exhausted": false,
+            "max_height_sigma": 99.35531055264873,
+            "score_profile": "indirect_sidelobe_valley"
+          },
+          "raw_score": 0.18413077613744638,
+          "detection_score": 49.468789136146896,
+          "separation_score": 0.18709471223895224,
+          "symmetry_score": 0.3333333333333333,
+          "sidelobe_score": 1.0,
+          "resolution_score": 0.9868181828416486,
+          "width_ratio": 1.0545117606797023,
+          "resolution_reference_fwhm": 2.849481968600287,
+          "resolution_weight": 0.25
+        },
+        {
+          "stage": "window",
+          "axis": "F1",
+          "source": "fid",
+          "candidate": "SP off=0.45 end=0.9 pow=1 c=0.5",
+          "parameters": {
+            "type": "sine_bell",
+            "off": 0.45,
+            "end": 0.9,
+            "pow": 1,
+            "c": 0.5
+          },
+          "score": 0.9614765714905532,
+          "score_metric": "window_detection",
+          "selected": true,
+          "applied": true,
+          "status": "scored",
+          "reason": "",
+          "fwhm": 2.819432201603604,
+          "snr": 16.81310040822943,
+          "shape": 1.0,
+          "merged": 0.0,
+          "n_ref": 1.0,
+          "sampling": {
+            "reference_sigma": 12.0,
+            "total_traces": 512,
+            "scanned_traces": 12,
+            "used_traces": 12,
+            "trace_indices": [
+              502,
+              503,
+              511,
+              501,
+              508,
+              500,
+              506,
+              504,
+              505,
+              509,
+              507,
+              510
+            ],
+            "probe_budget": 256,
+            "qualified_12": 12,
+            "qualified_6": 0,
+            "sampling_reason": "energy_fast_path",
+            "budget_exhausted": false,
+            "max_height_sigma": 16.705783293628517,
+            "score_profile": "indirect_sidelobe_valley"
+          },
+          "raw_score": 1.0,
+          "detection_score": 16.81310040822943,
+          "separation_score": 1.0,
+          "symmetry_score": 1.0,
+          "sidelobe_score": 1.0,
+          "resolution_score": 0.9614765714905532,
+          "width_ratio": 1.170159803298411,
+          "resolution_reference_fwhm": 2.4094420212147725,
+          "resolution_weight": 0.25
+        }
+      ]
+    },
+    "acquired3d": {
+      "shape": [
+        256,
+        256,
+        1176
+      ],
+      "wall_time_s": 247.60070298000937,
+      "spectrum_sha256": "1ed082ceed88a63c2f36369c294bbd83b4610360571ba2a2c08a8cd8c2e4cea9",
+      "raw_sha256": {
+        "ser": "4c5691ce6bfca18c9c70dfd5ed9edb750d2b9448110af2d3390025b143cd06e2",
+        "acqus": "ab1fd56379b05c68d7d67bebb6cf5e7445e4616e5d650e2f9a7d92faeb92711f",
+        "nuslist": "1ffab903b925ddbdfe36db0c0b637ee24a9bbdaa7238494280da0e094e7284fe",
+        "acqu2s": "08d63db82707c7208baeb484f11ea17585009636b175b2ae1f93fbc8205b699a",
+        "acqu3s": "33144b114f3d2a03d1f4b3e4b6b9a47f030e7afb6cc402a1f9a236548d23a140"
+      },
+      "author_reference_sha256": "10b8a86aaa1792d7553586503d074117da0181a9576eb1767bb5f14d008fe5d5",
+      "params_requested": {
+        "ext_lo": "10",
+        "ext_hi": "6",
+        "final_ext_lo": "10",
+        "final_ext_hi": "6",
+        "apply_ext_to_opt": true
+      },
+      "params_used": {
+        "ext_lo": "10",
+        "ext_hi": "6",
+        "final_ext_lo": "10",
+        "final_ext_hi": "6",
+        "apply_ext_to_opt": true,
+        "phase_route": "unified",
+        "phases": {
+          "F2": [
+            182.5,
+            0.0
+          ],
+          "F1": [
+            0.0,
+            0.0
+          ]
+        },
+        "baseline": {
+          "F3": {
+            "enabled": false,
+            "mode": "auto",
+            "order": 0
+          },
+          "F2": {
+            "enabled": false,
+            "mode": "auto",
+            "order": 0
+          },
+          "F1": {
+            "enabled": false,
+            "mode": "auto",
+            "order": 0
+          }
+        },
+        "zero_fill": {
+          "F3": {
+            "mode": "auto"
+          },
+          "F2": {
+            "mode": "auto"
+          },
+          "F1": {
+            "mode": "auto"
+          }
+        },
+        "window": {
+          "F1": {
+            "type": "sine_bell",
+            "off": 0.65,
+            "end": 1.0,
+            "pow": 2,
+            "c": 0.5
+          },
+          "F2": {
+            "type": "exp",
+            "lb": 10.0,
+            "c": 1.0
+          }
+        },
+        "backend_runs": 7,
+        "direct_phase": [
+          107.96939244478007,
+          -0.0
+        ],
+        "diagnostics": {
+          "reports": [
+            "检测到宽带包峰(FWHM 超过谱宽 8%),疑似溶剂/化学交换残留,数据处理难以完全消除,建议核对溶剂压制条件"
+          ],
+          "metrics": {
+            "dc_ratio": 0.06850416958332062,
+            "first_point_ratio": 0.0,
+            "broad_peak": true,
+            "fwhm_pts": 517.0,
+            "drift_pts": 0.0,
+            "n_direct": 1024.0,
+            "energy_top20_frac": 0.33275020122528076,
+            "nan_inf_count": 0,
+            "zero_traces": 5292,
+            "high_energy_traces": 0
+          },
+          "apply_poly_time": false,
+          "repaired_badpoints": 0,
+          "backup_dir": "<VM>/fid_diag_bak",
+          "clean": false
+        },
+        "projections": {
+          "F3": "<VM>/d_001_13C-15N.ft2",
+          "F2": "<VM>/d_001_1H-13C.ft2",
+          "F1": "<VM>/d_001_1H-15N.ft2"
+        }
+      },
+      "phase_header": {
+        "FDF1P0": 182.5,
+        "FDF1P1": 0.0,
+        "FDF1CAR": 117.08399963378906,
+        "FDF1LABEL": "15N",
+        "FDF2P0": 107.96900177001953,
+        "FDF2P1": 0.0,
+        "FDF2CAR": 4.7729997634887695,
+        "FDF2LABEL": "1H",
+        "FDF3P0": 0.0,
+        "FDF3P1": 0.0,
+        "FDF3CAR": 176.20700073242188,
+        "FDF3LABEL": "13C"
+      },
+      "tool_versions": {
+        "nmrfinesse": "1.0.12",
+        "python": "3.12.13",
+        "numpy": "2.4.6",
+        "scipy": "1.18.0",
+        "nmrglue": "0.11",
+        "matplotlib": "3.11.1",
+        "pyside6": "6.11.2",
+        "pyyaml": "6.0.3",
+        "software_commit": "63c63c4231f58fcc33d9ce67a49eba3e9ed2c0b1",
+        "git_commit": "63c63c4231f58fcc33d9ce67a49eba3e9ed2c0b1",
+        "git_commit_dirty": "1"
+      },
+      "automatic_conversion": {
+        "text": "#!/bin/csh\n\nnusExpand.tcl -zT 42 -yT 42 -mode bruker -sampleCount 441 -avg -off 0 \\\n -in ./ser -out ./ser_full -sample ./nuslist\n\nbruk2pipe -verb -in ./ser_full \\\n  -bad 0.0 -ext -aswap -AMX -decim 1792 -dspfvs 20 -grpdly 67.9841766357422  \\\n  -xN              2048  -yN                84  -zN                84  \\\n  -xT              1024  -yT                42  -zT                42  \\\n  -xMODE            DQD  -yMODE States-TPPI  -zMODE States-TPPI  \\\n  -xSW        11160.714  -ySW         2269.632  -zSW         2816.901  \\\n  -xOBS         799.864  -yOBS          81.059  -zOBS         201.160  \\\n  -xCAR           4.773  -yCAR         117.084  -zCAR         176.207  \\\n  -xLAB 1H  -yLAB             15N  -zLAB             13C  \\\n  -ndim               3  -aq2D         Complex  \\\n| nmrPipe -fn MULT -c 1.95312e+00 \\\n  -out ./d_001.fid -ov\n\n\n",
+        "sha256": "f479822c4413a08394a93661cdbdf21410ad79fd8e3151cfa1628946e1f88d41"
+      },
+      "automatic_final": {
+        "text": "#!/bin/csh\n# NMRFinesse 3D NUS SMILE reconstruction\n# experiment: d_001\nmkdir -p nus3d_1 nus3d_rc\n# step 1: direct dim (F3) FT + EXT + PS\nxyz2pipe -in d_001.fid -x \\\n| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -zf -size 4096 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn EXT -x1 10ppm -xn 6ppm -sw -round 2 \\\n| nmrPipe -fn PS -p0 107.969 -p1 -0 -di \\\n| pipe2xyz -out nus3d_1/test%04d.ft1 -z\n\n# step 2: SMILE reconstruct indirect dims (F2/F1)\nxyz2pipe -in nus3d_1/test%04d.ft1 -x \\\n| nmrPipe -fn SMILE -nDim 3 \\\n           -sample nuslist -nThread 2 \\\n           -sampleCount 441 -nSigma 5 -off 0 0 -report 1 \\\n           -maxMem 6.98096 \\\n           -scaling 1 \\\n           -maxIter 1500 \\\n           -xP0 182.5 -xP1 0 \\\n           -yP0 0 -yP1 0 \\\n           -xAlt -xNeg \\\n           -yAlt \\\n           -thresh 0.95 \\\n| pipe2xyz -out nus3d_rc/test%04d.ft1 -x\n\n# step 3: indirect dims (F2/F1) window + ZF + FT + PS\nxyz2pipe -in nus3d_rc/test%04d.ft1 -x \\\n| nmrPipe -fn EM -lb 10 \\\n| nmrPipe -fn ZF -size 256 \\\n| nmrPipe -fn FT -alt -neg \\\n| nmrPipe -fn PS -p0 182.5 -p1 0 -di \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn SP -off 0.65 -end 1 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -size 256 \\\n| nmrPipe -fn FT -alt \\\n| nmrPipe -fn PS -p0 0 -p1 0 -di \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn ZTP \\\n| pipe2xyz -out d_001.ft3 -x\n",
+        "sha256": "59f9f5fb0e14b4e08fb02c88a0df2fe97d541fca371052af0f24bd93331d20a6"
+      },
+      "selected_optimization_rows": [
+        {
+          "stage": "baseline",
+          "axis": "F3",
+          "source": "joint_spectrum",
+          "candidate": "off:0",
+          "parameters": {
+            "enabled": false,
+            "mode": "off",
+            "order": 0
+          },
+          "score": 97.917288063989,
+          "score_metric": "baseline_quality",
+          "selected": true,
+          "applied": true,
+          "status": "scored",
+          "reason": "baseline_good",
+          "raw_score": 97.917288063989,
+          "baseline_slope": 0.0003403537018296343,
+          "baseline_offset": 6.341621130330252e-05,
+          "baseline_curvature": 0.003223145355030802,
+          "baseline_stripe": 0.0,
+          "baseline_slope_score": 99.86385851926815,
+          "baseline_offset_score": 99.98731675773934,
+          "baseline_curvature_score": 98.06611278698152,
+          "baseline_stripe_score": 100.0
+        },
+        {
+          "stage": "baseline",
+          "axis": "F2",
+          "source": "joint_spectrum",
+          "candidate": "off:0",
+          "parameters": {
+            "enabled": false,
+            "mode": "off",
+            "order": 0
+          },
+          "score": 99.3820605807499,
+          "score_metric": "baseline_quality",
+          "selected": true,
+          "applied": true,
+          "status": "scored",
+          "reason": "baseline_good",
+          "raw_score": 99.3820605807499,
+          "baseline_slope": 0.00039133998341054705,
+          "baseline_offset": 8.853533196781125e-06,
+          "baseline_curvature": 0.0007660545320775467,
+          "baseline_stripe": 0.0,
+          "baseline_slope_score": 99.84346400663578,
+          "baseline_offset_score": 99.99822929336064,
+          "baseline_curvature_score": 99.54036728075347,
+          "baseline_stripe_score": 100.0
+        },
+        {
+          "stage": "baseline",
+          "axis": "F1",
+          "source": "joint_spectrum",
+          "candidate": "off:0",
+          "parameters": {
+            "enabled": false,
+            "mode": "off",
+            "order": 0
+          },
+          "score": 98.77546868129411,
+          "score_metric": "baseline_quality",
+          "selected": true,
+          "applied": true,
+          "status": "scored",
+          "reason": "baseline_good",
+          "raw_score": 98.77546868129411,
+          "baseline_slope": -0.0012260893807886212,
+          "baseline_offset": 0.00017025058437832068,
+          "baseline_curvature": 0.0011667424158579441,
+          "baseline_stripe": 0.0,
+          "baseline_slope_score": 99.50956424768455,
+          "baseline_offset_score": 99.96594988312434,
+          "baseline_curvature_score": 99.29995455048524,
+          "baseline_stripe_score": 100.0
+        },
+        {
+          "stage": "window",
+          "axis": "F3",
+          "source": "fid",
+          "candidate": "SP off=0.45 end=0.98 pow=1 c=0.5",
+          "parameters": {
+            "type": "sine_bell",
+            "off": 0.45,
+            "end": 0.98,
+            "pow": 1,
+            "c": 0.5
+          },
+          "score": 8.946559920737966,
+          "score_metric": "window_detection",
+          "selected": true,
+          "applied": false,
+          "status": "scored",
+          "reason": "nus_direct_window_fixed",
+          "fwhm": 4.007114876527339,
+          "snr": 71.6510375762053,
+          "shape": 0.18860788086149524,
+          "merged": 0.0,
+          "n_ref": 8.0,
+          "sampling": {
+            "reference_sigma": 12.0,
+            "total_traces": 7056,
+            "scanned_traces": 12,
+            "used_traces": 12,
+            "trace_indices": [
+              45,
+              1582,
+              36,
+              2042,
+              161,
+              2110,
+              4336,
+              5,
+              4824,
+              4221,
+              2770,
+              0
+            ],
+            "probe_budget": 256,
+            "qualified_12": 12,
+            "qualified_6": 0,
+            "sampling_reason": "energy_fast_path",
+            "budget_exhausted": false,
+            "max_height_sigma": 77.23327447554556
+          },
+          "raw_score": 9.047226355157004,
+          "detection_score": 39.72988686266207,
+          "separation_score": 1.0,
+          "symmetry_score": 0.5833333333333333,
+          "sidelobe_score": 0.2670599393412735,
+          "resolution_score": 0.9888732269463274,
+          "width_ratio": 1.0457732402028812,
+          "resolution_reference_fwhm": 3.8317244336353014,
+          "resolution_weight": 0.25
+        },
+        {
+          "stage": "window",
+          "axis": "F2",
+          "source": "reconstruction",
+          "candidate": "EM lb=10",
+          "parameters": {
+            "type": "exp",
+            "lb": 10.0,
+            "c": 1.0
+          },
+          "score": 0.9145331650049848,
+          "score_metric": "window_detection",
+          "selected": true,
+          "applied": true,
+          "status": "scored",
+          "reason": "",
+          "fwhm": 3.625717917727041,
+          "snr": 32.351464433195176,
+          "shape": 0.6666666666666666,
+          "merged": 0.0,
+          "n_ref": 2.0,
+          "sampling": {
+            "reference_sigma": 12.0,
+            "total_traces": 296352,
+            "scanned_traces": 12,
+            "used_traces": 12,
+            "trace_indices": [
+              41738,
+              48795,
+              47619,
+              40562,
+              47618,
+              47617,
+              48794,
+              87602,
+              88778,
+              48793,
+              88779,
+              93482
+            ],
+            "probe_budget": 256,
+            "qualified_12": 12,
+            "qualified_6": 0,
+            "sampling_reason": "energy_fast_path",
+            "budget_exhausted": false,
+            "max_height_sigma": 37.938084113311305,
+            "score_profile": "indirect_sidelobe_valley"
+          },
+          "raw_score": 0.9398112831883407,
+          "detection_score": 32.35146443319517,
+          "separation_score": 0.9921272430992059,
+          "symmetry_score": 0.8333333333333333,
+          "sidelobe_score": 1.0,
+          "resolution_score": 0.9731029849975847,
+          "width_ratio": 1.1152308664383372,
+          "resolution_reference_fwhm": 3.25109179349235,
+          "resolution_weight": 0.25
+        },
+        {
+          "stage": "window",
+          "axis": "F1",
+          "source": "reconstruction",
+          "candidate": "SP off=0.65 end=1 pow=2 c=0.5",
+          "parameters": {
+            "type": "sine_bell",
+            "off": 0.65,
+            "end": 1.0,
+            "pow": 2,
+            "c": 0.5
+          },
+          "score": 0.6072368143643104,
+          "score_metric": "window_detection",
+          "selected": true,
+          "applied": true,
+          "status": "scored",
+          "reason": "",
+          "fwhm": 4.95195488904254,
+          "snr": 46.66412477520056,
+          "shape": 0.6022117644825397,
+          "merged": 0.0,
+          "n_ref": 8.0,
+          "sampling": {
+            "reference_sigma": 12.0,
+            "total_traces": 74088,
+            "scanned_traces": 12,
+            "used_traces": 12,
+            "trace_indices": [
+              12339,
+              13515,
+              2930,
+              14691,
+              11162,
+              1754,
+              4106,
+              15867,
+              2929,
+              1753,
+              2928,
+              4105
+            ],
+            "probe_budget": 256,
+            "qualified_12": 12,
+            "qualified_6": 0,
+            "sampling_reason": "energy_fast_path",
+            "budget_exhausted": false,
+            "max_height_sigma": 40.94324075644184,
+            "score_profile": "indirect_sidelobe_valley"
+          },
+          "raw_score": 0.6678760825548727,
+          "detection_score": 35.60083846714846,
+          "separation_score": 0.9353487815459934,
+          "symmetry_score": 1.0,
+          "sidelobe_score": 0.7943046138500038,
+          "resolution_score": 0.9092058096187623,
+          "width_ratio": 1.4633600400282498,
+          "resolution_reference_fwhm": 3.383962082869875,
+          "resolution_weight": 0.25
+        }
+      ]
+    }
+  },
+  "path_policy": "VM paths in displayed records are shortened; recorded hashes identify original bytes."
+}

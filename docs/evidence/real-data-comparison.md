@@ -1,10 +1,40 @@
-# Four Processing Routes: 2D Spectra and 3D Projection Comparisons
+# NMRFinesse 1.0.13 Evidence
 
-Current software: **1.0.12 / API v1.1.6**. The figures, statistics and scripts below document the historical run of 2026-10-20.
-This page presents final spectra produced by software 1.0.9 / API v1.1.5 under the current
-processing workflow. All four cases were reprocessed from raw data, measured and plotted on
-2026-10-20. Each comparison uses the automatic workflow to generate final phases and processing
-parameters; the reference source for each case is listed below.
+## Four processing routes, 2026-11-10
+
+The automatic workflow was rerun from the same raw data using the same author references, cropping,
+referencing, 10% detection threshold, and same-sign one-to-one matching as on 2026-10-20. Controlled
+2D NUS used the same 68/90 increment schedule. Counts are matched pairs out of reference candidates.
+
+| Processing route | 2026-10-20 | 2026-11-10 | New comparison |
+| --- | --- | --- | --- |
+| Uniform 2D | HN 125/126 | HN 121/126 | [Figure](20261110/evidence-uniform2d.png) · [Statistics](20261110/uniform2d-comparison.json) |
+| Controlled 2D NUS | HN 123/126 | HN 123/126 | [Figure](20261110/evidence-nus75.png) · [Statistics](20261110/nus75-comparison.json) |
+| Uniform 3D | HN 80/84, HC 72/81, NC 64/71 | HN 82/84, HC 74/81, NC 65/71 | [Figure](20261110/evidence-uniform3d.png) · [Statistics](20261110/uniform3d-comparison.json) |
+| Acquired 3D NUS | HN 89/89, HC 93/93, NC 79/79 | HN 89/89, HC 93/93, NC 79/79 | [Figure](20261110/evidence-acquired3d.png) · [Statistics](20261110/acquired3d-comparison.json) |
+
+Four of the five unmatched uniform 2D positions reached the 10% threshold locally without yielding a
+separate candidate. The fifth was below threshold. The direct-dimension valley score kept the
+squared SP baseline window for uniform 2D F2 after evaluating 18 neighboring reference pairs. Uniform
+3D F3 switched from GM 4/8 to no window after evaluating one pair. The table compares two complete
+automatic workflows. [Parameters and scripts](20261110/processing-provenance.json) ·
+[Local-response audit](20261110/local-response-audit.json)
+
+## Peak-picking concordance with POKY/iPick
+
+NMRFinesse and POKY/iPick's UCSFtool route both use thresholded local maxima and per-axis three-point
+parabolic localization. In a matched-threshold comparison of 12 positive 2D HN spectra, candidate
+counts agreed in all 24 tables. All 5,175 table entries had unique one-to-one matches within one grid
+step per axis. The total includes four reused equal-threshold tables. Coordinate differences were
+typically about 0.00025 ppm and reached about 0.00050 ppm, consistent with iPick's three-decimal
+output. This historical comparison covers positive 2D peaks at the tested thresholds.
+[Method and scope](../picker-compatibility.md) · [Candidate pairs](picker-ipick-v1/candidate_pairs.csv) ·
+[Table verification](picker-ipick-v1/verification.txt)
+
+## Four-route baseline, 2026-10-20
+
+The original comparison uses final spectra reprocessed from raw data on 2026-10-20. Each route
+uses automatic phase and parameter selection, with the reference source listed below.
 
 ## How to read the figures
 
