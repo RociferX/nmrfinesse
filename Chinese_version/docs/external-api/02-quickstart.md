@@ -159,6 +159,6 @@ python -m nmrfinesse_api report    --study ~/studies/s1
 | 每个组合是什么、状态如何 | `study/workflows/<id>/workflow.json` |
 | 实际用了哪些参数 | `run.json.parameters_used` + `parameters_resolved` |
 | 峰表(使用者分析入口) | `study/workflows/<id>/<条件>/peak_table_parabolic.csv`;长表见 `study/records/peak_table_parabolic.csv` |
-| 处理脚本 / 谱 | `study/workflows/<id>/<条件>/process.com` / `spectrum.ft2` |
+| 处理脚本 / 谱 | `study/workflows/<id>/<条件>/process.com` 和同目录的 `spectrum.ft1`、`.ft2` 或 `.ft3` |
 | 日志 | `study/workflows/<id>/<条件>/log.txt`(完整)+ `workflows/<id>/log.txt` |
 | 版本与哈希 | `run.json.versions` / `manifest.json` |

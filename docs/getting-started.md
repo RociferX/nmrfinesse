@@ -1,8 +1,6 @@
 # Getting started
 
-This guide covers first data inspection and the processing boundary. For Linux desktop use,
-download the [1.0.12 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12).
-For source installation, follow the steps below.
+Download the Linux desktop AppImage from the [latest release](https://github.com/RociferX/nmrfinesse/releases/latest). For the Python API, CLI or source GUI, follow [Installation](installation.md).
 
 ## Install from source
 
@@ -13,9 +11,10 @@ git clone https://github.com/RociferX/nmrfinesse.git
 cd nmrfinesse
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install -e ".[test]"
-python main.py
+python -m pip install -e .
 ```
+
+Run `python main.py` from the checkout to open the desktop application.
 
 For the complete dependency and packaged-resource notes, see
 [Installation](installation.md). NMRPipe is required for spectral conversion and processing;

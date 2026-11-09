@@ -2,6 +2,8 @@
 
 ## 6.1 directory layout
 
+The tree shows a 2D study. The spectrum extension follows its dimensionality (`.ft1`, `.ft2` or `.ft3`).
+
 ```text
 <root>/
   project.json                    NMRFinesse project (datasets and WorkflowRun registrations)

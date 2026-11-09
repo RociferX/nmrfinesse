@@ -7,12 +7,9 @@ implementation as the desktop application. It does not require Qt:
 python -m nmrfinesse_api --help
 ```
 
-The current CLI uses API v1.1.6 / software 1.0.12. API parameters and the retained 38-column peak-table
-contract are documented in the [Python API](python-api.md). Desktop users can download the
-[1.0.12 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12).
-Install from a source checkout containing API v1.1.6. See
-[Installation](installation.md). Processing requires separately installed NMRPipe; NUS
-reconstruction also requires SMILE.
+Install the CLI from source or a wheel. See [Installation](installation.md). Processing requires
+NMRPipe, and NUS reconstruction also requires SMILE. See the [Python API](python-api.md) for the
+parameter and 38-column peak-table contract.
 
 ## Commands
 
@@ -39,10 +36,9 @@ python -m nmrfinesse_api report --study ./study
 python -m nmrfinesse_api status --study ./study
 ```
 
-For multiple conditions, register each dataset with a unique condition label before building
-references. The reference stage creates the peak identities; the sweep stage requires the reference
-explicitly and independently detects peaks on each candidate spectrum under the locked reference
-threshold.
+For multiple conditions, register each dataset with a unique condition label. `reference` builds the
+frozen spectra and `peaks` creates their peak identities. `sweep` requires the reference explicitly
+and detects peaks independently on each candidate spectrum using the reference threshold.
 
 `init` defaults to one source directory. With `--segmented`, repeat `--dataset` at least twice;
 their order defines one condition's complete segment list. Reference and sweep commands reuse the

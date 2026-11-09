@@ -1,10 +1,8 @@
 # Packaging
 
-The v1.0.12 source and AppImage release bundled API **1.1.5**. Current source uses
-NMRFinesse software **1.0.12** and scripting API **1.1.6**, which have separate version numbers.
-This source update does not rebuild the published binary. The AppImage is the simplest desktop
-installation path; NMRPipe and SMILE must be obtained and installed separately.
-NMRPipe handles conversion and processing, while SMILE performs NUS reconstruction.
+The AppImage bundles the desktop application and its Python and Qt runtime. Install NMRPipe for
+conversion and processing, and SMILE for NUS reconstruction. `BUILD_INFO.txt` records the AppImage
+software version and source commit. The scripting API has its own version, shown under Help → About.
 
 ## Linux AppImage
 

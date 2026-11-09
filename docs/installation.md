@@ -1,19 +1,17 @@
 # Installation
 
-Linux is the target runtime; Windows may be used to edit source but is not a supported runtime
-environment. Linux desktop users can use the AppImage; download the [1.0.12 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12) from the release.
-Install the Python API and command-line tools separately by following the source steps below.
+On Linux, download the desktop AppImage from the [latest release](https://github.com/RociferX/nmrfinesse/releases/latest).
+For Python and CLI tools, follow the source installation steps below.
 
 ## AppImage (Linux)
 
-Download `NMRFinesse-1.0.12-x86_64.AppImage` and
-`SHA256SUMS-v1.0.12.txt` from its release, then verify and start the AppImage in the same directory:
+Download the AppImage and checksum file into an empty directory. Verify and launch the app there.
 
 ```bash
-sha256sum -c SHA256SUMS-v1.0.12.txt
-chmod +x NMRFinesse-1.0.12-x86_64.AppImage
-./NMRFinesse-1.0.12-x86_64.AppImage --licenses
-./NMRFinesse-1.0.12-x86_64.AppImage
+sha256sum -c SHA256SUMS-*.txt
+chmod +x NMRFinesse-*-x86_64.AppImage
+./NMRFinesse-*-x86_64.AppImage --licenses
+./NMRFinesse-*-x86_64.AppImage
 ```
 
 The AppImage includes third-party licence notices, including those for PySide6/Qt. See the
@@ -26,9 +24,10 @@ git clone https://github.com/RociferX/nmrfinesse.git
 cd nmrfinesse
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install -e ".[test]"
-python main.py
+python -m pip install -e .
 ```
+
+Launch the source GUI from the checkout with `python main.py`. It creates or reuses the application's local environment.
 
 Packaged installs and wheels include runtime resources (`nmrfinesse_data/config`,
 `nmrfinesse_data/presets`, `gui/assets`, `ui_support/locales`). Real processing requires a separately
@@ -38,7 +37,7 @@ by NMRFinesse.
 ## Developers: editable source install
 
 ```bash
-git clone <this repository>
+git clone https://github.com/RociferX/nmrfinesse.git
 cd nmrfinesse
 python -m venv .venv
 source .venv/bin/activate

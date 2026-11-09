@@ -13,10 +13,7 @@ editable repository checkout.
 ### Can I run it on Windows or macOS?
 
 Linux is the target runtime; Windows is an editing environment. macOS has not been validated.
-The current version is software 1.0.12 / API v1.1.6. Download the Linux AppImage from the
-[1.0.12 release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12).
-API parameters and the
-38-column peak-table contract are documented in the [Python API](python-api.md).
+Download the Linux AppImage from the [latest release](https://github.com/RociferX/nmrfinesse/releases/latest).
 
 ### Does NMRFinesse send my data anywhere?
 
@@ -35,7 +32,7 @@ reruns are temporarily unavailable in the GUI.
 
 ### Which dimensions does batch processing support?
 
-1D/2D/3D with homogeneous groups. Automatic 2D processing defaults to five parallel data sets, configurable from 1 to 10. 3D runs sequentially.
+Batch groups support 1D, 2D and 3D separately. Automatic 2D processing defaults to five concurrent data sets, configurable from 1 to 10. 1D, 3D and reference-script groups run sequentially.
 
 ### Why does it refuse to process when sampling is "uncertain"?
 

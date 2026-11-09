@@ -4,11 +4,12 @@
 
 | Operation | Desktop workflow | Python/CLI API |
 | --- | --- | --- |
+| 1D uniform | Automatic and manual spectrum processing | Reference and parameter combinations |
 | 2D uniform | Automatic and manual processing | Reference and parameter combinations |
 | 2D NUS | Automatic/manual SMILE reconstruction; GUI parameter optimisation and ranked reruns unavailable | Reference and parameter combinations |
 | 3D uniform | Automatic and manual processing; complete spectrum or supported plane output | Reference and parameter combinations |
 | 3D NUS | Automatic and manual SMILE reconstruction | Reference construction; combination execution is rejected |
-| Batch operations | 2D data groups | Explicit workflow/condition combinations with resume |
+| Batch operations | Separate 1D, 2D and 3D groups. Automatic 2D groups can run in parallel | Explicit workflow/condition combinations with resume |
 | Peak localisation | Three-point parabolic | Three-point parabolic; optional target subset |
 | Viewing | 1D spectra/FIDs, 2D spectra and 3D slices/projections | Spectrum/peak-table products without Qt |
 
@@ -29,8 +30,9 @@ and API calls; the entry points have different parameter merging, output registr
 ## Peak tables and interpretation
 
 Each API workflow/condition independently detects peaks and writes the 38-column table. Peak IDs
-are local to one spectrum. The software does not perform automatic assignment, cross-spectrum
-matching, overlap deconvolution, Lorentzian/Voigt/multi-peak fitting or statistical inference.
+are local to one spectrum. The desktop can match reference peaks and estimate a shared coordinate
+shift for imported peak tables. Cross-spectrum matching, assignment and statistical inference for
+API outputs are downstream operations. Peak localisation uses a three-point parabola around each extremum.
 Use full logical-axis coordinates when nuclei repeat; H/N aliases alone may be ambiguous.
 Detection thresholds, noise, phase and line shape affect candidate selection and localisation QC.
 

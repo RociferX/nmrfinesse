@@ -44,7 +44,7 @@ Complete provenance + QC
   其余由后续独立分析代码基于统一峰表完成;
 - 不做峰归属/指认(可用外部峰表作为参考峰,但软件不推断归属);
 - 不做峰重叠解耦与去卷积；峰位亚像素精修采用三点抛物线方法；
-- 不支持 3D NUS 参数组合；2D uniform 与 2D NUS 支持组合执行；
+- 参数组合支持 1D、2D、3D 均匀采样和 2D NUS。3D NUS 支持建立参考。
 - 不做并行调度(串行 + 断点续跑);
 - 不自动生成研究参数空间(`axes` 只是便捷展开入口;`combos=` 原样执行)。
 
@@ -55,7 +55,7 @@ Complete provenance + QC
 | 研究根(root) | 一个目录 = 一个研究项目 = 一个 NMRFinesse 项目(`project.json`),内含 `study/` |
 | 条件(condition) | 一组原始数据(A/B…);两条件研究即同一实验的两个样品状态 |
 | 数据集(DatasetRef) | 导入研究项目的一个 Bruker 原始数据集(`exp_id/data_id` + 条件标签) |
-| 参考谱 | NMRFinesse 自动优化跑出的谱,冻结在 `study/reference/<key>/reference.ft2` |
+| 参考谱 | 各条件冻结的谱，位于 `study/reference/<key>/`，按维度命名为 `reference.ft1`、`.ft2` 或 `.ft3` |
 | 参考脚本 | 参考运行**实际执行**的 NMRPipe 脚本,冻结为 `process.com`(带 SHA-256) |
 | 参考峰表 | 每个条件各自登记 `reference.list`(条件内身份 R0001…)+ `reference_peak_table_parabolic.csv`;给外部峰表时只应用于主条件。条件内编号不构成跨条件或跨谱对应 |
 | `reference_peak_id` | **参考峰表**里的峰身份 `R0001`…;组合峰表留空(组合独立选峰)，API 不做跨谱匹配，由使用者分析完成 |
@@ -63,7 +63,7 @@ Complete provenance + QC
 | `parameters_requested` | 用户原样给的那一行参数 |
 | `parameters_used` | 实际喂给后端的完整参数(参考基底 + 组合覆盖) |
 | `parameters_resolved` | 自动参数的**实际结果**(`actual_p0/actual_p1`、SMILE 实际 nSigma/thresh、谱噪声 σ) |
-| 候选谱 | 某 workflow × 某条件跑出的谱,存 `study/workflows/<id>/<条件>/spectrum.ft2`,**不替换**活动谱 |
+| 候选谱 | 各工作流和条件的谱，位于 `study/workflows/<id>/<条件>/`，按维度命名为 `spectrum.ft1`、`.ft2` 或 `.ft3` |
 | 峰表 | `peak_table_parabolic.csv`(38 列;含 F1/F2/F3 逻辑轴 ppm、核名和等效 FWHM;本谱峰序号 `peak_id`;仅在 1H/15N 轴各自唯一时提供 H/N 坐标与线宽兼容列) |
 | 状态 | `success` / `success_with_warning` / `failed` |
 

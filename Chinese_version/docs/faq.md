@@ -12,7 +12,7 @@
 ### 能在 Windows 或 macOS 上跑吗?
 
 Linux 是目标运行平台，Windows 仅作为编辑环境；macOS 未验证。
-当前软件版本为 1.0.12，公开 API 版本为 v1.1.6。Linux AppImage 与源码可从 [1.0.12 Release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12) 获取；API 参数和 38 列峰表契约见 [Python API](python-api.md)。
+Linux AppImage 可从[最新发行页](https://github.com/RociferX/nmrfinesse/releases/latest)下载。
 
 ### NMRFinesse 会把我的数据发到什么地方吗?
 
@@ -29,7 +29,7 @@ Linux 是目标运行平台，Windows 仅作为编辑环境；macOS 未验证。
 
 ### 批量处理支持哪些维度？
 
-支持1D/2D/3D，同组成员必须同维度。2D自动处理默认最多5份并行，可在设置调为1–10；3D依次处理。
+支持 1D、2D 和 3D，同组成员须同维度。2D 自动处理默认并行 5 份，可在设置中调为 1–10。1D、3D 和参考脚本组依次处理。
 
 ### 采样判为「uncertain」时它为什么拒绝处理?
 

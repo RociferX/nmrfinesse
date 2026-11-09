@@ -2,6 +2,8 @@
 
 ## 6.1 目录布局
 
+下图以二维研究为例。谱图扩展名随维度为 `.ft1`、`.ft2` 或 `.ft3`。
+
 ```text
 <root>/
   project.json                    NMRFinesse 项目(数据与 WorkflowRun 登记)

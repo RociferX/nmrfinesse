@@ -14,9 +14,8 @@ the resolved parameters, scripts, warnings and outputs saved alongside the resul
 **Software: 1.0.12 · Python/CLI API: 1.1.6 · Target platform: Linux**
 
 **For desktop use on Linux, the simplest option is the AppImage.**
-Download the [1.0.12 AppImage](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.12/NMRFinesse-1.0.12-x86_64.AppImage)
-and its [checksum file](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.12/SHA256SUMS-v1.0.12.txt)
-from the release; no separate Python or Qt setup is needed. Follow
+Download the AppImage and its checksum file from the [latest release](https://github.com/RociferX/nmrfinesse/releases/latest).
+The AppImage includes Python and Qt. Follow
 [Installation](#installation) for startup and source/API setup. Real spectral processing still
 requires a separate NMRPipe installation; NUS reconstruction also needs SMILE.
 
@@ -141,14 +140,13 @@ licence inventory.
 
 ### Linux AppImage — simplest desktop setup
 
-Use the [1.0.12 release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12).
-Download `NMRFinesse-1.0.12-x86_64.AppImage` and
-`SHA256SUMS-v1.0.12.txt`, then run:
+Download the AppImage and checksum from the [latest release](https://github.com/RociferX/nmrfinesse/releases/latest)
+into an empty directory, then run:
 
 ```bash
-sha256sum -c SHA256SUMS-v1.0.12.txt
-chmod +x NMRFinesse-1.0.12-x86_64.AppImage
-./NMRFinesse-1.0.12-x86_64.AppImage
+sha256sum -c SHA256SUMS-*.txt
+chmod +x NMRFinesse-*-x86_64.AppImage
+./NMRFinesse-*-x86_64.AppImage
 ```
 
 The AppImage bundles Python, Qt and the desktop application, so desktop users can start without
@@ -225,7 +223,8 @@ python -m viewer
 Help → Usage tutorial has nine navigable sections with separate section and task headings.
 The experiment page has three horizontal import cards (single, segmented, batch), actions above
 their descriptions, and the sample-data table below. Import-and-group is off by default.
-Batch supports 1D/2D/3D in homogeneous groups; 2D can run in parallel and 3D runs sequentially.
+Batch supports 1D, 2D and 3D in separate groups. Automatic 2D groups can run in parallel. 1D, 3D
+and reference-script groups run sequentially.
 Tools → Export UCSF files… becomes available after opening a project. Configure its destination
 through automatic POKY/Sparky discovery or Browse in Settings.
 Tools also provides read-only FID checks and an automatic/manual abnormal-FID selection tool for
@@ -241,7 +240,7 @@ Needs-update details identify missing paths or changed files; old records explic
 provenance. Picked/imported peak tables retain separate assignments. CSV restores the full table;
 GUI `.list` exports contain assignments and coordinates only.
 
-This section describes the current source. Check the v1.0.12 release notes for the features in the published AppImage. See the [GUI guide](docs/gui.md) for full instructions.
+See the [GUI guide](docs/gui.md) for full instructions and the [release notes](https://github.com/RociferX/nmrfinesse/releases/latest) for the AppImage feature set.
 
 ## CLI usage
 
@@ -338,18 +337,16 @@ dynamically, so the package version and the version written into run records can
 
 ## Limitations
 
-- Processing supports **2D and 3D, uniform and NUS**. Batch groups support homogeneous 1D/2D/3D data.
+- Processing supports **uniform 1D, 2D and 3D** and **NUS 2D and 3D**. Desktop peak picking applies to 2D and 3D.
 - SMILE parameter optimisation and ranked reruns are temporarily unavailable in the GUI.
   Normal 2D/3D NUS reconstruction with SMILE remains available.
 - Real processing requires external NMRPipe, and NUS reconstruction additionally requires SMILE.
   Data inspection and the synthetic walkthrough remain available without these engines.
-- Bad-point correction can rewrite the project's copied `ser` and `nuslist` in complete rows,
-  with `ser.bak` and `nuslist.bak` retained. Writes use temporary files and replacement so linked
-  original inputs remain untouched. If the row layout cannot be determined, correction is applied
-  to the generated FID instead. The correction and affected data are logged.
+- Source-level NUS cleanup can rewrite the input `ser` and sampling schedule, including in a
+  referenced acquisition directory. It keeps `.bak` backups and logs the changes. When the row
+  layout cannot be verified, cleanup operates on the generated FID. The separate abnormal-FID
+  export tool writes a new NUS directory and preserves its input.
 - Automatic peak picking and QC use experiment type, signal quality and processing parameters.
-  The evidence report applies a shared candidate-matching rule and explains side lobes, overlap
-  and weak-signal effects on candidate counts for each case.
 - The Python API performs processing and archiving; it does not provide cross-spectrum peak
   matching, chemical-shift perturbation analysis or statistical inference.
 - Linux is the target runtime. Questions and issues can be reported through
@@ -436,7 +433,6 @@ Save applies them and Cancel discards them. View and the project/blank-area expe
 context actions are removed; use the project page to create an experiment. Unversioned legacy
 marker size 1.5 migrates to 0.5 once; other sizes and newly saved custom values are retained.
 
-The current source provides API 1.1.6. The published 1.0.12 AppImage bundles API 1.1.5.
 
 Reference scripts use approximately 25% of the processing pane. Range and phase tables start
 from reference values. Optional automatic phase search runs after FID conversion. Selecting

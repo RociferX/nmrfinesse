@@ -1,7 +1,6 @@
 # Python API
 
-当前公开脚本契约为 `API_VERSION = "1.1.6"`；软件版本为 1.0.12。API 参数和 38 列峰表契约按 v1.1.6 定义。
-GitHub 主分支源码提供 API 1.1.6。请从源码安装以使用新增的参考脚本字段。已发布的 [1.0.12 AppImage](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12) 内含 API 1.1.5。
+通过[源码或 wheel 安装](installation.md)使用 `nmrfinesse_api`。接口独立版本化，统一峰表为 38 列。复用处理结果前可用 `compat_manifest()` 查看兼容性。
 
 项目里有两套 Python 接口,稳定性承诺不同。
 

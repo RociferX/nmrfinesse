@@ -162,6 +162,6 @@ python -m nmrfinesse_api report    --study ~/studies/s1
 | What is each combination and what is its status | `study/workflows/<id>/workflow.json` |
 | Which parameters are actually used | `run.json.parameters_used` + `parameters_resolved` |
 | Peak table (entry point for downstream analysis) | `study/workflows/<id>/<condition>/peak_table_*.csv`; the long table is `study/records/peak_table_*.csv` |
-| Process script / spectrum | `study/workflows/<id>/<condition>/process.com` / `spectrum.ft2` |
+| Process script / spectrum | `study/workflows/<id>/<condition>/process.com` and `spectrum.ft1`, `.ft2` or `.ft3` in the same directory |
 | log | `study/workflows/<id>/<condition>/log.txt`(complete)+ `workflows/<id>/log.txt` |
 | Versions and Hash | `run.json.versions` / `manifest.json` |

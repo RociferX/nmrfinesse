@@ -69,7 +69,6 @@ optimization_candidates:
 ```
 
 候选及其顺序参与参考指纹，修改后需 `--force`。完整限制见[05 §5.10](05-inputs-and-data.md#510-参考优化候选列表)。
-参考模式每个条件独立生成峰表;外部 `--peak-table` 只应用到主条件,不会传播。
 
 `--rebuild-peak-tables` 只重算参考峰表(使用已有的冻结参考谱与 `reference.list`，不修改谱或
 峰身份；调用前后校验 SHA-256)，并刷新记录中的 `software_version`、`software_commit` 及
@@ -80,18 +79,16 @@ optimization_candidates:
 ```bash
 python -m nmrfinesse_api peaks --study ~/studies/s1
 python -m nmrfinesse_api peaks --study ~/studies/s1 --sigma 25 --max-peaks 60
-python -m nmrfinesse_api peaks --study ~/studies/s1 --peak-table external.list
+python -m nmrfinesse_api peaks --study ~/studies/s1 --condition A --peak-table external.list
 ```
 
-每个条件都在自己的参考谱上独立选峰并生成 `reference.list` 和
-`reference_peak_table_parabolic.csv`;外部 `--peak-table` 只登记主条件,不传播到其他条件。
+命令在各选定条件的参考谱上独立选峰并生成 `reference.list` 和 `reference_peak_table_parabolic.csv`。
+多条件研究传入 `--peak-table` 时，用 `--condition` 指定要登记该外部峰表的条件。
 `R0001…` 是所属参考峰表的局部身份,不代表跨条件或参考/组合谱间存在对应关系。
 组合表的 `reference_peak_id` 留空,本谱 `peak_id` 只在本谱有效。峰位亚像素精修采用
 三点抛物线。输出峰表路径、哈希、来源、峰数、峰表摘要与定位 QC。
 
-`--sigma N` 是**选峰阈值**(噪声 σ 倍数,缺省 35σ):在参考峰表**尚未生成**时
-指定 = 生成参考时选阈值;参考已冻结后再指定不同阈值会被拒绝(退出码 2,
-报错说明「阈值已锁定在参考」),因为后续参数扰动只能沿用参考的阈值。
+`--sigma N` 按噪声标准差倍数设定选峰阈值，默认 35σ。修改已冻结峰表的阈值时，运行 `peaks --force --sigma N`。参数组合沿用冻结的阈值。
 
 ## sweep(= workflows)— 组合模式:按参数组合表批量执行
 

@@ -6,20 +6,19 @@
 python -m nmrfinesse_api --help
 ```
 
-当前命令行属于 API v1.1.6，统一峰表为38列。安装源码或wheel后使用命令行入口。
-Linux AppImage 与源码可从 [1.0.12 Release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12) 获取；见
-[installation.md](installation.md)。
+通过源码或 wheel 安装命令行工具，见[安装说明](installation.md)。处理需要 NMRPipe，NUS 重构还需要 SMILE。参数与 38 列峰表契约见 [Python API](python-api.md)。
 
 ## 子命令
 
 | 子命令 | 用途 |
 | --- | --- |
 | `init` | 创建一个 study,并登记某个条件的 Bruker 数据集；可显式登记同条件的有序分段。 |
-| `reference` | 生成并冻结参考谱、参考脚本与参考峰表。 |
+| `reference` | 生成并冻结参考谱、参考脚本与参考元数据。 |
 | `peaks` | 在参考谱上选峰,或登记一张外部峰表。 |
 | `sweep`(别名 `workflows`) | 针对冻结的参考跑参数组合。 |
 | `report` | 从既有记录重算汇总,不重新处理任何东西。 |
 | `status` | 打印当前 study 的状态。 |
+| `compat` | 查看行为兼容性清单，可运行确定性黄金向量，无需研究目录。 |
 
 ## 典型顺序
 
@@ -76,8 +75,7 @@ window.F1.off: [0.35, 0.45, 0.55]
 | --- | --- |
 | `parabolic` | 唯一方法。三点抛物线精修,适用于任意维度。 |
 
-当前不提供二维高斯拟合;`localization` 只接受 `"parabolic"`,`"gaussian"`/`"both"` 会报
-`SweepError`。想限定只精修部分峰,用 `--localize-peaks`(普通 CSV)。
+命令行默认使用三点抛物线。使用 `--localize-peaks` 传入含 `peak_id` 的 CSV，可限定精修范围而保留检出的全部候选。
 
 ## 采样判定是硬门槛
 

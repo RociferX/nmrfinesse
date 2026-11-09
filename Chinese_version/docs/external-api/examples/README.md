@@ -11,9 +11,9 @@
 运行前请确认数据是解压后的 Bruker 目录;真机处理需要 NMRPipe。
 
 ```bash
-python docs/external-api/examples/run_study.py \
+python Chinese_version/docs/external-api/examples/run_study.py \
     --study ~/studies/s1 --a ~/data/apo --b ~/data/holo \
-    --combos docs/external-api/examples/combos.csv
+    --combos Chinese_version/docs/external-api/examples/combos.csv
 ```
 
 输出(节选):workflow 列表、逐 workflow × 条件状态、峰表路径,以及

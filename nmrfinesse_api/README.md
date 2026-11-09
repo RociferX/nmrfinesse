@@ -5,8 +5,8 @@ generates candidate spectra and tables from user-specified parameter combination
 analysis. It does not match peaks across spectra or compute relationships between tables.
 It can be imported without pulling in Qt or touching GUI state.
 
-API v1.1.6 defines its parameters and retains the 38-column table contract. The current software version is 1.0.9; the API is versioned separately
-from the software.
+The API has its own version and uses a 38-column peak table. Uniform 1D, 2D and 3D and 2D NUS
+support parameter combinations. 3D NUS supports reference construction.
 
 Import defaults to a single directory. Explicit `segmented=True` accepts the complete ordered
 list of at least two original Bruker data directories as one condition; multiple conditions use
@@ -23,7 +23,7 @@ evidence require an explicit `force=True` reference rebuild, never automatic rec
 | --- | --- |
 | `__init__.py` | the public exports and `API_VERSION` |
 | `session.py` | session and dataset definitions |
-| `study.py` | `run_parameter_study()` - the one-call convenience entry point |
+| `study.py` | `run_reference_study()`, `run_combination_study()` and the combined `run_parameter_study()` entry point |
 | `reference.py` | reference mode: the reference spectrum and script, plus the frozen reference peak tables |
 | `sweep.py` | combination mode: parameter combinations to `workflow_id`s, with resumable runs |
 | `peaks.py` | peak picking and sub-grid localisation entry points |

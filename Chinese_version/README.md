@@ -13,13 +13,12 @@ NMRFinesse读取Bruker数据集，识别实验类型与采样方式，规划处�
 **软件版本：1.0.12 · 源码 Python/CLI API：1.1.6 · 目标平台：Linux**
 
 **Linux桌面用户最简单的使用方式是AppImage。**
-下载[1.0.12 AppImage](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.12/NMRFinesse-1.0.12-x86_64.AppImage)
-及[校验文件](https://github.com/RociferX/nmrfinesse/releases/download/v1.0.12/SHA256SUMS-v1.0.12.txt)，
+从[最新发行页](https://github.com/RociferX/nmrfinesse/releases/latest)下载 AppImage 和校验文件，
 按[安装步骤](#安装)校验、赋予执行权限并启动，无需自行配置Python或Qt。
 真实谱图处理仍需单独安装NMRPipe，NUS重构还需要SMILE。
 
 桌面程序可通过AppImage或源码安装使用，Python/CLI API通过源码或Python包安装提供。
-源码 API **v1.1.6** 输出 **38 列**峰表。已发布的 1.0.12 AppImage 内含 API 1.1.5，安装包中的 `BUILD_INFO.txt` 记录版本、源码修订与依赖。
+源码 API **v1.1.6** 输出 **38 列**峰表。安装包中的 `BUILD_INFO.txt` 记录版本、源码修订与依赖。
 
 作者：**李宣锋（Xuanfeng Li），中国科学技术大学**。
 源码许可：[Apache-2.0](../LICENSE)，署名见[NOTICE](../NOTICE)。
@@ -125,13 +124,12 @@ NMRFinesse 不会替你分发、下载或安装 NMRPipe/SMILE。它在运行时�
 
 ### Linux AppImage：最简单的桌面使用方式
 
-从[1.0.12发行页](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12)下载
-`NMRFinesse-1.0.12-x86_64.AppImage`与`SHA256SUMS-v1.0.12.txt`，然后运行：
+从[最新发行页](https://github.com/RociferX/nmrfinesse/releases/latest)下载 AppImage 和校验文件到同一个空目录，然后运行：
 
 ```bash
-sha256sum -c SHA256SUMS-v1.0.12.txt
-chmod +x NMRFinesse-1.0.12-x86_64.AppImage
-./NMRFinesse-1.0.12-x86_64.AppImage
+sha256sum -c SHA256SUMS-*.txt
+chmod +x NMRFinesse-*-x86_64.AppImage
+./NMRFinesse-*-x86_64.AppImage
 ```
 
 AppImage包含Python、Qt和桌面程序，无需自行创建Python环境或安装Python依赖；
@@ -202,7 +200,7 @@ python -m viewer
 
 `帮助 → 使用教程` 提供九个分区的可点击目录；主分区与操作小节有独立标题层级。
 实验页上方横排单个、分段和批量三个导入区，按钮在上、说明在下，样品数据表在导入区下面。
-批量导入的“导入并成组”默认关闭；批量支持1D/2D/3D，同维度成组；2D可并行、3D依次处理。
+批量导入的「导入并成组」默认关闭。批量支持 1D、2D 和 3D，同维度成组。2D 自动处理可以并行，1D、3D 和参考脚本组依次处理。
 UCSF 复制入口在 `工具 → 导出 UCSF 文件…`，打开项目后可用；目标目录可在设置中自动寻找或手动指定。
 `工具` 也提供只读 FID 诊断，以及 2D/3D 均匀采样异常 FID 的自动检测、手动勾选和 NUS 副本导出。
 后者保留输入目录，删除完整采样点的相位组，在新目录写入采样表与转换报告。
@@ -214,8 +212,7 @@ UCSF 复制入口在 `工具 → 导出 UCSF 文件…`，打开项目后可用�
 待更新状态会给出缺失路径或变化文件；旧记录证据不足时会说明无法细分原因。
 拾取峰表和导入峰表可切换、各自保留指认；CSV 用于完整恢复，GUI 的 `.list` 只导出指认和坐标。
 
-本节描述当前源码。已发布的 v1.0.12 AppImage 所含功能见对应发布说明。
-完整操作见 [GUI 指南](docs/gui.md)。
+完整操作见 [GUI 指南](docs/gui.md)，安装包所含功能见[发布说明](https://github.com/RociferX/nmrfinesse/releases/latest)。
 
 ## 命令行用法
 
@@ -301,14 +298,11 @@ python examples/quickstart.py ./example_data/hsqc_2d
 
 ## 已知边界
 
-- 处理覆盖**2D、3D的uniform与NUS**；批量处理目前**仅支持2D**。
+- 处理支持 **1D、2D、3D 均匀采样**和 **2D、3D NUS**。桌面选峰适用于 2D 和 3D。
 - GUI 暂不提供 SMILE 参数扫描与按排名重跑；2D/3D NUS 的正常 SMILE 重构保留。
 - 真实处理需要外部NMRPipe，NUS重构还需要SMILE；无引擎时仍可检查数据和运行合成走查。
-- 坏点校正可能按整行改写项目副本中的`ser`与`nuslist`，并保留`ser.bak`与`nuslist.bak`。
-  临时文件加替换的写法会断开链接，保持原始输入不变；不能确定行布局时改为清理生成FID。
-  校正动作和受影响的数据会写入日志。
-- 自动选峰与QC结合实验类型、信号质量和处理参数；证据页按统一规则统计候选匹配，
-  并逐组解释旁瓣、重叠与弱信号对候选数量的影响。
+- 源级 NUS 清理可能改写输入目录的 `ser` 和采样表，包括以引用方式导入的采集目录。清理保留 `.bak` 备份并写入日志。无法确认行布局时清理生成的 FID。单独的异常 FID 导出工具写入新 NUS 目录，保留输入。
+- 自动选峰与 QC 结合实验类型、信号质量和处理参数。
 - Python API负责处理与留档，不提供跨谱峰匹配、化学位移扰动分析或统计推断。
 - Linux是目标运行平台，问题通过[GitHub](https://github.com/RociferX/nmrfinesse/issues)报告。
 

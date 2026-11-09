@@ -50,8 +50,8 @@ are rejected. Duplicate paths are rejected, and segment order is part of the sou
 - It does not infer peak assignments, deconvolve overlapping peaks, or match peaks across spectra.
   An external peak table can provide reference peak identities.
 - Peak-position refinement uses three-point parabolic localization.
-- 3D NUS parameter combinations are unsupported. Combination studies support 2D uniform and 2D NUS
-  data; see [input boundaries](05-inputs-and-data.md).
+- Combination studies support uniform 1D, 2D and 3D and 2D NUS. 3D NUS supports reference
+  construction. See [input boundaries](05-inputs-and-data.md).
 - Workflows run serially and can resume completed work. `axes` expands a full-factorial grid for
   convenience; `combos=` executes the supplied rows in order without designing a parameter space.
 
@@ -62,7 +62,7 @@ are rejected. Duplicate paths are rejected, and segment order is part of the sou
 | Study root | A directory containing the NMRFinesse project (`project.json`) and `study/` products |
 | Condition | One dataset or one ordered list of acquisition segments, labelled A/B/... |
 | Dataset (`DatasetRef`) | A Bruker dataset registered to a condition and project entry (`exp_id/data_id`) |
-| Reference spectrum | The condition's reference spectrum at `study/reference/<key>/reference.ft2` |
+| Reference spectrum | The condition's reference spectrum at `study/reference/<key>/reference.ft1`, `.ft2` or `.ft3`, depending on dimensionality |
 | Reference script | The NMRPipe script actually run to make the reference, stored as `process.com` with SHA-256 |
 | Reference peak table | The condition's `reference.list` identities (`R0001`...) and `reference_peak_table_parabolic.csv` |
 | `reference_peak_id` | An identity local to a reference peak table. Combination peak tables leave it blank; matching across spectra is downstream work. |
@@ -70,7 +70,7 @@ are rejected. Duplicate paths are rejected, and segment order is part of the sou
 | `parameters_requested` | The parameter values supplied by the user for that row |
 | `parameters_used` | The complete parameter mapping passed to the backend (reference base plus overrides) |
 | `parameters_resolved` | Values resolved during processing, including actual phase, SMILE settings, and spectrum noise |
-| Candidate spectrum | The spectrum for one workflow and condition, stored under `study/workflows/<id>/<condition>/spectrum.ft2`; it does not replace the active project spectrum |
+| Candidate spectrum | The spectrum for one workflow and condition, stored as `spectrum.ft1`, `.ft2` or `.ft3` under `study/workflows/<id>/<condition>/` |
 | Peak table | `peak_table_parabolic.csv`; `peak_id` is local to that spectrum |
 | Status | `success`, `success_with_warning`, or `failed` |
 

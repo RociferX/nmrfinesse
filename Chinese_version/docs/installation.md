@@ -1,18 +1,16 @@
 # 安装
 
-Linux 是目标运行平台；Windows 可用于编辑源码，但不属于支持的运行环境。Linux 桌面用户可直接使用
-[NMRFinesse 1.0.12 Release](https://github.com/RociferX/nmrfinesse/releases/tag/v1.0.12) 中的 AppImage。
-Python API 和命令行工具请按下方源码步骤单独安装。
+Linux 桌面用户可从[最新发行页](https://github.com/RociferX/nmrfinesse/releases/latest)下载 AppImage。Python API 和命令行工具按下文从源码安装。
 
 ## AppImage(Linux)
 
-下载 `NMRFinesse-1.0.12-x86_64.AppImage` 与 `SHA256SUMS-v1.0.12.txt`，在同一目录校验并启动：
+将 AppImage 和校验文件下载到同一个空目录，在该目录校验并启动。
 
 ```bash
-sha256sum -c SHA256SUMS-v1.0.12.txt
-chmod +x NMRFinesse-1.0.12-x86_64.AppImage
-./NMRFinesse-1.0.12-x86_64.AppImage --licenses
-./NMRFinesse-1.0.12-x86_64.AppImage
+sha256sum -c SHA256SUMS-*.txt
+chmod +x NMRFinesse-*-x86_64.AppImage
+./NMRFinesse-*-x86_64.AppImage --licenses
+./NMRFinesse-*-x86_64.AppImage
 ```
 
 它们捆绑 PySide6/Qt,这些库按 LGPL-3.0 随产物分发(许可与 NMRFinesse 源码的 Apache-2.0
@@ -25,9 +23,10 @@ git clone https://github.com/RociferX/nmrfinesse.git
 cd nmrfinesse
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install -e ".[test]"
-python main.py
+python -m pip install -e .
 ```
+
+在源码目录运行 `python main.py` 启动桌面程序，启动器会创建或复用应用自己的虚拟环境。
 
 `pip install .` 与 wheel 也包含运行资源(`nmrfinesse_data/config`、`nmrfinesse_data/presets`、
 `gui/assets`、`ui_support/locales`)，源码检出与安装态的相对位置一致。真实处理需要另行安装
@@ -36,7 +35,7 @@ NMRPipe；NUS 重构还需要 SMILE。NMRFinesse 不下载或捆绑这两个工�
 ## 开发者:可编辑源码安装
 
 ```bash
-git clone <this repository>
+git clone https://github.com/RociferX/nmrfinesse.git
 cd nmrfinesse
 python -m venv .venv
 source .venv/bin/activate
