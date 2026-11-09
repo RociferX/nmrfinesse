@@ -1,0 +1,161 @@
+{
+  "kind": "display_projection_comparison_not_independent_truth",
+  "projection": "signed_max_absolute_voxel; all-axis common crop before projection",
+  "source_ndim": 2,
+  "offset_fitted": false,
+  "reference_offset_ppm": {
+    "H": 0.07258459433886566,
+    "N": 0.05977570099166485
+  },
+  "matching": "same polarity; joint normalized distance <=1; greedy one-to-one",
+  "primary_metric": "reference_candidate_coverage; not true-peak recovery",
+  "requested_sigma_floor": 0.0,
+  "requested_sign_mode": "dominant",
+  "min_height_fraction": 0.1,
+  "tolerance_ppm": {
+    "H": 0.02,
+    "N": 0.2,
+    "C": 0.15
+  },
+  "planes": {
+    "HN": {
+      "automatic": {
+        "requested_sigma_floor": 0.0,
+        "resolved_sigma_multiplier": 10.693817252746696,
+        "requested_sign_mode": "dominant",
+        "sign_mode": "dominant",
+        "sign_evidence": {
+          "weighting": "squared_snr",
+          "positive_count": 126,
+          "negative_count": 0,
+          "positive_weight": 34.62891313549555,
+          "negative_weight": 0.0,
+          "positive_share": 1.0,
+          "negative_share": 0.0,
+          "dominant_sign": 1
+        },
+        "positive_candidates": 126,
+        "negative_candidates": 0,
+        "detected_before_height_filter": 126,
+        "noise_estimate": 104050.30354482422,
+        "baseline": 5344.68798828125,
+        "max_abs_centered_voxel": 11126949.312011719,
+        "height_cutoff": 1112694.9312011718,
+        "count": 126,
+        "shape": [
+          255,
+          1028
+        ]
+      },
+      "comparison": {
+        "requested_sigma_floor": 0.0,
+        "resolved_sigma_multiplier": 17.690127468321077,
+        "requested_sign_mode": "dominant",
+        "sign_mode": "dominant",
+        "sign_evidence": {
+          "weighting": "squared_snr",
+          "positive_count": 126,
+          "negative_count": 0,
+          "positive_weight": 34.04147895328617,
+          "negative_weight": 0.0,
+          "positive_share": 1.0,
+          "negative_share": 0.0,
+          "dominant_sign": 1
+        },
+        "positive_candidates": 126,
+        "negative_candidates": 0,
+        "detected_before_height_filter": 126,
+        "noise_estimate": 1474.1387554687499,
+        "baseline": 357.70751953125,
+        "max_abs_centered_voxel": 260777.02490234375,
+        "height_cutoff": 26077.702490234376,
+        "count": 126,
+        "shape": [
+          255,
+          514
+        ]
+      },
+      "matched": 123,
+      "automatic_matched_fraction": 0.9761904761904762,
+      "comparison_matched_fraction": 0.9761904761904762,
+      "reference_candidate_coverage": 0.9761904761904762,
+      "automatic_unmatched_candidates": [
+        {
+          "candidate_index_1based": 22,
+          "ppm": {
+            "H": 8.594869730867284,
+            "N": 120.22944923955927
+          },
+          "intensity": 7016286.312011719,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 125,
+          "ppm": {
+            "H": 8.521413821379705,
+            "N": 120.20906152122953
+          },
+          "intensity": 1274120.1870117188,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 126,
+          "ppm": {
+            "H": 9.014695307754875,
+            "N": 115.62765185095671
+          },
+          "intensity": 1255202.6870117188,
+          "sign": 1
+        }
+      ],
+      "reference_unmatched_candidates": [
+        {
+          "candidate_index_1based": 94,
+          "ppm": {
+            "H": 9.275114128130578,
+            "N": 118.05760136245794
+          },
+          "intensity": 97133.44482421875,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 125,
+          "ppm": {
+            "H": 8.131289764517504,
+            "N": 118.61218976568716
+          },
+          "intensity": 32220.64208984375,
+          "sign": 1
+        },
+        {
+          "candidate_index_1based": 126,
+          "ppm": {
+            "H": 8.543705039745257,
+            "N": 129.7483741652692
+          },
+          "intensity": 29501.23779296875,
+          "sign": 1
+        }
+      ],
+      "median_abs_delta_ppm": {
+        "H": 0.001215440318993899,
+        "N": 0.007230774085115854
+      },
+      "windows_ppm": {
+        "H": [
+          6.4967250218616535,
+          10.498915245036136
+        ],
+        "N": [
+          100.33825853921292,
+          135.93705247365412
+        ]
+      },
+      "intensity_pearson": 0.9766717628630017,
+      "median_fwhm_ratio_by_nucleus": {
+        "H": 0.849138077858976,
+        "N": 1.3253618039426132
+      }
+    }
+  }
+}

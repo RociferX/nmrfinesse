@@ -1,0 +1,5 @@
+context,matcher,scenario,execution_id,member,api_valid,ipick_valid
+group-3,original,HH,run-1,synthetic:O009,False,True
+group-3,original,HL,run-1,synthetic:O009,False,True
+group-3,original,LH,run-1,synthetic:O009,False,True
+group-3,original,LL,run-1,synthetic:O009,False,True

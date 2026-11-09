@@ -1,0 +1,7 @@
+context,matcher,compared_cells,api_valid,ipick_valid,validity_disagreements
+group-1,essential,1068,280,280,0
+group-1,original,1068,728,728,0
+group-2,essential,1332,536,536,0
+group-2,original,1332,818,818,0
+group-3,essential,1644,912,912,0
+group-3,original,1644,1616,1620,4

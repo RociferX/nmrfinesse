@@ -1,0 +1,10 @@
+{
+  "schema": "nmrfinesse.picker_concordance.v1",
+  "files_sha256": {
+    "table_comparison.csv": "866aecd9b8f241c56d34337a697ac41d9b0bb29ad2cdcfd33c5134c9755c90db",
+    "candidate_pairs.csv": "7d2ecebdba08db651e3eda65c26c319d9cd98266ce19c131392a957cb970d8a3",
+    "matching_comparison.csv": "aab6ff9dd45cdcca9b01a92263399ac42c32e74eb62f256a76bf38d5f08c8f5c",
+    "matching_disagreements.csv": "a260019260aae9a86053c818a8e0cdc9e55236604cdd064e3acf35e12b20627e",
+    "verify_tables.py": "acc1ae042079e2f3ec878273bf0c8fcbc1a7fd5aa227babc8e7dc00f62e052dc"
+  }
+}

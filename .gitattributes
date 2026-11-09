@@ -10,3 +10,6 @@
 *.spec text eol=lf
 # Licence texts are byte-verified (SHA-256 recorded in PROVENANCE.txt): no line-ending conversion is allowed
 packaging/linux/THIRD_PARTY_LICENSES/*.txt -text
+
+# The iPick verifier hashes these files as bytes.
+docs/evidence/ipick/** -text
