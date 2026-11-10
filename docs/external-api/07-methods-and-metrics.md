@@ -103,40 +103,61 @@ low-level detector uses `sign_mode="auto"` by default.
 
 ### Reference window candidate scoring
 
-Scoring uses deterministic representative traces: at most 256 traces are probed, then up to 12
-shared traces are scored under the FFT-cache budget. The fast path searches energy-leading traces
-at `12σ`; if it finds fewer than four qualifying traces, deterministic supplementation uses energy
-rank and acquisition position. Only when the probe set has no qualifying `12σ` reference trace does
-the method try `6σ`. A `6σ` reference peak must have FWHM of at least two points, adjacent samples at
-least half its height, and frequency support on five traces (or every trace when fewer than five
-were scanned).
+Window selection has an FID-magnitude baseline stage and a phased complex-preview refinement.
+The default baseline pool contains 13 candidates per axis: no window, six SP settings, two GM
+settings (`g1/g2/g3/c = 8/15/0/1` and `4/8/0/1`) and four EM settings (`lb = 3, 5, 10, 20 Hz`).
+Hz windows require a valid spectral width for the scored logical axis. Default selection chooses
+among valid windows; no window remains a diagnostic reference and an explicit user choice.
+Explicit lists are evaluated as supplied, without expansion or phased refinement, and select the
+highest valid score. An entirely invalid explicit pool fails. NUS direct-axis processing retains
+the reconstruction route's fixed SP window; explicit direct-axis candidates must also be SP.
 
-All candidates share the same reference traces, threshold, peaks and already-resolved peak pairs.
-Responses are aggregated per trace, and a trace is never removed because a candidate performs poorly.
-For each trace, only significant peaks at or above 25% of its strongest significant peak
-are retained. A trace without a valid shared reference peak scores zero. Direct scores combine
-detection strength, separation, symmetry and sidelobes. Indirect scores use
-`sidelobe * separation * min(detection/6, 1)`, emphasizing sidelobes and peak valleys. Components
-and their median product are recorded separately. Automatic selection chooses among valid windows on every axis, including phased direct-axis
-refinement. No window remains a diagnostic reference and an explicit user choice. Explicit candidate pools select the
-highest valid score.
+FID baseline scoring first searches energy-leading traces at `12σ`. If fewer than four qualify,
+deterministic supplementation uses energy rank and acquisition position. At most 256 traces are
+probed and 12 shared traces are scored, subject to a 64 MiB FFT-cache budget. Only when no probed
+trace qualifies at `12σ` does it try `6σ`. These weaker references require FWHM of at least two
+points, adjacent samples at least half the peak height, and frequency support on five traces
+(or all traces when fewer than five were scanned). Reference peaks must reach 25% of the
+strongest significant peak on their trace. All candidates share references, traces and thresholds;
+poor candidate responses are still included.
 
-The merge penalty is evaluated only for nearby pairs already resolved in the unwindowed reference:
-their spacing must be no more than 1.5 times the smaller reference FWHM, and the reference valley
-must be no higher than 0.6 times the smaller reference peak. A candidate counts as merged when its
-valley rises to at least 0.6 times the smaller candidate peak. The final score is
-`score = raw_score * resolution_score`, where `resolution_score = width_ratio^-0.25` and
-`width_ratio = candidate_fwhm / min_valid_fwhm` is at least 1. All logical axes use this same
-continuous resolution factor; there are no hard width limits or additional dimension-specific
-resolution penalties. A valid wider candidate therefore retains a nonzero resolution factor.
+Direct FID trace scores multiply detection strength, separation, symmetry and sidelobe factors.
+Detection equals SNR up to 60, then grows as `60 × (1 + ln(SNR/60))`. Indirect trace scores use
+`min(detection/6, 1) × separation × sidelobe`, prioritizing sidelobes and peak valleys.
+`raw_score` is the median of trace scores, including zeros. Component medians are recorded
+separately and need not multiply to `raw_score`. The FID merge test considers pairs separated
+by at most 1.5 times the smaller reference FWHM, with a reference valley at most 0.6 times the
+smaller peak. A candidate is merged when its valley reaches 0.6 times the smaller candidate peak.
+This stage uses `width_ratio = candidate_fwhm / min_valid_fwhm ≥ 1` and
+`score = raw_score × width_ratio^-0.25` on every axis.
 
-If scanning finds no qualifying trace, the optimizer has no winner: ordinary optimization retains
-the current/default setting, while an explicit candidate request fails. The score attachment also
-records baseline raw metrics and their component scores; see
-[06 §6.1.1](06-outputs-and-records.md#611-reference-optimization-score-table) for the complete
-53-column schema and cache-reuse behavior. The unified peak table remains at 38 columns.
-Scores rank candidates only within the same stage and axis. They do not estimate performance for all
-weak peaks or a globally optimal final spectrum. The per-candidate record is described in
+Phased 2D/3D refinement uses `score_profile=phased_global_window`. Uniform direct axes
+(2D F2 and 3D F3) and indirect axes across the processing routes share this algorithm.
+NUS indirect axes reuse the existing SMILE reconstruction. Strength and spatial coverage select
+at most 128 orthogonal signal regions per axis, under a 64 MiB FFT-cache budget.
+Noise is estimated over the full spectral width before scoring a requested crop. Reference peaks
+must reach 8σ, 12% of the trace maximum and 3σ prominence. Regions have equal weight.
+Measurements cover signed sidelobes, reference-peak retention, distinct neighbouring apices and
+linewidth relative to the unwindowed reference. Sidelobes and widths use within-region medians
+followed by the 80th percentile across regions; peak and pair retention use regional means.
+Peak intensity does not weight the regional vote. Close pairs span at most five times the smaller
+reference FWHM and have a reference valley at most 0.85 times the smaller peak. Candidates must
+retain two distinct apices with a valley at most 0.995 times the smaller candidate peak.
+
+The refined raw score is `peak_retention × sidelobe_factor × separation_factor`, where
+`sidelobe_factor = 1 / (1 + 5 × (negative_lobe_ratio + 0.25 × positive_lobe_ratio))` and
+`separation_factor = 0.25 + 0.75 × mean_regional_pair_retention`, or 1 when there are no reference pairs.
+For `d = max(width_ratio - 1, 0)`, the resolution factor is `(1 + d + d²)^-w`, with `w=1` on
+the direct axis and `w=0.25` on indirect axes. The final score remains
+`score = raw_score × resolution_score`. Refinement adds SP onset `0.40/0.50/0.60`, endpoint
+`0.90/0.94/0.98/1.00` and powers one/two. It adds no LP and does not rerun processing or
+reconstruction for each candidate.
+
+Without valid reference signal or a positive valid score, default optimization retains the
+current/default settings and explicit candidate requests fail. Score attachments preserve
+components, sampling and candidate diagnostics; peak tables remain at 38 columns. Rebuild frozen
+references with `force=True` to use current selection. Scores rank candidates within the same
+stage, axis and run. Fields and cache rules are documented in
 [06 §6.1.1](06-outputs-and-records.md#611-reference-optimization-score-table).
 
 ### Axis effects are reported according to conditions

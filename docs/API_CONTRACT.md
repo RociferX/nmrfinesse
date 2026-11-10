@@ -236,7 +236,7 @@ explicit list replaces the corresponding default pool, and the highest-scoring v
 candidate is used to generate the reference. An entirely invalid pool raises an error; unspecified
 stages/directions retain defaults. Per-condition `optimization_scores.csv` records parameters and scores,
 selection and application state, plus skip or rejection reasons. These records are observational
-metadata and do not change workflow combination parameters. Window scoring probes at most 256 traces
+metadata and do not change workflow combination parameters. FID baseline window scoring probes at most 256 traces
 and scores up to 12 shared representative traces under an FFT-cache limit. Its fast path uses `12σ`;
 only when no eligible reference trace is found does it try `6σ`, with a supported line profile and
 five-trace frequency support (or all scanned traces when fewer than five exist). All candidates use
@@ -246,14 +246,22 @@ optimization retains the current/default setting and explicit candidate requests
 includes `reference_sigma`, `scanned_traces`, `used_traces`, `total_traces` and optional `sampling_json`.
 The API signatures and 38-column peak table are unchanged.
 
-Window candidates use `score = raw_score * (candidate_fwhm / min_valid_fwhm)^(-2)`
-on every logical axis. `raw_score` is the median of per-trace detection, separation, symmetry and
-sidelobe products. Component medians use the same shared traces; multiplying those medians need not
-reproduce `raw_score`. Broader candidates retain a continuous resolution factor; other zero quality
-factors can still yield zero total score. There is no winner when no valid signal or positive final
-score exists. Window rows expose raw and component scores, `resolution_score`, `width_ratio`,
-`resolution_reference_fwhm` and `resolution_weight`. Baseline rows expose four raw metrics and four
-0–100 component scores from the same evaluation; their `raw_score` equals the total score.
+FID baseline window scores take the median trace score, with direct-axis detection × separation ×
+symmetry × sidelobe factors and indirect-axis `min(detection/6, 1)` × separation × sidelobe factors.
+Component medians need not multiply to `raw_score`. Width is relative to the narrowest valid candidate,
+and the resolution factor is `width_ratio^-0.25`.
+
+Phased 2D/3D refinement uses `score_metric=phased_global_window`, with up to 128 equally weighted
+orthogonal regions. It compares signed sidelobes, peak/pair retention and linewidth against the
+unwindowed reference. For `d = max(width_ratio - 1, 0)`, the resolution factor is
+`(1 + d + d²)^-w`, with `w=1` on the direct axis and `w=0.25` on indirect axes. Both stages use
+`score = raw_score × resolution_score`. Uniform direct axes (2D F2/3D F3) and indirect axes share
+refinement; NUS direct axes retain the reconstruction route's SP window. Explicit pools are not
+expanded or refined. `sampling_json` preserves sampling, the baseline window and candidate evidence.
+Window rows expose raw/components, resolution, width and exponent fields; fields not measured by
+the current stage remain blank. Baseline rows expose four raw metrics and four 0–100 components;
+their `raw_score` equals the total score. Full formulas and sampling rules are in the
+[scoring method](external-api/07-methods-and-metrics.md#reference-window-candidate-scoring).
 
 The score attachment retains schema `v1`, appending fields after the existing columns for 53 CSV
 columns. Valid legacy CSV files are reused unchanged; legacy JSON rows retain missing fields.

@@ -55,24 +55,34 @@ A newly written attachment contains 53 columns. Existing valid CSV files are reu
 | --- | --- |
 | `condition`, `dataset_key`, `run_id` | Condition, dataset and reference run identity |
 | `stage`, `axis`, `source` | `baseline`/`window`, logical F axis, and joint spectrum/FID/reconstruction-plane scoring source |
-| `candidate`, `score`, `score_metric` | Candidate label, score and `baseline_quality`/`window_detection` metric |
+| `candidate`, `score`, `score_metric` | Candidate label, score and `baseline_quality`, `window_detection`, `indirect_sidelobe_valley` or `phased_global_window` metric |
 | `type`, `off`, `end`, `pow`, `c`, `g1`, `g2`, `g3`, `lb` | Window candidate parameters; inapplicable cells are empty |
 | `enabled`, `mode`, `order` | Baseline candidate parameters; `off` means no correction and `auto:1` is automatic first order |
 | `parameters_json` | Full candidate parameters for programmatic use |
 | `selected`, `applied` | Whether the optimizer selected the candidate and whether it was retained/applied; these can differ |
 | `status`, `reason` | Scored, vetoed, skipped, disabled or failed state and reason |
 | `fwhm_points`, `snr`, `shape`, `merged`, `n_ref` | Window linewidth, SNR, shape and per-trace summaries; the last two may be fractional medians, not full 3D peak counts |
-| `raw_score`, `detection_score`, `separation_score`, `symmetry_score`, `sidelobe_score`, `resolution_score` | Window score and its components. Detection is 0–30; separation, symmetry and sidelobe factors are each 0–1. `raw_score` is the median of per-trace products of detection strength, peak-separation, symmetry and sidelobe factors. Each component is also stored as its median over the same traces, so multiplying component medians need not reproduce `raw_score` |
-| `width_ratio`, `resolution_reference_fwhm`, `resolution_weight` | Resolution audit values: `width_ratio = candidate_fwhm / min_valid_fwhm` and is at least 1; `resolution_reference_fwhm` is the smallest valid candidate FWHM in points; `resolution_weight` defaults to 2 |
+| `raw_score`, `detection_score`, `separation_score`, `symmetry_score`, `sidelobe_score`, `resolution_score` | FID baseline raw scores are median trace scores: detection × separation × symmetry × sidelobe on the direct axis, and `min(detection/6, 1)` × separation × sidelobe on indirect axes. Phased refinement uses reference-peak retention × sidelobe × separation, with symmetry left blank |
+| `width_ratio`, `resolution_reference_fwhm`, `resolution_weight` | FID baseline width is relative to the narrowest valid candidate, with exponent 0.25 and reference FWHM in points. Phased refinement uses the unwindowed reference, exponent 1 on the direct axis and 0.25 on indirect axes, and a blank reference-FWHM column. The formulas differ as described below |
 | `baseline_slope`, `baseline_offset`, `baseline_curvature`, `baseline_stripe` | Raw metrics from the same `baseline_quality.evaluate` call; populated on baseline rows only |
 | `baseline_slope_score`, `baseline_offset_score`, `baseline_curvature_score`, `baseline_stripe_score` | Interpretable 0–100 baseline components, respectively `100*(1-min(1,4*abs(slope)))`, `100*(1-min(1,2*abs(offset)))`, `100*(1-min(1,6*curvature))`, and `100*(1-min(1,stripe))`; populated on baseline rows only. `raw_score` equals the total baseline `score` |
-| `reference_sigma` | Reference threshold used on the axis, 12 or the conditional 6σ fallback; this is not the final peak-table threshold |
-| `scanned_traces`, `used_traces`, `total_traces` | Probe count, shared scoring-trace count and total traces; at most 256 are probed and 12 are scored, subject to the cache limit |
-| `sampling_json` | Shared trace indices, reference peaks, deterministic supplementation reasons, probe budget and threshold diagnostics; it may be empty on non-window rows |
+| `reference_sigma` | FID reference threshold, 12 or conditional 6σ. Phased refinement separately requires 8σ, 12% of the trace maximum and 3σ prominence; the inherited FID threshold is not the refinement or final peak-table threshold |
+| `scanned_traces`, `used_traces`, `total_traces` | FID baseline probes at most 256 traces and scores 12. In phased refinement, `used_traces` counts active regions, up to 128; inherited FID probe counts still describe the preceding stage |
+| `sampling_json` | Shared references and sampling diagnostics. `score_profile` distinguishes `indirect_sidelobe_valley` from `phased_global_window`; the latter adds region/pair counts, the baseline window and per-candidate signed sidelobe, width and retention evidence. Non-window rows may be empty |
 
 Scores rank candidates only within the same stage, axis and optimization run; window and baseline scores are not comparable and neither is a total score for the final spectrum. Window candidates share the same representative traces, reference peaks, thresholds and resolved peak pairs. A shared trace with no valid reference peak contributes zero. The scoring target is not rebuilt from each candidate.
 
-For each trace, the raw window score is the product of detection strength, peak-separation, symmetry and sidelobe factors. `raw_score` is the median of those products across all shared traces, including zero-score traces. The component columns are separate medians over the same traces, so their product need not equal `raw_score`. The final window score is `score = raw_score * resolution_score`, with `resolution_score = width_ratio^-2` for every logical axis. A valid but wider candidate retains a continuous nonzero resolution factor instead of failing a hard width gate; higher detection or shape quality can compensate for moderate broadening. Other quality components can still make `raw_score` zero. No winner is produced without valid reference signal or when all final candidate scores are non-positive.
+FID baseline `raw_score` is the median of shared trace scores, including zeros. Component medians
+need not multiply to `raw_score`. This stage uses `width_ratio = candidate_fwhm / min_valid_fwhm ≥ 1`
+and `resolution_score = width_ratio^-0.25`.
+
+For `phased_global_window`, `raw_score` multiplies regional mean peak retention, the sidelobe factor
+and the separation factor. Sidelobes and widths use the 80th percentile across regions. Width is
+relative to the unwindowed reference: for `d = max(width_ratio - 1, 0)`,
+`resolution_score = (1 + d + d²)^-w`, with `w=1` on the direct axis and `w=0.25` on indirect axes.
+Both stages use `score = raw_score × resolution_score`. No winner is produced without valid
+reference signal or a positive valid final score. Full component formulas and reference/pair
+criteria are in the [scoring method](07-methods-and-metrics.md#reference-window-candidate-scoring).
 
 Baseline total score follows `baseline_quality.evaluate`: `clip(100*(1-min(1,4*abs(slope)+2*abs(offset)+6*curvature+stripe)),0,100)`. Components are clipped separately for interpretation and cannot be multiplied or averaged to recover the total. A stripe veto happens before quality scoring: the CSV score is empty and `status="vetoed"`, rather than exposing an internal veto sentinel. The default baseline optimizer keeps `off` when the gain is at most 0.5 and skips candidate scoring when the baseline score is at least 95. An explicit baseline grid bypasses those two early-retention rules, but stripe vetoes still apply; reference construction fails if every explicit baseline candidate is vetoed.
 

@@ -145,7 +145,7 @@ run_parameter_study(..., peaks="library.list")   # or a peak_id,H_ppm,N_ppm CSV
 - All parameters that affect the result must be traceable: `parameters_requested` ->
   `parameters_used` -> `parameters_resolved` (automatic parameter actual result).
 
-### Reference cache, carrier and spectral width (v1.1.5)
+### Reference cache, carrier and spectral width
 
 Reference reuse requires an exact normalized processing request match, including phase route,
 direct range, and all parameters (nested mappings and equivalent dotted keys normalize alike).
@@ -296,11 +296,15 @@ sidelobes and peak valleys, using `sidelobe * separation * min(detection/6, 1)` 
 The median trace score is multiplied by `width_ratio^-0.25`, where
 `width_ratio = candidate_fwhm / min_valid_fwhm` and is at least 1.
 
-For phase-sensitive uniform 2D F2 and 3D F3, a shared complex preview also compares the phased
-peak valleys. A replacement must keep noise within 103% of the baseline, SNR at least 95% of the
-baseline and the number of bridged pairs from increasing. Refinement selects among eligible
-windows and does not automatically switch back to no window. Explicit pools retain their highest-valid-score rule. Default NUS direct-axis
-processing retains the reconstruction route's SP window.
+Phased 2D/3D axes then share a complex-preview refinement over equally weighted signal regions.
+It compares signed sidelobes, peak retention, neighbouring apices and linewidth against the
+unwindowed reference. For `d = max(width_ratio - 1, 0)`, its resolution factor is
+`(1 + d + d²)^-w`, with `w=1` on the direct axis and `w=0.25` on indirect axes.
+Refinement adds SP onset `0.40/0.50/0.60`, endpoint `0.90/0.94/0.98/1.00` and powers one/two,
+without LP. Default NUS direct-axis processing retains the reconstruction route's fixed SP.
+Explicit lists are not expanded or subjected to phased refinement; they select the highest valid
+supplied score, with SP-only candidates on the NUS direct axis. See the
+[scoring method](07-methods-and-metrics.md#reference-window-candidate-scoring).
 
 To evaluate a defined candidate set, pass
 `optimization_candidates` in the reference `params`. It is accepted by the high-level

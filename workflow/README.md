@@ -9,7 +9,7 @@ It may use `core/` and `backend/`, and must not import `gui/` or `viewer/`.
 | `stepwise.py` | the stepwise pipeline (FID generation, spectrum generation) shared with the GUI |
 | `phase_routes.py` | the unified phase route: complex preview, in-memory phase search, parameter optimisation, final run |
 | `manual.py` | the manual path: view, edit and run `fid.com` and the processing scripts |
-| `batch.py` | batch runs over a group (2D only) |
+| `batch.py` | homogeneous 1D/2D/3D groups; automatic 2D can run concurrently, other groups run sequentially |
 | `pick_peaks.py` | peak picking and localisation |
 | `peak_align.py` | aligning peak tables between spectra |
 | `direct_diagnostics.py` | FID diagnostics: DC offset, bad points, drift, broadband peaks |
@@ -21,7 +21,7 @@ It may use `core/` and `backend/`, and must not import `gui/` or `viewer/`.
 | `optimization_report.py` | writing the quality and optimisation record |
 | `ucsf_export.py` | exporting processed spectra |
 
-Reference baseline scores come from `baseline_optimize` calling `core.qc.baseline_quality.evaluate`; the score combines slope, offset, curvature and stripe penalties. The attachment records those raw metrics and their separate score components. Window scoring takes the median of per-trace detection-strength, peak-separation, symmetry and sidelobe products, then applies the continuous `width_ratio^-2` resolution factor on every logical axis.
+Reference baseline scores come from `baseline_optimize` calling `core.qc.baseline_quality.evaluate`; the score combines slope, offset, curvature and stripe penalties. The attachment records those raw metrics and their separate score components. Window selection starts with FID baseline scoring, then refines phased 2D/3D axes using equally weighted regions to compare signed sidelobes, peak retention and resolution. The FID resolution factor is `width_ratio^-0.25`; refinement compares width with the unwindowed reference and uses `(1+d+d²)^-w`, with direct-axis `w=1` and indirect-axis `w=0.25`. First-order phase uses a receiver-delay prior and phases of separated peaks, with preview/final axis coordinates reconciled. See the [score fields](../docs/external-api/06-outputs-and-records.md#611-reference-optimization-score-table).
 One documented exception to the boundary rule: `stepwise.py` reads the experiment-type labels from
 `gui/notes.py`, so that the GUI list and the stepwise path cannot drift apart.
 

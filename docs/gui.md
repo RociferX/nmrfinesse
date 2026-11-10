@@ -134,7 +134,7 @@ The viewer's File menu opens the current spectrum, opens an external spectrum or
 | Wheel and middle button | Zoom, or hold the middle button and drag to pan |
 | 2D/3D left drag | Zoom into a rectangle in normal viewing mode |
 | Contour start | Set the starting intensity percentage. Lower values reveal weaker signals and may show more noise |
-| Levels | Set how many contour levels are drawn |
+| Levels | Number of contour levels; defaults to 12, with saved settings retained |
 | Positive and negative controls | Hide contours of either sign |
 | Aspect | Set the horizontal/vertical ratio. Enter applies it, and 0 gives free scaling |
 | Full view | Restore the initial or full extent for the current mode |

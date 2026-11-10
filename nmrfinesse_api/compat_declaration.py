@@ -23,7 +23,7 @@ from typing import Any
 
 #: declared behaviour level (see the module doc; meaning matches nmrfinesse_api.compat)
 DECLARATION: dict[str, Any] = {'schema': 'nmrfinesse_api.compat.declaration.v1',
- 'digest': 'ae75648346faea2a7d4f817e3f6d59ddff73673c64cef8c9e0d7c35b29d09bcb',
+ 'digest': '8186f2bed951c2c875be597a573abb8644170af9f90ee148afff7b83cc5b184f',
  'token_digest': '309b2c374122a022f58da637d59d8a30293b567a39290f309cb36bfe8314f311',
  'compat_level': 'behavior_changed',
  'affected': ['reference', 'processing'],

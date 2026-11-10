@@ -2,8 +2,6 @@
 
 ## 6.1 目录布局
 
-下图以二维研究为例。谱图扩展名随维度为 `.ft1`、`.ft2` 或 `.ft3`。
-
 ```text
 <root>/
   project.json                    NMRFinesse 项目(数据与 WorkflowRun 登记)
@@ -53,25 +51,30 @@ print(reference.optimization_scores["path"])
 | --- | --- |
 | `condition`, `dataset_key`, `run_id` | 条件、数据集和参考运行身份 |
 | `stage`, `axis`, `source` | `baseline`/`window`、逻辑F轴、联合谱/FID/重构平面的评分来源 |
-| `candidate`, `score`, `score_metric` | 候选名称、实际评分及`baseline_quality`/`window_detection`口径 |
+| `candidate`, `score`, `score_metric` | 候选名称、实际评分及`baseline_quality`、`window_detection`、`indirect_sidelobe_valley`或`phased_global_window`口径。 |
 | `type`, `off`, `end`, `pow`, `c`, `g1`, `g2`, `g3`, `lb` | 窗候选参数；不适用的列留空 |
 | `enabled`, `mode`, `order` | 基线候选参数，off是不校正；auto:1是自动一阶候选 |
 | `parameters_json` | 完整候选参数，便于程序读取 |
 | `selected`, `applied` | 优化器选中、最终保留或采用该配置；两者不总相同 |
 | `status`, `reason` | 评分、否决、跳过、关闭或失败状态及原因 |
 | `fwhm_points`, `snr`, `shape`, `merged`, `n_ref` | 窗评分的线宽点数、SNR、线形和逐迹统计量；后两者可为中位数小数，不是完整三维峰计数 |
-| `raw_score`, `detection_score`, `separation_score`, `symmetry_score`, `sidelobe_score`, `resolution_score` | 窗评分各项；检测分项范围0–30，其余三个质量因子范围0–1；`raw_score`是逐迹检测强度×分峰×对称×旁瓣乘积的中位数，四个子分项分别取同一批迹的中位数，故子分项相乘不保证等于`raw_score` |
-| `width_ratio`, `resolution_reference_fwhm`, `resolution_weight` | 连续分辨率调整的审计值；`width_ratio = candidate_fwhm / min_valid_fwhm`且不小于1，`resolution_reference_fwhm`为本轮有效候选的最小有效FWHM（点），`resolution_weight`缺省为2 |
+| `raw_score`, `detection_score`, `separation_score`, `symmetry_score`, `sidelobe_score`, `resolution_score` | 窗评分各项；FID基准原分取逐迹中位数，直接维用检测×分峰×对称×旁瓣，间接维用`min(检测分/6, 1)`×分峰×旁瓣。复型复评分用参考峰保留率×旁瓣因子×分峰因子，对称项留空。 |
+| `width_ratio`, `resolution_reference_fwhm`, `resolution_weight` | FID基准的线宽比相对本轮最窄有效候选，指数0.25，参考FWHM以点计。复型复评分的线宽比相对无窗参考，指数为直接维1、间接维0.25；参考FWHM列留空。两阶段分辨率公式见下文 |
 | `baseline_slope`, `baseline_offset`, `baseline_curvature`, `baseline_stripe` | 基线候选在同一次`baseline_quality.evaluate`中的原始指标；仅基线行有值 |
 | `baseline_slope_score`, `baseline_offset_score`, `baseline_curvature_score`, `baseline_stripe_score` | 各基线指标对应的0–100分项；依次为`100*(1-min(1,4*abs(slope)))`、`100*(1-min(1,2*abs(offset)))`、`100*(1-min(1,6*curvature))`、`100*(1-min(1,stripe))`；仅基线行有值。`raw_score`等于基线总分`score` |
-| `reference_sigma` | 本轴参考检测实际使用12或6；仅在12σ无合格参考时尝试带跨迹支持的6σ回退；不是最终峰表的检测阈值 |
-| `scanned_traces`, `used_traces`, `total_traces` | 探测数、正式评分迹数及本轴总迹数；正式评分最多12条，探测最多256条，并受缓存大小上限约束 |
-| `sampling_json` | 各候选共用的迹索引、参考峰、补样原因、探测预算及阈值诊断；非窗评分行可为空对象 |
+| `reference_sigma` | FID基准参考检测使用12或条件性6σ。复型复评分另用8σ、12%迹峰高及3σ突出度；不将此列沿用的FID阈值当作复评分或最终选峰阈值 |
+| `scanned_traces`, `used_traces`, `total_traces` | FID基准最多探测256条、评分12条。复型复评分的`used_traces`为实际有参考峰的区域数，最多128；FID探测计数仍表示前一阶段 |
+| `sampling_json` | 共用参考与采样诊断。`score_profile`区分FID间接维的`indirect_sidelobe_valley`及复型复评分的`phased_global_window`；后者另存区域、峰对数、基准窗和逐候选正负旁瓣、线宽与保留证据。 |
 
 分数越高越优，但只在**同阶段、同轴、本轮候选**内比较，不能比较窗分和基线分，也不代表终谱质量总分。
 各窗候选在相同代表迹和共享参考峰上评分；无有效参考峰的迹线记零分，不从候选谱另建参考目标。
-窗`raw_score`为所有共享采样迹的检测强度×分峰因子×对称因子×旁瓣因子乘积的中位数，包括零分迹；四个可读分项各自对同一批迹取中位数，因此四个分项的乘积可能与`raw_score`不同。最终窗`score = raw_score * resolution_score`。
-`width_ratio = candidate_fwhm / min_valid_fwhm`（`r≥1`），`resolution_score = r^(-resolution_weight)`，缺省`resolution_weight=2`；该连续调整对直接维和间接维使用同一规则。有效但较宽的候选仍有非零分辨率因子，不因固定比值门槛直接归零。其它质量项可使`raw_score`为0；没有有效参考信号或全部候选最终分不为正时不产生赢家。
+FID基准的`raw_score`为共享采样迹逐迹原分中位数，包括零分迹；各分项单独取中位数，其乘积不一定等于原分。
+此阶段`width_ratio = candidate_fwhm / min_valid_fwhm ≥ 1`，`resolution_score = width_ratio^-0.25`。
+`phased_global_window`的`raw_score`为区域平均参考峰保留率×旁瓣因子×分峰因子；旁瓣和线宽采用区域间80%分位数。
+其线宽比相对于无窗参考，设`d = max(width_ratio - 1, 0)`，`resolution_score = (1 + d + d²)^-w`，直接维`w=1`、间接维`w=0.25`。
+两阶段均用`score = raw_score × resolution_score`。没有有效参考信号或全部有效最终分不为正时无赢家。
+完整分项公式及参考峰、近邻峰判据见[评分方法](07-methods-and-metrics.md#参考窗函数候选评分)。
+
 基线总分沿用`baseline_quality.evaluate`：`clip(100*(1-min(1,4*abs(slope)+2*abs(offset)+6*curvature+stripe)),0,100)`；各分项分别截断后便于解释，不能用分项的乘积或平均值还原总分。
 基线条纹否决发生在质量评分之前，CSV分数留空、状态为`vetoed`，不把内部否决哨兵当质量分。
 默认基线优化在增益不超过0.5时保留off，即使某个校正候选的原始分数略高；基线已良好时仅记录已算出的off分。

@@ -3,8 +3,8 @@
 ## How to read the figures
 
 The automatically processed spectrum is on the left and the author spectrum is on the right.
-Blue contours show positive signal and red contours show negative signal. As in the Viewer, each
-panel uses 12 logarithmically spaced levels starting at 8% of its positive maximum, or the
+Blue contours show positive signal and red contours show negative signal. The figures use the
+Viewer's logarithmic contour spacing, with 12 levels starting at 8% of each panel's positive maximum, or the
 absolute negative maximum if there is no positive signal. The axes use the same scale per Hz.
 The 3D figures show signed
 maximum-absolute-value HN, HC and NC projections over the common volume. Assignment counts use
