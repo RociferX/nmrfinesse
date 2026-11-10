@@ -149,43 +149,32 @@ def test_automatic_selection_keeps_window_despite_unwindowed_score(
     )
 
 
-@pytest.mark.parametrize(("unwindowed_valley", "windowed_valley", "selected_type"), [
-    (0.35, 0.40, "sine_bell"),
-    (0.74, 0.80, "sine_bell"),
-    (0.15, 0.40, "sine_bell"),
-])
-def test_direct_valley_refinement_keeps_window_despite_unwindowed_valley(
+def test_direct_global_refinement_scores_single_peak_regions_without_selecting_no_window(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
-    unwindowed_valley: float, windowed_valley: float, selected_type: str,
 ) -> None:
     import nmrglue as ng
 
     import workflow.window_optimize as windows
 
-    header = {"FDDIMORDER": [2], "FDF2SW": 2000.0, "FDF2OBS": 600.0}
-    monkeypatch.setattr(ng.pipe, "read", lambda path: (header, np.ones((1, 32), dtype=complex)))
-    monkeypatch.setattr(windows, "robust_noise_sigma", lambda trace: 1.0)
-    monkeypatch.setattr(windows, "_window_vector", lambda cfg, n, sw: np.ones(n))
-    monkeypatch.setattr(windows, "_reference_peaks", lambda *args, **kwargs: [
-        (10, 10.0, 4.0), (16, 10.0, 4.0),
+    t = np.arange(90)
+    fid = np.exp(2j * np.pi * .2 * t - t / 500.)[None, :]
+    preview = np.fft.fftshift(np.fft.ifft(fid, axis=-1), axes=-1)
+    header = {"FDDIMORDER": [2], "FDF2SW": 2000., "FDF2OBS": 600.}
+    monkeypatch.setattr(ng.pipe, "read", lambda path: (header, preview))
+    sp = windows.DEFAULT_CANDIDATES[0]
+    initial = WindowOptimizeResult(choice=sp, changed=True, scores=[
+        {"cfg": {"type": "none"}, "label": "none", "status": "scored"},
+        {"cfg": sp, "label": "SP", "status": "scored"},
     ])
-    valleys = iter((0.5, unwindowed_valley, windowed_valley, *([windowed_valley] * 3)))
-    monkeypatch.setattr(windows, "_valley_fraction", lambda *args: next(valleys))
-    window = windows.DEFAULT_CANDIDATES[0]
-    result = WindowOptimizeResult(choice=window, changed=True, scores=[
-        {"cfg": {"type": "none"}, "status": "scored"}, {"cfg": window, "status": "scored"},
-    ])
-
     refined = windows.refine_direct_window(
-        result, tmp_path / "preview.ft2", phase=(0.0, 0.0), zf_size=32,
+        initial, tmp_path / "preview.ft2", phase=(0., 0.), zf_size=256,
         ppm_range=None, current=None,
     )
-
-    assert refined.choice["type"] == selected_type
-    assert refined.sampling["score_profile"] == "direct_peak_valley"
-    assert refined.scores[0]["reason"] == (
-        "automatic_requires_window"
-    )
+    assert refined.choice["type"] != "none"
+    assert refined.sampling["score_profile"] == "phased_global_window"
+    assert refined.sampling["pair_count"] == 0
+    assert refined.sampling["used_traces"] == 1
+    assert all(row["cfg"]["type"] != "none" for row in refined.scores)
 
 
 def test_real_fid_exports_nonwinning_broad_candidate_components() -> None:
@@ -413,7 +402,10 @@ def test_uniform_f1_uses_complex_points_after_direct_projection(bruker_dir: Path
 
 
 @pytest.mark.parametrize("ndim", [2, 3])
-def test_indirect_phased_preview_preserves_a_pair_off_the_strongest_trace(ndim: int) -> None:
+@pytest.mark.parametrize(("gap", "amplitude"), [(1, .75), (3, .3)])
+def test_indirect_phased_preview_preserves_a_pair_off_the_strongest_trace(
+    ndim: int, gap: int, amplitude: float,
+) -> None:
     from workflow.window_optimize import WindowOptimizeResult, refine_indirect_window
 
     t = np.arange(90)
@@ -437,12 +429,86 @@ def test_indirect_phased_preview_preserves_a_pair_off_the_strongest_trace(ndim: 
     ])
     options = {"axis": 0 if ndim == 3 else 1, "phase": (0., 0.), "sw": 2187., "current": None}
     separated = refine_indirect_window(
-        initial, preview(strongest * tone(18) + crowded * (tone(8) + .75 * tone(9))), **options,
+        initial, preview(strongest * tone(18) + crowded * (tone(8) + amplitude * tone(8 + gap))),
+        **options,
     )
-    assert separated.choice == gm
-    assert separated.sampling["pair_count"] == 1
+    assert separated.sampling["pair_count"] >= 1
+    assert next(r for r in separated.scores if r["selected"])["preserved_pairs"] == (
+        separated.sampling["pair_count"]
+    )
     single = refine_indirect_window(initial, preview(strongest * tone(18)), **options)
-    assert single is initial
+    assert single.sampling["pair_count"] == 0
+    assert single.sampling["score_profile"] == "phased_global_window"
+
+
+
+@pytest.mark.parametrize("ndim", [2, 3])
+def test_global_window_choice_does_not_follow_one_rescaled_strong_region(ndim: int) -> None:
+    import workflow.window_optimize as windows
+
+    t = np.arange(90)
+    positions = np.arange(120)[:, None]
+    def tone(k):
+        return np.exp(2j * np.pi * k * t / len(t) - t / 500.)
+    common = sum(np.exp(-((positions - k) / 1.5) ** 2) * tone(12 + k % 11)
+                 for k in range(10, 110, 10))
+    exceptional = np.exp(-((positions - 115) / 1.5) ** 2) * (tone(8) + .75 * tone(9))
+    initial = windows.WindowOptimizeResult(
+        choice=windows.INDIRECT_CANDIDATES[5], changed=True, status="scored",
+        scores=[{"cfg": cfg, "label": windows._label(cfg), "status": "scored"}
+                for cfg in windows.INDIRECT_CANDIDATES],
+    )
+    choices = []
+    for scale in (1., 10000.):
+        spectrum = np.fft.fftshift(
+            np.fft.ifft(common + scale * exceptional, axis=-1), axes=-1,
+        )
+        if ndim == 3:
+            spectrum = spectrum.T[:, :, None]
+        result = windows.refine_indirect_window(
+            initial, spectrum, axis=0 if ndim == 3 else 1,
+            phase=(0., 0.), sw=2187., current=None,
+        )
+        choices.append(result.choice)
+        assert result.sampling["used_traces"] >= 10
+        assert len(result.sampling["candidate_evidence"]) > 13
+    assert choices[0] == choices[1]
+
+
+
+@pytest.mark.parametrize("ndim", [2, 3])
+def test_crowded_crop_keeps_signal_regions_with_full_width_noise(ndim: int) -> None:
+    import workflow.window_optimize as windows
+
+    t = np.arange(128)
+    positions = np.arange(100)[:, None]
+    fid = sum(np.exp(-((positions - k) / .8) ** 2) for k in range(10, 100, 20))
+    fid = fid * np.exp(2j * np.pi * .25 * t - t / 20.)
+    spectrum = np.fft.fftshift(np.fft.ifft(fid, axis=-1), axes=-1)
+    if ndim == 3:
+        spectrum = spectrum.T[:, :, None]
+    sp = windows.DEFAULT_CANDIDATES[0]
+    initial = windows.WindowOptimizeResult(choice=sp, changed=True, scores=[
+        {"cfg": sp, "label": "SP", "status": "scored"},
+    ])
+    result = windows._refine_phased_windows(
+        initial, spectrum, axis=0 if ndim == 3 else 1, phase=(0., 0.),
+        sw=2000., current=None, crop=slice(230, 280), resolution_weight=1.,
+    )
+    assert result is not initial
+    assert result.sampling["used_traces"] == 5
+
+
+def test_global_trace_sampler_collapses_plateaus_and_covers_weak_regions() -> None:
+    from workflow.window_optimize import _phased_trace_indices
+
+    spectrum = np.ones((800, 32), dtype=complex)
+    spectrum[10:40] *= 10000
+    spectrum[400:480] *= 2
+    indices = _phased_trace_indices(spectrum, 4)
+    assert sum(10 <= i < 40 for i in indices) == 1
+    assert any(400 <= i < 480 for i in indices)
+    assert len(indices) <= 4
 
 
 def test_indirect_windows_missing_recon_skips(

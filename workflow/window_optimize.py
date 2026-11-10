@@ -8,18 +8,19 @@ Only peaks at least 25% of the strongest
 reference peak in each trace enter the detection/near-neighbour criteria. Noise excludes all
 detected peaks where sufficient background remains.
 
-Direct traces score detection strength (height/noise, compressed above 60), separation and shape.
-Indirect traces prioritize sidelobes and peak-to-peak valleys once detection has 6-sigma support.
-Near pairs are within 1.5 times the smaller reference FWHM; a valley above 0.6 times the
-smaller candidate height counts as merged, provided the reference valley was resolved.
-Aggregate the same traces for every candidate, including degraded responses.
+Direct FID scores combine detection, separation and shape; indirect FID scores prioritize
+sidelobes and peak valleys. These initial scores use shared magnitude traces and a continuous
+inverse fourth-root linewidth penalty. Default automatic selection uses a valid window;
+unwindowed responses remain diagnostic references and explicit user choices.
 
-Score candidate broadening continuously relative to the narrowest valid FWHM, with
-an inverse fourth-root width factor on every axis. Better signal and shape can compensate
-for modest broadening. Keep raw scores and all component observations. GM/EM require SW.
-Default automatic selection chooses the best valid window on every axis.
-No window remains a diagnostic reference and an explicit user choice.
-Explicit pools select the highest valid score and keep input order for ties.
+Phase-sensitive 2D/3D axes then share a signed complex-preview refinement. Sample distinct
+orthogonal signal regions by strength and spatial coverage, with equal votes per region.
+Compare negative and positive sidelobes, shared peak retention, close-pair separation and
+linewidth against the unwindowed response. The direct-axis factor penalizes
+broadening more strongly than the indirect-axis fourth-root factor; both increase the cost
+continuously for large linewidth growth. Search SP onset/endpoints
+with first and second powers, without extending the FID or rerunning each backend candidate.
+Explicit candidate pools retain their highest-valid-score rule and bypass this refinement.
 
 Default pools allow graceful fallback. Explicit pools use strict_candidates=True and fail
 when no valid choice is available, so they cannot silently use a default configuration.
@@ -1149,110 +1150,209 @@ def refine_direct_window(
     ppm_range: tuple[str, str] | None,
     current: dict[str, Any] | None,
 ) -> WindowOptimizeResult:
-    """Use phased, orthogonally resolved traces to choose a quieter unbridged window."""
+    """Apply shared signed global scoring to the orthogonally resolved direct axis."""
     import nmrglue as ng
-    from scipy.fft import fft, fftshift, ifft, ifftshift
 
     header, spectrum = ng.pipe.read(str(preview_path))
     if not np.iscomplexobj(spectrum) or spectrum.ndim < 2:
         return result
-    n = spectrum.shape[-1]
-    size = max(n, zf_size)
-    traces = spectrum.reshape(-1, n)
-    if len(traces) > 256:
-        energy = np.einsum("ij,ij->i", traces.real, traces.real)
-        energy += np.einsum("ij,ij->i", traces.imag, traces.imag)
-        leaders = np.argsort(-energy, kind="stable")[:128]
-        positions = np.linspace(0, len(traces) - 1, 128, dtype=int)
-        traces = traces[np.union1d(leaders, positions)]
-    fid = fft(ifftshift(traces, axes=-1), axis=-1) / n
-    p0, p1 = phase
-    rotation = np.exp(1j * np.deg2rad(p0 + p1 * np.arange(size) / size)).astype(fid.dtype)
-    axis = f"FDF{int(header['FDDIMORDER'][0])}"
-    sw = float(header[axis + "SW"])
-    obs = float(header[axis + "OBS"])
+    prefix = f"FDF{int(header['FDDIMORDER'][0])}"
+    sw = float(header[prefix + "SW"])
+    obs = float(header[prefix + "OBS"])
     crop = slice(None)
     if ppm_range is not None and sw > 0 and obs > 0:
+        size = max(8 * spectrum.shape[-1], zf_size)
         lo, hi = sorted(map(float, ppm_range))
-        ppm = float(header[axis + "CAR"]) + (0.5 - np.arange(size) / size) * sw / obs
+        ppm = float(header[prefix + "CAR"]) + (0.5 - np.arange(size) / size) * sw / obs
         inside = np.flatnonzero((ppm >= lo) & (ppm <= hi))
         if inside.size:
             crop = slice(inside[0], inside[-1] + 1)
-
-    def render(cfg: dict[str, Any]) -> np.ndarray:
-        window = _window_vector(cfg, n, sw).astype(fid.real.dtype)
-        transformed = fftshift(ifft(fid * window, n=size, axis=-1), axes=-1)
-        return (transformed * rotation).real[:, crop]
-
-    pairs = []
-    for index, trace in enumerate(np.abs(render({"type": "none"}))):
-        peaks = _reference_peaks(trace, noise_sigma=robust_noise_sigma(trace))
-        refs = _significant_reference(peaks)
-        for left, right in zip(refs, refs[1:]):
-            a, b = left[0], right[0]
-            if 2 < b - a <= 4.0 * min(left[2], right[2]) and _valley_fraction(trace, a, b) <= 0.9:
-                pairs.append((index, a, b))
-    if not pairs:
-        return result
-
-    candidates = [row["cfg"] for row in result.scores if row["status"] == "scored"]
-    for off in (0.55, 0.60, 0.65):
-        cfg = {"type": "sine_bell", "off": off, "end": 0.98, "pow": 1, "c": 0.5}
-        if cfg not in candidates:
-            candidates.append(cfg)
-
-    def compare(cfg: dict[str, Any]) -> dict[str, Any]:
-        phased = render(cfg)
-        amp = np.abs(phased)
-        valleys = np.array([_valley_fraction(amp[i], a, b) for i, a, b in pairs])
-        height = np.median([min(amp[i, a], amp[i, b]) for i, a, b in pairs])
-        noise = robust_noise_sigma(phased)
-        valley = float(np.median(valleys))
-        return {
-            "cfg": dict(cfg), "label": _label(cfg), "raw_score": 1.0 - valley,
-            "separation_score": 1.0 - valley, "valley": valley,
-            "bridged_pairs": int(np.count_nonzero(valleys > _MERGE_VALLEY_FRACTION)),
-            "noise": noise, "snr": float(height / noise),
-        }
-
-    rows = [compare(cfg) for cfg in candidates]
-    baseline = next((row for row in rows if row["cfg"] == result.choice), None)
-    if baseline is None or baseline["snr"] <= 0:
-        return result
-    for row in rows:
-        reason = ""
-        if row["noise"] > 1.03 * baseline["noise"] or row["snr"] < 0.95 * baseline["snr"]:
-            reason = "direct_window_noise_or_snr"
-        elif row["bridged_pairs"] > baseline["bridged_pairs"]:
-            reason = "direct_window_more_bridges"
-        row.update(status="rejected" if reason else "scored", reason=reason,
-                   score=0.0 if reason else row["raw_score"])
-    scored = [row for row in rows if row["status"] == "scored"]
-    best = max(scored, key=lambda row: row["score"])
-    if best["score"] <= baseline["score"]:
-        best = baseline
-    if _is_unwindowed(best["cfg"]):
-        windowed = max((row for row in scored if not _is_unwindowed(row["cfg"])),
-                       key=lambda row: row["score"], default=None)
-        if windowed is not None:
-            best["reason"] = "automatic_requires_window"
-            best = windowed
-    for row in rows:
-        row["selected"] = row is best
-    evidence = [{k: row[k] for k in ("label", "valley", "bridged_pairs", "noise", "snr")}
-                for row in rows]
-    return WindowOptimizeResult(
-        choice=best["cfg"], changed=best["cfg"] != (current or {}), scores=rows,
-        skipped_candidates=result.skipped_candidates, status="scored", optimal_label=best["label"],
-        sampling={
-            **result.sampling, "score_profile": "direct_peak_valley", "pair_count": len(pairs),
-            "baseline_window": baseline["label"], "candidate_evidence": evidence,
-        },
-        logs=[*result.logs,
-              f"Direct window peak-valley check: {best['label']} ({len(pairs)} pairs, "
-              f"median valley {baseline['valley']:.3f} -> {best['valley']:.3f})"],
+    return _refine_phased_windows(
+        result, spectrum, axis=spectrum.ndim - 1, phase=phase, sw=sw,
+        current=current, zf_size=zf_size, crop=crop, resolution_weight=1.,
     )
 
+
+def _phased_trace_indices(spectrum: np.ndarray, limit: int = 128) -> np.ndarray:
+    """Sample distinct orthogonal regions, including weaker spatial bands."""
+    from scipy.ndimage import label, maximum_filter, maximum_position
+
+    energy = np.einsum("...i,...i->...", spectrum.real, spectrum.real)
+    energy += np.einsum("...i,...i->...", spectrum.imag, spectrum.imag)
+    regions, count = label((energy == maximum_filter(energy, size=7)) & (energy > 0))
+    if not count:
+        return np.empty(0, dtype=int)
+    positions = maximum_position(energy, regions, np.arange(1, count + 1))
+    centers = np.ravel_multi_index(np.asarray(positions).T, energy.shape)
+    if len(centers) <= limit:
+        return centers
+    ranked = centers[np.argsort(-energy.flat[centers], kind="stable")]
+    # Half by strength, half by spatial strata. Amplitude never weights the score.
+    leaders = ranked[:limit // 2]
+    remaining = np.setdiff1d(centers, leaders)
+    spatial = [band[np.argmax(energy.flat[band])]
+               for band in np.array_split(remaining, limit - len(leaders)) if len(band)]
+    return np.sort(np.concatenate((leaders, spatial)))
+
+
+def _refine_phased_windows(
+    result: WindowOptimizeResult,
+    spectrum: np.ndarray,
+    *,
+    axis: int,
+    phase: tuple[float, float],
+    sw: float,
+    current: dict[str, Any] | None,
+    zf_size: int = 0,
+    crop: slice = slice(None),
+    resolution_weight: float = .25,
+) -> WindowOptimizeResult:
+    """Choose on equal-region signed line shapes, widths and resolved neighbours."""
+    from scipy.fft import fft, fftshift, ifft, ifftshift
+    from scipy.signal import find_peaks
+
+    moved = np.moveaxis(spectrum, axis, -1)
+    n = moved.shape[-1]
+    if not np.iscomplexobj(moved) or moved.ndim < 2 or n < 16:
+        return result
+    size = max(8 * n, zf_size)
+    limit = min(128, max(1, (64 * 1024**2) // (8 * size)))
+    ids = _phased_trace_indices(moved, limit)
+    if not ids.size:
+        return result
+    fid = fft(ifftshift(moved[np.unravel_index(ids, moved.shape[:-1])], axes=-1),
+              axis=-1) / n
+    p0, p1 = phase
+    rotation = np.exp(1j * np.deg2rad(p0 + p1 * np.arange(size) / size))
+    full_raw = (fftshift(ifft(fid, n=size, axis=-1), axes=-1) * rotation).real
+    # A crowded display crop must not inflate the noise floor or hide weak regions.
+    sigmas = 1.4826 * np.median(
+        np.abs(full_raw - np.median(full_raw, axis=-1)[:, None]), axis=-1,
+    )
+    raw = full_raw[:, crop].copy()
+    signs = np.sign(raw[np.arange(len(raw)), np.argmax(np.abs(raw), axis=-1)])
+    raw *= signs[:, None]
+    raw -= np.median(raw, axis=-1)[:, None]
+    refs = []
+    for trace, noise in zip(raw, sigmas):
+        sigma = max(float(noise), np.finfo(float).eps)
+        peaks, _ = find_peaks(trace, height=max(8 * sigma, .12 * np.max(trace)),
+                              prominence=3 * sigma, distance=2)
+        refs.append([(int(k), _peak_fwhm(trace, int(k))) for k in peaks])
+    active = [i for i, peaks in enumerate(refs) if peaks]
+    if not active:
+        return result
+
+    candidates = [dict(row["cfg"]) for row in result.scores if row["status"] == "scored"
+                  and not _is_unwindowed(row["cfg"])]
+    if result.choice not in candidates:
+        return result
+    # Search SP onset and endpoint, keeping the existing first and second powers.
+    for off in (.40, .50, .60):
+        for end in (.90, .94, .98, 1.):
+            for power in (1, 2):
+                cfg = {"type": "sine_bell", "off": off, "end": end, "pow": power, "c": .5}
+                if cfg not in candidates:
+                    candidates.append(cfg)
+
+    pairs = []
+    for i in active:
+        pp = []
+        for (left, left_width), (right, right_width) in zip(refs[i], refs[i][1:]):
+            small = min(raw[i, left], raw[i, right])
+            valley = np.min(raw[i, left:right + 1]) / small
+            # Include already well-separated and unequal-height neighbours. A fixed
+            # FFT-bin span missed pairs on axes with different sampling/resolution.
+            span = 5 * max(min(left_width, right_width), 1.)
+            if 2 <= right - left <= span and valley <= .85:
+                pp.append((left, right))
+        pairs.append(pp)
+
+    rows = []
+    for cfg in candidates:
+        win = _window_vector(cfg, n, sw)
+        phased = (fftshift(ifft(fid * win, n=size, axis=-1), axes=-1) * rotation).real
+        phased = phased[:, crop] * signs[:, None]
+        phased -= np.median(phased, axis=-1)[:, None]
+        per_region = []
+        pair_retention = []
+        pair_count = 0
+        for i, local_pairs in zip(active, pairs):
+            trace = phased[i]
+            reference = refs[i]
+            peaks = find_peaks(trace, height=.05 * max(float(np.max(trace)), 0.),
+                               distance=2)[0]
+            measured = []
+            for index, width in reference:
+                nearby = peaks[np.abs(peaks - index) <= max(2., .5 * width)]
+                if not nearby.size:
+                    measured.append((1., 1., 2., 0.))
+                    continue
+                k = int(nearby[np.argmin(np.abs(nearby - index))])
+                height = float(trace[k])
+                fwhm = _peak_fwhm(trace, k)
+                bins = np.arange(max(1, index - math.ceil(5 * width)),
+                                 min(len(trace) - 1, index + math.ceil(5 * width) + 1))
+                side = np.abs(bins - k) >= max(.7 * width, .55 * fwhm)
+                for other, other_width in reference:
+                    if other != index:
+                        side &= np.abs(bins - other) > other_width
+                bins = bins[side]
+                negative = max(0., -float(np.min(trace[bins], initial=0.))) / height
+                maxima = bins[(trace[bins] > trace[bins - 1])
+                              & (trace[bins] >= trace[bins + 1])]
+                positive = float(np.max(trace[maxima], initial=0.)) / height
+                measured.append((min(negative, 1.), min(positive, 1.), fwhm / width, 1.))
+            observation = np.median(measured, axis=0)
+            observation[3] = np.mean(np.asarray(measured)[:, 3])
+            per_region.append(observation)
+            if local_pairs:
+                kept = 0
+                for left, right in local_pairs:
+                    a = peaks[np.abs(peaks - left) <= .45 * (right - left)]
+                    b = peaks[np.abs(peaks - right) <= .45 * (right - left)]
+                    if a.size and b.size and a[0] < b[0]:
+                        valley = np.min(trace[a[0]:b[0] + 1])
+                        kept += int(valley <= .995 * min(trace[a[0]], trace[b[0]]))
+                pair_retention.append(kept / len(local_pairs))
+                pair_count += kept
+        observations = np.asarray(per_region)
+        negative, positive, width, _ = np.quantile(observations, .8, axis=0)
+        detection = float(np.mean(observations[:, 3]))
+        # The upper population quantile includes poorer regions without letting one
+        # exceptionally strong peak dictate the result. Pair votes are per region.
+        sidelobe = float(1. / (1. + 5. * (negative + .25 * positive)))
+        broadening = max(float(width) - 1., 0.)
+        resolution = (1. + broadening + broadening**2) ** -resolution_weight
+        separation = .25 + .75 * float(np.mean(pair_retention)) if pair_retention else 1.
+        raw_score = detection * sidelobe * separation
+        score = raw_score * resolution
+        rows.append({
+            "cfg": cfg, "label": _label(cfg), "score": score, "raw_score": raw_score,
+            "status": "scored", "reason": "", "detection_score": detection,
+            "sidelobe_score": sidelobe, "resolution_score": resolution,
+            "separation_score": separation, "width_ratio": float(width),
+            "resolution_weight": resolution_weight,
+            "negative_lobe_ratio": float(negative), "positive_lobe_ratio": float(positive),
+            "preserved_pairs": pair_count,
+        })
+    best = max(rows, key=lambda row: row["score"])
+    for row in rows:
+        row["selected"] = row is best
+    return WindowOptimizeResult(
+        choice=best["cfg"], changed=best["cfg"] != (current or {}), scores=rows,
+        status="scored", optimal_label=best["label"],
+        skipped_candidates=result.skipped_candidates,
+        sampling={**result.sampling, "score_profile": "phased_global_window",
+                  "trace_indices": ids[active].tolist(), "used_traces": len(active),
+                  "sampled_regions": len(ids), "pair_count": sum(map(len, pairs)),
+                  "baseline_window": result.optimal_label,
+                  "candidate_evidence": [{k: row[k] for k in (
+                      "label", "negative_lobe_ratio", "positive_lobe_ratio", "width_ratio",
+                      "detection_score", "preserved_pairs", "score")} for row in rows]},
+        logs=[*result.logs, f"Global phased window: {best['label']} "
+              f"({len(active)} equally weighted regions, {sum(map(len, pairs))} close pairs)"],
+    )
 
 
 def refine_indirect_window(
@@ -1264,90 +1364,9 @@ def refine_indirect_window(
     sw: float,
     current: dict[str, Any] | None,
 ) -> WindowOptimizeResult:
-    """Recheck crowded regions on an unwindowed complex frequency preview."""
-    from scipy.fft import fft, fftshift, ifft, ifftshift
-    from scipy.ndimage import maximum_filter
-    from scipy.signal import find_peaks
-
-    moved = np.moveaxis(spectrum, axis, -1)
-    n = moved.shape[-1]
-    if not np.iscomplexobj(moved) or moved.ndim < 2 or n < 16:
-        return result
-    # Orthogonal energy maxima give neighbouring frequency regions separate votes.
-    energy = np.einsum("...i,...i->...", moved.real, moved.real)
-    energy += np.einsum("...i,...i->...", moved.imag, moved.imag)
-    centers = np.flatnonzero((energy == maximum_filter(energy, size=7)) & (energy > 0))
-    ids = centers[np.argsort(-energy.flat[centers], kind="stable")[:128]]
-    if not ids.size:
-        return result
-    traces = moved[np.unravel_index(ids, energy.shape)]
-    fid = fft(ifftshift(traces, axes=-1), axis=-1) / n
-    size = 8 * n  # Oversample valleys without treating zero fill as acquired resolution.
-    p0, p1 = phase
-    rotation = np.exp(1j * np.deg2rad(p0 + p1 * np.arange(size) / size))
-
-    def detect(cfg: dict[str, Any]) -> list[list[tuple[int, int, float]]]:
-        window = _window_vector(cfg, n, sw)
-        real = (fftshift(ifft(fid * window, n=size, axis=-1), axes=-1) * rotation).real
-        out = []
-        for trace in real:
-            row = trace * np.sign(trace[np.argmax(np.abs(trace))])
-            row -= np.median(row)
-            sigma = max(1.4826 * float(np.median(np.abs(row))), np.finfo(float).eps)
-            peaks, _ = find_peaks(row, height=max(8 * sigma, .12 * np.max(row)),
-                                  prominence=3 * sigma, distance=2)
-            pairs = []
-            for left, right in zip(peaks, peaks[1:]):
-                if not 4 <= right - left <= 16:
-                    continue
-                small, big = sorted((row[left], row[right]))
-                valley = float(np.min(row[left:right + 1]) / small)
-                if small >= .42 * big and valley <= .85:
-                    pairs.append((int(left), int(right), valley))
-            out.append(pairs)
-        return out
-
-    def has_pair(pairs: list[tuple[int, int, float]], a: int, b: int) -> bool:
-        return any(max(abs(left - a), abs(right - b)) <= 2 for left, right, _ in pairs)
-
-    rows = [row for row in result.scores if row["status"] == "scored"
-            and not _is_unwindowed(row["cfg"])]
-    baseline = next((i for i, row in enumerate(rows) if row["cfg"] == result.choice), None)
-    if baseline is None or len(rows) < 2:
-        return result
-    found = [detect(row["cfg"]) for row in rows]
-    # Check the same pair in an unapodized control and at least one real window.
-    # A positive saddle isolates bridged peaks; isolated lobes do not vote here.
-    reference = [(i, a, b) for i, pairs in enumerate(detect({"type": "none"}))
-                 for a, b, valley in pairs if valley >= .25
-                 and any(has_pair(detections[i], a, b) for detections in found)]
-    if not reference:
-        return result
-    preserved = [{pair for pair in reference if has_pair(detections[pair[0]], *pair[1:])}
-                 for detections in found]
-    prior = preserved[baseline]
-    missed = len(reference) - len(prior)
-    if missed == 0:
-        return result
-    # Keep the original sidelobe/width score among windows that protect resolved
-    # pairs and recover at least half of the remaining crowded pairs.
-    eligible = [i for i, kept in enumerate(preserved) if prior <= kept
-                and len(kept) - len(prior) >= math.ceil(missed / 2)]
-    best = max(eligible, key=lambda i: rows[i]["score"], default=baseline)
-    best_row = rows[best]
-    scores = [{**row, "selected": row["cfg"] == best_row["cfg"]} for row in result.scores]
-    return WindowOptimizeResult(
-        choice=best_row["cfg"], changed=best_row["cfg"] != (current or {}), scores=scores,
-        logs=[*result.logs, f"Indirect window peak-valley check: {best_row['label']} "
-              f"({len(prior)} -> {len(preserved[best])}/{len(reference)} crowded pairs)"],
-        optimal_label=best_row["label"], status=result.status,
-        skipped_candidates=result.skipped_candidates,
-        sampling={**result.sampling, "score_profile": "indirect_peak_valley",
-                  "pair_count": len(reference), "baseline_window": rows[baseline]["label"],
-                  "candidate_evidence": [{"label": row["label"], "preserved_pairs": len(kept),
-                                          "lost_baseline_pairs": len(prior - kept)}
-                                         for row, kept in zip(rows, preserved)]},
-    )
+    """Shared signed global scoring for uniform and reconstructed 2D/3D axes."""
+    return _refine_phased_windows(result, spectrum, axis=axis, phase=phase, sw=sw,
+                                  current=current)
 
 
 def optimize_indirect_windows_from_work(

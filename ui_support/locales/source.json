@@ -336,10 +336,10 @@
       "workflow/direct_diagnostics.py:1149"
     ],
     "; {p0} spectral width dependent candidates (GM/EM) not provided SW skip": [
-      "workflow/window_optimize.py:718"
+      "workflow/window_optimize.py:719"
     ],
     "; {p0}/{p1} expected peak(s) were merged into one detection by this window": [
-      "workflow/window_optimize.py:711"
+      "workflow/window_optimize.py:712"
     ],
     "== Quality inspection (manual spectrum preparation, multiplexing automatic optimisation final script) ==": [
       "workflow/manual.py:216"
@@ -1516,7 +1516,7 @@
       "workflow/phase_routes.py:1466"
     ],
     "Indirect dimension window optimisation failed (reading reconstruction plane): {p0}": [
-      "workflow/window_optimize.py:1429"
+      "workflow/window_optimize.py:1448"
     ],
     "Indirect flip": [
       "gui/pipeline_panel.py:1267"
@@ -2049,7 +2049,7 @@
       "gui/overlay_svg_export.py:65"
     ],
     "No window (linear)": [
-      "workflow/window_optimize.py:164"
+      "workflow/window_optimize.py:165"
     ],
     "No. {p0} Line: There are extra characters after the line continuation character `\\` {p1!r}(should be `\\` at the end of the line and wrap directly), the pipe will break": [
       "workflow/script_check.py:120"
@@ -4008,7 +4008,7 @@
       "core/experiment/acquisition_mode_detector.py:210"
     ],
     "direct dimension": [
-      "workflow/window_optimize.py:832"
+      "workflow/window_optimize.py:833"
     ],
     "direct dimension 1H extraction window height ppm(EXT -x1)": [
       "backend/script_generator.py:1723"
@@ -4129,14 +4129,14 @@
       "workflow/phase_routes.py:1395"
     ],
     "direct dimension window optimisation failed (read fid): {p0}": [
-      "workflow/window_optimize.py:1119"
+      "workflow/window_optimize.py:1120"
     ],
     "direct dimension window optimisation failed: {p0}": [
       "workflow/phase_routes.py:1455",
       "workflow/phase_routes.py:1705"
     ],
     "direct dimension window optimisation skipped: converted.fid not found": [
-      "workflow/window_optimize.py:1128"
+      "workflow/window_optimize.py:1129"
     ],
     "direct dimension {p0}×TD({p1}→{p2})": [
       "backend/script_generator.py:381",
@@ -4525,20 +4525,20 @@
       "workflow/phase_routes.py:1716"
     ],
     "indirect dimension window optimisation failed (reading fid): {p0}": [
-      "workflow/window_optimize.py:1379"
+      "workflow/window_optimize.py:1398"
     ],
     "indirect dimension window optimisation failed: {p0}": [
       "workflow/phase_routes.py:1509",
       "workflow/phase_routes.py:1753"
     ],
     "indirect dimension window optimisation skip: no timeline available": [
-      "workflow/window_optimize.py:900"
+      "workflow/window_optimize.py:901"
     ],
     "indirect dimension window optimisation skip: not found SMILE reconstruction plane": [
-      "workflow/window_optimize.py:1442"
+      "workflow/window_optimize.py:1461"
     ],
     "indirect dimension window optimisation skipped: converted.fid not found": [
-      "workflow/window_optimize.py:1388"
+      "workflow/window_optimize.py:1407"
     ],
     "indirect dimension {p0}×TD({p1}→{p2})": [
       "backend/script_generator.py:384"
@@ -4825,7 +4825,7 @@
       "core/data/nus_reader.py:157"
     ],
     "optimal {p0} (FWHM {p1:.2f}point, SNR {p2:.1f}, shape {p3:.3f}, score {p4:.3f}); scored {p5}/{p6} candidate(s); resolution factor {p7:.3f} (width {p8:.3f}x, exponent {p9:.3f})": [
-      "workflow/window_optimize.py:694"
+      "workflow/window_optimize.py:695"
     ],
     "optimisation ": [
       "workflow/baseline_optimize.py:407"
@@ -5836,8 +5836,8 @@
       "core/data/nus_reader.py:130"
     ],
     "trace no valid signal": [
-      "workflow/window_optimize.py:665",
-      "workflow/window_optimize.py:683"
+      "workflow/window_optimize.py:666",
+      "workflow/window_optimize.py:684"
     ],
     "trash target conflict: {p0}": [
       "core/trash.py:34"
@@ -6081,7 +6081,7 @@
       "workflow/smile_optimize.py:314"
     ],
     "{p0}(indirect dimension)": [
-      "workflow/window_optimize.py:886"
+      "workflow/window_optimize.py:887"
     ],
     "{p0}.fid is in place ({p1})": [
       "backend/nmrpipe_backend.py:3218"
@@ -6109,7 +6109,7 @@
       "backend/bruker_workflow.py:1578"
     ],
     "{p0}: Window: The optimal configuration is consistent with the existing configuration and remains": [
-      "workflow/window_optimize.py:797"
+      "workflow/window_optimize.py:798"
     ],
     "{p0}: acquisition centre (acqus O1/BF1)": [
       "backend/bruker_workflow.py:444"
@@ -6167,7 +6167,7 @@
       "workflow/phase_routes.py:888"
     ],
     "{p0}: indirect dimension window optimisation skip: insufficient points": [
-      "workflow/window_optimize.py:868"
+      "workflow/window_optimize.py:869"
     ],
     "{p0}: jump over({p1})": [
       "workflow/batch.py:450"
@@ -6208,13 +6208,13 @@
       "nmrfinesse_api/localization_targets.py:458"
     ],
     "{p0}: window optimisation skip: insufficient points in this axis": [
-      "workflow/window_optimize.py:752"
+      "workflow/window_optimize.py:753"
     ],
     "{p0}: window optimisation skip:{p1}": [
-      "workflow/window_optimize.py:792"
+      "workflow/window_optimize.py:793"
     ],
     "{p0}: window(memory score): {p1}": [
-      "workflow/window_optimize.py:795"
+      "workflow/window_optimize.py:796"
     ],
     "{p0}: {p1} Completed, skip": [
       "workflow/batch.py:488"

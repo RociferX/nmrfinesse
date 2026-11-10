@@ -363,8 +363,11 @@ def test_public_tree_carries_no_private_markers() -> None:
     public = ROOT / "publish" if _private_trunk() else ROOT
     if not public.is_dir():
         pytest.skip("公开树不在场(VM/CI)")
+    shipped = _shipped_paths(public)
     offenders: list[str] = []
     for path in sorted(public.rglob("*")):
+        if shipped is not None and path.relative_to(public).as_posix().casefold() not in shipped:
+            continue
         if not path.is_file() or PRIVATE_SCAN_SKIP & set(path.parts):
             continue
         try:

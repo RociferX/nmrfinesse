@@ -72,7 +72,7 @@ converted FID + diagnostics
 
 Baseline candidates are evaluated before window candidates. FID scoring supplies a direct-axis
 baseline window. Phase-sensitive uniform 2D and 3D then use one shared complex direct-axis preview
-for the phased peak-valley comparison. Indirect-axis scoring emphasizes sidelobes and separation. The route supplies resolved
+for phased line-shape comparison. Indirect-axis scoring emphasizes sidelobes and separation. The route supplies resolved
 baseline, windows and automatic zero-fill settings to the final script. If a scoring stage cannot
 evaluate its inputs, its logged fallback retains available settings instead of inventing a result.
 
@@ -122,19 +122,23 @@ sidelobes and peak valleys, using `sidelobe * separation * min(detection/6, 1)` 
 The median trace score is multiplied by `width_ratio^-0.25`, where
 `width_ratio = candidate_fwhm / min_valid_fwhm` and is at least 1.
 
-For phase-sensitive uniform 2D F2 and 3D F3, a shared complex preview also compares the phased
-peak valleys. A replacement must keep noise within 103% of the baseline, SNR at least 95% of the
-baseline and the number of bridged pairs from increasing. Refinement selects among eligible
-windows and does not automatically switch back to no window. Explicit pools retain their highest-valid-score rule. Default NUS direct-axis
-processing retains the reconstruction route's SP window.
+Phase-sensitive 2D and 3D axes share a signed complex-preview refinement. It samples distinct
+orthogonal signal regions by strength and spatial coverage, with at most 128 regions and a
+64 MiB FFT-cache budget. Noise is estimated over the full spectral width before scoring the
+requested crop. Regions have equal weight. Negative/positive sidelobes and linewidth
+use the 80th percentile across regions; reference-peak and close-pair retention use regional
+retention rates. An exceptionally strong peak therefore does not weight the score by intensity.
+Neighbour spans scale with reference linewidth and include already well-separated, unequal-height
+pairs. Linewidth is compared with the shared unwindowed reference. For broadening `d = max(width_ratio - 1, 0)`,
+the resolution factor is `(1 + d + d²)^-w`, with `w=1` on the direct axis and `w=0.25` on indirect
+axes. Larger broadening incurs a continuously increasing cost; indirect axes retain their
+emphasis on sidelobes and peak connections. SP refinement searches onset `0.40/0.50/0.60`, endpoint
+`0.90/0.94/0.98/1.00` and powers one/two. It adds no LP. Candidates share one complex preview
+per axis, and NUS indirect axes use the existing SMILE reconstruction. Default NUS direct-axis
+processing retains the reconstruction route's SP window. Explicit pools are not expanded and
+retain their highest-valid-score rule.
 
-For phase-sensitive 2D and 3D, indirect-axis refinement checks peak valleys across distinct
-signal regions in the other dimensions. A replacement must preserve the pairs already resolved
-by the initial window and recover at least half of its missed confirmed pairs. The original
-sidelobe and linewidth scores rank eligible windows. Candidates share one complex preview per
-axis, and NUS uses the existing SMILE reconstruction.
-
-Window scoring probes at most 256 traces and formally scores at most 12 shared representative
+FID scoring probes at most 256 traces and formally scores at most 12 shared representative
 traces under an FFT-cache limit. The fast path looks for references at `12σ`; only if none qualify
 does it try `6σ` references with a supported line profile and frequency support on five traces (or
 all traces when fewer than five were scanned). Candidates share reference peaks and traces, including

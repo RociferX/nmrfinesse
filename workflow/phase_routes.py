@@ -1431,11 +1431,11 @@ def _optimize_uniform_processing(
                             ppm_range=ppm_range,
                         )
                 except (OSError, ValueError, TypeError, KeyError) as exc:
-                    out_logs.append(f"Direct window peak-valley preview unavailable: {exc}")
+                    out_logs.append(f"Direct window phased preview unavailable: {exc}")
                 finally:
                     if preview is not None:
                         _unlink_quiet(preview)
-            refined = wres.sampling.get("score_profile") == "direct_peak_valley"
+            refined = wres.sampling.get("score_profile") == "phased_global_window"
             source = "direct_preview" if refined else "fid"
             score_rows += window_rows(wres, direct_axis, source=source)
             if wres.changed:
