@@ -104,10 +104,9 @@ def find_pipe2ucsf(explicit: str = "") -> Path | None:
 def bash_environment_csh_command(directory: str, csh: str) -> list[str] | None:
     """Build a temporary bash-login → interactive-csh bridge for GUI terminals.
 
-    Only PATH and NMRPipe's plugin registration variables are explicitly carried
-    across. The interactive csh then reads its normal rc file, whose values take
-    precedence. No parent-process environment or rc file is changed.
-    """
+        Only PATH and NMRPipe's plugin registration variables are explicitly carried
+        across. The interactive csh then reads its normal rc file, whose values take
+        precedence. No parent-process environment or rc file is changed."""
     bash = shutil.which("bash")
     if not bash:
         return None
@@ -121,7 +120,7 @@ def bash_environment_csh_command(directory: str, csh: str) -> list[str] | None:
         "unsetenv NMRFINESSE_BASH_PATH; "
         "unsetenv NMRFINESSE_BASH_PLUGIN_EXE; "
         "unsetenv NMRFINESSE_BASH_PLUGIN_FN; "
-        f"exec {shlex.quote(csh)} -if"
+        f"pwd; exec {shlex.quote(csh)} -if"
     )
     script = (
         f"cd {shlex.quote(directory)} && exec env PATH=\"$PATH\" "

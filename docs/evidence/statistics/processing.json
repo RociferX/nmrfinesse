@@ -4,7 +4,7 @@
       512,
       1028
     ],
-    "wall_time_s": 38.31839413201669,
+    "wall_time_s": 38.22788855800172,
     "params_used": {
       "ext_lo": "10.5",
       "ext_hi": "6.5",
@@ -397,7 +397,7 @@
       256,
       1028
     ],
-    "wall_time_s": 17.26946035597939,
+    "wall_time_s": 17.203612226003315,
     "params_used": {
       "ext_lo": "10.5",
       "ext_hi": "6.5",
@@ -507,8 +507,8 @@
       "sha256": "176c0dfb22b93e74e33ab554af8209bfa5008f9223920f7fce3f4e7544955452"
     },
     "automatic_final": {
-      "text": "#!/bin/csh\n# NMRFinesse 2D NUS SMILE reconstruction (two-stage)\n# experiment: d_001\nmkdir -p nus2d\n# stage 1: direct dim (F2) FT + EXT + POLY, SMILE reconstruct F1\nnmrPipe -in d_001.fid \\\n| nmrPipe -fn POLY -time \\\n| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 1 -c 0.5 \\\n| nmrPipe -fn ZF -zf -size 4096 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn EXT -x1 10.5ppm -xn 6.5ppm -sw -round 2 \\\n| nmrPipe -fn PS -p0 173.559 -p1 -0 -di \\\n| nmrPipe -fn POLY -ord 3 -auto \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn SMILE -nDim 2 \\\n           -sample nuslist -nThread 2 \\\n           -sampleCount 68 -nSigma 5 -off 0 0 -report 1 \\\n           -maxMem 8.89097 \\\n           -scaling 1 \\\n           -maxIter 300 \\\n           -xT 90 \\\n           -xP0 85 -xP1 0 \\\n           -thresh 0.95 \\\n| pipe2xyz -out nus2d/recon.ft1 -x -ov\n\n# stage 2: indirect dim (F1) window + ZF + FT -alt + PS + POLY\nnmrPipe -in nus2d/recon.ft1 \\\n| nmrPipe -fn EM -lb 3 \\\n| nmrPipe -fn ZF -size 256 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 85 -p1 0 -di \\\n| nmrPipe -fn POLY -ord 2 -auto \\\n| nmrPipe -fn TP \\\n  -out d_001.ft2 -ov\n",
-      "sha256": "a86f7825057c4d0b828dde3ce2df67227dd1bfcec9176b50b1dd4998fa7fadb9"
+      "text": "#!/bin/csh\n# NMRFinesse 2D NUS SMILE reconstruction (two-stage)\n# experiment: d_001\nmkdir -p nus2d\n# stage 1: direct dim (F2) FT + EXT + POLY, SMILE reconstruct F1\nnmrPipe -in d_001.fid \\\n| nmrPipe -fn POLY -time \\\n| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 1 -c 0.5 \\\n| nmrPipe -fn ZF -zf -size 4096 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn EXT -x1 10.5ppm -xn 6.5ppm -sw -round 2 \\\n| nmrPipe -fn PS -p0 173.559 -p1 -0 -di \\\n| nmrPipe -fn POLY -ord 3 -auto \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn SMILE -nDim 2 \\\n           -sample nuslist -nThread 2 \\\n           -sampleCount 68 -nSigma 5 -off 0 0 -report 1 \\\n           -maxMem 8.51909 \\\n           -scaling 1 \\\n           -maxIter 300 \\\n           -xT 90 \\\n           -xP0 85 -xP1 0 \\\n           -thresh 0.95 \\\n| pipe2xyz -out nus2d/recon.ft1 -x -ov\n\n# stage 2: indirect dim (F1) window + ZF + FT -alt + PS + POLY\nnmrPipe -in nus2d/recon.ft1 \\\n| nmrPipe -fn EM -lb 3 \\\n| nmrPipe -fn ZF -size 256 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 85 -p1 0 -di \\\n| nmrPipe -fn POLY -ord 2 -auto \\\n| nmrPipe -fn TP \\\n  -out d_001.ft2 -ov\n",
+      "sha256": "54e475261f33cbae48c3fcd7f652e923d78c10feb6a731912ed3790f1c0ba5e5"
     },
     "selected_optimization_rows": [
       {
@@ -567,20 +567,24 @@
         "stage": "window",
         "axis": "F2",
         "source": "fid",
-        "candidate": "无窗(线性)",
+        "candidate": "SP off=0.45 end=0.9 pow=1 c=0.5",
         "parameters": {
-          "type": "none"
+          "type": "sine_bell",
+          "off": 0.45,
+          "end": 0.9,
+          "pow": 1,
+          "c": 0.5
         },
-        "score": 69.68380928045275,
+        "score": 60.26236024561749,
         "score_metric": "window_detection",
         "selected": true,
         "applied": false,
         "status": "scored",
         "reason": "nus_direct_window_fixed",
-        "fwhm": 1.7943481840630966,
-        "snr": 283.8217944082637,
-        "shape": 0.4839431886322758,
-        "merged": 0.0,
+        "fwhm": 1.9974715657219804,
+        "snr": 320.70672738474707,
+        "shape": 0.4561841496000434,
+        "merged": 0.5,
         "n_ref": 3.0,
         "sampling": {
           "reference_sigma": 12.0,
@@ -608,13 +612,13 @@
           "budget_exhausted": false,
           "max_height_sigma": 368.8222303801008
         },
-        "raw_score": 69.68380928045275,
-        "detection_score": 120.85941069723488,
+        "raw_score": 61.89985175070196,
+        "detection_score": 130.71224559295098,
         "separation_score": 1.0,
-        "symmetry_score": 0.75,
+        "symmetry_score": 0.5,
         "sidelobe_score": 1.0,
-        "resolution_score": 1.0,
-        "width_ratio": 1.0,
+        "resolution_score": 0.9735461158828074,
+        "width_ratio": 1.1132017651105675,
         "resolution_reference_fwhm": 1.7943481840630966,
         "resolution_weight": 0.25
       },
@@ -684,7 +688,7 @@
       128,
       548
     ],
-    "wall_time_s": 58.743942864995915,
+    "wall_time_s": 56.985753154032864,
     "params_used": {
       "ext_lo": "10",
       "ext_hi": "6",
@@ -736,7 +740,11 @@
       },
       "window": {
         "F3": {
-          "type": "none"
+          "type": "sine_bell",
+          "off": 0.65,
+          "end": 1.0,
+          "pow": 2,
+          "c": 0.5
         },
         "F2": {
           "type": "none"
@@ -800,8 +808,8 @@
       "sha256": "a729754a4d46fbe7798e5c693caa49b003f7b7b634a659382dd7e81f237bb3e8"
     },
     "automatic_final": {
-      "text": "#!/bin/csh\n# NMRFinesse processing script\n# experiment: d_001\nxyz2pipe -in fid/test%03d.fid -x \\\n| nmrPipe -fn POLY -time \\\n| nmrPipe -fn ZF -size 2048 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 15 -p1 0 -di \\\n| nmrPipe -fn EXT -x1 10ppm -xn 6ppm -sw -round 2 \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn ZF -size 128 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 267.5 -p1 0 -di \\\n| nmrPipe -fn ZTP \\\n| nmrPipe -fn SP -off 0.45 -end 0.9 -pow 1 -c 0.5 \\\n| nmrPipe -fn ZF -size 128 \\\n| nmrPipe -fn FT -alt \\\n| nmrPipe -fn PS -p0 2.5 -p1 0 -di \\\n| nmrPipe -fn TP \\\n| pipe2xyz -out d_001.ft3 -x\n",
-      "sha256": "52da23119a2ceac6914ad2094f0a292f42084e73da1722e6c39722402ebe00b3"
+      "text": "#!/bin/csh\n# NMRFinesse processing script\n# experiment: d_001\nxyz2pipe -in fid/test%03d.fid -x \\\n| nmrPipe -fn POLY -time \\\n| nmrPipe -fn SP -off 0.65 -end 1 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -size 2048 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 15 -p1 0 -di \\\n| nmrPipe -fn EXT -x1 10ppm -xn 6ppm -sw -round 2 \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn ZF -size 128 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 267.5 -p1 0 -di \\\n| nmrPipe -fn ZTP \\\n| nmrPipe -fn SP -off 0.45 -end 0.9 -pow 1 -c 0.5 \\\n| nmrPipe -fn ZF -size 128 \\\n| nmrPipe -fn FT -alt \\\n| nmrPipe -fn PS -p0 2.5 -p1 0 -di \\\n| nmrPipe -fn TP \\\n| pipe2xyz -out d_001.ft3 -x\n",
+      "sha256": "06c89992c30b11d00e3525d3dcf334b7db551272b011e44026b968505dd0730c"
     },
     "selected_optimization_rows": [
       {
@@ -886,18 +894,22 @@
         "stage": "window",
         "axis": "F3",
         "source": "direct_preview",
-        "candidate": "无窗(线性)",
+        "candidate": "SP off=0.65 end=1 pow=2 c=0.5",
         "parameters": {
-          "type": "none"
+          "type": "sine_bell",
+          "off": 0.65,
+          "end": 1.0,
+          "pow": 2,
+          "c": 0.5
         },
-        "score": 0.9978772551888503,
+        "score": 0.9932260937482495,
         "score_metric": "direct_peak_valley",
         "selected": true,
         "applied": true,
         "status": "scored",
         "reason": "",
         "fwhm": null,
-        "snr": 11.84770393371582,
+        "snr": 14.81445026397705,
         "shape": null,
         "merged": null,
         "n_ref": null,
@@ -1044,8 +1056,8 @@
             }
           ]
         },
-        "raw_score": 0.9978772551888503,
-        "separation_score": 0.9978772551888503
+        "raw_score": 0.9932260937482495,
+        "separation_score": 0.9932260937482495
       },
       {
         "stage": "window",
@@ -1171,7 +1183,7 @@
       256,
       1176
     ],
-    "wall_time_s": 247.60070298000937,
+    "wall_time_s": 225.44907324697124,
     "params_used": {
       "ext_lo": "10",
       "ext_hi": "6",
@@ -1282,8 +1294,8 @@
       "sha256": "f479822c4413a08394a93661cdbdf21410ad79fd8e3151cfa1628946e1f88d41"
     },
     "automatic_final": {
-      "text": "#!/bin/csh\n# NMRFinesse 3D NUS SMILE reconstruction\n# experiment: d_001\nmkdir -p nus3d_1 nus3d_rc\n# step 1: direct dim (F3) FT + EXT + PS\nxyz2pipe -in d_001.fid -x \\\n| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -zf -size 4096 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn EXT -x1 10ppm -xn 6ppm -sw -round 2 \\\n| nmrPipe -fn PS -p0 107.969 -p1 -0 -di \\\n| pipe2xyz -out nus3d_1/test%04d.ft1 -z\n\n# step 2: SMILE reconstruct indirect dims (F2/F1)\nxyz2pipe -in nus3d_1/test%04d.ft1 -x \\\n| nmrPipe -fn SMILE -nDim 3 \\\n           -sample nuslist -nThread 2 \\\n           -sampleCount 441 -nSigma 5 -off 0 0 -report 1 \\\n           -maxMem 6.98096 \\\n           -scaling 1 \\\n           -maxIter 1500 \\\n           -xP0 182.5 -xP1 0 \\\n           -yP0 0 -yP1 0 \\\n           -xAlt -xNeg \\\n           -yAlt \\\n           -thresh 0.95 \\\n| pipe2xyz -out nus3d_rc/test%04d.ft1 -x\n\n# step 3: indirect dims (F2/F1) window + ZF + FT + PS\nxyz2pipe -in nus3d_rc/test%04d.ft1 -x \\\n| nmrPipe -fn EM -lb 10 \\\n| nmrPipe -fn ZF -size 256 \\\n| nmrPipe -fn FT -alt -neg \\\n| nmrPipe -fn PS -p0 182.5 -p1 0 -di \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn SP -off 0.65 -end 1 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -size 256 \\\n| nmrPipe -fn FT -alt \\\n| nmrPipe -fn PS -p0 0 -p1 0 -di \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn ZTP \\\n| pipe2xyz -out d_001.ft3 -x\n",
-      "sha256": "59f9f5fb0e14b4e08fb02c88a0df2fe97d541fca371052af0f24bd93331d20a6"
+      "text": "#!/bin/csh\n# NMRFinesse 3D NUS SMILE reconstruction\n# experiment: d_001\nmkdir -p nus3d_1 nus3d_rc\n# step 1: direct dim (F3) FT + EXT + PS\nxyz2pipe -in d_001.fid -x \\\n| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -zf -size 4096 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn EXT -x1 10ppm -xn 6ppm -sw -round 2 \\\n| nmrPipe -fn PS -p0 107.969 -p1 -0 -di \\\n| pipe2xyz -out nus3d_1/test%04d.ft1 -z\n\n# step 2: SMILE reconstruct indirect dims (F2/F1)\nxyz2pipe -in nus3d_1/test%04d.ft1 -x \\\n| nmrPipe -fn SMILE -nDim 3 \\\n           -sample nuslist -nThread 2 \\\n           -sampleCount 441 -nSigma 5 -off 0 0 -report 1 \\\n           -maxMem 6.86226 \\\n           -scaling 1 \\\n           -maxIter 1500 \\\n           -xP0 182.5 -xP1 0 \\\n           -yP0 0 -yP1 0 \\\n           -xAlt -xNeg \\\n           -yAlt \\\n           -thresh 0.95 \\\n| pipe2xyz -out nus3d_rc/test%04d.ft1 -x\n\n# step 3: indirect dims (F2/F1) window + ZF + FT + PS\nxyz2pipe -in nus3d_rc/test%04d.ft1 -x \\\n| nmrPipe -fn EM -lb 10 \\\n| nmrPipe -fn ZF -size 256 \\\n| nmrPipe -fn FT -alt -neg \\\n| nmrPipe -fn PS -p0 182.5 -p1 0 -di \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn SP -off 0.65 -end 1 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -size 256 \\\n| nmrPipe -fn FT -alt \\\n| nmrPipe -fn PS -p0 0 -p1 0 -di \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn ZTP \\\n| pipe2xyz -out d_001.ft3 -x\n",
+      "sha256": "4414dbfd2d32e6045e7cf1eb13b8c323f2f54308b20bd587f5f5ed552d2c0b13"
     },
     "selected_optimization_rows": [
       {

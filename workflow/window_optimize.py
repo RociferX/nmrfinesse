@@ -8,17 +8,18 @@ Only peaks at least 25% of the strongest
 reference peak in each trace enter the detection/near-neighbour criteria. Noise excludes all
 detected peaks where sufficient background remains.
 
-Each trace scores mean capped detection strength (height/noise, cap 30) times a near-pair
-separation factor times the strongest-peak shape factor (symmetry and side-wing penalty).
+Direct traces score detection strength (height/noise, compressed above 60), separation and shape.
+Indirect traces prioritize sidelobes and peak-to-peak valleys once detection has 6-sigma support.
 Near pairs are within 1.5 times the smaller reference FWHM; a valley above 0.6 times the
 smaller candidate height counts as merged, provided the reference valley was resolved.
 Aggregate the same traces for every candidate, including degraded responses.
 
 Score candidate broadening continuously relative to the narrowest valid FWHM, with
-a squared inverse-width factor on every axis. Better signal and shape can compensate
+an inverse fourth-root width factor on every axis. Better signal and shape can compensate
 for modest broadening. Keep raw scores and all component observations. GM/EM require SW.
-The highest-scoring eligible candidate wins; ties keep
-input order. This proxy does not certify all weak peaks or final phased-spectrum quality.
+Default selection requires a 25% score advantage for no window over the best valid window.
+Direct phased-valley refinement also requires a 0.10 decrease in the normalized valley.
+Explicit pools select the highest valid score and keep input order for ties.
 
 Default pools allow graceful fallback. Explicit pools use strict_candidates=True and fail
 when no valid choice is available, so they cannot silently use a default configuration.
@@ -27,6 +28,7 @@ NUS direct-window application is coordinated by phase_routes because SMILE requi
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -97,15 +99,17 @@ class MultiWindowOptimizeResult:
 
 
 # GM/EM parameters are Hz, using the sweep width of the scored axis. Both axes
-# compare two mild configurations per family; broadening reduces the score.
+# compare mild and stronger tapers; broadening reduces the score.
 _HZ_CANDIDATES: list[dict[str, Any]] = [
     {"type": "gaussian", "g1": 8.0, "g2": 15.0, "g3": 0.0, "c": 1.0},
     {"type": "gaussian", "g1": 4.0, "g2": 8.0, "g3": 0.0, "c": 1.0},
     {"type": "exp", "lb": 3.0, "c": 1.0},
     {"type": "exp", "lb": 5.0, "c": 1.0},
+    {"type": "exp", "lb": 10.0, "c": 1.0},
+    {"type": "exp", "lb": 20.0, "c": 1.0},
 ]
 
-# Preserve the preferred direct SP and indirect no-window tie order.
+# Preserve tie order within each pool. Automatic selection also favours a valid window.
 DEFAULT_CANDIDATES: list[dict[str, Any]] = [
     {"type": "sine_bell", "off": 0.50, "end": 0.98, "pow": 2, "c": 0.5},
     {"type": "none"},
@@ -113,6 +117,7 @@ DEFAULT_CANDIDATES: list[dict[str, Any]] = [
     {"type": "sine_bell", "off": 0.45, "end": 0.98, "pow": 1, "c": 0.5},
     {"type": "sine_bell", "off": 0.45, "end": 0.90, "pow": 1, "c": 0.5},
     {"type": "sine_bell", "off": 0.45, "end": 0.98, "pow": 2, "c": 0.5},
+    {"type": "sine_bell", "off": 0.65, "end": 1.00, "pow": 2, "c": 0.5},
     *[dict(cfg) for cfg in _HZ_CANDIDATES],
 ]
 
@@ -124,12 +129,14 @@ INDIRECT_CANDIDATES: list[dict[str, Any]] = [
     {"type": "sine_bell", "off": 0.45, "end": 0.90, "pow": 1, "c": 0.5},
     {"type": "sine_bell", "off": 0.45, "end": 0.98, "pow": 2, "c": 0.5},
     {"type": "sine_bell", "off": 0.50, "end": 0.98, "pow": 2, "c": 0.5},
+    {"type": "sine_bell", "off": 0.65, "end": 1.00, "pow": 2, "c": 0.5},
     *[dict(cfg) for cfg in _HZ_CANDIDATES],
 ]
 
-# Broadening by r requires an r**2 gain in detection/separation/shape to win.
-# This is a selection policy, rather than a universal physical quality metric.
-_RESOLUTION_WEIGHT = 2.0
+# A 20% wider peak needs about 4.7% better detection/separation/shape to win.
+_RESOLUTION_WEIGHT = 0.25
+_NO_WINDOW_SCORE_RATIO = 1.25
+_NO_WINDOW_VALLEY_GAIN = 0.10
 
 
 
@@ -144,7 +151,7 @@ _FALLBACK_SIGMA_MULT = 6.0
 _MAX_PROBE_TRACES = 256
 _MAX_SCORE_TRACES = 12
 _PEAK_MIN_SEP = 2
-_DETECTION_CAP = 30.0
+_DETECTION_KNEE = 60.0
 
 _REFERENCE_MIN_FRACTION = 0.25
 
@@ -337,6 +344,37 @@ def _resolved_pairs(
     return pairs
 
 
+def _valley_fraction(amp: np.ndarray, left: int, right: int) -> float:
+    """Valley height relative to the smaller peak at the two reference anchors."""
+    smaller = min(float(amp[left]), float(amp[right]))
+    if smaller <= 0.0:
+        return 1.0
+    return min(float(np.min(amp[left:right + 1])) / smaller, 1.0)
+
+
+def _indirect_sidelobe_score(
+    amp: np.ndarray, targets: list[tuple[int, float, float]], sigma: float,
+) -> float:
+    """Compare the same side bands for every window, excluding other reference peaks."""
+    from scipy.signal import peak_prominences
+
+    center, _height, width = max(targets, key=lambda peak: peak[1])
+    peak_height = float(amp[center])
+    if peak_height <= 0.0:
+        return 0.0
+    span = max(int(width), 2)
+    bins = np.arange(max(center - 6 * span, 1), min(center + 6 * span + 1, amp.size - 1))
+    side = np.abs(bins - center) >= width
+    side &= (amp[bins] > amp[bins - 1]) & (amp[bins] >= amp[bins + 1])
+    for index, _height, fwhm in targets:
+        if index != center:
+            side &= np.abs(bins - index) > fwhm
+    local_peaks = bins[side]
+    prominence, _, _ = peak_prominences(amp, local_peaks, wlen=2 * span + 1)
+    highest = float(np.max(amp[local_peaks[prominence >= 2.0 * sigma]], initial=0.0))
+    return 1.0 / (1.0 + 5.0 * highest / peak_height)
+
+
 def _mask_edges(amp: np.ndarray) -> None:
     amp[..., :max(2, amp.shape[-1] // 80)] = 0.0
     amp[..., -3:] = 0.0
@@ -437,6 +475,7 @@ def _measure_trace(
     amp: np.ndarray,
     reference_peaks: list[tuple[int, float, float]] | None = None,
     *, resolved_pairs: list[tuple[int, int]] | None = None,
+    indirect: bool = False,
 ) -> dict[str, float]:
     """Detection statistics of a single trace (the candidate spectrum is already apodised).
 
@@ -477,10 +516,10 @@ def _measure_trace(
     if not reference_peaks:
         return empty
     peaks = [(int(p[0]), float(amp[int(p[0])])) for p in reference_peaks]
-    sigma = _noise_sigma_without_peaks(amp, peaks)
+    sigma = max(_noise_sigma_without_peaks(amp, peaks), np.finfo(float).eps)
     strongest_index, strongest_height = max(peaks, key=lambda item: item[1])
     fwhm = _peak_fwhm(amp, strongest_index)
-    snr = float(strongest_height) / max(sigma, np.finfo(float).eps)
+    snr = float(strongest_height) / sigma
     symmetry, sidelobe = _shape_components(amp, strongest_index, fwhm)
     shape = symmetry * sidelobe
     targets = _significant_reference(reference_peaks)
@@ -490,25 +529,26 @@ def _measure_trace(
                 "symmetry_score": symmetry, "sidelobe_score": sidelobe, "ok": True}
     det_sum = 0.0
     for index, _height, _ref_fwhm in targets:
-        det_sum += min(
-            float(amp[int(index)]) / max(sigma, np.finfo(float).eps), _DETECTION_CAP
-        )
+        peak_snr = float(amp[int(index)]) / sigma
+        if peak_snr > _DETECTION_KNEE:
+            peak_snr = _DETECTION_KNEE * (1.0 + math.log(peak_snr / _DETECTION_KNEE))
+        det_sum += peak_snr
     det_mean = det_sum / len(targets)
 
-    merged = 0
-    pairs = 0
-    for left_index, right_index in resolved_pairs or []:
-        pairs += 1
-        valley = float(np.min(amp[left_index : right_index + 1]))
-        smaller = min(float(amp[left_index]), float(amp[right_index]))
-        if smaller <= 0.0:
-            merged += 1
-            continue
-        if valley > _MERGE_VALLEY_FRACTION * smaller:
-            merged += 1
+    pairs = resolved_pairs or []
+    merged = sum(_valley_fraction(amp, left, right) > _MERGE_VALLEY_FRACTION
+                 for left, right in pairs)
     n_targets = len(targets)
-    merge_factor = 1.0 if pairs == 0 else max(1.0 - merged / pairs, 0.0)
-    score = det_mean * merge_factor * shape
+    separation = 1.0 - merged / len(pairs) if pairs else 1.0
+    if indirect:
+        sidelobe = _indirect_sidelobe_score(amp, targets, sigma)
+        shape = symmetry * sidelobe
+        bridge = max((_valley_fraction(amp, left[0], right[0])
+                      for left, right in zip(targets, targets[1:])), default=0.0)
+        separation *= 1.0 - bridge
+        score = min(det_mean / _FALLBACK_SIGMA_MULT, 1.0) * separation * sidelobe
+    else:
+        score = det_mean * separation * shape
     return {
         "fwhm": fwhm,
         "snr": snr,
@@ -517,7 +557,7 @@ def _measure_trace(
         "det_mean": det_mean,
         "n_ref": float(n_targets),
         "resolved": float(n_targets - merged),
-        "separation_score": merge_factor,
+        "separation_score": separation,
         "symmetry_score": symmetry,
         "sidelobe_score": sidelobe,
         "ok": True,
@@ -528,9 +568,10 @@ def _aggregate(
     amp_traces: np.ndarray,
     reference: list[list[tuple[int, float, float]]],
     resolved_pairs: list[list[tuple[int, int]]],
+    indirect: bool = False,
 ) -> dict[str, float]:
     'Detection statistics per trace, then the median (robust against individual noisy traces).'
-    per = [_measure_trace(row, refs, resolved_pairs=pairs)
+    per = [_measure_trace(row, refs, resolved_pairs=pairs, indirect=indirect)
            for row, refs, pairs in zip(amp_traces, reference, resolved_pairs)]
     ok = per  # Every candidate is measured on exactly the same traces.
     if not ok:
@@ -556,6 +597,14 @@ def _resolution_score(width_ratio: float, weight: float) -> float:
     return float(ratio ** -weight)
 
 
+def _is_unwindowed(cfg: dict[str, Any]) -> bool:
+    return cfg.get("type") in ("none", "off")
+
+
+def _unwindowed_advantage(score: float, window_score: float, *, minimum_gain: float = 0.0) -> bool:
+    return score >= _NO_WINDOW_SCORE_RATIO * window_score and score - window_score >= minimum_gain
+
+
 def _score_axis(
     arr: np.ndarray,
     axis: int,
@@ -564,13 +613,13 @@ def _score_axis(
     zf_size: int | None = None,
     resolution_penalty: float = _RESOLUTION_WEIGHT,
     sw: float = 0.0,
+    indirect: bool = False,
+    prefer_window: bool = False,
 ) -> tuple[list[WindowChoice], WindowChoice | None, str, dict[str, Any]]:
     """Score the candidate windows along the given time axis; returns (choices, best, log rows).
 
-    With resolution_penalty>0 an exponential penalty is applied to FWHM broadening relative to
-    the best in the qualifying pool (score *= exp(-k*max(fwhm/min_fwhm-1,0))): the
-    resolution-limited indirect dimension uses it to make a naturally decaying axis land on no
-    window while a truncated axis still keeps a mild window (0.2.190).
+    Multiply the raw score by the inverse fourth root of the width ratio by default.
+    Better signal and peak shape can compensate for broadening.
     """
     n = arr.shape[axis]
     if not np.isfinite(resolution_penalty) or resolution_penalty < 0:
@@ -579,6 +628,8 @@ def _score_axis(
     flat = moved.reshape(-1, n)
     n_zf = zf_size or n
     picked, reference, ref_amp, sampling = _sample_references(flat, n_zf)
+    if indirect:
+        sampling["score_profile"] = "indirect_sidelobe_valley"
 
 
     sw_dependent = {"gaussian", "exp"}
@@ -589,7 +640,7 @@ def _score_axis(
             skipped_sw += 1
             continue
         scorable.append(cfg)
-
+    # Share the unwindowed reference peak pairs across candidates.
     resolved_pairs = [_resolved_pairs(refs, row) for refs, row in zip(reference, ref_amp)]
     measured: list[WindowChoice] = []
     for cfg in scorable:
@@ -597,7 +648,7 @@ def _score_axis(
         amp = np.abs(np.fft.fft(picked * win, n_zf, axis=-1))
 
         _mask_edges(amp)
-        agg = _aggregate(amp, reference, resolved_pairs)
+        agg = _aggregate(amp, reference, resolved_pairs, indirect)
         measured.append(
             WindowChoice(
                 cfg=cfg,
@@ -637,6 +688,12 @@ def _score_axis(
             m.status, m.reason = "rejected", "zero_score"
         return measured, None, tr("trace no valid signal"), sampling
     best = max(positive, key=lambda m: m.score)
+    if prefer_window and _is_unwindowed(best.cfg):
+        windowed = max((m for m in positive if not _is_unwindowed(m.cfg)),
+                       key=lambda m: m.score, default=None)
+        if windowed is not None and not _unwindowed_advantage(best.score, windowed.score):
+            best.reason = "no_window_advantage_below_margin"
+            best = windowed
     for m in measured:
         m.selected = m is best
     log = (
@@ -683,6 +740,7 @@ def optimize_axis_window(
     resolution_penalty: float = _RESOLUTION_WEIGHT,
     sw: float = 0.0,
     strict_candidates: bool = False,
+    indirect: bool = False,
 ) -> WindowOptimizeResult:
     """Score candidate windows along arr's axis timeline (shared engine, used by the direct and
     indirect dimensions).
@@ -703,11 +761,12 @@ def optimize_axis_window(
                 p0=axis_label,
             )],
         )
-    cands = candidates if candidates is not None else DEFAULT_CANDIDATES
+    defaults = INDIRECT_CANDIDATES if indirect else DEFAULT_CANDIDATES
+    cands = candidates if candidates is not None else defaults
     measured, best, message, sampling = _score_axis(
         data, axis, cands, zf_size=zf_size,
         resolution_penalty=resolution_penalty,
-        sw=sw,
+        sw=sw, indirect=indirect, prefer_window=candidates is None,
     )
     scores = [
         {"cfg": dict(m.cfg), "label": m.label, "fwhm": m.fwhm, "snr": m.snr,
@@ -801,7 +860,6 @@ def optimize_indirect_windows(
     for scoring (indirect dimensions have few points, and 2x improves the FWHM resolution).
     """
     data = np.asarray(arr)
-    cands = candidates if candidates is not None else INDIRECT_CANDIDATES
     current = dict(current or {})
     choice: dict[str, dict[str, Any]] = dict(current)
     per_axis: dict[str, WindowOptimizeResult] = {}
@@ -828,13 +886,14 @@ def optimize_indirect_windows(
         res = optimize_axis_window(
             data,
             axis,
-            cands,
+            candidates=candidates,
             zf_size=zf_size,
             current=current.get(axis_name),
             axis_label=tr("{p0}(indirect dimension)", p0=axis_name),
             resolution_penalty=_RESOLUTION_WEIGHT,
             sw=(sw_map or {}).get(axis_name, 0.0),
             strict_candidates=strict_candidates,
+            indirect=True,
         )
         per_axis[axis_name] = res
         logs += res.logs
@@ -955,6 +1014,46 @@ def _uniform_axis_map(experiment: Experiment) -> dict[str, int]:
     }
 
 
+def _uniform_2d_indirect_traces(
+    fid: np.ndarray,
+    header: dict[str, Any],
+    experiment: Experiment,
+    *,
+    direct_window: dict[str, Any] | None,
+    direct_phase: tuple[float, float] | None,
+    direct_range: tuple[str, str] | None,
+) -> np.ndarray:
+    """Use the direct frequency slices to unpack the acquired F1 quadrature pairs."""
+    points = int(header.get("FDF1TDSIZE") or 0)
+    if fid.ndim != 2 or header.get("FDF1QUADFLAG") != 0 or not 0 < 2 * points <= fid.shape[0]:
+        return fid
+    from scipy.fft import fftshift, ifft
+
+    from backend.script_generator import zero_fill_plan
+
+    sw = float(header.get("FDF2SW") or 0.0)
+    obs = float(header.get("FDF2OBS") or 0.0)
+    size = max(fid.shape[-1], zero_fill_plan(experiment)["F2"]["size"] or 0)
+    cfg = direct_window or {"type": "none"}
+    taper = _window_vector(cfg, fid.shape[-1], sw).astype(fid.real.dtype, copy=False)
+    direct = fftshift(ifft(fid[:2 * points] * taper, n=size, axis=-1), axes=-1)
+    if direct_phase is not None:
+        p0, p1 = direct_phase
+        phase = np.exp(1j * np.deg2rad(p0 + p1 * np.arange(size) / size))
+        direct = (direct * phase.astype(direct.dtype, copy=False)).real
+    if direct_range is not None and sw > 0 and obs > 0:
+        lo, hi = sorted(map(float, direct_range))
+        carrier = float(header.get("FDF2CAR") or 0.0)
+        ppm = carrier + (0.5 - np.arange(size) / size) * sw / obs
+        in_range = (ppm >= lo) & (ppm <= hi)
+        if np.any(in_range):
+            direct = direct[:, in_range]
+    real, imag = direct[::2], direct[1::2]
+    if not np.iscomplexobj(direct):
+        return real + 1j * imag
+    return np.concatenate((real.real + 1j * imag.real, real.imag + 1j * imag.imag), axis=1)
+
+
 def _nus_axis_map(experiment: Experiment) -> dict[str, int]:
     """NUS reconstruction plane layout (0.2.199-patch29 correction): 2D (F2 frequency, F1 time)
     -> F1=1; 3D stack (F1 time, F2 time, F3) -> F1=0, F2=1. The old code used F1=2, which
@@ -1047,6 +1146,123 @@ def optimize_direct_window_from_work(
 
 
 
+def refine_direct_window(
+    result: WindowOptimizeResult,
+    preview_path: Path,
+    *,
+    phase: tuple[float, float],
+    zf_size: int,
+    ppm_range: tuple[str, str] | None,
+    current: dict[str, Any] | None,
+) -> WindowOptimizeResult:
+    """Use phased, orthogonally resolved traces to choose a quieter unbridged window."""
+    import nmrglue as ng
+    from scipy.fft import fft, fftshift, ifft, ifftshift
+
+    header, spectrum = ng.pipe.read(str(preview_path))
+    if not np.iscomplexobj(spectrum) or spectrum.ndim < 2:
+        return result
+    n = spectrum.shape[-1]
+    size = max(n, zf_size)
+    traces = spectrum.reshape(-1, n)
+    if len(traces) > 256:
+        energy = np.einsum("ij,ij->i", traces.real, traces.real)
+        energy += np.einsum("ij,ij->i", traces.imag, traces.imag)
+        leaders = np.argsort(-energy, kind="stable")[:128]
+        positions = np.linspace(0, len(traces) - 1, 128, dtype=int)
+        traces = traces[np.union1d(leaders, positions)]
+    fid = fft(ifftshift(traces, axes=-1), axis=-1) / n
+    p0, p1 = phase
+    rotation = np.exp(1j * np.deg2rad(p0 + p1 * np.arange(size) / size)).astype(fid.dtype)
+    axis = f"FDF{int(header['FDDIMORDER'][0])}"
+    sw = float(header[axis + "SW"])
+    obs = float(header[axis + "OBS"])
+    crop = slice(None)
+    if ppm_range is not None and sw > 0 and obs > 0:
+        lo, hi = sorted(map(float, ppm_range))
+        ppm = float(header[axis + "CAR"]) + (0.5 - np.arange(size) / size) * sw / obs
+        inside = np.flatnonzero((ppm >= lo) & (ppm <= hi))
+        if inside.size:
+            crop = slice(inside[0], inside[-1] + 1)
+
+    def render(cfg: dict[str, Any]) -> np.ndarray:
+        window = _window_vector(cfg, n, sw).astype(fid.real.dtype)
+        transformed = fftshift(ifft(fid * window, n=size, axis=-1), axes=-1)
+        return (transformed * rotation).real[:, crop]
+
+    pairs = []
+    for index, trace in enumerate(np.abs(render({"type": "none"}))):
+        peaks = _reference_peaks(trace, noise_sigma=robust_noise_sigma(trace))
+        refs = _significant_reference(peaks)
+        for left, right in zip(refs, refs[1:]):
+            a, b = left[0], right[0]
+            if 2 < b - a <= 4.0 * min(left[2], right[2]) and _valley_fraction(trace, a, b) <= 0.9:
+                pairs.append((index, a, b))
+    if not pairs:
+        return result
+
+    candidates = [row["cfg"] for row in result.scores if row["status"] == "scored"]
+    for off in (0.55, 0.60, 0.65):
+        cfg = {"type": "sine_bell", "off": off, "end": 0.98, "pow": 1, "c": 0.5}
+        if cfg not in candidates:
+            candidates.append(cfg)
+
+    def compare(cfg: dict[str, Any]) -> dict[str, Any]:
+        phased = render(cfg)
+        amp = np.abs(phased)
+        valleys = np.array([_valley_fraction(amp[i], a, b) for i, a, b in pairs])
+        height = np.median([min(amp[i, a], amp[i, b]) for i, a, b in pairs])
+        noise = robust_noise_sigma(phased)
+        valley = float(np.median(valleys))
+        return {
+            "cfg": dict(cfg), "label": _label(cfg), "raw_score": 1.0 - valley,
+            "separation_score": 1.0 - valley, "valley": valley,
+            "bridged_pairs": int(np.count_nonzero(valleys > _MERGE_VALLEY_FRACTION)),
+            "noise": noise, "snr": float(height / noise),
+        }
+
+    rows = [compare(cfg) for cfg in candidates]
+    baseline = next((row for row in rows if row["cfg"] == result.choice), None)
+    if baseline is None or baseline["snr"] <= 0:
+        return result
+    for row in rows:
+        reason = ""
+        if row["noise"] > 1.03 * baseline["noise"] or row["snr"] < 0.95 * baseline["snr"]:
+            reason = "direct_window_noise_or_snr"
+        elif row["bridged_pairs"] > baseline["bridged_pairs"]:
+            reason = "direct_window_more_bridges"
+        row.update(status="rejected" if reason else "scored", reason=reason,
+                   score=0.0 if reason else row["raw_score"])
+    scored = [row for row in rows if row["status"] == "scored"]
+    best = max(scored, key=lambda row: row["score"])
+    if best["score"] <= baseline["score"]:
+        best = baseline
+    if _is_unwindowed(best["cfg"]):
+        windowed = max((row for row in scored if not _is_unwindowed(row["cfg"])),
+                       key=lambda row: row["score"], default=None)
+        if windowed is not None and not _unwindowed_advantage(
+            best["score"], windowed["score"], minimum_gain=_NO_WINDOW_VALLEY_GAIN,
+        ):
+            best["reason"] = "no_window_advantage_below_margin"
+            best = windowed
+    for row in rows:
+        row["selected"] = row is best
+    evidence = [{k: row[k] for k in ("label", "valley", "bridged_pairs", "noise", "snr")}
+                for row in rows]
+    return WindowOptimizeResult(
+        choice=best["cfg"], changed=best["cfg"] != (current or {}), scores=rows,
+        skipped_candidates=result.skipped_candidates, status="scored", optimal_label=best["label"],
+        sampling={
+            **result.sampling, "score_profile": "direct_peak_valley", "pair_count": len(pairs),
+            "baseline_window": baseline["label"], "candidate_evidence": evidence,
+        },
+        logs=[*result.logs,
+              f"Direct window peak-valley check: {best['label']} ({len(pairs)} pairs, "
+              f"median valley {baseline['valley']:.3f} -> {best['valley']:.3f})"],
+    )
+
+
+
 def optimize_indirect_windows_from_work(
     work_dir: Path | str,
     experiment: Experiment,
@@ -1054,6 +1270,8 @@ def optimize_indirect_windows_from_work(
     current: dict[str, dict[str, Any]] | None = None,
     candidates: list[dict[str, Any]] | None = None,
     strict_candidates: bool = False,
+    direct_phase: tuple[float, float] | None = None,
+    direct_range: tuple[str, str] | None = None,
 ) -> MultiWindowOptimizeResult:
     """Optimise every uniform indirect-dimension window from the converted fid (in-memory scoring,
     process is not re-run). Each axis's SW is read from the fid header so GM/EM can be modelled
@@ -1084,6 +1302,11 @@ def optimize_indirect_windows_from_work(
         )
     fid, dic = loaded
     axis_map = _uniform_axis_map(experiment)
+    if experiment.ndim == 2:
+        fid = _uniform_2d_indirect_traces(
+            fid, dic, experiment, direct_window=(current or {}).get("F2"),
+            direct_phase=direct_phase, direct_range=direct_range,
+        )
     sw_map = {axis: _axis_sw(dic, axis, experiment) for axis in axis_map}
     return optimize_indirect_windows(
         fid, axis_map, candidates=candidates, current=current, sw_map=sw_map,

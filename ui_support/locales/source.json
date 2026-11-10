@@ -144,7 +144,7 @@
       "gui/main_window.py:1726"
     ],
     "(Memory directory creation failed)": [
-      "workflow/stepwise.py:398"
+      "workflow/stepwise.py:384"
     ],
     "(No report record; generate a report after re-running \"Generate Spectrum\")": [
       "gui/pipeline_panel.py:3012"
@@ -213,13 +213,13 @@
     ],
     "), maintain existing baseline/zero filling/window configuration": [
       "workflow/phase_routes.py:1238",
-      "workflow/phase_routes.py:1454"
+      "workflow/phase_routes.py:1502"
     ],
     "), need to manually confirm the type": [
       "core/experiment/experiment_classifier.py:503"
     ],
     "), nus3d_rc_ph rotated copy not generated": [
-      "workflow/phase_routes.py:2232"
+      "workflow/phase_routes.py:2280"
     ],
     "**API version:** {p0}": [
       "gui/dialogs.py:116"
@@ -261,7 +261,7 @@
       "backend/nmrpipe_backend.py:4049"
     ],
     "1D spectrum does not generate UCSF file (skip)": [
-      "workflow/stepwise.py:211"
+      "workflow/ucsf_export.py:25"
     ],
     "2D NUS Determination: There is neither ser nor converted fid, so dense model cannot be determined": [
       "backend/nmrpipe_backend.py:725"
@@ -336,10 +336,10 @@
       "workflow/direct_diagnostics.py:1149"
     ],
     "; {p0} spectral width dependent candidates (GM/EM) not provided SW skip": [
-      "workflow/window_optimize.py:667"
+      "workflow/window_optimize.py:724"
     ],
     "; {p0}/{p1} expected peak(s) were merged into one detection by this window": [
-      "workflow/window_optimize.py:660"
+      "workflow/window_optimize.py:717"
     ],
     "== Quality inspection (manual spectrum preparation, multiplexing automatic optimisation final script) ==": [
       "workflow/manual.py:216"
@@ -402,10 +402,10 @@
       "gui/center_panel.py:234"
     ],
     "Add other data to the group": [
-      "gui/project_tree.py:1266"
+      "gui/project_tree.py:1267"
     ],
     "Add other data to the group...": [
-      "gui/project_tree.py:1385"
+      "gui/project_tree.py:1386"
     ],
     "Add peak": [
       "viewer/app.py:116",
@@ -458,12 +458,12 @@
     "Already imported": [
       "gui/main_window.py:2654",
       "gui/main_window.py:1196",
-      "gui/project_tree.py:978"
+      "gui/project_tree.py:979"
     ],
     "Already peak picking": [
       "gui/main_window.py:2657",
       "gui/main_window.py:1199",
-      "gui/project_tree.py:988"
+      "gui/project_tree.py:989"
     ],
     "Analyzed": [
       "gui/main_window.py:2658"
@@ -567,14 +567,14 @@
     ],
     "Baseline optimisation (embedding) failed: {p0}": [
       "workflow/phase_routes.py:1296",
-      "workflow/phase_routes.py:1512"
+      "workflow/phase_routes.py:1560"
     ],
     "Baseline optimisation summary: ": [
       "workflow/baseline_optimize.py:406"
     ],
     "Baseline optimisation(memory score)": [
       "workflow/phase_routes.py:1274",
-      "workflow/phase_routes.py:1490"
+      "workflow/phase_routes.py:1538"
     ],
     "Baseline optimisation(memory score): axis {p0}({p1}/{p2}),scoring every candidate": [
       "workflow/baseline_optimize.py:239"
@@ -736,7 +736,7 @@
       "gui/pipeline_panel.py:1217"
     ],
     "Click to open project": [
-      "gui/project_tree.py:479"
+      "gui/project_tree.py:480"
     ],
     "Close": [
       "gui/overlay_svg_export.py:371",
@@ -824,7 +824,7 @@
       "backend/nmrpipe_backend.py:1300"
     ],
     "Conversion failed": [
-      "workflow/stepwise.py:272"
+      "workflow/stepwise.py:258"
     ],
     "Conversion record {p0} is unreadable; converting again": [
       "backend/nmrpipe_backend.py:3140"
@@ -861,7 +861,7 @@
     ],
     "Create data group": [
       "gui/main_window.py:1014",
-      "gui/project_tree.py:1326"
+      "gui/project_tree.py:1327"
     ],
     "Create experiments": [
       "gui/center_panel.py:302"
@@ -947,7 +947,7 @@
       "gui/pipeline_panel.py:3032"
     ],
     "Data: {p0}\nTitle: {p1}\nOriginal data: {p2}\nRight-click for data actions.": [
-      "gui/project_tree.py:840"
+      "gui/project_tree.py:841"
     ],
     "Default folder for UCSF exports. Leave blank to find POKY/Sparky Spectra automatically; you can also choose a folder manually.": [
       "gui/dialogs.py:883"
@@ -960,7 +960,7 @@
     ],
     "Delete selected sample data…": [
       "gui/main_window.py:2411",
-      "gui/project_tree.py:1341"
+      "gui/project_tree.py:1342"
     ],
     "Delete the selected rows from the peak table (automatic and manual peaks alike)": [
       "gui/spectrum_panel.py:361"
@@ -1073,10 +1073,10 @@
       "gui/welcome_page.py:84"
     ],
     "Enter the experiment title and press Enter to create, Esc to cancel": [
-      "gui/project_tree.py:1513"
+      "gui/project_tree.py:1514"
     ],
     "Enter the project name and press Enter to create, Esc to cancel": [
-      "gui/project_tree.py:1489",
+      "gui/project_tree.py:1490",
       "gui/welcome_page.py:141",
       "gui/welcome_page.py:154"
     ],
@@ -1221,7 +1221,7 @@
       "gui/pipeline_panel.py:117",
       "gui/pipeline_panel.py:3037",
       "gui/pipeline_panel.py:3429",
-      "gui/project_tree.py:982"
+      "gui/project_tree.py:983"
     ],
     "Failed to create new experiment": [
       "gui/main_window.py:2465"
@@ -1269,17 +1269,17 @@
       "workflow/phase_routes.py:953"
     ],
     "Final run (complete script) failed: {p0}": [
-      "workflow/phase_routes.py:2216"
+      "workflow/phase_routes.py:2264"
     ],
     "Final run completed": [
       "workflow/phase_routes.py:994",
-      "workflow/phase_routes.py:2218"
+      "workflow/phase_routes.py:2266"
     ],
     "Final run failed: {p0}": [
       "workflow/phase_routes.py:992"
     ],
     "Final script baseline check: ": [
-      "workflow/phase_routes.py:2252"
+      "workflow/phase_routes.py:2300"
     ],
     "Find nmrPipe: {p0}": [
       "backend/nmrpipe_backend.py:811"
@@ -1300,7 +1300,7 @@
       "backend/nmrpipe_backend.py:2611"
     ],
     "First pass SMILE completed": [
-      "workflow/phase_routes.py:1725"
+      "workflow/phase_routes.py:1773"
     ],
     "Fitting spectra…": [
       "gui/overlay_comparison.py:573",
@@ -1339,7 +1339,7 @@
       "gui/dialogs.py:400"
     ],
     "Generate FID": [
-      "workflow/stepwise.py:287",
+      "workflow/stepwise.py:273",
       "gui/group_panel.py:37",
       "gui/pipeline_panel.py:70"
     ],
@@ -1355,8 +1355,8 @@
     ],
     "Generated FID": [
       "gui/main_window.py:1197",
-      "gui/project_tree.py:993",
-      "gui/project_tree.py:1005"
+      "gui/project_tree.py:994",
+      "gui/project_tree.py:1006"
     ],
     "Give exactly one of: --grid (candidate values per axis, full factorial) or --combos (an external combination table: orthogonal / fractional factorial / LHS ...)": [
       "nmrfinesse_api/cli.py:421"
@@ -1385,7 +1385,7 @@
     ],
     "Handling parameter optimisation: joint review spectrum generation failed (": [
       "workflow/phase_routes.py:1236",
-      "workflow/phase_routes.py:1452"
+      "workflow/phase_routes.py:1500"
     ],
     "Hide negative": [
       "viewer/spectrum_viewer.py:164"
@@ -1478,21 +1478,21 @@
       "gui/main_window.py:1320"
     ],
     "In phase optimisation: {p0} Replica preview (direct dimension has been determined)": [
-      "workflow/phase_routes.py:842"
+      "workflow/phase_routes.py:841"
     ],
     "In phase optimisation: {p0} Replica preview completed": [
-      "workflow/phase_routes.py:781",
-      "workflow/phase_routes.py:1799"
+      "workflow/phase_routes.py:780",
+      "workflow/phase_routes.py:1847"
     ],
     "In phase optimisation: {p0} Replica preview in progress": [
-      "workflow/phase_routes.py:762",
-      "workflow/phase_routes.py:1776"
+      "workflow/phase_routes.py:761",
+      "workflow/phase_routes.py:1824"
     ],
     "In phase optimisation: {p0} Replicate preview (iteration) in progress": [
-      "workflow/phase_routes.py:2046"
+      "workflow/phase_routes.py:2094"
     ],
     "In the final run (complete script, including the final phase of each dimension)": [
-      "workflow/phase_routes.py:2208"
+      "workflow/phase_routes.py:2256"
     ],
     "Indirect (F1)": [
       "gui/pipeline_panel.py:1282",
@@ -1513,10 +1513,10 @@
       "gui/pipeline_panel.py:3676"
     ],
     "Indirect dimension window function optimisation (FID memory score, do not rerun the process)": [
-      "workflow/phase_routes.py:1357"
+      "workflow/phase_routes.py:1396"
     ],
     "Indirect dimension window optimisation failed (reading reconstruction plane): {p0}": [
-      "workflow/window_optimize.py:1119"
+      "workflow/window_optimize.py:1342"
     ],
     "Indirect flip": [
       "gui/pipeline_panel.py:1267"
@@ -1529,7 +1529,7 @@
     ],
     "Initial script retention failed: {p0}": [
       "workflow/phase_routes.py:951",
-      "workflow/phase_routes.py:1739"
+      "workflow/phase_routes.py:1787"
     ],
     "Input does not match the expected structure ({p0}): {p1}": [
       "core/user_errors.py:45"
@@ -1607,10 +1607,10 @@
       "backend/memory_disk.py:195"
     ],
     "Intermediate spectrum work directory using disk": [
-      "workflow/stepwise.py:397"
+      "workflow/stepwise.py:383"
     ],
     "Intermediate spectrum working directory using ramdisk (adaptive): {p0}": [
-      "workflow/stepwise.py:389"
+      "workflow/stepwise.py:375"
     ],
     "Internal memory search: locked trace takes time {p0:.2f}s,scoring / the rest takes {p1:.2f}s, {p2} candidates scored in {p3:.2f}s in total": [
       "workflow/memory_phase_search.py:813"
@@ -1800,8 +1800,8 @@
       "backend/nmrpipe_backend.py:1725"
     ],
     "Memory phase research({p0}) No trace available": [
-      "workflow/phase_routes.py:878",
-      "workflow/phase_routes.py:2092"
+      "workflow/phase_routes.py:877",
+      "workflow/phase_routes.py:2140"
     ],
     "Memory tips: {p0} Replica preview {p1:.0f}MB,about {p2} MB free, memory may be insufficient (on failure, free memory or use a smaller data set)": [
       "workflow/phase_routes.py:263"
@@ -1845,7 +1845,7 @@
     ],
     "Missing script: {p0}": [
       "workflow/manual.py:539",
-      "workflow/manual.py:629"
+      "workflow/manual.py:627"
     ],
     "Missing time domain data file (ser/fid)": [
       "gui/raw_quality.py:149"
@@ -1857,7 +1857,7 @@
       "gui/overlay_comparison.py:165"
     ],
     "Move the data out of the group": [
-      "gui/project_tree.py:1419"
+      "gui/project_tree.py:1420"
     ],
     "Move {p0} selected data sets and their output files to the trash? They can be restored.": [
       "gui/main_window.py:2412"
@@ -1914,7 +1914,7 @@
     ],
     "NMRPipe processing failed": [
       "backend/nmrpipe_backend.py:1065",
-      "workflow/stepwise.py:516"
+      "workflow/stepwise.py:496"
     ],
     "NMRPipe spectrum (*.ft2 *.ft3 *.ft1 *.fid);; all files (*)": [
       "gui/spectrum_panel.py:2581",
@@ -1931,10 +1931,10 @@
       "backend/nmrpipe_backend.py:840"
     ],
     "NUS Replica preview ({p0}) failed: {p1}": [
-      "workflow/phase_routes.py:1792"
+      "workflow/phase_routes.py:1840"
     ],
     "NUS Replica preview search ({p0}) failed: {p1}": [
-      "workflow/phase_routes.py:2075"
+      "workflow/phase_routes.py:2123"
     ],
     "NUS data was detected, but no valid sampling schedule was found in {p0}. Import was stopped because the sampling order cannot be recovered; put the nuslist file (or the file explicitly named by acqus.NUSLIST) in the dataset directory and import again. Detection evidence: {p1}": [
       "workflow/import_workflow.py:263"
@@ -2010,7 +2010,7 @@
       "workflow/batch.py:107"
     ],
     "No data to add": [
-      "gui/project_tree.py:1254"
+      "gui/project_tree.py:1255"
     ],
     "No details": [
       "gui/pipeline_panel.py:3074"
@@ -2049,7 +2049,7 @@
       "gui/overlay_svg_export.py:65"
     ],
     "No window (linear)": [
-      "workflow/window_optimize.py:159"
+      "workflow/window_optimize.py:166"
     ],
     "No. {p0} Line: There are extra characters after the line continuation character `\\` {p1!r}(should be `\\` at the end of the line and wrap directly), the pipe will break": [
       "workflow/script_check.py:120"
@@ -2070,7 +2070,7 @@
       "viewer/spectrum.py:1194"
     ],
     "None POLY": [
-      "workflow/phase_routes.py:2253"
+      "workflow/phase_routes.py:2301"
     ],
     "Not a Bruker dataset directory (acqus is missing): {p0}": [
       "workflow/import_workflow.py:135"
@@ -2104,8 +2104,8 @@
       "workflow/baseline_optimize.py:411"
     ],
     "Not recorded": [
-      "gui/project_tree.py:839",
-      "gui/project_tree.py:842",
+      "gui/project_tree.py:840",
+      "gui/project_tree.py:843",
       "ui_support/spectrum_metadata.py:41",
       "ui_support/spectrum_metadata.py:68"
     ],
@@ -2166,12 +2166,12 @@
       "viewer/app.py:163"
     ],
     "Open in terminal": [
-      "gui/project_tree.py:1432",
-      "gui/project_tree.py:1452"
+      "gui/project_tree.py:1433",
+      "gui/project_tree.py:1453"
     ],
     "Open project...": [
       "gui/main_window.py:323",
-      "gui/project_tree.py:1360"
+      "gui/project_tree.py:1361"
     ],
     "Open snapshot directory": [
       "gui/dialogs.py:705"
@@ -2183,8 +2183,8 @@
       "gui/spectrum_panel.py:549"
     ],
     "Open the directory where it is located": [
-      "gui/project_tree.py:1428",
-      "gui/project_tree.py:1448"
+      "gui/project_tree.py:1429",
+      "gui/project_tree.py:1449"
     ],
     "Open the script/parameter snapshot directory of the run (if any)": [
       "gui/dialogs.py:708"
@@ -2438,7 +2438,7 @@
       "gui/pipeline_panel.py:1128"
     ],
     "Press Rank1 (SMILE to scan the optimal parameters) and rerun the final spectrum and refresh the companion products": [
-      "gui/processing.py:1068"
+      "gui/processing.py:1065"
     ],
     "Press Rank1 to rerun": [
       "gui/pipeline_panel.py:1353"
@@ -2478,7 +2478,7 @@
     ],
     "Processing parameter optimisation (baseline/zero filling/window function) is completed, time-consuming {p0:.1f} Second": [
       "workflow/phase_routes.py:930",
-      "workflow/phase_routes.py:2158"
+      "workflow/phase_routes.py:2206"
     ],
     "Processing plan parameter (table editor/script rendering shared data source)": [
       "backend/script_generator.py:1605"
@@ -2551,13 +2551,13 @@
       "gui/pipeline_panel.py:602"
     ],
     "Rank1 quality record generation failed and has been skipped: {p0}": [
-      "gui/processing.py:1053"
+      "gui/processing.py:1050"
     ],
     "Rank1 rerun failed (rc={p0}), not generated {p1}": [
       "gui/processing.py:1020"
     ],
     "Rank1 rerun failed: {p0}": [
-      "gui/processing.py:1080"
+      "gui/processing.py:1077"
     ],
     "Rank1 script not found, please run SMILE optimisation first": [
       "gui/processing.py:967"
@@ -2724,13 +2724,13 @@
       "nmrfinesse_api/peaks.py:277"
     ],
     "Replica preview": [
-      "workflow/stepwise.py:516"
+      "workflow/stepwise.py:496"
     ],
     "Replica preview ({p0}) failed: {p1}": [
-      "workflow/phase_routes.py:774"
+      "workflow/phase_routes.py:773"
     ],
     "Replica preview search ({p0}) failed: {p1}": [
-      "workflow/phase_routes.py:861"
+      "workflow/phase_routes.py:860"
     ],
     "Report": [
       "gui/pipeline_panel.py:1052"
@@ -2777,7 +2777,7 @@
     ],
     "Running": [
       "gui/pipeline_panel.py:115",
-      "gui/project_tree.py:976"
+      "gui/project_tree.py:977"
     ],
     "Running {p0}: {p1}/{p2}": [
       "gui/pipeline_panel.py:3363"
@@ -2877,7 +2877,7 @@
       "workflow/script_audit.py:150"
     ],
     "Searching for the direct-dimension phase (first run, usually tens of seconds), please wait": [
-      "workflow/phase_routes.py:1952"
+      "workflow/phase_routes.py:2000"
     ],
     "Segmented data only: set the frequency offset (Hz) of parts 2..N relative to part 1. Running applies these manual offsets during FID conversion; offsets are not detected automatically.": [
       "gui/pipeline_panel.py:1227",
@@ -2900,7 +2900,7 @@
       "gui/dialogs.py:316"
     ],
     "Select a level to open its tools in the center panel.": [
-      "gui/project_tree.py:378"
+      "gui/project_tree.py:379"
     ],
     "Select a plane for the third spectrum.": [
       "gui/spectrum_panel.py:2767"
@@ -2918,7 +2918,7 @@
       "gui/ucsf_export_dialog.py:42"
     ],
     "Select data with the same dimensionality in one experiment": [
-      "gui/project_tree.py:1338"
+      "gui/project_tree.py:1339"
     ],
     "Select export reference peak file (.list)": [
       "gui/spectrum_panel.py:2382"
@@ -3051,21 +3051,21 @@
       "gui/overlay_comparison.py:186"
     ],
     "Spectrum generation failed": [
-      "workflow/stepwise.py:457"
+      "workflow/stepwise.py:442"
     ],
     "Spectrum generation finished ({p0})": [
       "gui/processing.py:476"
     ],
     "Spectrum has been generated": [
       "gui/main_window.py:1198",
-      "gui/project_tree.py:990",
-      "gui/project_tree.py:1003"
+      "gui/project_tree.py:991",
+      "gui/project_tree.py:1004"
     ],
     "Spectrum plot": [
       "viewer/spectrum_viewer.py:645"
     ],
     "Spectrum quality assessment failed: {p0}: {p1}": [
-      "workflow/manual.py:682"
+      "workflow/manual.py:679"
     ],
     "Spectrum {p0}": [
       "gui/overlay_comparison.py:310"
@@ -3176,7 +3176,7 @@
       "backend/nmrpipe_backend.py:3145"
     ],
     "The converted fid is missing, please generate FID first: {p0}/{p1}": [
-      "workflow/manual.py:607"
+      "workflow/manual.py:606"
     ],
     "The converted fid is missing, please perform the \"Generate FID\" step first": [
       "workflow/manual.py:467"
@@ -3210,13 +3210,13 @@
     ],
     "The final run is completed and takes time {p0:.1f} Second": [
       "workflow/phase_routes.py:996",
-      "workflow/phase_routes.py:2235"
+      "workflow/phase_routes.py:2283"
     ],
     "The first pass SMILE reconstruction failed: {p0}": [
-      "workflow/phase_routes.py:1708"
+      "workflow/phase_routes.py:1756"
     ],
     "The first pass SMILE reconstruction is completed: {p0}": [
-      "workflow/phase_routes.py:1722"
+      "workflow/phase_routes.py:1770"
     ],
     "The high field end ppm must be greater than the low field end ppm (such as 8.5-7.5)": [
       "gui/pipeline_panel.py:197"
@@ -3240,8 +3240,8 @@
       "workflow/display_alignment.py:38"
     ],
     "The phase search is completed and processing of parameter optimisation (baseline/zero filling/window function) begins": [
-      "workflow/phase_routes.py:913",
-      "workflow/phase_routes.py:2143"
+      "workflow/phase_routes.py:912",
+      "workflow/phase_routes.py:2191"
     ],
     "The ppm offset explicitly recorded in this acquisition file. Compare with O1/BF1 if the metadata disagree.": [
       "backend/carrier_choices.py:100"
@@ -3252,7 +3252,7 @@
       "gui/processing.py:370",
       "gui/processing.py:426",
       "gui/processing.py:522",
-      "gui/processing.py:1179"
+      "gui/processing.py:1176"
     ],
     "The processing script is generated automatically by the backend from the sampling mode and usually needs no changes.\n- Poor baseline (wavy spectrum / spurious peaks): append `| nmrPipe -fn POLY -auto` after the FT of that dimension, or fine-tune POLY -ord;\n- Poor peak shape or resolution: adjust -off/-end/-pow/-c of the SP window function, or increase ZF -size;\n- Poor phase: adjust PS -p0/-p1 (auto phasing fills them in; normally leave them alone);\n- The -alt/-neg/-real flags of the FT are decided automatically from the sampling mode; if you believe the choice is wrong you can edit them: -neg flips the spectrum, -alt shifts it by half the spectral width.": [
       "gui/dialogs.py:551"
@@ -3292,7 +3292,7 @@
       "backend/nmrpipe_backend.py:4746"
     ],
     "The source spectrum does not exist, skip UCSF conversion: {p0}": [
-      "workflow/ucsf_export.py:31"
+      "workflow/ucsf_export.py:46"
     ],
     "The spectrum is missing and cannot pick the peak: {p0}/{p1}": [
       "workflow/pick_peaks.py:852"
@@ -3337,7 +3337,7 @@
       "gui/main_window.py:2224"
     ],
     "There is no ungrouped sample data under experiment": [
-      "gui/project_tree.py:1257"
+      "gui/project_tree.py:1258"
     ],
     "Third axis slice position (drag and release to refresh)": [
       "viewer/spectrum3d_panel.py:58"
@@ -3400,10 +3400,10 @@
       "gui/ucsf_export_dialog.py:49"
     ],
     "UCSF has generated: {p0}": [
-      "workflow/ucsf_export.py:90"
+      "workflow/ucsf_export.py:109"
     ],
     "Unable to clean old UCSF files, skipping conversion: {p0}": [
-      "workflow/ucsf_export.py:35"
+      "workflow/ucsf_export.py:50"
     ],
     "Unable to generate scan script": [
       "backend/nmrpipe_backend.py:2308"
@@ -3439,7 +3439,7 @@
       "gui/overlay_comparison.py:128"
     ],
     "Unified replication preview failed ({p0}); fallback phase_route=none": [
-      "workflow/stepwise.py:519"
+      "workflow/stepwise.py:499"
     ],
     "Uniformly sampled data: starting NMRPipe processing and phase optimisation": [
       "gui/processing.py:446"
@@ -3464,7 +3464,7 @@
       "nmrfinesse_api/peaks.py:992"
     ],
     "Unknown phase_route: {p0}": [
-      "workflow/stepwise.py:491"
+      "workflow/stepwise.py:471"
     ],
     "Unsupported batch steps: {p0}": [
       "workflow/batch.py:190",
@@ -3691,7 +3691,7 @@
     ],
     "baseline optimisation: switched off externally (params.reference_optimize.baseline=off), reusing the baseline configuration supplied by the caller (tests / reproduction only)": [
       "workflow/phase_routes.py:1262",
-      "workflow/phase_routes.py:1478"
+      "workflow/phase_routes.py:1526"
     ],
     "baseline tilt/offset detected (worst storage axis): baseline correction recommended": [
       "core/qc/spectrum_quality.py:327"
@@ -3847,13 +3847,13 @@
       "backend/runtime.py:400"
     ],
     "current": [
-      "gui/project_tree.py:524",
-      "gui/project_tree.py:475",
-      "gui/project_tree.py:755",
-      "gui/project_tree.py:1159"
+      "gui/project_tree.py:525",
+      "gui/project_tree.py:476",
+      "gui/project_tree.py:756",
+      "gui/project_tree.py:1160"
     ],
     "current project": [
-      "gui/project_tree.py:479"
+      "gui/project_tree.py:480"
     ],
     "data": [
       "gui/group_panel.py:296",
@@ -3895,8 +3895,8 @@
     ],
     "data quality diagnosis failed: {p0}": [
       "backend/nmrpipe_backend.py:1273",
-      "workflow/phase_routes.py:710",
-      "workflow/phase_routes.py:1682"
+      "workflow/phase_routes.py:709",
+      "workflow/phase_routes.py:1730"
     ],
     "data segment {p0} Slicing failed": [
       "backend/nmrpipe_backend.py:4437"
@@ -3954,7 +3954,7 @@
     ],
     "delete experiment": [
       "gui/main_window.py:1595",
-      "gui/project_tree.py:1380"
+      "gui/project_tree.py:1381"
     ],
     "delete experiment failed": [
       "gui/main_window.py:1614"
@@ -3963,10 +3963,10 @@
       "gui/main_window.py:1596"
     ],
     "delete group (including data)...": [
-      "gui/project_tree.py:1400"
+      "gui/project_tree.py:1401"
     ],
     "delete group tag (data retained)...": [
-      "gui/project_tree.py:1396"
+      "gui/project_tree.py:1397"
     ],
     "delete peak": [
       "viewer/app.py:118",
@@ -3983,11 +3983,11 @@
       "gui/main_window.py:2296"
     ],
     "delete project...": [
-      "gui/project_tree.py:1369"
+      "gui/project_tree.py:1370"
     ],
     "delete sample data": [
       "gui/main_window.py:2403",
-      "gui/project_tree.py:1441"
+      "gui/project_tree.py:1442"
     ],
     "delete sample data {p0} and its output files?\nIt will be moved to the system trash and can be restored.\n(the WorkflowRun audit trail is kept)": [
       "gui/main_window.py:2404"
@@ -4008,7 +4008,7 @@
       "core/experiment/acquisition_mode_detector.py:210"
     ],
     "direct dimension": [
-      "workflow/window_optimize.py:779"
+      "workflow/window_optimize.py:838"
     ],
     "direct dimension 1H extraction window height ppm(EXT -x1)": [
       "backend/script_generator.py:1723"
@@ -4026,7 +4026,7 @@
       "backend/nmrpipe_backend.py:3402"
     ],
     "direct dimension memory phase: {p0}=({p1:g}°, {p2:g}°)": [
-      "workflow/phase_routes.py:2024"
+      "workflow/phase_routes.py:2072"
     ],
     "direct dimension p1 consensus automatic phase": [
       "backend/script_generator.py:1716"
@@ -4052,24 +4052,24 @@
       "backend/nmrpipe_backend.py:4084"
     ],
     "direct dimension phase is searching (last appointment {p0:.0f} seconds), please wait": [
-      "workflow/phase_routes.py:1944"
+      "workflow/phase_routes.py:1992"
     ],
     "direct dimension phase renormalized by final run window: {p0} p1={p1:g}° → {p2:g}°": [
-      "workflow/phase_routes.py:2181",
+      "workflow/phase_routes.py:2229",
       "workflow/phase_routes.py:964"
     ],
     "direct dimension phase reuse cache phase.json: {p0}=({p1:g}°, {p2:g}°)": [
-      "workflow/phase_routes.py:1928"
+      "workflow/phase_routes.py:1976"
     ],
     "direct dimension phase search (NU-DFT): p0={p0:g} p1={p1:g} (correlation SNR={p2:.2f}, peak k*={p3}, {p4} slice)": [
       "backend/nmrpipe_backend.py:3928"
     ],
     "direct dimension phase search basis: real data final spectrum {p0}(indirect dimension corrected, direct dimension = last axis, projection trace = sum of indirect dimension points)": [
-      "workflow/phase_routes.py:1909"
+      "workflow/phase_routes.py:1957"
     ],
     "direct dimension phase search completed, time consuming {p0:.1f} Second": [
-      "workflow/phase_routes.py:1972",
-      "workflow/phase_routes.py:1967"
+      "workflow/phase_routes.py:2020",
+      "workflow/phase_routes.py:2015"
     ],
     "direct dimension phase search: direct dimension spectrum has no signal, keep p0=p1=0": [
       "backend/nmrpipe_backend.py:4060"
@@ -4090,10 +4090,10 @@
       "backend/nmrpipe_backend.py:2365"
     ],
     "direct dimension projection HT Search for: {p0}=({p1:g}°, {p2:g}°) score={p3:.2f}": [
-      "workflow/phase_routes.py:2002"
+      "workflow/phase_routes.py:2050"
     ],
     "direct dimension projection HT searches for no clean signal peaks or insufficient confidence, keep the initial phase": [
-      "workflow/phase_routes.py:2018"
+      "workflow/phase_routes.py:2066"
     ],
     "direct dimension range": [
       "gui/group_panel.py:137",
@@ -4123,27 +4123,27 @@
       "gui/pipeline_panel.py:2507"
     ],
     "direct dimension window function optimisation (FID memory score, no rerun SMILE)": [
-      "workflow/phase_routes.py:1541"
+      "workflow/phase_routes.py:1589"
     ],
     "direct dimension window function optimisation(FID memory score)": [
-      "workflow/phase_routes.py:1322"
+      "workflow/phase_routes.py:1325"
     ],
     "direct dimension window optimisation failed (read fid): {p0}": [
-      "workflow/window_optimize.py:1026"
+      "workflow/window_optimize.py:1125"
     ],
     "direct dimension window optimisation failed: {p0}": [
-      "workflow/phase_routes.py:1346",
-      "workflow/phase_routes.py:1580"
+      "workflow/phase_routes.py:1385",
+      "workflow/phase_routes.py:1628"
     ],
     "direct dimension window optimisation skipped: converted.fid not found": [
-      "workflow/window_optimize.py:1035"
+      "workflow/window_optimize.py:1134"
     ],
     "direct dimension {p0}×TD({p1}→{p2})": [
       "backend/script_generator.py:381",
       "backend/script_generator.py:394"
     ],
     "direct-dimension HT search p1={p0:g}° is out of range (>170°), reset to zero": [
-      "workflow/phase_routes.py:1994"
+      "workflow/phase_routes.py:2042"
     ],
     "direct-dimension frequency offset of each part vs part 1 over the effective criterion: {p0:.2f} Hz ({p1})": [
       "workflow/field_drift.py:1272"
@@ -4177,10 +4177,10 @@
       "nmrfinesse_api/direct_range.py:44"
     ],
     "direct-dimension real-data final spectrum preview failed: {p0}": [
-      "workflow/phase_routes.py:1898"
+      "workflow/phase_routes.py:1946"
     ],
     "direct-dimension window: NUS SMILE requires a direct-dimension window (SP) and the candidates do not cover the direct dimension, keeping the default SP": [
-      "workflow/phase_routes.py:1564"
+      "workflow/phase_routes.py:1612"
     ],
     "direct-dimension window: {p0}-{p1} ppm (EXT -x1/-xn, {p2})\n{p3}; peaks outside it do not enter the final spectrum,\np1 is renormalised to the window width; each data set shows its own settings": [
       "gui/pipeline_panel.py:2547"
@@ -4275,10 +4275,10 @@
       "gui/processing.py:247"
     ],
     "experiment type {p0}: magnitude spectra are not phase-optimised, so the all-axis phase search is skipped (keeping 0,0)": [
-      "workflow/phase_routes.py:737"
+      "workflow/phase_routes.py:736"
     ],
     "experiment type {p0}: magnitude spectra are not phase-optimised, the direct-dimension phase stays at (0,0) (the search is skipped)": [
-      "workflow/phase_routes.py:1864"
+      "workflow/phase_routes.py:1912"
     ],
     "experiment {p0}": [
       "gui/log_panel.py:194"
@@ -4361,7 +4361,7 @@
       "gui/pipeline_panel.py:2529"
     ],
     "final run: the final phase of every dimension is written into the full script (direct dimension {p0}=({p1:g}°, {p2:g}°)": [
-      "workflow/phase_routes.py:2220"
+      "workflow/phase_routes.py:2268"
     ],
     "final spectrum -> {p0}": [
       "backend/nmrpipe_backend.py:1945"
@@ -4386,7 +4386,7 @@
     ],
     "first-run script kept as: {p0}": [
       "workflow/phase_routes.py:949",
-      "workflow/phase_routes.py:1737"
+      "workflow/phase_routes.py:1785"
     ],
     "floor {p0:g} Hz": [
       "workflow/field_drift.py:1258"
@@ -4398,11 +4398,11 @@
       "viewer/app.py:96"
     ],
     "generate 3D projections from the final spectrum": [
-      "workflow/stepwise.py:642"
+      "workflow/stepwise.py:618"
     ],
     "generate spectrum": [
-      "workflow/stepwise.py:572",
-      "workflow/stepwise.py:485"
+      "workflow/stepwise.py:549",
+      "workflow/stepwise.py:465"
     ],
     "give exactly one of axes (full factorial) or combos (explicit table)": [
       "nmrfinesse_api/sweep.py:1122"
@@ -4500,7 +4500,7 @@
       "gui/dialogs.py:227"
     ],
     "import sample data...": [
-      "gui/project_tree.py:1371"
+      "gui/project_tree.py:1372"
     ],
     "import the ordered dataset directories as one segmented acquisition": [
       "nmrfinesse_api/cli.py:600"
@@ -4522,29 +4522,29 @@
       "gui/pipeline_panel.py:3645"
     ],
     "indirect dimension window function optimisation (reconstruct plane memory score, do not rerun SMILE)": [
-      "workflow/phase_routes.py:1591"
+      "workflow/phase_routes.py:1639"
     ],
     "indirect dimension window optimisation failed (reading fid): {p0}": [
-      "workflow/window_optimize.py:1074"
+      "workflow/window_optimize.py:1292"
     ],
     "indirect dimension window optimisation failed: {p0}": [
-      "workflow/phase_routes.py:1387",
-      "workflow/phase_routes.py:1623"
+      "workflow/phase_routes.py:1434",
+      "workflow/phase_routes.py:1671"
     ],
     "indirect dimension window optimisation skip: no timeline available": [
-      "workflow/window_optimize.py:847"
+      "workflow/window_optimize.py:906"
     ],
     "indirect dimension window optimisation skip: not found SMILE reconstruction plane": [
-      "workflow/window_optimize.py:1132"
+      "workflow/window_optimize.py:1355"
     ],
     "indirect dimension window optimisation skipped: converted.fid not found": [
-      "workflow/window_optimize.py:1083"
+      "workflow/window_optimize.py:1301"
     ],
     "indirect dimension {p0}×TD({p1}→{p2})": [
       "backend/script_generator.py:384"
     ],
     "indirect dimension: the amplitude spectrum does not automatically adjust the phase, skip the finalize replica preview and search": [
-      "workflow/phase_routes.py:1753"
+      "workflow/phase_routes.py:1801"
     ],
     "input parameters for automatic processing (YAML/JSON)": [
       "nmrfinesse_api/cli.py:610"
@@ -4688,8 +4688,8 @@
       "nmrfinesse_api/cli.py:727"
     ],
     "memory phase search({p0}) No trace available": [
-      "workflow/phase_routes.py:792",
-      "workflow/phase_routes.py:1810"
+      "workflow/phase_routes.py:791",
+      "workflow/phase_routes.py:1858"
     ],
     "more than {p0} columns per line": [
       "core/data/nus_reader.py:142"
@@ -4713,7 +4713,7 @@
       "core/data/nus_reader.py:255"
     ],
     "new experiment": [
-      "gui/project_tree.py:1509"
+      "gui/project_tree.py:1510"
     ],
     "nmrPipe not found (csh: source ~/.cshrc; which nmrPipe)": [
       "backend/nmrpipe_backend.py:804"
@@ -4810,7 +4810,7 @@
       "backend/nmrpipe_backend.py:5034"
     ],
     "object": [
-      "gui/project_tree.py:388"
+      "gui/project_tree.py:389"
     ],
     "ongoing{p0}: {p1}": [
       "gui/main_window.py:1715"
@@ -4825,7 +4825,7 @@
       "core/data/nus_reader.py:157"
     ],
     "optimal {p0} (FWHM {p1:.2f}point, SNR {p2:.1f}, shape {p3:.3f}, score {p4:.3f}); scored {p5}/{p6} candidate(s); resolution factor {p7:.3f} (width {p8:.3f}x, exponent {p9:.3f})": [
-      "workflow/window_optimize.py:643"
+      "workflow/window_optimize.py:700"
     ],
     "optimisation ": [
       "workflow/baseline_optimize.py:407"
@@ -4992,25 +4992,25 @@
       "workflow/optimization_report.py:239"
     ],
     "phase iteration: indirect dimension {p0} There is no change in the wheel, convergence": [
-      "workflow/phase_routes.py:2129"
+      "workflow/phase_routes.py:2177"
     ],
     "phase optimisation does not produce spectrum": [
-      "workflow/stepwise.py:538"
+      "workflow/stepwise.py:518"
     ],
     "phase optimisation: direct dimension real data final spectrum preview": [
-      "workflow/phase_routes.py:1877"
+      "workflow/phase_routes.py:1925"
     ],
     "phase optimisation: direct dimension real data final spectrum preview completed": [
-      "workflow/phase_routes.py:1918"
+      "workflow/phase_routes.py:1966"
     ],
     "picking produced no peak table: {p0}": [
       "nmrfinesse_api/peaks.py:842"
     ],
     "pipe2ucsf conversion failed ({p0}), skip UCSF conversion": [
-      "workflow/ucsf_export.py:89"
+      "workflow/ucsf_export.py:108"
     ],
     "pipe2ucsf execution failed, skipping UCSF conversion: {p0}": [
-      "workflow/ucsf_export.py:73"
+      "workflow/ucsf_export.py:92"
     ],
     "pipe2ucsf path": [
       "gui/dialogs.py:848"
@@ -5123,7 +5123,7 @@
       "core/project/manager.py:182"
     ],
     "project/data": [
-      "gui/project_tree.py:372"
+      "gui/project_tree.py:373"
     ],
     "quit": [
       "gui/main_window.py:331",
@@ -5211,7 +5211,7 @@
       "gui/main_window.py:1582"
     ],
     "rename group...": [
-      "gui/project_tree.py:1389"
+      "gui/project_tree.py:1390"
     ],
     "rename project": [
       "gui/main_window.py:2269"
@@ -5221,11 +5221,11 @@
       "gui/main_window.py:2281"
     ],
     "rename project...": [
-      "gui/project_tree.py:1365"
+      "gui/project_tree.py:1366"
     ],
     "rename...": [
-      "gui/project_tree.py:1376",
-      "gui/project_tree.py:1436"
+      "gui/project_tree.py:1377",
+      "gui/project_tree.py:1437"
     ],
     "repeat({p0})": [
       "backend/nmrpipe_backend.py:273"
@@ -5507,7 +5507,7 @@
       "gui/dashboards.py:91",
       "gui/dashboards.py:666",
       "gui/dialogs.py:686",
-      "gui/project_tree.py:388"
+      "gui/project_tree.py:389"
     ],
     "state: {p0}": [
       "gui/pipeline_panel.py:1445"
@@ -5836,8 +5836,8 @@
       "core/data/nus_reader.py:130"
     ],
     "trace no valid signal": [
-      "workflow/window_optimize.py:620",
-      "workflow/window_optimize.py:638"
+      "workflow/window_optimize.py:671",
+      "workflow/window_optimize.py:689"
     ],
     "trash target conflict: {p0}": [
       "core/trash.py:34"
@@ -5902,7 +5902,7 @@
     ],
     "window optimisation: switched off externally (params.reference_optimize.window=off), reusing the window configuration supplied by the caller (tests / reproduction only)": [
       "workflow/phase_routes.py:1310",
-      "workflow/phase_routes.py:1527"
+      "workflow/phase_routes.py:1575"
     ],
     "window_pts cannot be negative": [
       "nmrfinesse_api/peaks.py:501"
@@ -5959,8 +5959,8 @@
       "nmrfinesse_api/sweep.py:378"
     ],
     "{p0}\nright click: add other data to this group / rename the group / remove the group tag (data kept) / delete the group (with its data)": [
-      "gui/project_tree.py:583",
-      "gui/project_tree.py:811"
+      "gui/project_tree.py:584",
+      "gui/project_tree.py:812"
     ],
     "{p0} ({p1} data)": [
       "gui/main_window.py:2684"
@@ -5984,12 +5984,12 @@
       "workflow/direct_diagnostics.py:725"
     ],
     "{p0} Phase re-search is completed, time-consuming {p1:.1f} Second": [
-      "workflow/phase_routes.py:899",
-      "workflow/phase_routes.py:2121"
+      "workflow/phase_routes.py:898",
+      "workflow/phase_routes.py:2169"
     ],
     "{p0} Phase search is completed, time-consuming {p1:.1f} Second": [
-      "workflow/phase_routes.py:824",
-      "workflow/phase_routes.py:1841"
+      "workflow/phase_routes.py:823",
+      "workflow/phase_routes.py:1889"
     ],
     "{p0} Status: {p1}": [
       "gui/pipeline_panel.py:3039"
@@ -6016,8 +6016,8 @@
       "nmrfinesse_api/sweep.py:1139"
     ],
     "{p0} data": [
-      "gui/project_tree.py:580",
-      "gui/project_tree.py:807"
+      "gui/project_tree.py:581",
+      "gui/project_tree.py:808"
     ],
     "{p0} fail: {p1}": [
       "workflow/batch.py:538"
@@ -6054,7 +6054,7 @@
       "gui/main_window.py:2164"
     ],
     "{p0} run failed: {p1}": [
-      "workflow/manual.py:645"
+      "workflow/manual.py:643"
     ],
     "{p0} size mismatch: actual {p1} bytes, expected {p2} bytes (TD/dimensionality may not match)": [
       "core/data/bruker_reader.py:131"
@@ -6081,14 +6081,14 @@
       "workflow/smile_optimize.py:314"
     ],
     "{p0}(indirect dimension)": [
-      "workflow/window_optimize.py:834"
+      "workflow/window_optimize.py:892"
     ],
     "{p0}.fid is in place ({p1})": [
       "backend/nmrpipe_backend.py:3218"
     ],
     "{p0}: +/-180° chemical shift partitioning disambiguation {p1} → {p2}": [
-      "workflow/phase_routes.py:799",
-      "workflow/phase_routes.py:1817"
+      "workflow/phase_routes.py:798",
+      "workflow/phase_routes.py:1865"
     ],
     "{p0}: Baseline has been optimised {p1} → {p2} (score={p3:.1f} → {p4:.1f}, +{p5:.1f})": [
       "workflow/baseline_optimize.py:390"
@@ -6097,7 +6097,7 @@
       "backend/bruker_workflow.py:453"
     ],
     "{p0}: Memory phase re-search (iteration {p1}) = ({p2:g}°, {p3:g}°) score={p4:.2f}": [
-      "workflow/phase_routes.py:2108"
+      "workflow/phase_routes.py:2156"
     ],
     "{p0}: The backend interface needs to be implemented and cannot be run yet": [
       "gui/pipeline_panel.py:3303"
@@ -6109,7 +6109,7 @@
       "backend/bruker_workflow.py:1578"
     ],
     "{p0}: Window: The optimal configuration is consistent with the existing configuration and remains": [
-      "workflow/window_optimize.py:744"
+      "workflow/window_optimize.py:803"
     ],
     "{p0}: acquisition centre (acqus O1/BF1)": [
       "backend/bruker_workflow.py:444"
@@ -6164,10 +6164,10 @@
       "backend/bruker_workflow.py:1428"
     ],
     "{p0}: in-memory phase re-search (direct dimension fixed) = ({p1:g}°, {p2:g}°) score={p3:.2f}": [
-      "workflow/phase_routes.py:889"
+      "workflow/phase_routes.py:888"
     ],
     "{p0}: indirect dimension window optimisation skip: insufficient points": [
-      "workflow/window_optimize.py:816"
+      "workflow/window_optimize.py:874"
     ],
     "{p0}: jump over({p1})": [
       "workflow/batch.py:450"
@@ -6176,8 +6176,8 @@
       "backend/bruker_workflow.py:434"
     ],
     "{p0}: memory phase = ({p1:g}°, {p2:g}°) score={p3:.2f}": [
-      "workflow/phase_routes.py:815",
-      "workflow/phase_routes.py:1832"
+      "workflow/phase_routes.py:814",
+      "workflow/phase_routes.py:1880"
     ],
     "{p0}: peak_id is empty (delete the blank row)": [
       "nmrfinesse_api/localization_targets.py:74"
@@ -6208,13 +6208,13 @@
       "nmrfinesse_api/localization_targets.py:458"
     ],
     "{p0}: window optimisation skip: insufficient points in this axis": [
-      "workflow/window_optimize.py:700"
+      "workflow/window_optimize.py:758"
     ],
     "{p0}: window optimisation skip:{p1}": [
-      "workflow/window_optimize.py:739"
+      "workflow/window_optimize.py:798"
     ],
     "{p0}: window(memory score): {p1}": [
-      "workflow/window_optimize.py:742"
+      "workflow/window_optimize.py:801"
     ],
     "{p0}: {p1} Completed, skip": [
       "workflow/batch.py:488"
@@ -6265,8 +6265,8 @@
       "core/experiment/pulse_pathways.py:1064"
     ],
     "{p0}Right click: import sample data / rename / delete": [
-      "gui/project_tree.py:525",
-      "gui/project_tree.py:758"
+      "gui/project_tree.py:526",
+      "gui/project_tree.py:759"
     ],
     "{p0}{p1}{p2}, {p3} peaks": [
       "nmrfinesse_api/localization_targets.py:179"
@@ -6299,7 +6299,7 @@
       "workflow/script_audit.py:137"
     ],
     "◆ Process parameter: manual method (mode=manual)": [
-      "workflow/manual.py:669"
+      "workflow/manual.py:666"
     ],
     "◆ conversion and merging": [
       "workflow/direct_diagnostics.py:1795"

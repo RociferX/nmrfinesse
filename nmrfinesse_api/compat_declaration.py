@@ -23,12 +23,12 @@ from typing import Any
 
 #: declared behaviour level (see the module doc; meaning matches nmrfinesse_api.compat)
 DECLARATION: dict[str, Any] = {'schema': 'nmrfinesse_api.compat.declaration.v1',
- 'digest': 'fd01104eda197571b56a04f90dc851be264de319c78d9d794f135bca9ab1c20d',
- 'token_digest': '31e9ae37610c85577a462403c388feb52b8d686638589f7da1939734630b263f',
+ 'digest': '1c4849d9db33c1c41b9b2876d6f3dc3cc032e6d058544af4eda9f250ab6863ec',
+ 'token_digest': '0dcf4da065e529b0f16a5f10a3b665f96de8fb572b8d4cf9203043e4b47833e6',
  'compat_level': 'behavior_changed',
- 'affected': ['processing', 'records'],
+ 'affected': ['reference', 'processing', 'records'],
  'updated': '2026-11-07',
- 'note': 'Window-sized startup loading; processing validation unchanged',
+ 'note': 'Prefer apodization unless no-window scores show a clear advantage',
  'golden': {'name': 'conformance_v1',
             'spectrum_sha256': '382b330926da93d856feef40ca33c2df1eec21b61e50db471bdf7aa4bb2fb311',
             'peak_table_sha256': 'e9ef45f2cae32bc580fc1bdeea1928ceb8406154848f8aca3c4558285e532242',

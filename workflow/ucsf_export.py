@@ -14,6 +14,22 @@ from typing import Any
 from ui_support.i18n import tr
 
 
+def refresh_spectrum_ucsf(
+    spectrum: Path | str,
+    *,
+    progress: Callable[[str], None] | None = None,
+) -> str | None:
+    """Refresh the UCSF sidecar for a newly written project spectrum."""
+    spectrum = Path(spectrum)
+    if spectrum.suffix.lower() == ".ft1":
+        path, message = None, tr("1D spectrum does not generate UCSF file (skip)")
+    else:
+        path, message = export_ucsf(spectrum, spectrum.with_suffix(".ucsf"))
+    if progress is not None:
+        progress(message)
+    return path
+
+
 def export_ucsf(
     source: Path | str,
     target: Path | str,
@@ -21,10 +37,9 @@ def export_ucsf(
     run: Callable[..., Any] | None = None,
 ) -> tuple[str | None, str]:
     """Use pipe2ucsf to convert NMRPipe spectrum (ft2/ft3) to Sparky UCSF file. run can be injected
-    (for testing); the default is to use the backend csh runtime (``source ~/.cshrc`` after
-    execution, VM environment has installed pipe2ucsf). Return (ucsf path or None, message), no
-    exception will be thrown if the conversion fails.
-    """
+        (for testing); the default is to use the backend csh runtime (``source ~/.cshrc`` after
+        execution, VM environment has installed pipe2ucsf). Return (ucsf path or None, message), no
+        exception will be thrown if the conversion fails."""
     source = Path(source)
     target = Path(target)
     if not source.is_file():
@@ -70,6 +85,10 @@ def export_ucsf(
             timeout=300,
         )
     except Exception as exc:
+        try:
+            target.unlink(missing_ok=True)
+        except OSError:
+            pass
         return None, tr("pipe2ucsf execution failed, skipping UCSF conversion: {p0}", p0=exc)
     if (
         getattr(result, "returncode", 1) != 0
@@ -90,4 +109,4 @@ def export_ucsf(
     return str(target), tr("UCSF has generated: {p0}", p0=target)
 
 
-__all__ = ["export_ucsf"]
+__all__ = ["export_ucsf", "refresh_spectrum_ucsf"]

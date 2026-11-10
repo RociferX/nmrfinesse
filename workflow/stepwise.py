@@ -26,7 +26,7 @@ from core.planning.method_selector import select_method
 from core.project import ProjectManager
 from ui_support.i18n import tr
 from workflow.import_workflow import ImportResult, import_data
-from workflow.ucsf_export import export_ucsf
+from workflow.ucsf_export import refresh_spectrum_ucsf
 
 
 class StepwiseError(Exception):
@@ -176,43 +176,29 @@ def _register_spectrum(
     exp_id: str,
     data_id: str,
     spectrum_path: str,
-) -> str:
+    *,
+    progress: Callable[[str], None] | None = None,
+) -> tuple[str, str | None]:
     """Return the final spectrum produced by the backend to <exp_id>/<data_id>/spectra/ (move,
-    process does not leave a copy) and register it.
-    """
+        process does not leave a copy) and register it."""
     source = Path(spectrum_path)
     spectra_dir = manager.data_dir(exp_id, data_id, "spectra")
     spectra_dir.mkdir(parents=True, exist_ok=True)
-    # 2026-08-19: The final spectrum naming prefix uses data id (d_001), renaming will not affect.
+
     target = spectra_dir / f"{data_id}{source.suffix}"
     if source.is_file() and source.resolve() != target.resolve():
         shutil.move(str(source), str(target))
-    # 0.2.199-patch29af: Homonuclear spectrum (HNN/NNH double 15N) unique label (15Nx/15Ny), making
-    # proj3D axis selection by label available; after rewriting, both projection and GUI display
+
+
     try:
         experiment = _read_experiment(manager, exp_id, data_id)
         _rewrite_duplicate_nucleus_labels(str(target), experiment)
-    except Exception:  # noqa: BLE001 - Failure to rewrite does not affect spectrum registration.
+    except Exception:
         pass
     manager.set_data_spectrum(exp_id, data_id, target)
-    return str(target)
+    return str(target), refresh_spectrum_ucsf(target, progress=progress)
 
 
-def _export_ucsf(
-    manager: ProjectManager,
-    exp_id: str,
-    data_id: str,
-    spectrum_path: str,
-) -> tuple[str | None, str]:
-    """After final spectrum is returned, Sparky UCSF file (spectra/<data_id>.ucsf) is generated."""
-    # 0.2.199-patch29gj-Fix (user): 1D spectrum (.ft1) does not generate UCSF file -- UCSF For
-    # 2D/3D, pipe2ucsf is meaningless for 1D; skip it directly to avoid redundant products and
-    if Path(spectrum_path).suffix.lower() == ".ft1":
-        return None, tr("1D spectrum does not generate UCSF file (skip)")
-    spectra_dir = manager.data_dir(exp_id, data_id, "spectra")
-    spectra_dir.mkdir(parents=True, exist_ok=True)
-    target = spectra_dir / f"{Path(spectrum_path).stem}.ucsf"
-    return export_ucsf(spectrum_path, target)
 
 
 def _ensure_work_dir(backend: Any, work: Path) -> None:
@@ -425,8 +411,7 @@ def _generate_spectrum_impl(
     progress: Callable[[str], None] | None = None,
 ) -> str:
     """Original generate_spectrum principal (working directory has been determined by the outer
-    layer).
-    """
+        layer)."""
     experiment = _read_experiment(manager, exp_id, data_id)
     params = dict(params or {})
     record_scores = bool(params.pop("_record_optimization_scores", False))
@@ -434,11 +419,11 @@ def _generate_spectrum_impl(
     from core.data.sweep_width import apply_sweep_width_overrides
 
     experiment = apply_sweep_width_overrides(experiment, params)
-    # 0.2.199-patch29hc:"data type/Peak symbol"Prioritize automatic classification/Default. in data
+
     _apply_note_overrides(manager, exp_id, data_id, experiment)
     plan = select_method(experiment)
     if route == "none":
-        # 0.2.162-patch15: The escape hatch only runs once, and directly maps the final run direct
+
         for key, target_key in (("final_ext_lo", "ext_lo"), ("final_ext_hi", "ext_hi")):
             if key in params and str(params[key]).strip():
                 params[target_key] = str(params[key])
@@ -459,18 +444,13 @@ def _generate_spectrum_impl(
                     "failed",
                 ))) + " | " + " | ".join(logs)
             )
-        # 0.2.199-patch29gu: Successfully also forwards the backend detailed log progress.
+
         if progress is not None:
             for _lg in logs:
                 progress(_lg)
-        spectrum_path = _register_spectrum(
-            manager, exp_id, data_id, str(resp.get("spectrum_path", ""))
+        spectrum_path, ucsf_path = _register_spectrum(
+            manager, exp_id, data_id, str(resp.get("spectrum_path", "")), progress=progress
         )
-        ucsf_path, ucsf_msg = _export_ucsf(
-            manager, exp_id, data_id, spectrum_path
-        )
-        if progress is not None:
-            progress(ucsf_msg)
         merged_params = dict(resp.get("effective_params") or {})
         merged_params.update(params)
         outputs: dict[str, str] = {"spectrum_path": spectrum_path}
@@ -509,9 +489,9 @@ def _generate_spectrum_impl(
             raise CandidateSelectionError(
                 "Explicit reference optimisation failed; no default fallback is allowed"
             ) from exc
-        # noqa: BLE001
-        # 0.2.199-patch29gy: Unified automatic phase replication preview will fail for some data
-        # (such as solid CANH) (NMRPipe reports data in Frequency Domain / Broken pipe); fall back
+
+
+
         msg = str(exc)
         if tr("Replica preview") not in msg and tr("NMRPipe processing failed") not in msg:
             raise
@@ -536,12 +516,9 @@ def _generate_spectrum_impl(
 
     if not result.get("spectrum_path"):
         raise StepwiseError(tr("phase optimisation does not produce spectrum"))
-    spectrum_path = _register_spectrum(
-        manager, exp_id, data_id, str(result.get("spectrum_path"))
+    spectrum_path, ucsf_path = _register_spectrum(
+        manager, exp_id, data_id, str(result.get("spectrum_path")), progress=progress
     )
-    ucsf_path, ucsf_msg = _export_ucsf(manager, exp_id, data_id, spectrum_path)
-    if progress is not None:
-        progress(ucsf_msg)
     merged_params = dict(params)
     merged_params["phase_route"] = route
     for key in (
@@ -572,22 +549,22 @@ def _generate_spectrum_impl(
         message=tr("generate spectrum"),
         params=merged_params,
     )
-    # Task E (0.2.133): generate three projections from the final 3D spectrum with
-    # NMRPipe proj3D.tcl (see generate_3d_projections). GUI indirect-axis flip reruns
-    # also use this path, so regenerate projections whenever the final spectrum changes.
+
+
+
     if experiment.ndim >= 3 and getattr(backend, "project_3d", None):
         projections = generate_3d_projections(
-            manager, exp_id, data_id, experiment, spectrum_path, backend
+            manager, exp_id, data_id, experiment, spectrum_path, backend, progress=progress
         )
         if projections:
             merged_params.setdefault("projections", {}).update(projections)
         _run = manager.project.run(run_id)
         if _run is not None and "projections" in merged_params:
-            # 0.2.133: Projection registration writeback run parameter (for GUI/Report reading).
+
             _run.params["projections"] = merged_params["projections"]
-    # 0.2.199-patch29t: The report cache disk must be placed after the projection registration --
-    # run.params will append projections. If the record is written in advance, the fingerprint will
-    # not match the run.params read by GUI, and the report will always display "No report record"
+
+
+
     try:
         from workflow.optimization_report import (
             report_text_from_logs,
@@ -596,15 +573,15 @@ def _generate_spectrum_impl(
 
         report_text = report_text_from_logs(list(result.get("logs", [])))
         if report_text:
-            # 2026-09-23 fix: the "parameter fingerprint of the report record" must have exactly
-            # the same shape as the run.params the GUI reads -- the record used to be written from
-            # the local merged_params, and any divergence (the record object being written back /
+
+
+
             record_params = merged_params
             _stored = manager.project.run(run_id)
             if _stored is not None and _stored.params:
                 record_params = dict(_stored.params)
             write_quality_record(spectrum_path, record_params, report_text)
-    except Exception:  # noqa: BLE001 - a failed cache record must not affect spectrum generation
+    except Exception:
         pass
     return spectrum_path
 
@@ -621,18 +598,17 @@ def generate_3d_projections(
 ) -> dict[str, str]:
     """Generate three 2D projections from a final 3D spectrum.
 
-    The NMRPipe ``proj3D.tcl`` script is used when nucleus labels are distinct;
-    repeated labels use a NumPy fallback. See :func:`projection_filename` for output
-    names (``{data_id}_{nucleus_a}-{nucleus_b}.ft2`` and the legacy
-    ``{data_id}_proj_*.ft2`` form; repeated nuclei use ``{data_id}_proj_F{n}.ft2``).
-    Returns a mapping from logical axis or tag to path. Errors are returned as
-    ``{"error": ...}`` rather than raised, so a projection failure does not block
-    spectrum generation.
+        The NMRPipe ``proj3D.tcl`` script is used when nucleus labels are distinct;
+        repeated labels use a NumPy fallback. See :func:`projection_filename` for output
+        names (``{data_id}_{nucleus_a}-{nucleus_b}.ft2`` and the legacy
+        ``{data_id}_proj_*.ft2`` form; repeated nuclei use ``{data_id}_proj_F{n}.ft2``).
+        Returns a mapping from logical axis or tag to path. Errors are returned as
+        ``{"error": ...}`` rather than raised, so a projection failure does not block
+        spectrum generation.
 
-    Called by ``_generate_spectrum_impl`` after spectrum generation and by the GUI's
-    rerun-final-script action. Flipping an indirect dimension changes the final
-    spectrum, so projections must be regenerated to avoid showing stale pre-flip data.
-    """
+        Called by ``_generate_spectrum_impl`` after spectrum generation and by the GUI's
+        rerun-final-script action. Flipping an indirect dimension changes the final
+        spectrum, so projections must be regenerated to avoid showing stale pre-flip data."""
     if not getattr(backend, "project_3d", None):
         return {}
     out: dict[str, str] = {}
@@ -649,9 +625,8 @@ def generate_3d_projections(
         nuclei = proj.get("nuclei", {})
         for tag, path in proj.get("paths", {}).items():
             if proj.get("numpy_fallback"):
-                # Duplicate nucleus labels can collide (for example, the two 15N-1H HNN planes).
-                # Use stable logical-axis names, {data_id}_proj_F{n}; the backend already writes
-                # these names, so no rename is needed.
+
+
                 logical = str(tag)
                 target = spectra_dir / f"{data_id}_proj_{logical}.ft2"
             else:
@@ -672,7 +647,8 @@ def generate_3d_projections(
                     target.unlink()
                 Path(path).replace(str(target))
             out[logical or tag] = str(target)
-    except Exception as exc:  # noqa: BLE001 - projection failure must not block the spectrum
+            refresh_spectrum_ucsf(target, progress=progress)
+    except Exception as exc:
         out["error"] = str(exc)
     return out
 

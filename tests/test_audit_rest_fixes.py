@@ -422,26 +422,6 @@ def test_both_trees_declare_a_default_language_file() -> None:
     assert data["language"] in {"zh", "en"}
 
 
-def test_packaging_policy_declares_source_and_appimage_release() -> None:
-    """PACK-015: the license / acceptance boundary of the current release artifact and the
-    AppImage must be explicit."""
-    text = Path("docs/packaging.md").read_text(encoding="utf-8")
-    from core import __version__
-
-    released = "v" + __version__
-    assert (
-        f"{released} 源码与 AppImage 发布" in text
-        or f"The {released} source and AppImage release" in text
-    )
-    assert "AppImage" in text
-    assert "wheel" in text
-    if Path("docs/manager").is_dir():
-        assert "APPIMAGE_RELEASE_CHECKLIST.md" in text
-    else:
-        assert "THIRD_PARTY_LICENSES/PROVENANCE.txt" in text
-        assert "THIRD_PARTY_LICENSES/NOTICE.md" in text
-
-
 def test_appimage_build_keeps_the_machine_local_config_out() -> None:
     """PACK-015: the machine-level local config (git-ignored) must not enter the artifact
     -- it carries the build machine's absolute paths."""

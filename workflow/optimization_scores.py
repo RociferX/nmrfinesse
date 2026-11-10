@@ -89,7 +89,8 @@ def window_rows(result: Any, axis: str, *, source: str, apply: bool = True) -> l
                 "candidate": value["label"],
                 "parameters": dict(value.get("cfg") or {}),
                 "score": value["score"],
-                "score_metric": "window_detection",
+                "score_metric": "direct_peak_valley" if source == "direct_preview"
+                else "window_detection",
                 "selected": selected,
                 "applied": selected and apply,
                 "status": value.get("status", "scored"),

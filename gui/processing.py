@@ -950,7 +950,7 @@ class ProcessingController:
         data_id: str,
         progress: Callable[[str], None] | None = None,
     ) -> str:
-        'Run and use SMILE Rank1, and refresh all companion products and traceability.'
+        """Run and use SMILE Rank1, and refresh all companion products and traceability."""
         import json
 
         from backend.runtime import CshRuntime
@@ -958,7 +958,7 @@ class ProcessingController:
             spectrum_quality_report_lines,
             write_quality_record,
         )
-        from workflow.ucsf_export import export_ucsf
+        from workflow.ucsf_export import refresh_spectrum_ucsf
 
         self._require_manager()
         proc = self._manager.data_dir(exp_id, data_id, "process")
@@ -1032,10 +1032,7 @@ class ProcessingController:
                 produced.replace(target)
             self._manager.set_data_spectrum(exp_id, data_id, target)
 
-            ucsf_target = spectra / f"{target.stem}.ucsf"
-            ucsf_path, ucsf_message = export_ucsf(target, ucsf_target)
-            if progress is not None:
-                progress(ucsf_message)
+            ucsf_path = refresh_spectrum_ucsf(target, progress=progress)
 
             quality_path = Path(f"{target}.quality.json")
             quality_path.unlink(missing_ok=True)
@@ -1048,7 +1045,7 @@ class ProcessingController:
                     write_quality_record(
                         str(target), run_params, "\n".join(quality_lines)
                     )
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 if progress is not None:
                     progress(tr(
                         "Rank1 quality record generation failed and has been skipped: "

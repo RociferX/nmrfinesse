@@ -29,7 +29,7 @@ maximum-absolute-value HN, HC and NC projections. Each projection is picked and 
 | --- | --- | --- |
 | Uniform 2D | HN 121/126 | [JSON](statistics/uniform2d-comparison.json) |
 | Controlled 2D NUS | HN 123/126 | [JSON](statistics/nus75-comparison.json) |
-| Uniform 3D | HN 82/84, HC 74/81, NC 65/71 | [JSON](statistics/uniform3d-comparison.json) |
+| Uniform 3D | HN 83/84, HC 76/81, NC 66/71 | [JSON](statistics/uniform3d-comparison.json) |
 | Acquired 3D NUS | HN 89/89, HC 93/93, NC 79/79 | [JSON](statistics/acquired3d-comparison.json) |
 
 Coverage is matched pairs divided by reference candidates. The results measure agreement between
@@ -80,17 +80,18 @@ route's SP setting. The indirect window is applied during finalization.
 
 | Projection | Automatic / reference candidates | Matched | Median absolute ppm differences |
 | --- | --- | --- | --- |
-| HN | 86 / 84 | 82 | H 0.00088, N 0.01285 |
-| HC | 79 / 81 | 74 | H 0.00087, C 0.03114 |
-| NC | 68 / 71 | 65 | N 0.01673, C 0.02887 |
+| HN | 85 / 84 | 83 | H 0.00104, N 0.01234 |
+| HC | 76 / 81 | 76 | H 0.00101, C 0.02934 |
+| NC | 69 / 71 | 66 | N 0.01378, C 0.02782 |
 
-Eight of the 15 unmatched projection entries involve nearby candidates competing for one-to-one
-matches. Six have local responses below the detection threshold. One has a local response without
+Eight of the 11 unmatched projection entries involve nearby candidates competing for one-to-one
+matches. Two have local responses below the detection threshold. One has a local response without
 an independent candidate.
 
 ### Processing parameters
 
-F3 and F2 use no apodization. F1 uses SP with off 0.45, end 0.90 and power 1. The direct dimension
+F3 uses SP with off 0.65, end 1.00 and power 2. F2 uses no apodization. F1 uses SP with off 0.45,
+end 0.90 and power 1. The direct dimension
 is extracted from 10.0 to 6.0 ppm. The final script uses automatic zero filling and applies
 time-domain DC correction. Spectrum-domain baseline correction is off for this case.
 

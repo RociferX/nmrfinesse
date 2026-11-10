@@ -70,9 +70,9 @@ converted FID + diagnostics
   -> spectrum QC and registered products
 ```
 
-Baseline candidates are evaluated before window candidates. Window scoring reads FID data in
-memory and does not require an extra baseline-selected spectrum render. Uniform candidates may
-include no window; indirect scoring includes resolution retention. The route supplies resolved
+Baseline candidates are evaluated before window candidates. FID scoring supplies a direct-axis
+baseline window. Phase-sensitive uniform 2D and 3D then use one shared complex direct-axis preview
+for the phased peak-valley comparison. Indirect-axis scoring emphasizes sidelobes and separation. The route supplies resolved
 baseline, windows and automatic zero-fill settings to the final script. If a scoring stage cannot
 evaluate its inputs, its logged fallback retains available settings instead of inventing a result.
 
@@ -111,16 +111,23 @@ Explicit NUS direct-dimension candidates must use SP; the selected SP configurat
 in the full reconstruction. Unspecified stages/directions retain defaults. An entirely invalid
 pool raises an error instead of falling back. Reference score CSV rows record scores and application.
 
-The default window pool scores ten candidates on each direct and indirect dimension: no window,
-five SP candidates, two Gaussian/GM candidates (`g1/g2/g3/c = 8/15/0/1` and `4/8/0/1`), and two
-exponential/EM candidates (`lb/c = 3/1` and `5/1`). The Hz-based candidates require a valid sweep
-width for their logical axis. The raw window score is the median of per-trace detection-strength,
-peak-separation, symmetry and sidelobe products. The final score is `raw_score * resolution_score`,
-where `resolution_score = width_ratio^-2` and `width_ratio = candidate_fwhm / min_valid_fwhm` is at
-least 1. Every logical axis uses the same continuous resolution factor; there are no direct- or
-indirect-dimension hard width gates. Default NUS direct-dimension processing retains its fixed SP
-window; its default candidate scores are comparative and do not replace that window. Explicit NUS
-direct candidates are restricted to SP and the selected SP is applied during final reconstruction.
+The default pool has 13 candidates per axis, comprising no window, six SP settings, two GM
+settings (`g1/g2/g3/c = 8/15/0/1` and `4/8/0/1`) and four EM settings (`lb = 3, 5, 10, 20 Hz`).
+Hz-based candidates require a valid spectral width for the scored axis. Default selection favours
+a valid window. No window must score at least 25% above the best valid window to win.
+
+Direct-axis FID scores combine detection, separation, symmetry and sidelobe factors. Detection
+strength grows linearly up to SNR 60 and logarithmically above it. Indirect scores prioritize
+sidelobes and peak valleys, using `sidelobe * separation * min(detection/6, 1)` per trace.
+The median trace score is multiplied by `width_ratio^-0.25`, where
+`width_ratio = candidate_fwhm / min_valid_fwhm` and is at least 1.
+
+For phase-sensitive uniform 2D F2 and 3D F3, a shared complex preview also compares the phased
+peak valleys. A replacement must keep noise within 103% of the baseline, SNR at least 95% of the
+baseline and the number of bridged pairs from increasing. Choosing no window additionally requires
+a 25% improvement in `1 - median_valley` and a median valley at least 0.10 lower than the best
+eligible window. Explicit pools retain their highest-valid-score rule. Default NUS direct-axis
+processing retains the reconstruction route's SP window.
 
 Window scoring probes at most 256 traces and formally scores at most 12 shared representative
 traces under an FFT-cache limit. The fast path looks for references at `12σ`; only if none qualify

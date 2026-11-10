@@ -59,9 +59,7 @@ def _spectrum_array() -> np.ndarray:
 
 
 class FakeBackend:
-    """Simulated NMRPipe backend: writes a real readable fid; spectrum
-    paths/previews are provided via monkeypatch.
-    """
+    """Simulated backend with readable FIDs and controlled spectrum previews."""
 
     def __init__(self, work: Path) -> None:
         self.work = Path(work)
@@ -79,9 +77,7 @@ class FakeBackend:
         self, experiment, data_dir, progress=None,
         params=None, fid_com_overrides=None
     ) -> dict:
-        """Write a real readable fid (readable by diagnostics/direct-dimension
-        window optimisation) and fid.com (read manually).
-        """
+        """Write readable FIDs and a conversion script for processing checks."""
         work = self.work
         dataset_id = experiment.dataset_id
         work.mkdir(parents=True, exist_ok=True)
@@ -114,9 +110,7 @@ class FakeBackend:
 
     @staticmethod
     def _write_spectrum_file(path: Path, ndim: int = 2) -> None:
-        """Write a readable pipe spectrum (real values + valid header) for peak
-        picking and quality scoring to read.
-        """
+        """Write an NMRPipe spectrum with a valid header for peak picking and QC."""
         import nmrglue as ng
         import nmrglue.fileio.pipe as pmod
 
@@ -190,9 +184,7 @@ class FakeBackend:
         ng.pipe.write(str(path), dic, np.ascontiguousarray(data), overwrite=True)
 
     def _write_fid_file(self, path: Path, n_traces: int, n_direct: int) -> None:
-        """Write an nmrglue-readable fid: 512B header + (n_traces, n_direct) complex
-        interleaved.
-        """
+        """Write an FID with a 512-byte header and interleaved complex values."""
         import nmrglue as ng
         import nmrglue.fileio.pipe as pmod
 
@@ -216,6 +208,8 @@ class FakeBackend:
                 "FDF1P1": 0.0,
                 "FDF2QUADFLAG": 1,
                 "FDF1QUADFLAG": 1,
+                # FDSPECNUM below already counts both rows of each interleaved pair.
+                "FDQUADFLAG": 1,
                 "FDF2APOD": 0.0,
                 "FDF1APOD": 0.0,
                 "FDF2FTFLAG": 1,
@@ -364,9 +358,6 @@ def _install_spectrum_mocks(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(core.data.pipe_io, "read_pipe_complex", fake_read_pipe_complex)
 
 
-# ----------------------------------------------------------------------
-
-# ----------------------------------------------------------------------
 @pytest.mark.parametrize(
     ("dataset", "exp_title"),
     [
@@ -529,12 +520,12 @@ def test_auto_full_path_1d_generates_ft1(
     assert backend.reconstruct_params == []
 
 
+@pytest.mark.parametrize(("dataset", "direct_axis"), [("hsqc_2d", "F2"), ("hnca_3d", "F3")])
 def test_auto_uniform_runs_processing_optimization(
     tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch,
+    dataset: str, direct_axis: str,
 ) -> None:
-    """uniform processing parameter optimisation: diagnostics + baseline +
-    direct-dimension window + zero filling/indirect window go into the final run.
-    """
+    """Processing optimisation settings reach the final run."""
     from workflow.baseline_optimize import BaselineOptimizeResult
     from workflow.stepwise import generate_fid, generate_spectrum
     from workflow.window_optimize import (
@@ -544,7 +535,7 @@ def test_auto_uniform_runs_processing_optimization(
 
     _install_spectrum_mocks(monkeypatch)
     manager, exp_id, data_id, _raw = _manager_with_data(
-        tmp_path, bruker_dir, "hsqc_2d"
+        tmp_path, bruker_dir, dataset
     )
     backend = FakeBackend(manager.data_dir(exp_id, data_id, "process"))
     generate_fid(manager, exp_id, data_id, backend)
@@ -566,12 +557,23 @@ def test_auto_uniform_runs_processing_optimization(
         lambda work, experiment, current=None: WindowOptimizeResult(
             choice={"type": "sine_bell", "off": 0.45, "end": 0.95},
             changed=True,
+            status="scored",
+            scores=[{"label": "preliminary", "score": 1.0}],
             logs=["测试直接维窗"],
+        ),
+    )
+    refined = {"type": "sine_bell", "off": 0.60, "end": 0.98, "pow": 1, "c": 0.5}
+    monkeypatch.setattr(
+        "workflow.window_optimize.refine_direct_window",
+        lambda *args, **kwargs: WindowOptimizeResult(
+            choice=refined, changed=True, status="scored",
+            scores=[{"cfg": refined, "label": "refined", "score": 0.5, "selected": True}],
+            sampling={"score_profile": "direct_peak_valley"},
         ),
     )
     monkeypatch.setattr(
         "workflow.window_optimize.optimize_indirect_windows_from_work",
-        lambda work, experiment, current=None: MultiWindowOptimizeResult(
+        lambda work, experiment, **kwargs: MultiWindowOptimizeResult(
             choice={"F1": {"type": "none"}},
             changed=True,
             logs=["测试间接维窗"],
@@ -581,15 +583,15 @@ def test_auto_uniform_runs_processing_optimization(
     assert spec
     final_params = backend.process_calls[-1][2]
     assert final_params["baseline"]["F1"]["order"] == 2
-    assert final_params["window"]["F2"]["type"] == "sine_bell"
+    assert final_params["window"][direct_axis] == refined
+    previews = [call[2] for call in backend.process_calls
+                if (call[2].get("window") or {}).get(direct_axis) == {"type": "none"}]
+    assert len(previews) == 1 and previews[0]["preview_axis"] == direct_axis
     assert "direct_poly_time" in final_params
     run = manager.last_run_for_data(exp_id, data_id, ["phase_optimize_unified"])
     assert "optimization_scores" not in run.params
 
 
-# ----------------------------------------------------------------------
-
-# ----------------------------------------------------------------------
 @pytest.mark.parametrize("dataset", ["hsqc_2d", "nus_2d", "hnca_3d", "nus_3d"])
 def test_explicit_reference_candidates_drive_final_processing(
     tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch, dataset: str,
@@ -634,9 +636,9 @@ def test_explicit_reference_candidates_drive_final_processing(
             assert row["raw_score"] > 0
             assert row["score"] == pytest.approx(row["raw_score"] * row["resolution_score"])
             assert row["resolution_score"] == 1.0  # one explicit candidate per axis
-            assert row["resolution_weight"] == 2.0
+            assert row["resolution_weight"] == 0.25
             assert row["resolution_reference_fwhm"] == row["fwhm"]
-            assert 0 < row["detection_score"] <= 30
+            assert 0 < row["detection_score"] <= row["snr"]
             for field in ("separation_score", "symmetry_score", "sidelobe_score"):
                 assert 0 <= row[field] <= 1
         if row["stage"] == "baseline":
@@ -807,8 +809,6 @@ def test_manual_scripts_slice_in_file(
     assert "-in src_hnca_3d.fid" not in content
 
 
-
-
 def test_manual_scripts_merged_fid_in_file(
     tmp_path: Path, bruker_dir: Path
 ) -> None:
@@ -884,9 +884,6 @@ def test_manual_spectrum_accepts_slice_fid(
     assert Path(spectrum).parent == manager.data_dir(exp_id, data_id, "spectra")
 
 
-# ----------------------------------------------------------------------
-
-# ----------------------------------------------------------------------
 def test_batch_full_path_group(
     tmp_path: Path, bruker_dir: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:

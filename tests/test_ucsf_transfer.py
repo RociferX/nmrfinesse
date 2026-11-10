@@ -19,6 +19,10 @@ def test_catalog_uses_current_spectrum_and_excludes_trashed_data(tmp_path):
     entries = ucsf_export_entries(manager)
     assert Path(entries[0]['source']).read_bytes() == b'current'
     assert entries[1]['source'] == ''
+    (directory / 'current.ucsf').unlink()
+    (directory / 'old.ucsf').unlink()
+    (directory / f'{data.id}_15N-1H.ucsf').write_bytes(b'projection')
+    assert ucsf_export_entries(manager)[0]['source'] == ''
     other.trashed = True
     assert len(ucsf_export_entries(manager)) == 1
     exp.trashed = True

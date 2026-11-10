@@ -500,7 +500,6 @@ def test_unified_route_nus_reconstruct_then_finalize(
     assert any("初跑脚本保留" in line for line in result["logs"])
 
 
-
 def test_optimize_nus_processing_baseline_and_window(
     tmp_path: Path, monkeypatch, bruker_dir: Path
 ) -> None:
@@ -672,7 +671,6 @@ def test_unified_route_nus_progress_stages(
     assert result["backend_runs"] == 5
 
 
-
 def test_unified_route_nus_final_ext_apply_to_opt(
     tmp_path: Path, monkeypatch, bruker_dir: Path
 ) -> None:
@@ -793,17 +791,14 @@ def test_unified_route_uniform_optimization_passes_plan(
 def test_unified_route_uniform_runs_processing_optimization(
     tmp_path: Path, monkeypatch, bruker_dir: Path
 ) -> None:
-    """0.2.163-patch6: uniform processing-parameter optimisation -- candidate scoring
-    for baseline/direct-dimension window/zero fill+indirect windows, with the
-    optimisation result in the final-run parameters; symmetric with NUS.
-    """
+    """Processing optimisation settings reach the final run."""
     from workflow.baseline_optimize import BaselineOptimizeResult
     from workflow.window_optimize import WindowOptimizeResult
 
     experiment = read_dataset(bruker_dir / "hsqc_2d")
     backend = _FakeBackend(tmp_path / "uni_opt_work")
     work = backend.work
-    # Provide a scoreable synthetic spectrum (baseline/window optimisation read the
+
     for name in ("hsqc_2d_joint.ft2", "hsqc_2d_final.ft2"):
         path = work / name
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -818,7 +813,7 @@ def test_unified_route_uniform_runs_processing_optimization(
         return _synthetic_preview(0, 0.0)
 
     monkeypatch.setattr(routes, "_read_complex_preview", fake_read)
-    # Baseline/window optimisation degrades to the existing configuration (the fake
+
     monkeypatch.setattr(
         "workflow.baseline_optimize.optimize_baseline",
         lambda experiment, path, **kwargs: BaselineOptimizeResult(
@@ -842,14 +837,14 @@ def test_unified_route_uniform_runs_processing_optimization(
 
     monkeypatch.setattr(
         "workflow.window_optimize.optimize_indirect_windows_from_work",
-        lambda work, experiment, current=None: MultiWindowOptimizeResult(
+        lambda work, experiment, **kwargs: MultiWindowOptimizeResult(
             choice={"F1": {"type": "none"}},
             changed=True,
             logs=["间接维窗(测试): F1 无窗"],
         ),
     )
     result = routes.unified_route(experiment, backend, work_dir=work)
-    # The final-run call (the last one) carries the optimisation result
+
     final_params = backend.process_calls[-1][2]
     assert final_params["baseline"]["F1"]["order"] == 2
     assert final_params["baseline"]["F2"]["enabled"] is False
@@ -859,9 +854,9 @@ def test_unified_route_uniform_runs_processing_optimization(
     assert result["baseline"]["F1"]["order"] == 2
     assert result["window"]["F2"]["type"] == "sine_bell"
     assert "diagnostics" in result
-    # Uniform and NUS reports both include baseline, window, and zero-fill results.
-    # Reports use section headings, an overall verdict, and per-item grades. Since
-    # 2026-09-23, data-quality diagnostics belong to the Generate FID step instead.
+
+
+
     from workflow.optimization_report import spectrum_report_title
 
     assert spectrum_report_title() in result["logs"]
@@ -870,7 +865,7 @@ def test_unified_route_uniform_runs_processing_optimization(
     assert any("  窗函数:" in line for line in result["logs"])
     assert any("  零填充:" in line for line in result["logs"])
     assert not any("◆ 数据质量诊断" in line for line in result["logs"])
-    # 0.2.166: the uniform first-run script is kept (a copy of the joint script that
+
     no_opt = work / "hsqc_2d_before_optimize.com"
     assert no_opt.is_file()
     assert "# fake script hsqc_2d_joint.com" in no_opt.read_text(encoding="utf-8")
@@ -1096,6 +1091,7 @@ def test_finalize_nus_progress_callback(tmp_path: Path, monkeypatch, bruker_dir:
     # 0.2.199-patch29eb: finalize no longer emits generic progress (the caller emits
     assert messages == []
 
+
 def test_split_final_ext_apply_to_opt_default_on() -> None:
     """0.2.199-patch3: "apply this range to the optimisation" is on by default and the
     parameters pass through the parser.
@@ -1190,7 +1186,6 @@ def test_direct_phase_cache_roundtrip(tmp_path: Path) -> None:
     data.update(version=2, p0=174.0)
     (tmp_path / "phase.json").write_text(json.dumps(data), encoding="utf-8")
     assert _load_direct_phase_cache(tmp_path, exp, params, shape) is None
-
 
 
 def test_append_final_summary_readable_report(tmp_path: Path) -> None:

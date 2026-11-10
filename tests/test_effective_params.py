@@ -158,14 +158,16 @@ def test_generate_spectrum_records_ucsf_output(
     """0.2.162-patch15: after generating a spectrum, also emit UCSF into run outputs."""
     import workflow.stepwise as stepwise_mod
 
-    manager, exp_id, data_id = _manager_with_data(tmp_path, bruker_dir / "hsqc_2d")
+    manager, exp_id, data_id = _manager_with_data(
+        tmp_path, bruker_dir / "hsqc_2d"
+    )
     backend = _EffectiveBackend(tmp_path / "work")
     spectra = manager.data_dir(exp_id, data_id, "spectra")
     fake_ucsf = spectra / f"{data_id}.ucsf"
     monkeypatch.setattr(
         stepwise_mod,
-        "_export_ucsf",
-        lambda mgr, e, d, spec: (str(fake_ucsf), f"UCSF 已生成: {fake_ucsf}"),
+        "refresh_spectrum_ucsf",
+        lambda spectrum, *, progress=None: str(fake_ucsf),
     )
     generate_fid(manager, exp_id, data_id, backend)
     generate_spectrum(
@@ -205,12 +207,14 @@ def test_generate_spectrum_none_route_maps_final_ext(
                 progress=progress,
             )
 
-    manager, exp_id, data_id = _manager_with_data(tmp_path, bruker_dir / "hsqc_2d")
+    manager, exp_id, data_id = _manager_with_data(
+        tmp_path, bruker_dir / "hsqc_2d"
+    )
     backend = _CaptureBackend(tmp_path / "work")
     monkeypatch.setattr(
         stepwise_mod,
-        "_export_ucsf",
-        lambda mgr, e, d, spec: (None, "跳过 UCSF 转换"),
+        "refresh_spectrum_ucsf",
+        lambda spectrum, *, progress=None: None,
     )
     generate_fid(manager, exp_id, data_id, backend)
     generate_spectrum(

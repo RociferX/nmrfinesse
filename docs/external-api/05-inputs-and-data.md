@@ -283,11 +283,25 @@ window.F1.off,window.F2.off,zero_fill.F1,baseline.F2.enabled,points_per_line.F1
 
 ## 5.10 Explicit reference optimization candidates
 
-Reference optimization remains enabled by default. Each direct and indirect dimension normally
-scores ten window candidates: no window, five SP candidates, two Gaussian/GM candidates with
-`g1/g2/g3/c = 8/15/0/1` and `4/8/0/1`, and two exponential/EM candidates with `lb/c = 3/1`
-and `5/1`. The direct-dimension tie order starts with SP `off=0.50,end=0.98,pow=2,c=0.5`;
-the indirect-dimension tie order prefers no window. The four Hz-based candidates require a valid sweep width for their logical axis and are skipped when it is unavailable. Window candidates share reference peaks and representative traces. The raw score is the median of per-trace detection-strength, peak-separation, symmetry and sidelobe products; the final score multiplies it by the continuous resolution factor `width_ratio^-2`, where `width_ratio = candidate_fwhm / min_valid_fwhm` and is at least 1. All logical axes use this rule without a hard width gate. See [the score attachment reference](06-outputs-and-records.md#611-reference-optimization-score-table) for components and cache details. Default NUS direct-dimension processing keeps its fixed SP window: default scores are comparative only and do not replace that window. Explicit NUS direct-dimension candidates accept SP types only and apply the selected SP in the final reconstruction.
+Reference optimization is enabled by default.
+
+The default pool has 13 candidates per axis, comprising no window, six SP settings, two GM
+settings (`g1/g2/g3/c = 8/15/0/1` and `4/8/0/1`) and four EM settings (`lb = 3, 5, 10, 20 Hz`).
+Hz-based candidates require a valid spectral width for the scored axis. Default selection favours
+a valid window. No window must score at least 25% above the best valid window to win.
+
+Direct-axis FID scores combine detection, separation, symmetry and sidelobe factors. Detection
+strength grows linearly up to SNR 60 and logarithmically above it. Indirect scores prioritize
+sidelobes and peak valleys, using `sidelobe * separation * min(detection/6, 1)` per trace.
+The median trace score is multiplied by `width_ratio^-0.25`, where
+`width_ratio = candidate_fwhm / min_valid_fwhm` and is at least 1.
+
+For phase-sensitive uniform 2D F2 and 3D F3, a shared complex preview also compares the phased
+peak valleys. A replacement must keep noise within 103% of the baseline, SNR at least 95% of the
+baseline and the number of bridged pairs from increasing. Choosing no window additionally requires
+a 25% improvement in `1 - median_valley` and a median valley at least 0.10 lower than the best
+eligible window. Explicit pools retain their highest-valid-score rule. Default NUS direct-axis
+processing retains the reconstruction route's SP window.
 
 To evaluate a defined candidate set, pass
 `optimization_candidates` in the reference `params`. It is accepted by the high-level

@@ -656,23 +656,22 @@ def unified_route(    experiment: Experiment,
     progress: Callable[[str], None] | None = None,
 ) -> dict[str, Any]:
     """Unified plan (replacing the simple/advanced dispatch): per-axis complex
-    preview -> in-memory phase tuning (the old algorithm's criterion, no extra
-    backend) -> full final run.
+        preview -> in-memory phase tuning (the old algorithm's criterion, no extra
+        backend) -> full final run.
 
-    uniform (0.2.199-patch29dr): an initial per-axis search (indirect dimensions
-    first), then one more indirect-dimension search once the direct dimension is
-    settled (no iteration; the joint review is skipped since
-    0.2.199-patch29fj); the preview adds -di only outside the search axis (which
-    stays at 0,0), the other axes use their fixed phases, and zero filling is the
-    full auto one;
-    NUS: a single SMILE pass produces the complex recon planes, the direct
-    dimension is searched in memory on the real final spectrum and its projection
-    traces (HT), the indirect dimensions replay the whole finalize chain in memory
-    for a full search, and once the direct dimension is settled the indirect
-    dimensions are searched once more; finally the final phase of every dimension
-    is fed into the full script and re-run to produce a good spectrum (no rotated
-    plane copies are written).
-    """
+        uniform (0.2.199-patch29dr): an initial per-axis search (indirect dimensions
+        first), then one more indirect-dimension search once the direct dimension is
+        settled (no iteration; the joint review is skipped since
+        0.2.199-patch29fj); the preview adds -di only outside the search axis (which
+        stays at 0,0), the other axes use their fixed phases, and zero filling is the
+        full auto one;
+        NUS: a single SMILE pass produces the complex recon planes, the direct
+        dimension is searched in memory on the real final spectrum and its projection
+        traces (HT), the indirect dimensions replay the whole finalize chain in memory
+        for a full search, and once the direct dimension is settled the indirect
+        dimensions are searched once more; finally the final phase of every dimension
+        is fed into the full script and re-run to produce a good spectrum (no rotated
+        plane copies are written)."""
     from workflow.memory_phase_search import search_axis_memory
 
     plan = plan or select_method(experiment)
@@ -688,9 +687,9 @@ def unified_route(    experiment: Experiment,
     work = Path(work_dir) if work_dir else backend._work_path(experiment)
     params = dict(base_params or {})
     params.pop("preview_axis", None)
-    # 2026-09-23 (user request): the direct-dimension data quality diagnosis now runs at the end
-    # of the Generate-FID step and lands in process/diagnostics.json; here it is only read back
-    # and reused -- the spectrum step no longer re-runs or announces it. When the record is
+
+
+
     diagnostics: dict[str, Any] = {}
     diag_logs: list[str] = []
     if not params.get("_phase_only"):
@@ -706,12 +705,12 @@ def unified_route(    experiment: Experiment,
                 "backup_dir": diag_result.backup_dir,
                 "clean": bool(getattr(diag_result, "clean", False)),
             }
-        except Exception as exc:  # noqa: BLE001 - a failed diagnostic must not block
+        except Exception as exc:
             diag_logs = [tr("data quality diagnosis failed: {p0}", p0=exc)]
 
-    # 0.2.162-patch15: the user's final-run direct-dimension range
-    # (final_ext_lo/final_ext_hi); 0.2.199-patch3: with "apply this range to the
-    # optimisation" on it also enters the complex preview/optimisation evaluation,
+
+
+
     params, final_ext_lo, final_ext_hi, apply_ext_opt = _split_final_ext(params)
     if apply_ext_opt:
         params = _apply_final_ext(params, final_ext_lo, final_ext_hi)
@@ -719,17 +718,17 @@ def unified_route(    experiment: Experiment,
     direct_axis = "F2" if experiment.ndim == 2 else "F3"
     sign_mode = _sign_mode(experiment)
     axes = [dim.logical_axis for dim in experiment.dimensions]
-    # 0.2.75: the uniform path goes indirect first and direct last (the old
-    # algorithm's order: the direct dimension locks onto peaks in the spectrum
-    # corrected by the indirect dimensions); 0.2.199-patch29ad: uniform
+
+
+
     search_axes = [a for a in axes if a != direct_axis] + [direct_axis]
     fixed: dict[str, tuple[float, float]] = {}
-    # 0.2.169: the data-quality diagnostic runs at the very start of the flow, so
-    # its log must precede the preview/optimisation lines (previously diag_logs was
+
+
     logs: list[str] = list(diag_logs)
-    # 0.2.167: experiment-type-level auto_phase (presets processing_hints) --
-    # magnitude spectra (HMBC and the like) skip the phase search on every axis and
-    # stay at (0,0), while phase-sensitive experiments filter the magnitude
+
+
+
     auto_phase = _template_auto_phase(experiment)
     if not auto_phase:
         search_axes = []
@@ -745,16 +744,16 @@ def unified_route(    experiment: Experiment,
         search_axes = [
             a for a in search_axes if f"phase_{a}" in plan.dag.nodes
         ]
-    # 0.2.199-patch29du (user, measured on the VM with sampleI and sampleH): the
-    # phase-search preview never zero fills on any axis. Zero filling is data
-    # dependent: with auto zero filling sampleI F1=90 deg was right but sampleH
-    # F1=70 deg was wrong (should be 85); with no zero fill sampleI F1=90 deg
+
+
+
+
     zf_phase = {"zero_fill": {a: {"mode": "none"} for a in axes}}
     backend_runs = 0
-    # 0.2.199-patch29dr (user): no iteration -- after the initial per-axis search
-    # (indirect dimensions first) the direct dimension is settled and the indirect
-    # dimensions are searched once more (with the direct-dimension phase fixed in
-    # the preview); there is no alternating iteration.
+
+
+
+
     for axis in search_axes:
         out_file = f"{experiment.dataset_id}_preview_{axis}.{ext}"
         t_axis = time.time()
@@ -827,12 +826,12 @@ def unified_route(    experiment: Experiment,
             p0=axis,
             p1=time.time() - t_axis,
         ))
-    # 0.2.199-patch29fj (user): skip the joint review -- neither the history nor the
-    # measurements (900/102/101) crossed the 0.05 gate to correct the phase order
-    # (patch29dn fixed sampleI through zero filling plus a re-search once the direct
-    # dimension was settled, not through the review); after the direct dimension is
-    # settled the r2 re-search already covers it. The joint_recheck_memory code and
-    # its test are kept (not called, for reference / restoring later if needed).
+
+
+
+
+
+
     indirect_axes = [a for a in axes if a != direct_axis]
     if len(search_axes) >= 2 and direct_axis in fixed:
         for axis in indirect_axes:
@@ -903,12 +902,12 @@ def unified_route(    experiment: Experiment,
                     p1=time.time() - t_axis,
                 )
             )
-    # 0.2.166: with auto_phase=False the direct dimension took no part in the
+
     fixed.setdefault(direct_axis, (0.0, 0.0))
     if params.get("_phase_only"):
         return {"phases": fixed, "logs": logs, "backend_runs": backend_runs}
-    # 0.2.163-patch6: processing-parameter optimisation (baseline / direct-dimension
-    # window / zero fill + indirect windows), symmetric with NUS; uniform has no
+
+
     if progress is not None:
         progress(tr(
             "The phase search is completed and processing of parameter optimisation (baseline/zero "
@@ -925,6 +924,7 @@ def unified_route(    experiment: Experiment,
         plan=plan,
         progress=progress,
     )
+    backend_runs += proc.get("direct_window_preview_runs", 0)
     logs += proc["logs"]
     logs.append(
         tr(
@@ -934,9 +934,9 @@ def unified_route(    experiment: Experiment,
             p0=time.time() - t_opt,
         )
     )
-    # 0.2.166: uniform retains the complete script before optimisation (joint script, including the
-    # final phase and automatic zero filling, but does not include the optimisation baseline/window)
-    # as {dataset_id}_before_optimize.com, which is symmetrical with the NUS initial run script to
+
+
+
     joint_script = work / f"{experiment.dataset_id}_joint.com"
     no_opt_script = work / f"{experiment.dataset_id}_before_optimize.com"
     try:
@@ -953,7 +953,7 @@ def unified_route(    experiment: Experiment,
         progress(tr("Final run (complete rerun) in progress"))
     t_final = time.time()
     params_final = _apply_final_ext(dict(params), final_ext_lo, final_ext_hi)
-    # 0.2.162-patch16: when the final-run direct-dimension range changes, the
+
     fixed_final = dict(fixed)
     if direct_axis in fixed_final:
         renormed = _renormalize_direct_p1(
@@ -1194,15 +1194,14 @@ def _optimize_uniform_processing(
 ) -> dict[str, Any]:
     """Optimize processing parameters after per-axis phase search for uniform 2D/3D data.
 
-    The sequence is baseline scoring, direct-axis window scoring, then indirect-axis window
-    scoring. Window selection does not feed back into baseline selection. This path has no
-    SMILE reconstruction; window candidates are scored from the FID.
+        The sequence is baseline scoring, direct-axis window scoring, then indirect-axis window
+        scoring. Window selection does not feed back into baseline selection. This path has no
+        SMILE reconstruction; window candidates are scored from the FID.
 
-    Failures with default candidate pools are non-fatal: keep the existing ``base_params``
-    configuration or its default and continue to the final run. Explicit
-    ``optimization_candidates`` pools are strict; if their candidates cannot be evaluated,
-    raise ``CandidateSelectionError`` rather than silently using a default.
-    """
+        Failures with default candidate pools are non-fatal: keep the existing ``base_params``
+        configuration or its default and continue to the final run. Explicit
+        ``optimization_candidates`` pools are strict; if their candidates cannot be evaluated,
+        raise ``CandidateSelectionError`` rather than silently using a default."""
     axes = [dim.logical_axis for dim in experiment.dimensions]
     direct_axis = "F3" if experiment.ndim >= 3 else "F2"
     ext = "ft3" if experiment.ndim >= 3 else "ft2"
@@ -1213,9 +1212,10 @@ def _optimize_uniform_processing(
     window_cfg = base.get("window")
     opt_switches = reference_optimize_switches(base)
     score_rows: list[dict[str, Any]] = []
-    # 1) Joint review spectrum: final phase + full zero filling, used as the
-    #    baseline scoring basis (one process run); the window functions use FID
-    #    in-memory scoring and do not consume it (0.2.199-patch29fg removed the 2.1
+    direct_window_preview_runs = 0
+
+
+
     opt_ext = {k: base[k] for k in ("ext_lo", "ext_hi") if k in base}
     joint_file = f"{experiment.dataset_id}_joint.{ext}"
     resp = backend.process(
@@ -1250,9 +1250,9 @@ def _optimize_uniform_processing(
             ],
         }
     base_path = Path(resp["spectrum_path"])
-    # 2) baseline: in-memory scoring per axis (off/auto/order1-3), written back to
-    #    the final run; params.reference_optimize.baseline can switch it off or
-    #    restrict the candidates
+
+
+
     opt = None
     baseline_switch = opt_switches.get("baseline", "auto")
     if baseline_switch in (False, "off"):
@@ -1286,7 +1286,7 @@ def _optimize_uniform_processing(
             score_rows += baseline_rows(opt)
         except CandidateSelectionError:
             raise
-        except Exception as exc:  # noqa: BLE001 - a failed baseline run is harmless
+        except Exception as exc:
             if isinstance(baseline_switch, Mapping) and baseline_switch.get("strict_candidates"):
                 raise CandidateSelectionError(
                     "Explicit baseline candidate evaluation failed"
@@ -1294,11 +1294,11 @@ def _optimize_uniform_processing(
             score_rows += unscored_rows("baseline", axes, source="joint_spectrum",
                                         status="error", reason="baseline_optimization_failed")
             out_logs.append(tr("Baseline optimisation (embedding) failed: {p0}", p0=exc))
-    # 0.2.199-patch29fk-fix: the joint/base spectrum is only the baseline scoring
+
     _unlink_quiet(base_path)
-    # 2.5) direct-dimension window function: FID direct-dimension trace in-memory
-    #      score (no process re-run), written back to the final run;
-    #      params.reference_optimize.window can switch it off or restrict the
+
+
+
     window_switch = opt_switches.get("window", "auto")
     direct_candidates, indirect_candidates = window_candidates_from_switch(
         window_switch
@@ -1316,7 +1316,10 @@ def _optimize_uniform_processing(
         )
     else:
         try:
-            from workflow.window_optimize import optimize_direct_window_from_work
+            from workflow.window_optimize import (
+                optimize_direct_window_from_work,
+                refine_direct_window,
+            )
 
             if progress is not None:
                 progress(tr("direct dimension window function optimisation(FID memory score)"))
@@ -1328,7 +1331,43 @@ def _optimize_uniform_processing(
             if isinstance(window_switch, Mapping) and window_switch.get("direct_strict"):
                 win_kwargs["strict_candidates"] = True
             wres = optimize_direct_window_from_work(work, experiment, **win_kwargs)
-            score_rows += window_rows(wres, direct_axis, source="fid")
+            if (wres.scores and wres.status == "scored" and not direct_candidates
+                    and all(axis in fixed for axis in axes)):
+                from backend.config import resolve_ext_window
+                from backend.script_generator import zero_fill_plan
+
+                preview = None
+                try:
+                    direct_window_preview_runs = 1
+                    response = backend.process(
+                        experiment, plan, direct_phase_override=dict(fixed),
+                        params={
+                            **_sign_sampling(base), "extract": False, "preview_axis": direct_axis,
+                            "window": {**(window_cfg or {}), direct_axis: {"type": "none"}},
+                            "baseline": baseline_cfg,
+                            "zero_fill": {axis: {"mode": "none"} for axis in axes},
+                        },
+                        out_file=f"{experiment.dataset_id}_direct_window.{ext}",
+                        script_name=f"{experiment.dataset_id}_direct_window.com", progress=progress,
+                    )
+                    if response.get("success") and response.get("spectrum_path"):
+                        preview = Path(response["spectrum_path"])
+                        ppm_range = resolve_ext_window(
+                            experiment, base.get("ext_lo"), base.get("ext_hi"),
+                        ) if base.get("extract", True) else None
+                        wres = refine_direct_window(
+                            wres, preview, phase=fixed[direct_axis], current=win_kwargs["current"],
+                            zf_size=zero_fill_plan(experiment)[direct_axis]["size"],
+                            ppm_range=ppm_range,
+                        )
+                except (OSError, ValueError, TypeError, KeyError) as exc:
+                    out_logs.append(f"Direct window peak-valley preview unavailable: {exc}")
+                finally:
+                    if preview is not None:
+                        _unlink_quiet(preview)
+            refined = wres.sampling.get("score_profile") == "direct_peak_valley"
+            source = "direct_preview" if refined else "fid"
+            score_rows += window_rows(wres, direct_axis, source=source)
             if wres.changed:
                 win = dict(window_cfg or {})
                 win[direct_axis] = wres.choice
@@ -1336,7 +1375,7 @@ def _optimize_uniform_processing(
             out_logs += wres.logs
         except CandidateSelectionError:
             raise
-        except Exception as exc:  # noqa: BLE001 - a failed window run is harmless
+        except Exception as exc:
             if isinstance(window_switch, Mapping) and window_switch.get("direct_strict"):
                 raise CandidateSelectionError(
                     "Explicit direct-window candidate evaluation failed"
@@ -1344,9 +1383,9 @@ def _optimize_uniform_processing(
             score_rows += unscored_rows("window", [direct_axis], source="fid",
                                         status="error", reason="window_optimization_failed")
             out_logs.append(tr("direct dimension window optimisation failed: {p0}", p0=exc))
-    # 3) indirect-dimension window functions: FID indirect-dimension time-axis
-    #    in-memory score (candidates include no window; a resolution-limited
-    #    indirect dimension adds a resolution-retention factor), written back per
+
+
+
     if window_switch not in (False, "off"):
         try:
             from workflow.window_optimize import (
@@ -1360,6 +1399,14 @@ def _optimize_uniform_processing(
                     "process)",
                 ))
             win_kwargs = {"current": window_cfg}
+            if experiment.ndim == 2:
+                from backend.config import resolve_ext_window
+
+                win_kwargs["direct_phase"] = fixed.get(direct_axis)
+                if base.get("extract", True):
+                    win_kwargs["direct_range"] = resolve_ext_window(
+                        experiment, base.get("ext_lo"), base.get("ext_hi"),
+                    )
             if indirect_candidates:
                 win_kwargs["candidates"] = indirect_candidates
             if isinstance(window_switch, Mapping) and window_switch.get("indirect_strict"):
@@ -1375,7 +1422,7 @@ def _optimize_uniform_processing(
             out_logs += ires.logs
         except CandidateSelectionError:
             raise
-        except Exception as exc:  # noqa: BLE001 - a failed window run is harmless
+        except Exception as exc:
             if isinstance(window_switch, Mapping) and window_switch.get("indirect_strict"):
                 raise CandidateSelectionError(
                     "Explicit indirect-window candidate evaluation failed"
@@ -1388,8 +1435,8 @@ def _optimize_uniform_processing(
 
     return {
         "baseline": baseline_cfg,
-        # 0.2.199-patch29z: score of each axis' selected baseline configuration --
-        # the report's baseline score matches the optimisation (no separate
+
+
         "baseline_scores": _chosen_baseline_scores(
             baseline_cfg, opt.scores if opt is not None else {}
         ),
@@ -1397,6 +1444,7 @@ def _optimize_uniform_processing(
         "window": window_cfg,
         "logs": out_logs,
         "optimization_scores": score_rows,
+        "direct_window_preview_runs": direct_window_preview_runs,
     }
 
 

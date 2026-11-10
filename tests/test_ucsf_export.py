@@ -5,29 +5,22 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-from workflow.ucsf_export import export_ucsf
+from workflow.ucsf_export import export_ucsf, refresh_spectrum_ucsf
 
 
-def test_stepwise_export_ucsf_skips_1d_ft1(monkeypatch) -> None:
-    """
-    0.2.199-patch29gj-fix: a 1D final spectrum (.ft1) does not call pipe2ucsf, it is
-    skipped.
-    """
-    import workflow.stepwise as stepwise
-
+def test_refresh_spectrum_ucsf_skips_1d_ft1(monkeypatch) -> None:
+    """Process the selected spectrum and register its outputs."""
     called: list[str] = []
-    manager = SimpleNamespace()
+    messages: list[str] = []
 
     def _boom(*args, **kwargs):
         called.append("export")
         return "boom", "boom"
 
-    monkeypatch.setattr(stepwise, "export_ucsf", _boom)
-    path, message = stepwise._export_ucsf(
-        manager, "exp_001", "d_001", "d_001.ft1"
-    )
+    monkeypatch.setattr("workflow.ucsf_export.export_ucsf", _boom)
+    path = refresh_spectrum_ucsf("d_001.ft1", progress=messages.append)
     assert path is None
-    assert "1D" in message
+    assert messages and "1D" in messages[0]
     assert not called
 
 
@@ -128,13 +121,15 @@ def test_export_ucsf_failure_returns_none_and_cleans_partial(tmp_path: Path) -> 
 
 def test_export_ucsf_exception_removes_stale_target(tmp_path: Path) -> None:
     """SMILE-005: when the conversion fails to start, no stale UCSF may be left behind posing as
-    the current spectrum's companion product."""
+        the current spectrum's companion product."""
     source = tmp_path / "d_001.ft2"
     target = tmp_path / "d_001.ucsf"
     source.write_bytes(b"new-spectrum")
     target.write_bytes(b"stale-ucsf")
 
     def failed_run(*args, **kwargs):
+        assert not target.exists()
+        target.write_bytes(b"partial")
         raise OSError("pipe2ucsf missing")
 
     path, message = export_ucsf(source, target, run=failed_run)

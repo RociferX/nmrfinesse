@@ -27,7 +27,10 @@ def ucsf_export_entries(manager) -> list[dict]:
                 candidates.append(spectrum.with_suffix(".ucsf"))
             candidates.extend([directory / f"{experiment.id}-{data.id}.ucsf",
                                directory / f"{data.id}.ucsf"])
-            available = sorted(directory.glob("*.ucsf"))
+            available = [
+                path for path in directory.glob("*.ucsf")
+                if not path.name.startswith(f"{data.id}_")
+            ]
             if len(available) == 1:
                 candidates.extend(available)
             source = next((p for p in candidates if p.is_file()), None)

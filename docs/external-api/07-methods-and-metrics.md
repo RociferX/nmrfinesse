@@ -113,17 +113,20 @@ were scanned).
 
 All candidates share the same reference traces, threshold, peaks and already-resolved peak pairs.
 Responses are aggregated per trace, and a trace is never removed because a candidate performs poorly.
-For each trace, only significant peaks at or above 25% of that trace's strongest significant peak
-are retained. A trace without a valid shared reference peak scores zero. The raw score is the median
-of the per-trace products of detection strength, peak-separation, symmetry and sidelobe factors.
-Those four components are also recorded as separate medians over the same traces, so multiplying
-them need not reproduce `raw_score`.
+For each trace, only significant peaks at or above 25% of its strongest significant peak
+are retained. A trace without a valid shared reference peak scores zero. Direct scores combine
+detection strength, separation, symmetry and sidelobes. Indirect scores use
+`sidelobe * separation * min(detection/6, 1)`, emphasizing sidelobes and peak valleys. Components
+and their median product are recorded separately. Default no-window selection needs at least
+25% higher final score than the best valid window. Phased direct-axis refinement also requires
+the normalized median valley to fall by at least 0.10. Explicit candidate pools select the
+highest valid score.
 
 The merge penalty is evaluated only for nearby pairs already resolved in the unwindowed reference:
 their spacing must be no more than 1.5 times the smaller reference FWHM, and the reference valley
 must be no higher than 0.6 times the smaller reference peak. A candidate counts as merged when its
 valley rises to at least 0.6 times the smaller candidate peak. The final score is
-`score = raw_score * resolution_score`, where `resolution_score = width_ratio^-2` and
+`score = raw_score * resolution_score`, where `resolution_score = width_ratio^-0.25` and
 `width_ratio = candidate_fwhm / min_valid_fwhm` is at least 1. All logical axes use this same
 continuous resolution factor; there are no hard width limits or additional dimension-specific
 resolution penalties. A valid wider candidate therefore retains a nonzero resolution factor.

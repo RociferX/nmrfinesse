@@ -598,10 +598,9 @@ def _run_manual_spectrum_impl(
 ) -> str:
     """The actual run of run_manual_spectrum (success path; failures raise ManualRunError).
 
-    The spectrum step only consumes the converted fid (produced by the independent "Generate
-    FID"
-    step) and does not execute fid.com.
-    """
+        The spectrum step only consumes the converted fid (produced by the independent "Generate
+        FID"
+        step) and does not execute fid.com."""
     if not _converted_fid_present(work, data_entry, experiment):
         raise ManualRunError(
             tr(
@@ -619,9 +618,8 @@ def _run_manual_spectrum_impl(
             if nuslist_src is not None:
                 shutil.copy2(nuslist_src, nuslist_dst)
 
-    # 0.2.193: a manual "Run" does the quality diagnosis first (bad-point repair / report), like
-    # the start of the automatic spectrum path; opening the script editor no longer runs it (so
-    # opening got faster)
+
+
     _run_quality_check(manager, exp_id, data_entry, work, data_id)
 
     script = scripts.get(script_key)
@@ -644,8 +642,8 @@ def _run_manual_spectrum_impl(
     if result.returncode != 0 or not spectrum_src.is_file():
         raise ManualRunError(tr("{p0} run failed: {p1}", p0=script_key, p1=execution_log))
 
-    spectrum_path = _register_spectrum(
-        manager, exp_id, data_id, str(spectrum_src)
+    spectrum_path, ucsf_path = _register_spectrum(
+        manager, exp_id, data_id, str(spectrum_src), progress=progress
     )
     audit_lines = script_change_report(list((run_params or {}).get("manual_script_changes") or []))
 
@@ -663,16 +661,15 @@ def _run_manual_spectrum_impl(
         lines += spectrum_quality_report_lines(
             spectrum_path, sign_mode=_sign_mode(experiment)
         )
-        # 2026-09-23 (user request): the diagnosis is not in this report -- the FID-layer
-        # conclusions belong to the "Generate FID" step; this report keeps the quality score and
-        # the parameter note of this step (the manual run).
+
+
         lines.append(tr("◆ Process parameter: manual method (mode=manual)"))
         lines += audit_lines
-        # 0.2.199-patch29ei: the evaluation report is mirrored to progress/logs, visible after a
+
         write_quality_record(
             spectrum_path, run_params or {"mode": "manual"}, "\n".join(lines)
         )
-        # manual run
+
         if progress is not None:
             for _ln in lines:
                 progress(_ln)
@@ -690,12 +687,15 @@ def _run_manual_spectrum_impl(
             progress(_msg)
             for line in audit_lines:
                 progress(line)
+    outputs = {"spectrum_path": spectrum_path}
+    if ucsf_path:
+        outputs["ucsf_path"] = ucsf_path
     run_id = _finish_run(
         manager,
         exp_id,
         data_id,
         workflow_ref,
-        {"spectrum_path": spectrum_path},
+        outputs,
         tr("Artificial spectrum completed") + "\n" + execution_log,
         params=run_params,
     )

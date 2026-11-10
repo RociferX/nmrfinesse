@@ -886,6 +886,11 @@ def test_comparison_plot_heights_match_after_open_resize_and_drag(
     left, middle = panel._compare_viewer, panel.viewer
 
     def assert_equal_height():
+        for _ in range(100):
+            if (abs(left.plot_area.height() - middle.plot_area.height()) <= 1
+                    and abs(left.plot.height() - middle.plot.height()) <= 1):
+                break
+            QTest.qWait(10)
         assert abs(left.plot_area.height() - middle.plot_area.height()) <= 1
         assert abs(left.plot.height() - middle.plot.height()) <= 1
         assert left.plot_area.height() >= 300

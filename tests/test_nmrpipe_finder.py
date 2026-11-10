@@ -116,7 +116,7 @@ def test_bash_environment_bridge_quotes_directory_and_limits_transferred_vars(
     assert 'PATH="$PATH"' in script
     assert "NMR_PLUGIN_EXE" in script and "NMR_PLUGIN_FN" in script
     assert "-lic" in argv
-    assert "-if" in script
+    assert "pwd; exec" in script and "-if" in script
     assert shlex.quote(csh_path) in script
     assert "setenv PATH \"${PATH}:$NMRFINESSE_BASH_PATH\"" in script
     assert script.index("source ~/.cshrc") < script.index("setenv PATH")

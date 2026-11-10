@@ -176,11 +176,10 @@ class _TreeLevelDelegate(QStyledItemDelegate):
 
 def _terminal_argv(directory: str) -> list[str] | None:
     """Construct the command "open directory in the terminal" (csh is preferred); if there is no
-    available terminal, None is returned. Linux/macOS: Prioritize gnome-
-    terminal/konsole/x-terminal-emulator/xterm to start csh (automatically read the NMRPipe
-    environment of ~/.cshrc); Windows gives priority to the csh found (such as Cygwin/Git Bash),
-    otherwise it falls back to cmd.
-    """
+        available terminal, None is returned. Linux/macOS: Prioritize gnome-
+        terminal/konsole/x-terminal-emulator/xterm to start csh (automatically read the NMRPipe
+        environment of ~/.cshrc); Windows gives priority to the csh found (such as Cygwin/Git Bash),
+        otherwise it falls back to cmd."""
     import shlex
     import shutil
     import sys
@@ -209,12 +208,14 @@ def _terminal_argv(directory: str) -> list[str] | None:
     if terminal is None:
         return None
     base = terminal
-    if "gnome-terminal" in base:
+    terminal_name = Path(terminal).resolve().name
+    # Debian's gnome-terminal.wrapper uses xterm's -e interface.
+    if terminal_name in {"gnome-terminal", "gnome-terminal.real"}:
         args = [base, f"--working-directory={directory}"]
         if shell_argv:
             args += ["--", *shell_argv]
         return args
-    if "konsole" in base:
+    if terminal_name == "konsole":
         args = [base, f"--workdir={directory}"]
         if shell_argv:
             args += ["-e", *shell_argv]
@@ -226,14 +227,14 @@ def _terminal_argv(directory: str) -> list[str] | None:
 
 def open_in_terminal(path: str) -> bool:
     """Open directory in the terminal (csh is preferred) and return whether it started
-    successfully.
-    """
+        successfully."""
     from qtcompat.QtCore import QProcess
 
     argv = _terminal_argv(str(path))
     if not argv:
         return False
-    return QProcess.startDetached(argv[0], argv[1:])
+    started, _pid = QProcess.startDetached(argv[0], argv[1:], str(path))
+    return started
 
 
 class _InlineRenameEditor(QWidget):
