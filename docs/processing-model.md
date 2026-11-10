@@ -114,7 +114,7 @@ pool raises an error instead of falling back. Reference score CSV rows record sc
 The default pool has 13 candidates per axis, comprising no window, six SP settings, two GM
 settings (`g1/g2/g3/c = 8/15/0/1` and `4/8/0/1`) and four EM settings (`lb = 3, 5, 10, 20 Hz`).
 Hz-based candidates require a valid spectral width for the scored axis. Default selection favours
-a valid window. No window must score at least 25% above the best valid window to win.
+a valid window on every axis. No window is retained as a diagnostic reference and an explicit user choice.
 
 Direct-axis FID scores combine detection, separation, symmetry and sidelobe factors. Detection
 strength grows linearly up to SNR 60 and logarithmically above it. Indirect scores prioritize
@@ -124,9 +124,8 @@ The median trace score is multiplied by `width_ratio^-0.25`, where
 
 For phase-sensitive uniform 2D F2 and 3D F3, a shared complex preview also compares the phased
 peak valleys. A replacement must keep noise within 103% of the baseline, SNR at least 95% of the
-baseline and the number of bridged pairs from increasing. Choosing no window additionally requires
-a 25% improvement in `1 - median_valley` and a median valley at least 0.10 lower than the best
-eligible window. Explicit pools retain their highest-valid-score rule. Default NUS direct-axis
+baseline and the number of bridged pairs from increasing. Refinement selects among eligible
+windows and does not automatically switch back to no window. Explicit pools retain their highest-valid-score rule. Default NUS direct-axis
 processing retains the reconstruction route's SP window.
 
 Window scoring probes at most 256 traces and formally scores at most 12 shared representative

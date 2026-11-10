@@ -17,8 +17,8 @@ Aggregate the same traces for every candidate, including degraded responses.
 Score candidate broadening continuously relative to the narrowest valid FWHM, with
 an inverse fourth-root width factor on every axis. Better signal and shape can compensate
 for modest broadening. Keep raw scores and all component observations. GM/EM require SW.
-Default selection requires a 25% score advantage for no window over the best valid window.
-Direct phased-valley refinement also requires a 0.10 decrease in the normalized valley.
+Default automatic selection chooses the best valid window on every axis.
+No window remains a diagnostic reference and an explicit user choice.
 Explicit pools select the highest valid score and keep input order for ties.
 
 Default pools allow graceful fallback. Explicit pools use strict_candidates=True and fail
@@ -135,8 +135,6 @@ INDIRECT_CANDIDATES: list[dict[str, Any]] = [
 
 # A 20% wider peak needs about 4.7% better detection/separation/shape to win.
 _RESOLUTION_WEIGHT = 0.25
-_NO_WINDOW_SCORE_RATIO = 1.25
-_NO_WINDOW_VALLEY_GAIN = 0.10
 
 
 
@@ -601,10 +599,6 @@ def _is_unwindowed(cfg: dict[str, Any]) -> bool:
     return cfg.get("type") in ("none", "off")
 
 
-def _unwindowed_advantage(score: float, window_score: float, *, minimum_gain: float = 0.0) -> bool:
-    return score >= _NO_WINDOW_SCORE_RATIO * window_score and score - window_score >= minimum_gain
-
-
 def _score_axis(
     arr: np.ndarray,
     axis: int,
@@ -691,8 +685,8 @@ def _score_axis(
     if prefer_window and _is_unwindowed(best.cfg):
         windowed = max((m for m in positive if not _is_unwindowed(m.cfg)),
                        key=lambda m: m.score, default=None)
-        if windowed is not None and not _unwindowed_advantage(best.score, windowed.score):
-            best.reason = "no_window_advantage_below_margin"
+        if windowed is not None:
+            best.reason = "automatic_requires_window"
             best = windowed
     for m in measured:
         m.selected = m is best
@@ -1240,10 +1234,8 @@ def refine_direct_window(
     if _is_unwindowed(best["cfg"]):
         windowed = max((row for row in scored if not _is_unwindowed(row["cfg"])),
                        key=lambda row: row["score"], default=None)
-        if windowed is not None and not _unwindowed_advantage(
-            best["score"], windowed["score"], minimum_gain=_NO_WINDOW_VALLEY_GAIN,
-        ):
-            best["reason"] = "no_window_advantage_below_margin"
+        if windowed is not None:
+            best["reason"] = "automatic_requires_window"
             best = windowed
     for row in rows:
         row["selected"] = row is best

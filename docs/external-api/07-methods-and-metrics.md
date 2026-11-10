@@ -117,9 +117,8 @@ For each trace, only significant peaks at or above 25% of its strongest signific
 are retained. A trace without a valid shared reference peak scores zero. Direct scores combine
 detection strength, separation, symmetry and sidelobes. Indirect scores use
 `sidelobe * separation * min(detection/6, 1)`, emphasizing sidelobes and peak valleys. Components
-and their median product are recorded separately. Default no-window selection needs at least
-25% higher final score than the best valid window. Phased direct-axis refinement also requires
-the normalized median valley to fall by at least 0.10. Explicit candidate pools select the
+and their median product are recorded separately. Automatic selection chooses among valid windows on every axis, including phased direct-axis
+refinement. No window remains a diagnostic reference and an explicit user choice. Explicit candidate pools select the
 highest valid score.
 
 The merge penalty is evaluated only for nearby pairs already resolved in the unwindowed reference:

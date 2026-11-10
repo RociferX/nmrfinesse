@@ -115,8 +115,10 @@ def test_broader_window_keeps_scores_and_can_compensate_for_poor_narrow_quality(
 
 
 @pytest.mark.parametrize("indirect", [False, True])
-@pytest.mark.parametrize(("unwindowed_score", "selected_type"), [(11.0, "exp"), (13.0, "none")])
-def test_automatic_window_requires_clear_unwindowed_advantage(
+@pytest.mark.parametrize(
+    ("unwindowed_score", "selected_type"), [(11.0, "exp"), (13.0, "exp"), (1000.0, "exp")],
+)
+def test_automatic_selection_keeps_window_despite_unwindowed_score(
     monkeypatch: pytest.MonkeyPatch, indirect: bool, unwindowed_score: float, selected_type: str,
 ) -> None:
     import workflow.window_optimize as windows
@@ -138,19 +140,21 @@ def test_automatic_window_requires_clear_unwindowed_advantage(
     else:
         result = windows.optimize_direct_window(fid, sw=20000.0)
 
+    if indirect:
+        selected_type = "exp"
     assert result.choice["type"] == selected_type
     assert result.scores[0]["score"] == unwindowed_score
     assert result.scores[0]["reason"] == (
-        "no_window_advantage_below_margin" if selected_type == "exp" else ""
+        "automatic_requires_window"
     )
 
 
 @pytest.mark.parametrize(("unwindowed_valley", "windowed_valley", "selected_type"), [
     (0.35, 0.40, "sine_bell"),
     (0.74, 0.80, "sine_bell"),
-    (0.15, 0.40, "none"),
+    (0.15, 0.40, "sine_bell"),
 ])
-def test_direct_valley_refinement_requires_clear_unwindowed_advantage(
+def test_direct_valley_refinement_keeps_window_despite_unwindowed_valley(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
     unwindowed_valley: float, windowed_valley: float, selected_type: str,
 ) -> None:
@@ -180,7 +184,7 @@ def test_direct_valley_refinement_requires_clear_unwindowed_advantage(
     assert refined.choice["type"] == selected_type
     assert refined.sampling["score_profile"] == "direct_peak_valley"
     assert refined.scores[0]["reason"] == (
-        "no_window_advantage_below_margin" if selected_type == "sine_bell" else ""
+        "automatic_requires_window"
     )
 
 
@@ -319,6 +323,7 @@ def test_window_candidates_include_none() -> None:
 
 def test_indirect_windows_keeps_window_for_small_unwindowed_gain() -> None:
     rng = np.random.default_rng(3)
+    rng = np.random.default_rng(3)
     n_f1, n_f2 = 64, 256
     k0 = np.arange(n_f2, dtype=float)
     t1 = np.arange(n_f1, dtype=float)
@@ -333,8 +338,21 @@ def test_indirect_windows_keeps_window_for_small_unwindowed_gain() -> None:
     selected = next(row for row in axis.scores if row["selected"])
     assert axis.choice["type"] == "sine_bell"
     assert 1.0 <= unwindowed["score"] / selected["score"] < 1.25
-    assert unwindowed["reason"] == "no_window_advantage_below_margin"
+    assert unwindowed["reason"] == "automatic_requires_window"
     assert res.changed is True
+
+
+def test_indirect_3d_default_windows_and_explicit_none() -> None:
+    t = np.arange(32)
+    signal = np.exp(-t / 20) * np.exp(2j * np.pi * .2 * t)
+    fid = signal[:, None, None] * signal[None, :, None] * np.ones((1, 1, 8))
+    automatic = optimize_indirect_windows(fid, {"F1": 0, "F2": 1})
+    assert set(automatic.per_axis) == {"F1", "F2"}
+    assert all(axis.choice["type"] != "none" for axis in automatic.per_axis.values())
+    explicit = optimize_indirect_windows(
+        fid, {"F1": 0, "F2": 1}, candidates=[{"type": "none"}], strict_candidates=True,
+    )
+    assert all(axis.choice == {"type": "none"} for axis in explicit.per_axis.values())
 
 
 def test_indirect_windows_picks_window_for_truncated_fid() -> None:

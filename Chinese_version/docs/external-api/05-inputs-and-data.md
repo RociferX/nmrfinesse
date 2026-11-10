@@ -300,7 +300,7 @@ window.F1.off,window.F2.off,zero_fill.F1,baseline.F2.enabled,points_per_line.F1
 
 默认自动优化启用。窗候选默认池在直接维和间接维各含 13 项，包括无窗、6 个 SP 和 6 个 Hz 窗。GM/Gaussian
 `g1/g2/g3/c` 分别为 `8/15/0/1`、`4/8/0/1`。EM/exp 的 `lb/c` 分别为 `3/1`、`5/1`、`10/1`、`20/1`。
-默认搜索优先选加窗。无窗需比最佳有效加窗候选高至少 25%，或在没有有效加窗候选时才可选。
+默认搜索从有效加窗候选中选择。无窗保留作评分对照和显式人工选择。
 Hz窗使用被评分逻辑轴的谱宽，该轴SW缺失或无效时跳过对应候选。窗评分按维度合成原始分，再乘
 连续分辨率因子 `resolution_score = (min_valid_fwhm / candidate_fwhm)^0.25`。
 线宽以点计，`min_valid_fwhm`是本轮有效候选峰线宽的最小值。所有逻辑轴统一使用指数

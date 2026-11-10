@@ -193,13 +193,28 @@
       ],
       "sampling": "uniform",
       "sampling_fraction_reader_summary": 1.0,
-      "unmatched_count": 11,
+      "unmatched_count": 12,
       "observations": {
+        "local_response_without_independent_candidate": 2,
         "below_10_percent": 2,
-        "candidate_competition": 8,
-        "local_response_without_independent_candidate": 1
+        "candidate_competition": 8
       },
       "candidates": [
+        {
+          "projection": "HN",
+          "reference_candidate": {
+            "candidate_index_1based": 44,
+            "ppm": {
+              "H": 8.043762574643422,
+              "N": 117.37564503197245
+            },
+            "intensity": 124313259.6875,
+            "sign": 1
+          },
+          "automatic_local_height_fraction": 0.35351001400782484,
+          "automatic_candidates_within_tolerance": 0,
+          "observation": "local_response_without_independent_candidate"
+        },
         {
           "projection": "HN",
           "reference_candidate": {
@@ -211,7 +226,7 @@
             "intensity": 38609103.6875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.09408553740596537,
+          "automatic_local_height_fraction": 0.09595104737437626,
           "automatic_candidates_within_tolerance": 0,
           "observation": "below_10_percent"
         },
@@ -226,7 +241,7 @@
             "intensity": 211832807.90625,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.6355131810169127,
+          "automatic_local_height_fraction": 0.6306788171631244,
           "automatic_candidates_within_tolerance": 1,
           "observation": "candidate_competition"
         },
@@ -241,7 +256,7 @@
             "intensity": 149275607.90625,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.4540553223430364,
+          "automatic_local_height_fraction": 0.45711177291594535,
           "automatic_candidates_within_tolerance": 1,
           "observation": "candidate_competition"
         },
@@ -256,7 +271,7 @@
             "intensity": 144203879.90625,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.4103184882063967,
+          "automatic_local_height_fraction": 0.40815264445616645,
           "automatic_candidates_within_tolerance": 1,
           "observation": "candidate_competition"
         },
@@ -271,7 +286,7 @@
             "intensity": 121203375.90625,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.3622349543478745,
+          "automatic_local_height_fraction": 0.36808686865047824,
           "automatic_candidates_within_tolerance": 1,
           "observation": "candidate_competition"
         },
@@ -286,7 +301,7 @@
             "intensity": 38419195.90625,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.09489732831782145,
+          "automatic_local_height_fraction": 0.09563905068160536,
           "automatic_candidates_within_tolerance": 0,
           "observation": "below_10_percent"
         },
@@ -301,7 +316,7 @@
             "intensity": 211782384.875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.6346597882005788,
+          "automatic_local_height_fraction": 0.6308185656673594,
           "automatic_candidates_within_tolerance": 1,
           "observation": "candidate_competition"
         },
@@ -316,7 +331,7 @@
             "intensity": 149225184.875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.4527770723713968,
+          "automatic_local_height_fraction": 0.45731719795308795,
           "automatic_candidates_within_tolerance": 1,
           "observation": "candidate_competition"
         },
@@ -331,7 +346,7 @@
             "intensity": 144153456.875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.4089378348058333,
+          "automatic_local_height_fraction": 0.4083765952786928,
           "automatic_candidates_within_tolerance": 1,
           "observation": "candidate_competition"
         },
@@ -346,7 +361,7 @@
             "intensity": 121152952.875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.3607417203538803,
+          "automatic_local_height_fraction": 0.3683259800771076,
           "automatic_candidates_within_tolerance": 1,
           "observation": "candidate_competition"
         },
@@ -361,7 +376,7 @@
             "intensity": 55317892.875,
             "sign": 1
           },
-          "automatic_local_height_fraction": 0.16138179572497743,
+          "automatic_local_height_fraction": 0.16313704494839387,
           "automatic_candidates_within_tolerance": 0,
           "observation": "local_response_without_independent_candidate"
         }
