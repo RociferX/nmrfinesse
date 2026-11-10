@@ -414,7 +414,7 @@ def test_main_mark_peaks_detects_cropped_plane_and_passes_markers(
         "--mark-peaks", "--peak-sign-mode", "both",
     ]) == 0
     assert explicit_both.is_file() and explicit_both.stat().st_size > 0
-    assert [call[-1] for call in detections] == ["both", "both"]
+    assert [call[-2:] for call in detections] == [(0.05, "both")] * 2
     assert marker_sizes == [9, 9, 4, 4]
 
 
@@ -448,30 +448,28 @@ def test_draws_positive_and_negative_candidates_as_red_dots_and_keeps_unmatched_
     plt.close(figure)
 
 
-def test_default_contour_levels_start_at_7_5_percent_for_both_signs():
+def test_default_contour_levels_start_at_8_percent_for_both_signs():
     import matplotlib.pyplot as plt
 
     tool = _load_tool()
-    assert tool.LEVELS == (0.075, 0.1, 0.2, 0.35, 0.5, 0.7, 0.9)
     figure, ax = plt.subplots()
     calls = []
 
     def capture_contour(*args, **kwargs):
-        calls.append((kwargs["levels"], kwargs.get("linestyles", "solid"), kwargs["linewidths"]))
+        calls.append((kwargs["levels"], kwargs["colors"], kwargs.get("linestyles", "solid")))
 
     ax.contour = capture_contour
     tool._draw(ax, np.array([[100.0, 0.0], [0.0, -100.0]]),
                np.array([7.0, 8.0]), np.array([110.0, 111.0]), "signed")
 
     assert len(calls) == 2
-    positive_levels, positive_style, positive_widths = calls[0]
-    negative_levels, negative_style, negative_widths = calls[1]
-    np.testing.assert_allclose(positive_levels, np.array(tool.LEVELS) * 100.0)
-    np.testing.assert_allclose(np.sort(np.abs(negative_levels)), np.array(tool.LEVELS) * 100.0)
-    assert positive_style == "solid"
-    assert negative_style == "dashed"
-    np.testing.assert_allclose(positive_widths, [0.25, 0.25, 0.4, 0.4, 0.4, 0.4, 0.4])
-    np.testing.assert_allclose(negative_widths, positive_widths[::-1])
+    positive_levels, positive_color, positive_style = calls[0]
+    negative_levels, negative_color, negative_style = calls[1]
+    expected = np.geomspace(8.0, 100.0, 12)
+    np.testing.assert_allclose(positive_levels, expected)
+    np.testing.assert_allclose(negative_levels, -expected[::-1])
+    assert (positive_color, negative_color) == ("#1f77b4", "#e74c3c")
+    assert positive_style == negative_style == "solid"
     plt.close(figure)
 
 

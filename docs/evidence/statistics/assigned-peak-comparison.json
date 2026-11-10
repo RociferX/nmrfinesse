@@ -278,238 +278,242 @@
       },
       "automatic": {
         "0.05": {
-          "candidates": 196,
-          "matched": 106,
+          "candidates": 208,
+          "matched": 108,
           "assignments_in_range": 113,
           "assignments_total": 114,
           "median_abs_error_ppm": {
-            "H": 0.0006319696299481592,
-            "N": 0.002907275390960251
+            "H": 0.0007499535589969852,
+            "N": 0.0038107677075629454
           },
           "matched_author_seq_ids": [
             "141",
-            "190",
+            "144",
             "127",
             "150",
-            "144",
-            "102",
-            "172",
+            "190",
             "126",
             "165",
+            "102",
             "125",
-            "151",
             "142",
-            "192",
-            "154",
-            "194",
-            "163",
+            "151",
             "189",
-            "166",
+            "192",
+            "163",
             "101",
+            "166",
+            "172",
             "171",
+            "108",
             "152",
             "87",
-            "182",
-            "118",
-            "169",
-            "108",
-            "105",
-            "128",
-            "107",
-            "90",
-            "138",
-            "184",
-            "159",
-            "162",
             "174",
+            "182",
+            "154",
+            "107",
             "86",
-            "175",
-            "98",
-            "202",
-            "119",
-            "167",
+            "162",
+            "138",
             "147",
+            "98",
+            "184",
+            "128",
+            "202",
             "204",
-            "103",
+            "175",
+            "169",
+            "167",
+            "159",
+            "90",
             "168",
+            "103",
             "153",
-            "130",
-            "179",
-            "146",
+            "118",
             "183",
+            "146",
             "88",
             "140",
-            "110",
-            "92",
-            "116",
-            "117",
+            "119",
+            "105",
+            "130",
             "191",
-            "188",
-            "200",
+            "194",
+            "92",
             "121",
-            "111",
-            "104",
-            "181",
-            "89",
-            "193",
-            "124",
-            "203",
-            "137",
-            "113",
-            "164",
-            "115",
             "99",
+            "188",
+            "124",
+            "104",
+            "203",
+            "200",
+            "111",
+            "181",
+            "137",
+            "89",
             "132",
-            "176",
-            "155",
+            "193",
+            "113",
+            "110",
             "91",
+            "179",
+            "116",
             "136",
+            "164",
+            "176",
+            "117",
             "149",
+            "115",
             "112",
+            "155",
             "85",
-            "133",
-            "114",
-            "195",
-            "185",
-            "135",
             "201",
+            "185",
             "180",
+            "135",
+            "195",
+            "84",
             "106",
+            "133",
+            "158",
             "197",
             "170",
-            "158",
-            "186",
+            "114",
+            "100",
             "122",
+            "186",
             "123",
-            "177",
-            "178",
-            "173",
             "157",
-            "95",
+            "178",
             "196",
+            "173",
+            "177",
+            "95",
             "131",
             "129",
             "134",
-            "199",
             "143",
+            "199",
             "93"
           ]
         },
         "0.1": {
-          "candidates": 129,
-          "matched": 105,
+          "candidates": 130,
+          "matched": 107,
           "assignments_in_range": 113,
           "assignments_total": 114,
           "median_abs_error_ppm": {
-            "H": 0.0006196731074439299,
-            "N": 0.002882921665872118
+            "H": 0.0007467357185060308,
+            "N": 0.0037396016797686116
           },
           "matched_author_seq_ids": [
             "141",
-            "190",
+            "144",
             "127",
             "150",
-            "144",
-            "102",
-            "172",
+            "190",
             "126",
             "165",
+            "102",
             "125",
-            "151",
             "142",
-            "192",
-            "154",
-            "194",
-            "163",
+            "151",
             "189",
-            "166",
+            "192",
+            "163",
             "101",
+            "166",
+            "172",
             "171",
+            "108",
             "152",
             "87",
-            "182",
-            "118",
-            "169",
-            "108",
-            "105",
-            "128",
-            "107",
-            "90",
-            "138",
-            "184",
-            "159",
-            "162",
             "174",
+            "182",
+            "154",
+            "107",
             "86",
-            "175",
-            "98",
-            "202",
-            "119",
-            "167",
+            "162",
+            "138",
             "147",
+            "98",
+            "184",
+            "128",
+            "202",
             "204",
-            "103",
+            "175",
+            "169",
+            "167",
+            "159",
+            "90",
             "168",
+            "103",
             "153",
-            "130",
-            "179",
-            "146",
+            "118",
             "183",
+            "146",
             "88",
             "140",
-            "110",
-            "92",
-            "116",
-            "117",
+            "119",
+            "105",
+            "130",
             "191",
-            "188",
-            "200",
+            "194",
+            "92",
             "121",
-            "111",
-            "104",
-            "181",
-            "89",
-            "193",
-            "124",
-            "203",
-            "137",
-            "113",
-            "164",
-            "115",
             "99",
+            "188",
+            "124",
+            "104",
+            "203",
+            "200",
+            "111",
+            "181",
+            "137",
+            "89",
             "132",
-            "176",
-            "155",
+            "193",
+            "113",
+            "110",
             "91",
+            "179",
+            "116",
             "136",
+            "164",
+            "176",
+            "117",
             "149",
+            "115",
             "112",
+            "155",
             "85",
-            "133",
-            "114",
-            "195",
-            "185",
-            "135",
             "201",
+            "185",
             "180",
+            "135",
+            "195",
+            "84",
             "106",
+            "133",
+            "158",
             "197",
             "170",
-            "158",
-            "186",
+            "114",
+            "100",
             "122",
+            "186",
             "123",
-            "177",
-            "178",
-            "173",
             "157",
-            "95",
+            "178",
             "196",
+            "173",
+            "177",
+            "95",
             "131",
             "129",
             "134",
-            "199",
-            "143"
+            "143",
+            "199"
           ]
         }
       }
@@ -1950,56 +1954,125 @@
       }
     }
   },
-  "author_only_at_10_percent": {
-    "method": "Retest at 7.5% and 5% without changing assignments or tolerances. For diagnosis only, inspect same-sign voxels and independent candidates down to 2.5% or five noise standard deviations, whichever is higher. Inspect author peak apex profiles in every dimension and check the positions against separately processed spectra from the same acquisition.",
+  "uniform2d_nitrogen_window_control": {
+    "method": "Only the F1 window changes on the full acquisition. Both tapered variants resolve Gly100 and His194, which the SP control merges.",
+    "at_5_percent": {
+      "SP": {
+        "candidates": 196,
+        "matched": 106
+      },
+      "GM 8/15": {
+        "candidates": 208,
+        "matched": 108
+      },
+      "EM 3 Hz": {
+        "candidates": 290,
+        "matched": 108
+      }
+    },
+    "at_10_percent": {
+      "SP": {
+        "candidates": 129,
+        "matched": 105
+      },
+      "GM 8/15": {
+        "candidates": 130,
+        "matched": 107
+      },
+      "EM 3 Hz": {
+        "candidates": 135,
+        "matched": 107
+      }
+    }
+  },
+  "weak_peak_window_controls": {
+    "method": "Keep the input spectrum or SMILE reconstruction, phases and zero filling fixed. Change one axis window at a time and report the local apex as a fraction of the spectrum maximum and in noise standard deviations.",
+    "Glu199_controlled_2d_nus": {
+      "same_pipeline": {
+        "peak_fraction": 0.08071071562995705,
+        "snr": 8.649261222487961
+      },
+      "F1_EM3_c0.5": {
+        "peak_fraction": 0.08071070238647572,
+        "snr": 8.649264489448749
+      },
+      "F1_EM1": {
+        "peak_fraction": 0.08008068124451886,
+        "snr": 8.852711402351959
+      },
+      "F1_EM5": {
+        "peak_fraction": 0.08145769852512305,
+        "snr": 8.452473232904929
+      },
+      "F1_SP1": {
+        "peak_fraction": 0.07868469073236606,
+        "snr": 8.291471157617126
+      },
+      "F1_SP2": {
+        "peak_fraction": 0.08115907074290041,
+        "snr": 7.489398285089043
+      },
+      "F1_GM": {
+        "peak_fraction": 0.07866180069716244,
+        "snr": 9.049640569510522
+      },
+      "F1_no_window_control": {
+        "peak_fraction": 0.07984255807409515,
+        "snr": 8.96563673562655
+      }
+    },
+    "Phe14_uniform_3d": {
+      "same_pipeline": {
+        "peak_fraction": 0.09880633803345211,
+        "snr": 66.00285311739205
+      },
+      "F3_SP2": {
+        "peak_fraction": 0.09724215916949905,
+        "snr": 69.90758527223274
+      },
+      "F3_SP1": {
+        "peak_fraction": 0.0912247603118112,
+        "snr": 71.59560261167452
+      },
+      "F3_EM3": {
+        "peak_fraction": 0.08884314629257652,
+        "snr": 67.75649600343242
+      },
+      "F2_EM3": {
+        "peak_fraction": 0.09790566102000145,
+        "snr": 64.3377359409876
+      },
+      "F1_EM3": {
+        "peak_fraction": 0.09592449560872872,
+        "snr": 61.441491565305654
+      }
+    }
+  },
+  "author_only_at_5_percent": {
+    "method": "Keep assignments and tolerances fixed. Inspect same-sign voxels in tolerance and search locally for independent candidates down to 2.5% or five noise standard deviations, whichever is higher. Inspect author peak apex profiles in every dimension and check the positions against separately processed spectra from the same acquisition.",
     "automatic_local_checks": {
-      "uniform2d": [
+      "uniform2d": [],
+      "nus75": [
         {
-          "author_seq_id": "84",
-          "residue": "VAL",
+          "author_seq_id": "93",
+          "residue": "SER",
           "expected_ppm": {
-            "N": 123.43273112746041,
-            "H": 8.666279627191077
+            "N": 113.95673112746042,
+            "H": 7.872279627191078
           },
           "highest_independent_peak_fraction_in_tolerance": null,
           "also_within_tolerance_of_other_assignments": [],
-          "local_max_fraction": 0.4718825099263396,
-          "local_max_sigma": 53.768425769245304,
-          "nearest_peak_fraction": 0.5197609883740192,
-          "nearest_peak_normalized_distance": 1.8094960081106384,
+          "local_max_fraction": 0.024480165205224915,
+          "local_max_sigma": 2.623385779410213,
+          "nearest_peak_fraction": 0.049622110074765476,
+          "nearest_peak_normalized_distance": 9.96116998528454,
           "nearest_peak_delta_ppm": {
-            "N": 0.2489716121082779,
-            "H": -0.026264837425527432
+            "N": 1.9624146724616764,
+            "H": -0.034340202727484836
           },
-          "matched_at_5_percent": false,
-          "matched_at_7_5_percent": false,
-          "reason": "nearest_apex_outside_assignment_tolerance"
+          "has_independent_apex_at_4_percent_in_tolerance": false,
+          "reason": "local_response_near_noise"
         },
-        {
-          "author_seq_id": "100",
-          "residue": "GLY",
-          "expected_ppm": {
-            "N": 118.1127311274604,
-            "H": 9.272279627191077
-          },
-          "highest_independent_peak_fraction_in_tolerance": 0.6540864183693064,
-          "also_within_tolerance_of_other_assignments": [
-            "194"
-          ],
-          "local_max_fraction": 0.6540864183693064,
-          "local_max_sigma": 74.52956253507139,
-          "nearest_peak_fraction": 0.6540864183693064,
-          "nearest_peak_normalized_distance": 0.8756761132560299,
-          "nearest_peak_delta_ppm": {
-            "N": 0.17452958139868713,
-            "H": -0.0014552368531841609
-          },
-          "matched_at_5_percent": false,
-          "matched_at_7_5_percent": false,
-          "reason": "unresolved_from_his194"
-        }
-      ],
-      "nus75": [
         {
           "author_seq_id": "100",
           "residue": "GLY",
@@ -2017,56 +2090,11 @@
             "N": 0.2247936014426557,
             "H": -0.003623753574993671
           },
-          "matched_at_5_percent": false,
-          "matched_at_7_5_percent": false,
+          "has_independent_apex_at_4_percent_in_tolerance": false,
           "reason": "unresolved_from_his194"
-        },
-        {
-          "author_seq_id": "199",
-          "residue": "GLU",
-          "expected_ppm": {
-            "N": 118.6127311274604,
-            "H": 8.133279627191078
-          },
-          "highest_independent_peak_fraction_in_tolerance": 0.08071071562995705,
-          "also_within_tolerance_of_other_assignments": [],
-          "local_max_fraction": 0.08071071562995705,
-          "local_max_sigma": 8.649261222487961,
-          "nearest_peak_fraction": 0.08071071562995705,
-          "nearest_peak_normalized_distance": 0.019617409271513207,
-          "nearest_peak_delta_ppm": {
-            "N": 0.0038040788429754002,
-            "H": -9.605696317649404e-05
-          },
-          "matched_at_5_percent": true,
-          "matched_at_7_5_percent": true,
-          "reason": "apex_below_10_percent"
         }
       ],
       "uniform3d": [
-        {
-          "author_seq_id": "14",
-          "residue": "PHE",
-          "expected_ppm": {
-            "N": 118.72500152587891,
-            "C": 176.40100708007813,
-            "H": 9.018999576568604
-          },
-          "highest_independent_peak_fraction_in_tolerance": 0.09880633803345211,
-          "also_within_tolerance_of_other_assignments": [],
-          "local_max_fraction": 0.09880633803345211,
-          "local_max_sigma": 66.00285311739205,
-          "nearest_peak_fraction": 0.09880633803345211,
-          "nearest_peak_normalized_distance": 0.37866949300387276,
-          "nearest_peak_delta_ppm": {
-            "N": -0.0054784325535166545,
-            "C": 0.01312156320616964,
-            "H": -0.007348142987682493
-          },
-          "matched_at_5_percent": true,
-          "matched_at_7_5_percent": true,
-          "reason": "apex_below_10_percent"
-        },
         {
           "author_seq_id": "71",
           "residue": "SER",
@@ -2086,8 +2114,7 @@
             "C": 0.13103067330530394,
             "H": 0.009216542025455965
           },
-          "matched_at_5_percent": false,
-          "matched_at_7_5_percent": false,
+          "has_independent_apex_at_4_percent_in_tolerance": false,
           "reason": "reproduced_apex_just_outside_assignment_tolerance"
         }
       ],
@@ -2095,41 +2122,41 @@
     },
     "author_apex_checks": {
       "27493": {
-        "84": {
-          "residue": "VAL",
+        "93": {
+          "residue": "SER",
           "ppm": {
-            "H": 8.596718177121666,
-            "N": 123.35819628180971
+            "H": 7.799841115942174,
+            "N": 113.90209174030653
           },
-          "peak_fraction": 0.3163967740891188,
-          "snr": 78.72661718510874,
-          "normalized_distance": 0.1682091316233871,
+          "peak_fraction": 0.062364728142435176,
+          "snr": 15.517743796401502,
+          "normalized_distance": 0.0267000687064825,
           "other_assignments_in_tolerance": [],
           "other_author_peaks_in_tolerance": [],
           "axis_profile_half_prominence_width_ppm": {
-            "H": 0.033397984772293596,
-            "N": 0.5122115591363392
+            "H": 0.04434552209509868,
+            "N": 0.36872716278203493
           },
           "separate_processings": {
             "uniform2d": {
               "ppm": {
-                "H": 8.64001478976555,
-                "N": 123.68170273956869
+                "H": 7.874774856316238,
+                "N": 113.94144944129215
               },
-              "peak_fraction": 0.5197609883740192,
-              "snr": 59.223915981756726,
-              "normalized_distance_to_author_peak": 1.970612209705512,
-              "normalized_distance_to_assignment": 1.8094960081106384
+              "peak_fraction": 0.06039363851487272,
+              "snr": 8.987279627600643,
+              "normalized_distance_to_author_peak": 0.1556232175573348,
+              "normalized_distance_to_assignment": 0.1462999291566588
             },
             "nus75": {
               "ppm": {
-                "H": 8.667185029700747,
-                "N": 123.43006457794309
+                "H": 7.837939424463594,
+                "N": 115.91914579992209
               },
-              "peak_fraction": 0.39026308075463834,
-              "snr": 41.82204685702126,
-              "normalized_distance_to_author_peak": 0.1219337805301269,
-              "normalized_distance_to_assignment": 0.04719265217699566
+              "peak_fraction": 0.049622110074765476,
+              "snr": 5.317690335140529,
+              "normalized_distance_to_author_peak": 9.937138627499499,
+              "normalized_distance_to_assignment": 9.96116998528454
             }
           }
         },
@@ -2151,13 +2178,13 @@
           "separate_processings": {
             "uniform2d": {
               "ppm": {
-                "H": 9.270824390337893,
-                "N": 118.2872607088591
+                "H": 9.276625873619299,
+                "N": 118.01076901905095
               },
-              "peak_fraction": 0.6540864183693064,
-              "snr": 74.52956253507139,
-              "normalized_distance_to_author_peak": 1.1681566720950003,
-              "normalized_distance_to_assignment": 0.8756761132560299
+              "peak_fraction": 0.34353253111010423,
+              "snr": 51.1216577471749,
+              "normalized_distance_to_author_peak": 0.2460592322621165,
+              "normalized_distance_to_assignment": 0.5541944007472467
             },
             "nus75": {
               "ppm": {
@@ -2170,89 +2197,9 @@
               "normalized_distance_to_assignment": 1.1384783951264454
             }
           }
-        },
-        "199": {
-          "residue": "GLU",
-          "ppm": {
-            "H": 8.058705170178639,
-            "N": 118.55241406469548
-          },
-          "peak_fraction": 0.12474193396764278,
-          "snr": 31.038592320269995,
-          "normalized_distance": 0.09952994757076333,
-          "other_assignments_in_tolerance": [],
-          "other_author_peaks_in_tolerance": [],
-          "axis_profile_half_prominence_width_ppm": {
-            "H": 0.028631015176634838,
-            "N": 0.2664045670690474
-          },
-          "separate_processings": {
-            "uniform2d": {
-              "ppm": {
-                "H": 8.126751380458,
-                "N": 118.63879540648574
-              },
-              "peak_fraction": 0.1484468843406995,
-              "snr": 16.91470888080719,
-              "normalized_distance_to_author_peak": 0.2630376926155294,
-              "normalized_distance_to_assignment": 0.3514664700189985
-            },
-            "nus75": {
-              "ppm": {
-                "H": 8.133183570227901,
-                "N": 118.61653520630338
-              },
-              "peak_fraction": 0.08071071562995705,
-              "snr": 8.649261222487961,
-              "normalized_distance_to_author_peak": 0.09715102431555221,
-              "normalized_distance_to_assignment": 0.019617409271513207
-            }
-          }
         }
       },
       "15750": {
-        "14": {
-          "residue": "PHE",
-          "ppm": {
-            "H": 8.990091570549584,
-            "N": 118.71919258170308,
-            "C": 176.40205299172732
-          },
-          "peak_fraction": 0.11424119800992975,
-          "snr": 119.03260859423457,
-          "normalized_distance": 0.5048154500213132,
-          "other_assignments_in_tolerance": [],
-          "other_author_peaks_in_tolerance": [],
-          "axis_profile_half_prominence_width_ppm": {
-            "H": 0.04424567771429845,
-            "N": 0.4290001684114197,
-            "C": 0.4729095715984923
-          },
-          "separate_processings": {
-            "uniform3d": {
-              "ppm": {
-                "H": 9.011651433580921,
-                "N": 118.71952309332539,
-                "C": 176.4141286432843
-              },
-              "peak_fraction": 0.09880633803345211,
-              "snr": 66.00285311739205,
-              "normalized_distance_to_author_peak": 0.19248162240916525,
-              "normalized_distance_to_assignment": 0.37866949300387276
-            },
-            "f2_unwindowed": {
-              "ppm": {
-                "H": 9.011562449527862,
-                "N": 118.72097731765406,
-                "C": 176.41451006239322
-              },
-              "peak_fraction": 0.09800283413940378,
-              "snr": 64.2775001330563,
-              "normalized_distance_to_author_peak": 0.18593168251355946,
-              "normalized_distance_to_assignment": 0.383126065440165
-            }
-          }
-        },
         "71": {
           "residue": "SER",
           "ppm": {
@@ -2314,9 +2261,14 @@
         ],
         "Uniform": [
           {
-            "H": 9.199881466084998,
-            "N": 118.22816885385369,
-            "fraction": 0.6540864183693064
+            "H": 9.203782216706497,
+            "N": 117.94690818164595,
+            "fraction": 0.34353253111010423
+          },
+          {
+            "H": 9.195980715463497,
+            "N": 118.36879918995756,
+            "fraction": 0.5039950917787557
           }
         ],
         "2D NUS": [
@@ -2328,9 +2280,9 @@
         ],
         "SP, no LP": [
           {
-            "H": 9.195980715463497,
-            "N": 118.26333008750393,
-            "fraction": 0.6275501537736237
+            "H": 9.199881466084998,
+            "N": 118.22816885385369,
+            "fraction": 0.6540864183693064
           }
         ],
         "EM, no LP": [

@@ -3,8 +3,10 @@
 ## How to read the figures
 
 The automatically processed spectrum is on the left and the author spectrum is on the right.
-Blue solid contours show positive signal and red dashed contours show negative signal. Contours
-start at 7.5% of each panel's maximum absolute intensity. The 3D figures show signed
+Blue contours show positive signal and red contours show negative signal. As in the Viewer, each
+panel uses 12 logarithmically spaced levels starting at 8% of its positive maximum, or the
+absolute negative maximum if there is no positive signal. The axes use the same scale per Hz.
+The 3D figures show signed
 maximum-absolute-value HN, HC and NC projections over the common volume. Assignment counts use
 the full 3D spectra.
 
@@ -21,7 +23,7 @@ the full 3D spectra.
 
 The reference coordinates come from the public BMRB assignments. HSQC uses H and N from the
 same residue. HNCO combines H and N from residue *i* with the deposited carbonyl shift of
-residue *i−1*. The HNCO comparison uses full 3D coordinates. Each spectrum is picked independently at 10% of its maximum absolute peak height after median
+residue *i−1*. The HNCO comparison uses full 3D coordinates. Each spectrum is picked independently at 5% of its maximum absolute peak height after median
 centring, using the dominant sign. Candidate peaks are matched one-to-one to assigned coordinates
 in the common range, within a joint normalized distance of 1 (H 0.02 ppm, N 0.20 ppm, C 0.15 ppm).
 For bsCopL, a whole-axis offset to the author spectrum was fitted on half the assigned residues;
@@ -30,34 +32,39 @@ For bsCopL, a whole-axis offset to the author spectrum was fitted on half the as
 
 | Route | Assigned coordinates | Assignments in common range | Found in automatic spectrum | Found in author spectrum |
 | --- | --- | --- | --- | --- |
-| Uniform 2D | [BMRB 27493](https://bmrb.io/data_library/summary/?bmrbId=27493) · [HSQC CSV](statistics/assigned-27493-hsqc.csv) | 113 | 105 | 107 |
-| Controlled 2D NUS | Same HSQC assignments | 113 | 106 | 107 |
-| Uniform 3D | [BMRB 15750](https://bmrb.io/data_library/summary/?bmrbId=15750) · [HNCO CSV](statistics/assigned-15750-hnco.csv) | 76 | 72 | 74 |
-| Acquired 3D NUS | [BMRB 52533](https://bmrb.io/data_library/summary/?bmrbId=52533) · [HNCO CSV](statistics/assigned-52533-hnco.csv) | 97 | 89 | 87 |
+| Uniform 2D | [BMRB 27493](https://bmrb.io/data_library/summary/?bmrbId=27493) · [HSQC CSV](statistics/assigned-27493-hsqc.csv) | 113 | 108 | 108 |
+| Controlled 2D NUS | Same HSQC assignments | 113 | 107 | 108 |
+| Uniform 3D | [BMRB 15750](https://bmrb.io/data_library/summary/?bmrbId=15750) · [HNCO CSV](statistics/assigned-15750-hnco.csv) | 76 | 74 | 75 |
+| Acquired 3D NUS | [BMRB 52533](https://bmrb.io/data_library/summary/?bmrbId=52533) · [HNCO CSV](statistics/assigned-52533-hnco.csv) | 97 | 90 | 88 |
 
 In the uniform 3D control, adding the F2 SP window was the only processing change. At a 5%
 threshold, it reduced detected candidates from 193 to 116 while retaining the same 74 assigned
-matches. At 10%, the same 72 assignments matched with either setting. The
+matches. The
 [assignment statistics](statistics/assigned-peak-comparison.json) include the thresholds,
 matched residue IDs and local checks below.
 
 ### Why some assignments were missed
 
-Six route–residue cases matched at 10% in the author spectra but not in the automatic spectra.
-We checked each author peak using cross-sections through its apex and compared it with separate
-processing of the same acquisition. Lowering the automatic threshold to 7.5% recovered two;
-lowering it to 5% recovered no further cases. The assignment tolerance stayed fixed.
+The uniform 2D spectrum recovered the same 108 assignments as the author spectrum. The automatic
+GM 8/15 window separates Gly100 and His194 along N; the SP control merges them. EM 3 Hz also
+separates the pair. At 5%, GM and EM recovered the same 108 assignments, with 208 and 290
+candidates respectively. See the [Gly100/His194 close-up](figures/gly100-peak-shape.png).
 
-| Assignment | Author peak and processing check | Why the automatic count was lower |
+At 5%, three assignments were found in the author spectra and missed in their corresponding
+automatic spectra. We checked the author peak apexes against separate processing of the same
+acquisitions and searched the automatic spectra locally at a lower threshold with the same
+coordinate tolerances.
+
+| Assignment | Author peak and processing check | Why the automatic spectrum missed it |
 | --- | --- | --- |
-| Val84 · Uniform 2D | The author peak also appears in the controlled 2D NUS spectrum. | In uniform 2D, the nearest apex is outside tolerance by the joint H and N criterion (deviations 0.026 and 0.249 ppm). |
-| Gly100 · Both 2D routes | The author spectrum separates Gly100 and His194 along N. Reprocessing the full acquisition with EM 3 Hz and no linear prediction also separates the pair. | Both automatic routes show one broad peak in this region. Uniform 2D assigns it to His194; lowering the threshold does not reveal a second apex. |
-| Glu199 · Controlled 2D NUS | The author peak is also present in the uniform 2D spectrum. | The NUS apex is at 8.07% of maximum peak height and is recovered at 7.5%. |
-| Phe14 · Uniform 3D | The author spectrum shows a distinct apex in all three dimensions. The same feature is present with and without the automatic F2 window. | The automatic apex is at 9.88% and is recovered at 7.5%. |
+| Ser93 · Controlled 2D NUS | A distinct peak appears in both the author and automatic uniform spectra, at 6.24% and 6.04% of their maximum peak heights. | The strongest local response within tolerance is 2.45% of maximum and 2.6 times the estimated noise. No distinct apex was recovered in the local check. |
+| Gly100 · Controlled 2D NUS | The author and automatic uniform spectra both separate Gly100 and His194 along N. | The NUS spectrum shows one broad peak in this region. Lowering the threshold did not reveal a second apex. |
 | Ser71 · Uniform 3D | A distinct apex appears in both 3D spectra at nearly the same position after referencing. | Its distance to the deposited assignment is 0.930 in the author spectrum and 1.020 in the automatic spectrum, just beyond the cutoff of 1. |
 
-The [Gly100/His194 close-up](figures/gly100-peak-shape.png) shows both assigned positions and the
-effect of changing only the nitrogen-dimension processing in the uniform control.
+The 5% threshold includes Glu199 in controlled 2D NUS and Phe14 in uniform 3D. With the same
+NUS reconstruction, changing the F1 window left Glu199 at 7.87%–8.15% of the maximum. In uniform
+3D, changing one window at a time left Phe14 below 10% in all tested settings. Its automatic peak
+is 66 times the estimated noise.
 
 ## Uniform 2D
 
@@ -68,7 +75,7 @@ effect of changing only the nitrogen-dimension processing in the uniform control
 | Axis | Window | Baseline polynomial order |
 | --- | --- | --- |
 | F2 | SP, off 0.45, end 0.98, power 2 | 3 |
-| F1 | SP, off 0.65, end 1.00, power 2 | 3 |
+| F1 | GM, g1 8 Hz, g2 15 Hz | 3 |
 
 The direct dimension is extracted from 10.5 to 6.5 ppm. The processing record includes the
 time-domain DC correction and the final transform script.

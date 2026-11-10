@@ -4,7 +4,7 @@
       512,
       1028
     ],
-    "wall_time_s": 38.22788855800172,
+    "wall_time_s": 43.786064853018615,
     "params_used": {
       "ext_lo": "10.5",
       "ext_hi": "6.5",
@@ -51,14 +51,14 @@
           "c": 0.5
         },
         "F1": {
-          "type": "sine_bell",
-          "off": 0.65,
-          "end": 1.0,
-          "pow": 2,
-          "c": 0.5
+          "type": "gaussian",
+          "g1": 8.0,
+          "g2": 15.0,
+          "g3": 0.0,
+          "c": 1.0
         }
       },
-      "backend_runs": 5,
+      "backend_runs": 6,
       "direct_phase": [
         0.0,
         0.0
@@ -82,7 +82,7 @@
         },
         "apply_poly_time": true,
         "repaired_badpoints": 0,
-        "backup_dir": "<VM>/fid_diag_bak",
+        "backup_dir": "<work>/fid_diag_bak",
         "clean": false
       }
     },
@@ -105,8 +105,8 @@
       "sha256": "cdf04368145409ada04819ffee693803a90d243c773349ea792d4968ff32796d"
     },
     "automatic_final": {
-      "text": "#!/bin/csh\n# NMRFinesse processing script\n# experiment: d_001\nxyz2pipe -in d_001.fid -x \\\n| nmrPipe -fn POLY -time \\\n| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -size 4096 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 0 -p1 0 -di \\\n| nmrPipe -fn POLY -ord 3 -auto \\\n| nmrPipe -fn EXT -x1 10.5ppm -xn 6.5ppm -sw -round 2 \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn SP -off 0.65 -end 1 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -size 512 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 265 -p1 0 -di \\\n| nmrPipe -fn POLY -ord 3 -auto \\\n| nmrPipe -fn TP \\\n| pipe2xyz -out d_001.ft2 -x\n",
-      "sha256": "0c59f28c77445e139a505d73f279556455a0a8982a07e88d475e9a194abef6d3"
+      "text": "#!/bin/csh\n# NMRFinesse processing script\n# experiment: d_001\nxyz2pipe -in d_001.fid -x \\\n| nmrPipe -fn POLY -time \\\n| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -size 4096 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 0 -p1 0 -di \\\n| nmrPipe -fn POLY -ord 3 -auto \\\n| nmrPipe -fn EXT -x1 10.5ppm -xn 6.5ppm -sw -round 2 \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn GM -g1 8 -g2 15 \\\n| nmrPipe -fn ZF -size 512 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 265 -p1 0 -di \\\n| nmrPipe -fn POLY -ord 3 -auto \\\n| nmrPipe -fn TP \\\n| pipe2xyz -out d_001.ft2 -x\n",
+      "sha256": "f450f970939b9a32f3142dda366bed08186d9d0708e22622cdba9f67efafc4c3"
     },
     "selected_optimization_rows": [
       {
@@ -334,23 +334,23 @@
         "stage": "window",
         "axis": "F1",
         "source": "fid",
-        "candidate": "SP off=0.65 end=1 pow=2 c=0.5",
+        "candidate": "GM g1=8 g2=15",
         "parameters": {
-          "type": "sine_bell",
-          "off": 0.65,
-          "end": 1.0,
-          "pow": 2,
-          "c": 0.5
+          "type": "gaussian",
+          "g1": 8.0,
+          "g2": 15.0,
+          "g3": 0.0,
+          "c": 1.0
         },
-        "score": 0.711793398505319,
+        "score": 0.547429394810395,
         "score_metric": "window_detection",
         "selected": true,
         "applied": true,
         "status": "scored",
         "reason": "",
-        "fwhm": 4.241134430426085,
-        "snr": 33.236482229650036,
-        "shape": 0.6666666666666666,
+        "fwhm": 2.6993188009986246,
+        "snr": 78.0839543474101,
+        "shape": 0.5,
         "merged": 0.0,
         "n_ref": 3.5,
         "sampling": {
@@ -378,15 +378,79 @@
           "sampling_reason": "energy_fast_path",
           "budget_exhausted": false,
           "max_height_sigma": 62.27308241118721,
-          "score_profile": "indirect_sidelobe_valley"
+          "score_profile": "indirect_peak_valley",
+          "pair_count": 4,
+          "baseline_window": "SP off=0.65 end=1 pow=2 c=0.5",
+          "candidate_evidence": [
+            {
+              "label": "SP off=0.3 end=0.98 pow=1 c=0.5",
+              "preserved_pairs": 0,
+              "lost_baseline_pairs": 0
+            },
+            {
+              "label": "SP off=0.45 end=0.98 pow=1 c=0.5",
+              "preserved_pairs": 0,
+              "lost_baseline_pairs": 0
+            },
+            {
+              "label": "SP off=0.45 end=0.9 pow=1 c=0.5",
+              "preserved_pairs": 0,
+              "lost_baseline_pairs": 0
+            },
+            {
+              "label": "SP off=0.45 end=0.98 pow=2 c=0.5",
+              "preserved_pairs": 0,
+              "lost_baseline_pairs": 0
+            },
+            {
+              "label": "SP off=0.5 end=0.98 pow=2 c=0.5",
+              "preserved_pairs": 0,
+              "lost_baseline_pairs": 0
+            },
+            {
+              "label": "SP off=0.65 end=1 pow=2 c=0.5",
+              "preserved_pairs": 0,
+              "lost_baseline_pairs": 0
+            },
+            {
+              "label": "GM g1=8 g2=15",
+              "preserved_pairs": 2,
+              "lost_baseline_pairs": 0
+            },
+            {
+              "label": "GM g1=4 g2=8",
+              "preserved_pairs": 4,
+              "lost_baseline_pairs": 0
+            },
+            {
+              "label": "EM lb=3",
+              "preserved_pairs": 2,
+              "lost_baseline_pairs": 0
+            },
+            {
+              "label": "EM lb=5",
+              "preserved_pairs": 2,
+              "lost_baseline_pairs": 0
+            },
+            {
+              "label": "EM lb=10",
+              "preserved_pairs": 0,
+              "lost_baseline_pairs": 0
+            },
+            {
+              "label": "EM lb=20",
+              "preserved_pairs": 0,
+              "lost_baseline_pairs": 0
+            }
+          ]
         },
-        "raw_score": 0.8112625876507165,
-        "detection_score": 23.97105414459091,
-        "separation_score": 0.8981929904920392,
-        "symmetry_score": 0.6666666666666666,
-        "sidelobe_score": 1.0,
-        "resolution_score": 0.8773896508238548,
-        "width_ratio": 1.687446336028406,
+        "raw_score": 0.5572866525504383,
+        "detection_score": 55.350689422869806,
+        "separation_score": 0.953134192699304,
+        "symmetry_score": 0.5,
+        "sidelobe_score": 0.5637396095057752,
+        "resolution_score": 0.9823120512667382,
+        "width_ratio": 1.0739946340394841,
         "resolution_reference_fwhm": 2.513344774215499,
         "resolution_weight": 0.25
       }

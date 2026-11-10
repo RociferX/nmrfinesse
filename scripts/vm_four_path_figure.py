@@ -42,9 +42,10 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 #: Contour levels as fractions of each spectrum's own maximum; normalize each separately.
-LEVELS = (0.075, 0.1, 0.2, 0.35, 0.5, 0.7, 0.9)
-CONTOUR_LINEWIDTHS = (0.25, 0.25, 0.4, 0.4, 0.4, 0.4, 0.4)
-COLOR = "#1f4e79"
+LEVELS = np.geomspace(0.08, 1.0, 12)
+CONTOUR_LINEWIDTH = 0.32
+POSITIVE_COLOR = "#1f77b4"
+NEGATIVE_COLOR = "#e74c3c"
 #: Keep figure text ASCII because the real machine lacks Chinese fonts.
 
 
@@ -323,7 +324,9 @@ def _draw(ax, block, ppm_h, ppm_n, title: str, labels=("1H", "15N"), *,
     import textwrap
 
     title = textwrap.fill(title, width=62)
-    peak = float(np.max(np.abs(block))) if block.size else 0.0
+    peak = float(np.max(block)) if block.size else 0.0
+    if peak <= 0.0 and block.size:
+        peak = abs(float(np.min(block)))
     if not np.isfinite(peak) or peak <= 0.0:
         ax.text(0.5, 0.5, "no signal", ha="center", va="center", transform=ax.transAxes)
         ax.set_title(title, fontsize=10)
@@ -332,14 +335,14 @@ def _draw(ax, block, ppm_h, ppm_n, title: str, labels=("1H", "15N"), *,
     if np.max(block) >= peak * LEVELS[0]:
         ax.contour(
             ppm_h, ppm_n, block,
-            levels=[peak * level for level in LEVELS],
-            colors=COLOR, linewidths=CONTOUR_LINEWIDTHS,
+            levels=peak * LEVELS,
+            colors=POSITIVE_COLOR, linewidths=CONTOUR_LINEWIDTH,
         )
     if np.min(block) < -peak * LEVELS[0]:
         ax.contour(
             ppm_h, ppm_n, block,
-            levels=sorted(-peak * level for level in LEVELS),
-            colors="#a23b3b", linewidths=CONTOUR_LINEWIDTHS[::-1], linestyles="dashed",
+            levels=-peak * LEVELS[::-1],
+            colors=NEGATIVE_COLOR, linewidths=CONTOUR_LINEWIDTH,
         )
     if peak_points is not None:
         points = np.asarray(peak_points).reshape(-1, 2)
@@ -387,8 +390,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dpi", type=int, default=160)
     parser.add_argument("--mark-peaks", action="store_true",
                         help="Mark each panel's own independently detected peak candidates")
-    parser.add_argument("--peak-height-fraction", type=float, default=.10,
-                        help="Candidate height fraction of baseline-centered maximum; default .10")
+    parser.add_argument("--peak-height-fraction", type=float, default=.05,
+                        help="Candidate height fraction of baseline-centered maximum; default .05")
     parser.add_argument("--peak-marker-size", type=float, default=4,
                         help="Scatter marker area in points squared; default 4")
     parser.add_argument("--peak-sign-mode", default="dominant",
@@ -443,8 +446,24 @@ def main(argv: list[str] | None = None) -> int:
         pairs = _available_pairs(auto) if args.projection == "all" else (args.projection,)
         for pair in pairs:
             entries.append((case, auto, reference, pair))
+    from viewer.axis_labels import _NUCLEUS_RATIOS
+
+    names = {"H": "1H", "N": "15N", "C": "13C"}
+    aspects = []
+    row_heights = []
+    for _, auto, reference, pair in entries:
+        x, y = "NC" if args.h_slice is not None else pair
+        aspect = _NUCLEUS_RATIOS[names[y]] / _NUCLEUS_RATIOS[names[x]]
+        spans = []
+        for nucleus in (x, y):
+            lo, hi = _window(*(spec["ppm"][spec["nuclei"].index(nucleus)]
+                               for spec in (auto, reference)))
+            spans.append(hi - lo)
+        aspects.append(aspect)
+        row_heights.append(4.65 * np.clip(aspect * spans[1] / spans[0], .65, 1.6) + .60)
     figure, grid = plt.subplots(
-        len(entries), 2, figsize=(11.0, 4.4 * len(entries)), squeeze=False,
+        len(entries), 2, figsize=(10.6, sum(row_heights) + .28), squeeze=False,
+        gridspec_kw={"height_ratios": row_heights}, layout="constrained",
     )
     for row, (case, auto, reference, pair) in enumerate(entries):
         labels = ("1H", "15N")
@@ -457,7 +476,6 @@ def main(argv: list[str] | None = None) -> int:
         else:
             auto_plane, auto_h, auto_n = _projection_plane(auto, pair)
             ref_plane, ref_h, ref_n = _projection_plane(reference, pair)
-            names = {"H": "1H", "N": "15N", "C": "13C"}
             labels = (names[pair[0]], names[pair[1]])
         h_lo, h_hi = _window(auto_h, ref_h)
         n_lo, n_hi = _window(auto_n, ref_n)
@@ -466,11 +484,12 @@ def main(argv: list[str] | None = None) -> int:
             # second grid-dependent crop would change the detection threshold.
             h_lo, h_hi = min(auto_h.min(), ref_h.min()), max(auto_h.max(), ref_h.max())
             n_lo, n_hi = min(auto_n.min(), ref_n.min()), max(auto_n.max(), ref_n.max())
+        panel_label = f"{case['label']} · {pair}" if len(cases) > 1 else pair
         panels = (
             (grid[row][0], auto_plane, auto_h, auto_n,
-             f"{case['label']} {pair} - automatic{_qc_score(case['auto_qc'])}", case["auto"]),
+             f"{panel_label} · Automatic{_qc_score(case['auto_qc'])}", case["auto"]),
             (grid[row][1], ref_plane, ref_h, ref_n,
-             f"{case['label']} {pair} - comparison{_qc_score(case['ref_qc'])}", case["reference"]),
+             f"{panel_label} · Reference{_qc_score(case['ref_qc'])}", case["reference"]),
         )
         prepared = []
         detection_pair = "NC" if args.h_slice is not None else pair
@@ -481,7 +500,6 @@ def main(argv: list[str] | None = None) -> int:
                 block, block_h, block_n = _crop(
                     plane, ppm_h, ppm_n, h_lo, h_hi, n_lo, n_hi
                 )
-            shape = "x".join(str(int(v)) for v in plane.shape)
             points, signs = None, None
             marker_title = ""
             if args.mark_peaks:
@@ -493,7 +511,7 @@ def main(argv: list[str] | None = None) -> int:
                 )
                 marker_title = f"; {len(rows)} candidates"
             prepared.append((ax, block, block_h, block_n,
-                             f"{title} ({shape}){slice_title}{marker_title}", points, signs))
+                             f"{title}{slice_title}{marker_title}", points, signs))
         masks = [None, None]
         matched_indices = []
         if args.mark_peaks:
@@ -520,24 +538,15 @@ def main(argv: list[str] | None = None) -> int:
                   peak_matched=masks[side] if side == 1 else None)
             ax.set_xlim(float(h_hi), float(h_lo))
             ax.set_ylim(float(n_hi), float(n_lo))
-    alignment_title = ""
-    if any(offsets.values()):
-        alignment_title = "\nComparison ppm offsets: " + ", ".join(
-            f"{n} {value:+.6f}" for n, value in offsets.items() if value
-        )
+            ax.set_aspect(aspects[row], adjustable="box")
+    heading = cases[0]["label"] if len(cases) == 1 else ""
     if args.mark_peaks:
-        alignment_title += (
+        heading += (
             f"\nCandidates at {args.peak_height_fraction * 100:g}% centered height: "
-            f"{args.peak_sign_mode}; red dot; "
-            "reference unmatched: purple x"
+            f"{args.peak_sign_mode}; red dot; reference unmatched: purple x"
         )
-    figure.suptitle(
-        "Signed spectra: blue positive / dashed red negative; "
-        + ("signed max-absolute projections" if args.h_slice is None else "3D N/C slices")
-        + alignment_title,
-        fontsize=10,
-    )
-    figure.tight_layout(rect=(0, 0, 1, 0.98))
+    if heading:
+        figure.suptitle(heading, fontsize=13)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(args.out, dpi=args.dpi)
     plt.close(figure)

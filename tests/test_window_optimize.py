@@ -412,6 +412,39 @@ def test_uniform_f1_uses_complex_points_after_direct_projection(bruker_dir: Path
     np.testing.assert_allclose(traces[:, center] / traces[0, center], f1, atol=1e-6)
 
 
+@pytest.mark.parametrize("ndim", [2, 3])
+def test_indirect_phased_preview_preserves_a_pair_off_the_strongest_trace(ndim: int) -> None:
+    from workflow.window_optimize import WindowOptimizeResult, refine_indirect_window
+
+    t = np.arange(90)
+    positions = np.arange(80)[:, None]
+    strongest = 10 * np.exp(-((positions - 10) / 2) ** 2)
+    crowded = np.exp(-((positions - 57) / 2) ** 2)
+
+    def tone(k: int) -> np.ndarray:
+        return np.exp(2j * np.pi * k * t / len(t) - .02 * t)
+
+    def preview(fid: np.ndarray) -> np.ndarray:
+        spectrum = np.fft.fftshift(np.fft.ifft(fid, axis=-1), axes=-1)
+        return spectrum.T[:, :, None] if ndim == 3 else spectrum
+
+    sp = {"type": "sine_bell", "off": .65, "end": 1., "pow": 2, "c": .5}
+    gm = {"type": "gaussian", "g1": 4., "g2": 8., "c": 1.}
+    em = {"type": "exp", "lb": 3., "c": 1.}
+    initial = WindowOptimizeResult(choice=sp, changed=True, status="scored", scores=[
+        {"cfg": cfg, "label": label, "status": "scored", "score": score}
+        for cfg, label, score in [(sp, "SP", .71), (gm, "GM", .55), (em, "EM", .48)]
+    ])
+    options = {"axis": 0 if ndim == 3 else 1, "phase": (0., 0.), "sw": 2187., "current": None}
+    separated = refine_indirect_window(
+        initial, preview(strongest * tone(18) + crowded * (tone(8) + .75 * tone(9))), **options,
+    )
+    assert separated.choice == gm
+    assert separated.sampling["pair_count"] == 1
+    single = refine_indirect_window(initial, preview(strongest * tone(18)), **options)
+    assert single is initial
+
+
 def test_indirect_windows_missing_recon_skips(
     tmp_path: Path, bruker_dir: Path
 ) -> None:

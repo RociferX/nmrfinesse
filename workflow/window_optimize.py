@@ -1255,6 +1255,101 @@ def refine_direct_window(
 
 
 
+def refine_indirect_window(
+    result: WindowOptimizeResult,
+    spectrum: np.ndarray,
+    *,
+    axis: int,
+    phase: tuple[float, float],
+    sw: float,
+    current: dict[str, Any] | None,
+) -> WindowOptimizeResult:
+    """Recheck crowded regions on an unwindowed complex frequency preview."""
+    from scipy.fft import fft, fftshift, ifft, ifftshift
+    from scipy.ndimage import maximum_filter
+    from scipy.signal import find_peaks
+
+    moved = np.moveaxis(spectrum, axis, -1)
+    n = moved.shape[-1]
+    if not np.iscomplexobj(moved) or moved.ndim < 2 or n < 16:
+        return result
+    # Orthogonal energy maxima give neighbouring frequency regions separate votes.
+    energy = np.einsum("...i,...i->...", moved.real, moved.real)
+    energy += np.einsum("...i,...i->...", moved.imag, moved.imag)
+    centers = np.flatnonzero((energy == maximum_filter(energy, size=7)) & (energy > 0))
+    ids = centers[np.argsort(-energy.flat[centers], kind="stable")[:128]]
+    if not ids.size:
+        return result
+    traces = moved[np.unravel_index(ids, energy.shape)]
+    fid = fft(ifftshift(traces, axes=-1), axis=-1) / n
+    size = 8 * n  # Oversample valleys without treating zero fill as acquired resolution.
+    p0, p1 = phase
+    rotation = np.exp(1j * np.deg2rad(p0 + p1 * np.arange(size) / size))
+
+    def detect(cfg: dict[str, Any]) -> list[list[tuple[int, int, float]]]:
+        window = _window_vector(cfg, n, sw)
+        real = (fftshift(ifft(fid * window, n=size, axis=-1), axes=-1) * rotation).real
+        out = []
+        for trace in real:
+            row = trace * np.sign(trace[np.argmax(np.abs(trace))])
+            row -= np.median(row)
+            sigma = max(1.4826 * float(np.median(np.abs(row))), np.finfo(float).eps)
+            peaks, _ = find_peaks(row, height=max(8 * sigma, .12 * np.max(row)),
+                                  prominence=3 * sigma, distance=2)
+            pairs = []
+            for left, right in zip(peaks, peaks[1:]):
+                if not 4 <= right - left <= 16:
+                    continue
+                small, big = sorted((row[left], row[right]))
+                valley = float(np.min(row[left:right + 1]) / small)
+                if small >= .42 * big and valley <= .85:
+                    pairs.append((int(left), int(right), valley))
+            out.append(pairs)
+        return out
+
+    def has_pair(pairs: list[tuple[int, int, float]], a: int, b: int) -> bool:
+        return any(max(abs(left - a), abs(right - b)) <= 2 for left, right, _ in pairs)
+
+    rows = [row for row in result.scores if row["status"] == "scored"
+            and not _is_unwindowed(row["cfg"])]
+    baseline = next((i for i, row in enumerate(rows) if row["cfg"] == result.choice), None)
+    if baseline is None or len(rows) < 2:
+        return result
+    found = [detect(row["cfg"]) for row in rows]
+    # Check the same pair in an unapodized control and at least one real window.
+    # A positive saddle isolates bridged peaks; isolated lobes do not vote here.
+    reference = [(i, a, b) for i, pairs in enumerate(detect({"type": "none"}))
+                 for a, b, valley in pairs if valley >= .25
+                 and any(has_pair(detections[i], a, b) for detections in found)]
+    if not reference:
+        return result
+    preserved = [{pair for pair in reference if has_pair(detections[pair[0]], *pair[1:])}
+                 for detections in found]
+    prior = preserved[baseline]
+    missed = len(reference) - len(prior)
+    if missed == 0:
+        return result
+    # Keep the original sidelobe/width score among windows that protect resolved
+    # pairs and recover at least half of the remaining crowded pairs.
+    eligible = [i for i, kept in enumerate(preserved) if prior <= kept
+                and len(kept) - len(prior) >= math.ceil(missed / 2)]
+    best = max(eligible, key=lambda i: rows[i]["score"], default=baseline)
+    best_row = rows[best]
+    scores = [{**row, "selected": row["cfg"] == best_row["cfg"]} for row in result.scores]
+    return WindowOptimizeResult(
+        choice=best_row["cfg"], changed=best_row["cfg"] != (current or {}), scores=scores,
+        logs=[*result.logs, f"Indirect window peak-valley check: {best_row['label']} "
+              f"({len(prior)} -> {len(preserved[best])}/{len(reference)} crowded pairs)"],
+        optimal_label=best_row["label"], status=result.status,
+        skipped_candidates=result.skipped_candidates,
+        sampling={**result.sampling, "score_profile": "indirect_peak_valley",
+                  "pair_count": len(reference), "baseline_window": rows[baseline]["label"],
+                  "candidate_evidence": [{"label": row["label"], "preserved_pairs": len(kept),
+                                          "lost_baseline_pairs": len(prior - kept)}
+                                         for row, kept in zip(rows, preserved)]},
+    )
+
+
 def optimize_indirect_windows_from_work(
     work_dir: Path | str,
     experiment: Experiment,

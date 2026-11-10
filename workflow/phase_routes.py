@@ -925,6 +925,7 @@ def unified_route(    experiment: Experiment,
         progress=progress,
     )
     backend_runs += proc.get("direct_window_preview_runs", 0)
+    backend_runs += proc.get("indirect_window_preview_runs", 0)
     logs += proc["logs"]
     logs.append(
         tr(
@@ -1183,6 +1184,74 @@ def _chosen_baseline_scores(
     return out
 
 
+def _refine_indirect_choices(
+    experiment: Experiment,
+    result: Any,
+    *,
+    backend: Any,
+    work: Path,
+    fixed: dict[str, tuple[float, float]],
+    base: dict[str, Any],
+    window: dict[str, Any] | None,
+    baseline: dict[str, Any],
+    progress: Callable[[str], None] | None,
+    plan: Any = None,
+) -> int:
+    """Share the phased valley check across uniform and reconstructed 2D/3D."""
+    import nmrglue as ng
+
+    from workflow.window_optimize import _axis_sw, refine_indirect_window
+
+    runs = 0
+    ext = "ft3" if experiment.ndim >= 3 else "ft2"
+    for axis, initial in result.per_axis.items():
+        if axis not in fixed or initial.status != "scored" or len(initial.scores) < 3:
+            continue
+        path = None
+        try:
+            params = {
+                **_sign_sampling(base),
+                "preview_axis": axis,
+                "window": {**(window or {}), **result.choice, axis: {"type": "none"}},
+                "baseline": {**baseline, axis: {"enabled": False, "mode": "off"}},
+                "zero_fill": {dim.logical_axis: {"mode": "none" if dim.logical_axis == axis
+                                                 else "auto"} for dim in experiment.dimensions},
+            }
+            io = {"out_file": f"{experiment.dataset_id}_window_{axis}.{ext}",
+                  "script_name": f"{experiment.dataset_id}_window_{axis}.com",
+                  "progress": progress}
+            phases = {a: p for a, p in fixed.items() if a != axis}
+            runs += 1
+            if plan is not None:
+                params.update({k: base[k] for k in ("extract", "ext_lo", "ext_hi") if k in base})
+                response = backend.process(experiment, plan, direct_phase_override=phases,
+                                           params=params, **io)
+            else:
+                response = backend.finalize_nus(experiment, phases=phases, work_dir=work,
+                                                params=params, **io)
+            if not response.get("success") or not response.get("spectrum_path"):
+                continue
+            path = Path(response["spectrum_path"])
+            ax = _axis_index(axis, experiment.ndim)
+            spectrum = _load_preview_with_memory_guard(str(path), axis=axis, unpack_axis=ax,
+                                                       progress=progress, logs=result.logs)
+            header = ng.pipe.fdata2dic(ng.pipe.get_fdata(str(path)))
+            refined = refine_indirect_window(initial, spectrum, axis=ax, phase=fixed[axis],
+                                             sw=_axis_sw(header, axis, experiment),
+                                             current=(window or {}).get(axis))
+            if refined is not initial:
+                result.per_axis[axis] = refined
+                result.choice[axis] = refined.choice
+                result.changed |= refined.changed
+                result.logs.extend(refined.logs[len(initial.logs):])
+        except (OSError, ValueError, TypeError, KeyError, MemoryError) as exc:
+            result.logs.append(f"Indirect window peak-valley preview unavailable ({axis}): {exc}")
+        finally:
+            if path is not None:
+                _unlink_quiet(path)
+    return runs
+
+
 def _optimize_uniform_processing(
     experiment: Experiment,
     backend: Any,
@@ -1213,6 +1282,7 @@ def _optimize_uniform_processing(
     opt_switches = reference_optimize_switches(base)
     score_rows: list[dict[str, Any]] = []
     direct_window_preview_runs = 0
+    indirect_window_preview_runs = 0
 
 
 
@@ -1412,6 +1482,11 @@ def _optimize_uniform_processing(
             if isinstance(window_switch, Mapping) and window_switch.get("indirect_strict"):
                 win_kwargs["strict_candidates"] = True
             ires = optimize_indirect_windows_from_work(work, experiment, **win_kwargs)
+            if not indirect_candidates and plan is not None:
+                indirect_window_preview_runs = _refine_indirect_choices(
+                    experiment, ires, backend=backend, work=work, fixed=fixed, base=base,
+                    window=window_cfg, baseline=baseline_cfg, progress=progress, plan=plan,
+                )
             score_rows += indirect_window_rows(
                 ires, [a for a in axes if a != direct_axis], source="fid",
             )
@@ -1445,6 +1520,7 @@ def _optimize_uniform_processing(
         "logs": out_logs,
         "optimization_scores": score_rows,
         "direct_window_preview_runs": direct_window_preview_runs,
+        "indirect_window_preview_runs": indirect_window_preview_runs,
     }
 
 
@@ -1479,6 +1555,7 @@ def _optimize_nus_processing(
     window_cfg = base.get("window")
     opt_switches = reference_optimize_switches(base)
     score_rows: list[dict[str, Any]] = []
+    indirect_window_preview_runs = 0
     # 1) Joint review spectrum: indirect-dimension final phase + full zero filling,
     #    used as the baseline scoring basis (the window functions use recon/FID
     joint_file = f"{experiment.dataset_id}_joint.{ext}"
@@ -1649,6 +1726,11 @@ def _optimize_nus_processing(
             ires = optimize_indirect_windows_from_recon(
                 work, experiment, **win_kwargs
             )
+            if not indirect_candidates:
+                indirect_window_preview_runs = _refine_indirect_choices(
+                    experiment, ires, backend=backend, work=work, fixed=fixed, base=base,
+                    window=window_cfg, baseline=baseline_cfg, progress=progress,
+                )
             score_rows += indirect_window_rows(
                 ires, [a for a in axes if a != direct_axis], source="reconstruction",
             )
@@ -1681,6 +1763,7 @@ def _optimize_nus_processing(
         "window": window_cfg,
         "logs": out_logs,
         "optimization_scores": score_rows,
+        "indirect_window_preview_runs": indirect_window_preview_runs,
     }
 
 
@@ -2202,6 +2285,7 @@ def _unified_nus(
         base_params,
         progress=progress,
     )
+    backend_runs += proc.get("indirect_window_preview_runs", 0)
     logs += proc["logs"]
     logs.append(tr(
         "Processing parameter optimisation (baseline/zero filling/window function) is completed, "

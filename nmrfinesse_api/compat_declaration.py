@@ -23,13 +23,12 @@ from typing import Any
 
 #: declared behaviour level (see the module doc; meaning matches nmrfinesse_api.compat)
 DECLARATION: dict[str, Any] = {'schema': 'nmrfinesse_api.compat.declaration.v1',
- 'digest': '486034c081f3fbcc37e865ef92a7d559688fc1f45fae32da2c889ea8b3fcbce7',
- 'token_digest': '98fa44ef2435385502ca4b11959cb260f29d67fce327bd6445a9cd67d847a9e8',
+ 'digest': 'd6a5fe9c3b2dfce6a2f36b3de99d3d99d266f6408d24f5af878ace2884f9c64e',
+ 'token_digest': '05adacfcc7e0605235ea4253d1fc0a1f77a9238ab423d7141f8995c051480611',
  'compat_level': 'behavior_changed',
- 'affected': ['reference', 'processing', 'records'],
- 'updated': '2026-11-07',
- 'note': 'Automatic window selection uses valid apodization on direct and indirect '
-         'axes',
+ 'affected': ['reference', 'processing'],
+ 'updated': '2026-11-10',
+ 'note': 'Check crowded peak valleys when choosing indirect windows.',
  'golden': {'name': 'conformance_v1',
             'spectrum_sha256': '382b330926da93d856feef40ca33c2df1eec21b61e50db471bdf7aa4bb2fb311',
             'peak_table_sha256': 'e9ef45f2cae32bc580fc1bdeea1928ceb8406154848f8aca3c4558285e532242',

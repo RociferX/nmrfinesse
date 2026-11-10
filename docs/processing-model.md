@@ -128,6 +128,12 @@ baseline and the number of bridged pairs from increasing. Refinement selects amo
 windows and does not automatically switch back to no window. Explicit pools retain their highest-valid-score rule. Default NUS direct-axis
 processing retains the reconstruction route's SP window.
 
+For phase-sensitive 2D and 3D, indirect-axis refinement checks peak valleys across distinct
+signal regions in the other dimensions. A replacement must preserve the pairs already resolved
+by the initial window and recover at least half of its missed confirmed pairs. The original
+sidelobe and linewidth scores rank eligible windows. Candidates share one complex preview per
+axis, and NUS uses the existing SMILE reconstruction.
+
 Window scoring probes at most 256 traces and formally scores at most 12 shared representative
 traces under an FFT-cache limit. The fast path looks for references at `12σ`; only if none qualify
 does it try `6σ` references with a supported line profile and frequency support on five traces (or
