@@ -934,12 +934,12 @@ def test_unified_route_uniform_final_ext_apply_to_opt(
 
 def test_renormalize_direct_p1_scales_with_window_width() -> None:
     """0.2.162-patch16: p1 is scaled by the final-run/first-pass window-width ratio,
-    p0 unchanged; an identical window changes nothing.
+    p0 follows the new starting frequency.
     """
     first = {"ext_lo": "10.5", "ext_hi": "6.5"}
     narrow = {"ext_lo": "8.5", "ext_hi": "6.5"}
     assert routes._renormalize_direct_p1((30.0, 20.0), first, narrow) == (
-        30.0,
+        40.0,
         10.0,
     )
     assert routes._renormalize_direct_p1((30.0, 20.0), first, first) == (
@@ -948,7 +948,7 @@ def test_renormalize_direct_p1_scales_with_window_width() -> None:
     )
     # When the first pass gives no explicit window it falls back to the configured
     assert routes._renormalize_direct_p1((30.0, 20.0), {}, narrow) == (
-        30.0,
+        40.0,
         10.0,
     )
 
@@ -1018,8 +1018,8 @@ def test_unified_route_nus_final_ext_renormalizes_p1(
     )
     final_params = backend.reconstruct_params[1]
     # First-pass window 10.5-6.5=4.0, final run 8.5-6.5=2.0 -> p1 15 deg -> 7.5 deg;
-    assert final_params["direct_phase_override"] == [30.0, 7.5]
-    assert result["direct_phase"] == (30.0, 7.5)
+    assert final_params["direct_phase_override"] == [37.5, 7.5]
+    assert result["direct_phase"] == (37.5, 7.5)
     assert any(
         "窗口重归一化" in line and "7.50" in line for line in result["logs"]
     )
@@ -1157,7 +1157,7 @@ def test_direct_phase_cache_roundtrip(tmp_path: Path) -> None:
     assert float(data["p0"]) == 12.5
     assert float(data["p1"]) == -3.0
     assert float(data["duration_s"]) == 22.3
-    assert data["version"] == 3
+    assert data["version"] == 4
     assert _load_direct_phase_cache(tmp_path, exp, params, (21, 16, 12)) is None
     assert (
         _load_direct_phase_cache(

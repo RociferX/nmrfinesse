@@ -151,8 +151,13 @@ reused as-is and can retain fewer columns until the reference is rebuilt with `f
 ## Ranges, phases and manual execution
 
 `final_ext_lo`/`final_ext_hi` set the final direct-dimension window. The optimisation-range switch
-decides whether this window also applies to previews/scoring. When the final range changes, direct
-P1 is renormalised to the final window width. Axis identity, units and applied range are recorded.
+decides whether this window also applies to previews/scoring. The direct-axis P1 search uses a
+receiver-delay estimate from acquisition DE and the preview bandwidth, with a zero seed for
+baseopt. Digital-filter group delay is handled in conversion. The phase fit gives equal weight
+to frequency bands and checks isolated peaks at separated positions. A nonzero slope requires
+adequate frequency coverage, consistent peak phases and preserved absorption quality.
+Uniform processing maps the preview phase back to the full axis for PS before EXT. NUS applies
+the direct phase after EXT, so a changed range translates the P0 origin and rescales P1.
 Single-sign templates resolve the 180-degree ambiguity; mixed-sign templates preserve physical
 positive/negative signals. Magnitude templates skip phase optimisation.
 

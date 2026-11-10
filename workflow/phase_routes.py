@@ -608,43 +608,51 @@ def _apply_final_ext(
     return p
 
 
-def _direct_phase_width(params: dict[str, Any]) -> float:
-    """Direct-dimension extraction window width (ppm): the difference between the
-    effective EXT -x1/-xn values, falling back to the configured default.
-    """
-    from backend.config import resolve_ext_hi, resolve_ext_lo
+def _direct_phase_frame(path: Path | str, n: int) -> tuple[float, float, float]:
+    """Return the preview bandwidth and its start/width on the full FT axis."""
+    import nmrglue as ng
 
     try:
-        lo = float(resolve_ext_lo(params.get("ext_lo")))
-        hi = float(resolve_ext_hi(params.get("ext_hi")))
-    except (TypeError, ValueError):
-        return 0.0
-    return abs(lo - hi)
+        header = ng.pipe.fdata2dic(ng.pipe.get_fdata(str(path)))
+        prefix = f"FDF{int(header['FDDIMORDER'][0])}"
+        sw = float(header[prefix + "SW"])
+        size = int(header[prefix + "FTSIZE"])
+        start = int(header[prefix + "X1"])
+    except (OSError, ValueError, TypeError, KeyError, IndexError):
+        return 0.0, 0.0, 1.0
+    if 0 < n <= size and start > 0 and start - 1 + n <= size:
+        return sw, (start - 1) / size, n / size
+    return sw, 0.0, 1.0
 
 
 def _renormalize_direct_p1(
     direct_phase: tuple[float, float],
     first_params: dict[str, Any],
     final_params: dict[str, Any],
+    experiment: Experiment | None = None,
 ) -> tuple[float, float]:
-    """Renormalise p1 by the window-width ratio when the final-run
-    direct-dimension range differs from the first pass.
+    """Translate the NUS phase ramp between two extracted frequency windows."""
+    from backend.config import resolve_ext_hi, resolve_ext_lo, resolve_ext_window
 
-    p1 is the total linear phase in degrees across the whole extraction window;
-    with a narrower or wider range the same p1 degrees spread over a different
-    frequency range and the physical slope changes accordingly. Scaling by
-    (final window width / first-pass window width) keeps the physical correction
-    consistent with the in-memory search.
-    """
+    def bounds(params):
+        lo, hi = params.get("ext_lo"), params.get("ext_hi")
+        if experiment is None:
+            return sorted((float(resolve_ext_lo(lo)), float(resolve_ext_hi(hi))), reverse=True)
+        return sorted(map(float, resolve_ext_window(experiment, lo, hi)), reverse=True)
+
+    if not first_params.get("extract", True) or not final_params.get("extract", True):
+        return direct_phase
+    try:
+        first_start, first_end = bounds(first_params)
+        final_start, final_end = bounds(final_params)
+    except (TypeError, ValueError):
+        return direct_phase
+    width = first_start - first_end
+    if width <= 0 or final_start <= final_end:
+        return direct_phase
     p0, p1 = direct_phase
-    w_first = _direct_phase_width(first_params)
-    w_final = _direct_phase_width(final_params)
-    if w_first <= 0 or w_final <= 0:
-        return (p0, p1)
-    ratio = w_final / w_first
-    if abs(ratio - 1.0) < 1e-9:
-        return (p0, p1)
-    return (p0, p1 * ratio)
+    return ((p0 + p1 * (first_start - final_start) / width) % 360.0,
+            p1 * (final_start - final_end) / width)
 
 
 def unified_route(    experiment: Experiment,
@@ -783,9 +791,16 @@ def unified_route(    experiment: Experiment,
             str(resp["spectrum_path"]), axis=axis, unpack_axis=ax,
             progress=progress, logs=logs,
         )
+        p1_prior = None
+        start, fraction = 0.0, 1.0
+        if axis == direct_axis:
+            from core.optimization.phase_slope import direct_p1_prior
+
+            sw, start, fraction = _direct_phase_frame(resp["spectrum_path"], arr.shape[-1])
+            p1_prior = direct_p1_prior(experiment.acquisition_parameters.get("acqus", {}), sw)
         _unlink_quiet(resp["spectrum_path"])
         est = search_axis_memory(
-            arr, ax, sign_mode=sign_mode, cancel=cancel_requested
+            arr, ax, sign_mode=sign_mode, cancel=cancel_requested, p1_prior=p1_prior,
         )
         if est is None:
             raise RuntimeError(tr("memory phase search({p0}) No trace available", p0=axis))
@@ -808,6 +823,10 @@ def unified_route(    experiment: Experiment,
             phase = resolved
         else:
             phase = est.phase
+        if axis == direct_axis and fraction != 1.0:
+            p0, p1 = phase
+            p1 /= fraction
+            phase = ((p0 - p1 * start) % 360.0, p1)
         fixed[axis] = phase
         logs += est.logs
         logs.append(
@@ -956,21 +975,6 @@ def unified_route(    experiment: Experiment,
     params_final = _apply_final_ext(dict(params), final_ext_lo, final_ext_hi)
 
     fixed_final = dict(fixed)
-    if direct_axis in fixed_final:
-        renormed = _renormalize_direct_p1(
-            fixed[direct_axis], params, params_final
-        )
-        if renormed != fixed[direct_axis]:
-            logs.append(
-                tr(
-                    "direct dimension phase renormalized by final run window: {p0} p1={p1:g}° → "
-                    "{p2:g}°",
-                    p0=direct_axis,
-                    p1=phase_angle_value(fixed[direct_axis][1]),
-                    p2=phase_angle_value(renormed[1]),
-                )
-            )
-        fixed_final[direct_axis] = renormed
     params_final.update(
         {
             "direct_phase_search": False,
@@ -1052,7 +1056,9 @@ def _direct_phase_params_fp(experiment: Experiment, params: dict) -> str:
         "segments": [str(s) for s in (experiment.segments or [])],
         "params": {k: params.get(k) for k in _DIRECT_PHASE_FP_KEYS},
     }
-    # Leave 3D cache semantics unchanged. A 2D bootstrap changes the direct
+    acqus = experiment.acquisition_parameters.get("acqus", {})
+    payload["receiver_timing"] = {key: acqus.get(key) for key in ("DE", "DIGMOD")}
+    # A 2D bootstrap changes the direct
     # real-spectrum search basis, so its exact seed belongs to this fingerprint.
     if experiment.ndim == 2 and "_nus_phase_seed" in params:
         payload["params"]["_nus_phase_seed"] = params["_nus_phase_seed"]
@@ -1099,7 +1105,7 @@ def _load_direct_phase_cache(
         return None
     # Version 2 stored half-circle-wrapped phases and is incompatible with the 360-degree polarity
     # fix.
-    if data.get("version") != 3 or data.get("source") != "unified_direct":
+    if data.get("version") != 4 or data.get("source") != "unified_direct":
         return None
     if list(data.get("shape") or []) != list(shape):
         return None
@@ -1119,7 +1125,7 @@ def _save_direct_phase_cache(
             _direct_phase_cache_path(work),
             _json.dumps(
                 {
-                    "version": 3,
+                    "version": 4,
                     "source": "unified_direct",
                     "p0": p0,
                     "p1": p1,
@@ -2035,6 +2041,10 @@ def _unified_nus(
         search_arr = _read_real_ft3(
             str(resp_direct["spectrum_path"])
         )
+        from core.optimization.phase_slope import direct_p1_prior
+
+        sw, _, _ = _direct_phase_frame(resp_direct["spectrum_path"], search_arr.shape[-1])
+        p1_prior = direct_p1_prior(experiment.acquisition_parameters.get("acqus", {}), sw)
         _unlink_quiet(resp_direct["spectrum_path"])
         logs.append(
             tr(
@@ -2092,6 +2102,7 @@ def _unified_nus(
                 sign_mode=sign_mode,
                 progress=progress,
                 cancel=cancel_requested,
+                p1_prior=p1_prior,
             )
             elapsed = _time.time() - t0
             if progress is not None:
@@ -2306,7 +2317,7 @@ def _unified_nus(
     # 0.2.162-patch16: when the final-run direct-dimension range changes, p1 is
     # renormalised by the window-width ratio (p1 is the total degrees across the
     direct_phase_final = _renormalize_direct_p1(
-        direct_phase, params_first, params_final
+        direct_phase, params_first, params_final, experiment
     )
     if direct_phase_final != direct_phase:
         logs.append(

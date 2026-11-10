@@ -212,14 +212,14 @@
       "nmrfinesse_api/localization_targets.py:476"
     ],
     "), maintain existing baseline/zero filling/window configuration": [
-      "workflow/phase_routes.py:1308",
-      "workflow/phase_routes.py:1579"
+      "workflow/phase_routes.py:1314",
+      "workflow/phase_routes.py:1585"
     ],
     "), need to manually confirm the type": [
       "core/experiment/experiment_classifier.py:503"
     ],
     "), nus3d_rc_ph rotated copy not generated": [
-      "workflow/phase_routes.py:2364"
+      "workflow/phase_routes.py:2375"
     ],
     "**API version:** {p0}": [
       "gui/dialogs.py:116"
@@ -566,15 +566,15 @@
       "backend/script_generator.py:1762"
     ],
     "Baseline optimisation (embedding) failed: {p0}": [
-      "workflow/phase_routes.py:1366",
-      "workflow/phase_routes.py:1637"
+      "workflow/phase_routes.py:1372",
+      "workflow/phase_routes.py:1643"
     ],
     "Baseline optimisation summary: ": [
       "workflow/baseline_optimize.py:406"
     ],
     "Baseline optimisation(memory score)": [
-      "workflow/phase_routes.py:1344",
-      "workflow/phase_routes.py:1615"
+      "workflow/phase_routes.py:1350",
+      "workflow/phase_routes.py:1621"
     ],
     "Baseline optimisation(memory score): axis {p0}({p1}/{p2}),scoring every candidate": [
       "workflow/baseline_optimize.py:239"
@@ -1266,20 +1266,20 @@
       "gui/spectrum_panel.py:602"
     ],
     "Final run (complete rerun) in progress": [
-      "workflow/phase_routes.py:954"
+      "workflow/phase_routes.py:973"
     ],
     "Final run (complete script) failed: {p0}": [
-      "workflow/phase_routes.py:2348"
+      "workflow/phase_routes.py:2359"
     ],
     "Final run completed": [
-      "workflow/phase_routes.py:995",
-      "workflow/phase_routes.py:2350"
+      "workflow/phase_routes.py:999",
+      "workflow/phase_routes.py:2361"
     ],
     "Final run failed: {p0}": [
-      "workflow/phase_routes.py:993"
+      "workflow/phase_routes.py:997"
     ],
     "Final script baseline check: ": [
-      "workflow/phase_routes.py:2384"
+      "workflow/phase_routes.py:2395"
     ],
     "Find nmrPipe: {p0}": [
       "backend/nmrpipe_backend.py:811"
@@ -1300,7 +1300,11 @@
       "backend/nmrpipe_backend.py:2611"
     ],
     "First pass SMILE completed": [
-      "workflow/phase_routes.py:1856"
+      "workflow/phase_routes.py:1862"
+    ],
+    "First-order phase {p0:.2f}° from {p1} peaks across {p2:.0%} of the spectrum": [
+      "core/optimization/phase_consensus.py:472",
+      "workflow/memory_phase_search.py:794"
     ],
     "Fitting spectra…": [
       "gui/overlay_comparison.py:573",
@@ -1384,8 +1388,8 @@
       "gui/group_panel.py:344"
     ],
     "Handling parameter optimisation: joint review spectrum generation failed (": [
-      "workflow/phase_routes.py:1306",
-      "workflow/phase_routes.py:1577"
+      "workflow/phase_routes.py:1312",
+      "workflow/phase_routes.py:1583"
     ],
     "Hide negative": [
       "viewer/spectrum_viewer.py:164"
@@ -1478,21 +1482,21 @@
       "gui/main_window.py:1320"
     ],
     "In phase optimisation: {p0} Replica preview (direct dimension has been determined)": [
-      "workflow/phase_routes.py:841"
+      "workflow/phase_routes.py:860"
     ],
     "In phase optimisation: {p0} Replica preview completed": [
-      "workflow/phase_routes.py:780",
-      "workflow/phase_routes.py:1930"
+      "workflow/phase_routes.py:788",
+      "workflow/phase_routes.py:1936"
     ],
     "In phase optimisation: {p0} Replica preview in progress": [
-      "workflow/phase_routes.py:761",
-      "workflow/phase_routes.py:1907"
+      "workflow/phase_routes.py:769",
+      "workflow/phase_routes.py:1913"
     ],
     "In phase optimisation: {p0} Replicate preview (iteration) in progress": [
-      "workflow/phase_routes.py:2177"
+      "workflow/phase_routes.py:2188"
     ],
     "In the final run (complete script, including the final phase of each dimension)": [
-      "workflow/phase_routes.py:2340"
+      "workflow/phase_routes.py:2351"
     ],
     "Indirect (F1)": [
       "gui/pipeline_panel.py:1282",
@@ -1513,7 +1517,7 @@
       "gui/pipeline_panel.py:3676"
     ],
     "Indirect dimension window function optimisation (FID memory score, do not rerun the process)": [
-      "workflow/phase_routes.py:1466"
+      "workflow/phase_routes.py:1472"
     ],
     "Indirect dimension window optimisation failed (reading reconstruction plane): {p0}": [
       "workflow/window_optimize.py:1448"
@@ -1528,8 +1532,8 @@
       "backend/script_generator.py:1639"
     ],
     "Initial script retention failed: {p0}": [
-      "workflow/phase_routes.py:952",
-      "workflow/phase_routes.py:1870"
+      "workflow/phase_routes.py:971",
+      "workflow/phase_routes.py:1876"
     ],
     "Input does not match the expected structure ({p0}): {p1}": [
       "core/user_errors.py:45"
@@ -1613,7 +1617,7 @@
       "workflow/stepwise.py:375"
     ],
     "Internal memory search: locked trace takes time {p0:.2f}s,scoring / the rest takes {p1:.2f}s, {p2} candidates scored in {p3:.2f}s in total": [
-      "workflow/memory_phase_search.py:813"
+      "workflow/memory_phase_search.py:800"
     ],
     "Invalid direct-axis phase": [
       "workflow/reference_scripts.py:307"
@@ -1800,8 +1804,8 @@
       "backend/nmrpipe_backend.py:1725"
     ],
     "Memory phase research({p0}) No trace available": [
-      "workflow/phase_routes.py:877",
-      "workflow/phase_routes.py:2223"
+      "workflow/phase_routes.py:896",
+      "workflow/phase_routes.py:2234"
     ],
     "Memory tips: {p0} Replica preview {p1:.0f}MB,about {p2} MB free, memory may be insufficient (on failure, free memory or use a smaller data set)": [
       "workflow/phase_routes.py:263"
@@ -1813,7 +1817,7 @@
       "backend/nmrpipe_backend.py:4904"
     ],
     "Missing 2D reconstruction plane: {p0}": [
-      "workflow/phase_routes.py:1155"
+      "workflow/phase_routes.py:1161"
     ],
     "Missing acqus parameter file": [
       "gui/raw_quality.py:117"
@@ -1931,10 +1935,10 @@
       "backend/nmrpipe_backend.py:840"
     ],
     "NUS Replica preview ({p0}) failed: {p1}": [
-      "workflow/phase_routes.py:1923"
+      "workflow/phase_routes.py:1929"
     ],
     "NUS Replica preview search ({p0}) failed: {p1}": [
-      "workflow/phase_routes.py:2206"
+      "workflow/phase_routes.py:2217"
     ],
     "NUS data was detected, but no valid sampling schedule was found in {p0}. Import was stopped because the sampling order cannot be recovered; put the nuslist file (or the file explicitly named by acqus.NUSLIST) in the dataset directory and import again. Detection evidence: {p1}": [
       "workflow/import_workflow.py:263"
@@ -2070,7 +2074,7 @@
       "viewer/spectrum.py:1194"
     ],
     "None POLY": [
-      "workflow/phase_routes.py:2385"
+      "workflow/phase_routes.py:2396"
     ],
     "Not a Bruker dataset directory (acqus is missing): {p0}": [
       "workflow/import_workflow.py:135"
@@ -2477,8 +2481,8 @@
       "gui/pipeline_panel.py:1708"
     ],
     "Processing parameter optimisation (baseline/zero filling/window function) is completed, time-consuming {p0:.1f} Second": [
-      "workflow/phase_routes.py:931",
-      "workflow/phase_routes.py:2290"
+      "workflow/phase_routes.py:950",
+      "workflow/phase_routes.py:2301"
     ],
     "Processing plan parameter (table editor/script rendering shared data source)": [
       "backend/script_generator.py:1605"
@@ -2727,10 +2731,10 @@
       "workflow/stepwise.py:496"
     ],
     "Replica preview ({p0}) failed: {p1}": [
-      "workflow/phase_routes.py:773"
+      "workflow/phase_routes.py:781"
     ],
     "Replica preview search ({p0}) failed: {p1}": [
-      "workflow/phase_routes.py:860"
+      "workflow/phase_routes.py:879"
     ],
     "Report": [
       "gui/pipeline_panel.py:1052"
@@ -2877,7 +2881,7 @@
       "workflow/script_audit.py:150"
     ],
     "Searching for the direct-dimension phase (first run, usually tens of seconds), please wait": [
-      "workflow/phase_routes.py:2083"
+      "workflow/phase_routes.py:2093"
     ],
     "Segmented data only: set the frequency offset (Hz) of parts 2..N relative to part 1. Running applies these manual offsets during FID conversion; offsets are not detected automatically.": [
       "gui/pipeline_panel.py:1227",
@@ -3136,7 +3140,7 @@
       "workflow/baseline_optimize.py:299"
     ],
     "Task cancelled: Memory phase search terminated by user": [
-      "workflow/memory_phase_search.py:563"
+      "workflow/memory_phase_search.py:559"
     ],
     "Task has been stopped by user": [
       "backend/runtime.py:455"
@@ -3209,14 +3213,14 @@
       "gui/pipeline_panel.py:3512"
     ],
     "The final run is completed and takes time {p0:.1f} Second": [
-      "workflow/phase_routes.py:997",
-      "workflow/phase_routes.py:2367"
+      "workflow/phase_routes.py:1001",
+      "workflow/phase_routes.py:2378"
     ],
     "The first pass SMILE reconstruction failed: {p0}": [
-      "workflow/phase_routes.py:1839"
+      "workflow/phase_routes.py:1845"
     ],
     "The first pass SMILE reconstruction is completed: {p0}": [
-      "workflow/phase_routes.py:1853"
+      "workflow/phase_routes.py:1859"
     ],
     "The high field end ppm must be greater than the low field end ppm (such as 8.5-7.5)": [
       "gui/pipeline_panel.py:197"
@@ -3240,8 +3244,8 @@
       "workflow/display_alignment.py:38"
     ],
     "The phase search is completed and processing of parameter optimisation (baseline/zero filling/window function) begins": [
-      "workflow/phase_routes.py:912",
-      "workflow/phase_routes.py:2274"
+      "workflow/phase_routes.py:931",
+      "workflow/phase_routes.py:2285"
     ],
     "The ppm offset explicitly recorded in this acquisition file. Compare with O1/BF1 if the metadata disagree.": [
       "backend/carrier_choices.py:100"
@@ -3648,37 +3652,31 @@
       "core/processing/axes.py:40"
     ],
     "axis{p0}: +/-90° symmetry disambiguation {p1} → {p2} (sym {p3:.2f}→{p4:.2f})": [
-      "workflow/memory_phase_search.py:773"
+      "workflow/memory_phase_search.py:769"
     ],
     "axis{p0}: Fallback (0,0) (coarse mesh is optimally zero)": [
-      "workflow/memory_phase_search.py:718"
+      "workflow/memory_phase_search.py:714"
     ],
     "axis{p0}: Main score is flat, pairwise positive and negative peak similarity arbitration {p1}(net={p2:.2f}) → {p3}(net={p4:.2f}, pair={p5:.2f}); candidate=": [
-      "workflow/memory_phase_search.py:684"
+      "workflow/memory_phase_search.py:680"
     ],
     "axis{p0}: Platform circle median p0 -> {p1:.2f}° (score={p2:.2f})": [
-      "workflow/memory_phase_search.py:753"
+      "workflow/memory_phase_search.py:749"
     ],
     "axis{p0}: Reproducibility check failed (top-K subsampling optimal p1 {p1:g}/{p2:g}, difference>{p3:g}°),falling back to (0,0)": [
-      "workflow/memory_phase_search.py:638"
-    ],
-    "axis{p0}: Score saturated (100 points), skip p1 refinement": [
-      "workflow/memory_phase_search.py:791"
+      "workflow/memory_phase_search.py:634"
     ],
     "axis{p0}: The fine grid score is flat, and the coarse grid is optimal. {p1} (coarse margin={p2:.2f} point)": [
-      "workflow/memory_phase_search.py:723"
+      "workflow/memory_phase_search.py:719"
     ],
     "axis{p0}: The main score is flat, and the similarity arbitration of paired positive and negative peaks is maintained. {p1}(pair={p2:.2f})": [
-      "workflow/memory_phase_search.py:702"
-    ],
-    "axis{p0}: p1 refinement {p1:g}° → {p2:g}° (score={p3:.2f})": [
-      "workflow/memory_phase_search.py:800"
+      "workflow/memory_phase_search.py:698"
     ],
     "axis{p0}: phase scoring margin {p1:.2f} points(<{p2:g}), the scoring surface is flat": [
-      "workflow/memory_phase_search.py:606"
+      "workflow/memory_phase_search.py:602"
     ],
     "axis{p0}: phase scoring margin {p1:.2f} points, the optimal is clearer": [
-      "workflow/memory_phase_search.py:616"
+      "workflow/memory_phase_search.py:612"
     ],
     "bad combination table (expected a list or combos:): {p0}": [
       "nmrfinesse_api/sweep.py:1038"
@@ -3690,8 +3688,8 @@
       "workflow/optimization_report.py:240"
     ],
     "baseline optimisation: switched off externally (params.reference_optimize.baseline=off), reusing the baseline configuration supplied by the caller (tests / reproduction only)": [
-      "workflow/phase_routes.py:1332",
-      "workflow/phase_routes.py:1603"
+      "workflow/phase_routes.py:1338",
+      "workflow/phase_routes.py:1609"
     ],
     "baseline tilt/offset detected (worst storage axis): baseline correction recommended": [
       "core/qc/spectrum_quality.py:327"
@@ -3731,8 +3729,8 @@
       "core/optimization/phase_consensus.py:250"
     ],
     "cancelled by the user: direct-dimension HT trace-by-trace phase search": [
-      "core/optimization/phase_consensus.py:360",
-      "core/optimization/phase_consensus.py:458"
+      "core/optimization/phase_consensus.py:361",
+      "core/optimization/phase_consensus.py:478"
     ],
     "cancelled by the user: direct-dimension phase search": [
       "core/optimization/phase_search.py:637"
@@ -3895,8 +3893,8 @@
     ],
     "data quality diagnosis failed: {p0}": [
       "backend/nmrpipe_backend.py:1273",
-      "workflow/phase_routes.py:709",
-      "workflow/phase_routes.py:1813"
+      "workflow/phase_routes.py:717",
+      "workflow/phase_routes.py:1819"
     ],
     "data segment {p0} Slicing failed": [
       "backend/nmrpipe_backend.py:4437"
@@ -4017,7 +4015,7 @@
       "backend/script_generator.py:1728"
     ],
     "direct dimension HT item by item phase: locked {p0} projection trace": [
-      "core/optimization/phase_consensus.py:395"
+      "core/optimization/phase_consensus.py:396"
     ],
     "direct dimension TD": [
       "gui/raw_quality.py:142"
@@ -4026,7 +4024,7 @@
       "backend/nmrpipe_backend.py:3402"
     ],
     "direct dimension memory phase: {p0}=({p1:g}°, {p2:g}°)": [
-      "workflow/phase_routes.py:2155"
+      "workflow/phase_routes.py:2166"
     ],
     "direct dimension p1 consensus automatic phase": [
       "backend/script_generator.py:1716"
@@ -4052,24 +4050,23 @@
       "backend/nmrpipe_backend.py:4084"
     ],
     "direct dimension phase is searching (last appointment {p0:.0f} seconds), please wait": [
-      "workflow/phase_routes.py:2075"
+      "workflow/phase_routes.py:2085"
     ],
     "direct dimension phase renormalized by final run window: {p0} p1={p1:g}° → {p2:g}°": [
-      "workflow/phase_routes.py:2313",
-      "workflow/phase_routes.py:965"
+      "workflow/phase_routes.py:2324"
     ],
     "direct dimension phase reuse cache phase.json: {p0}=({p1:g}°, {p2:g}°)": [
-      "workflow/phase_routes.py:2059"
+      "workflow/phase_routes.py:2069"
     ],
     "direct dimension phase search (NU-DFT): p0={p0:g} p1={p1:g} (correlation SNR={p2:.2f}, peak k*={p3}, {p4} slice)": [
       "backend/nmrpipe_backend.py:3928"
     ],
     "direct dimension phase search basis: real data final spectrum {p0}(indirect dimension corrected, direct dimension = last axis, projection trace = sum of indirect dimension points)": [
-      "workflow/phase_routes.py:2040"
+      "workflow/phase_routes.py:2050"
     ],
     "direct dimension phase search completed, time consuming {p0:.1f} Second": [
-      "workflow/phase_routes.py:2103",
-      "workflow/phase_routes.py:2098"
+      "workflow/phase_routes.py:2114",
+      "workflow/phase_routes.py:2109"
     ],
     "direct dimension phase search: direct dimension spectrum has no signal, keep p0=p1=0": [
       "backend/nmrpipe_backend.py:4060"
@@ -4090,10 +4087,10 @@
       "backend/nmrpipe_backend.py:2365"
     ],
     "direct dimension projection HT Search for: {p0}=({p1:g}°, {p2:g}°) score={p3:.2f}": [
-      "workflow/phase_routes.py:2133"
+      "workflow/phase_routes.py:2144"
     ],
     "direct dimension projection HT searches for no clean signal peaks or insufficient confidence, keep the initial phase": [
-      "workflow/phase_routes.py:2149"
+      "workflow/phase_routes.py:2160"
     ],
     "direct dimension range": [
       "gui/group_panel.py:137",
@@ -4123,17 +4120,17 @@
       "gui/pipeline_panel.py:2507"
     ],
     "direct dimension window function optimisation (FID memory score, no rerun SMILE)": [
-      "workflow/phase_routes.py:1666"
+      "workflow/phase_routes.py:1672"
     ],
     "direct dimension window function optimisation(FID memory score)": [
-      "workflow/phase_routes.py:1395"
+      "workflow/phase_routes.py:1401"
     ],
     "direct dimension window optimisation failed (read fid): {p0}": [
       "workflow/window_optimize.py:1120"
     ],
     "direct dimension window optimisation failed: {p0}": [
-      "workflow/phase_routes.py:1455",
-      "workflow/phase_routes.py:1705"
+      "workflow/phase_routes.py:1461",
+      "workflow/phase_routes.py:1711"
     ],
     "direct dimension window optimisation skipped: converted.fid not found": [
       "workflow/window_optimize.py:1129"
@@ -4143,7 +4140,7 @@
       "backend/script_generator.py:394"
     ],
     "direct-dimension HT search p1={p0:g}° is out of range (>170°), reset to zero": [
-      "workflow/phase_routes.py:2125"
+      "workflow/phase_routes.py:2136"
     ],
     "direct-dimension frequency offset of each part vs part 1 over the effective criterion: {p0:.2f} Hz ({p1})": [
       "workflow/field_drift.py:1272"
@@ -4177,10 +4174,10 @@
       "nmrfinesse_api/direct_range.py:44"
     ],
     "direct-dimension real-data final spectrum preview failed: {p0}": [
-      "workflow/phase_routes.py:2029"
+      "workflow/phase_routes.py:2035"
     ],
     "direct-dimension window: NUS SMILE requires a direct-dimension window (SP) and the candidates do not cover the direct dimension, keeping the default SP": [
-      "workflow/phase_routes.py:1689"
+      "workflow/phase_routes.py:1695"
     ],
     "direct-dimension window: {p0}-{p1} ppm (EXT -x1/-xn, {p2})\n{p3}; peaks outside it do not enter the final spectrum,\np1 is renormalised to the window width; each data set shows its own settings": [
       "gui/pipeline_panel.py:2547"
@@ -4275,10 +4272,10 @@
       "gui/processing.py:247"
     ],
     "experiment type {p0}: magnitude spectra are not phase-optimised, so the all-axis phase search is skipped (keeping 0,0)": [
-      "workflow/phase_routes.py:736"
+      "workflow/phase_routes.py:744"
     ],
     "experiment type {p0}: magnitude spectra are not phase-optimised, the direct-dimension phase stays at (0,0) (the search is skipped)": [
-      "workflow/phase_routes.py:1995"
+      "workflow/phase_routes.py:2001"
     ],
     "experiment {p0}": [
       "gui/log_panel.py:194"
@@ -4361,7 +4358,7 @@
       "gui/pipeline_panel.py:2529"
     ],
     "final run: the final phase of every dimension is written into the full script (direct dimension {p0}=({p1:g}°, {p2:g}°)": [
-      "workflow/phase_routes.py:2352"
+      "workflow/phase_routes.py:2363"
     ],
     "final spectrum -> {p0}": [
       "backend/nmrpipe_backend.py:1945"
@@ -4385,8 +4382,8 @@
       "gui/pipeline_panel.py:2531"
     ],
     "first-run script kept as: {p0}": [
-      "workflow/phase_routes.py:950",
-      "workflow/phase_routes.py:1868"
+      "workflow/phase_routes.py:969",
+      "workflow/phase_routes.py:1874"
     ],
     "floor {p0:g} Hz": [
       "workflow/field_drift.py:1258"
@@ -4522,14 +4519,14 @@
       "gui/pipeline_panel.py:3645"
     ],
     "indirect dimension window function optimisation (reconstruct plane memory score, do not rerun SMILE)": [
-      "workflow/phase_routes.py:1716"
+      "workflow/phase_routes.py:1722"
     ],
     "indirect dimension window optimisation failed (reading fid): {p0}": [
       "workflow/window_optimize.py:1398"
     ],
     "indirect dimension window optimisation failed: {p0}": [
-      "workflow/phase_routes.py:1509",
-      "workflow/phase_routes.py:1753"
+      "workflow/phase_routes.py:1515",
+      "workflow/phase_routes.py:1759"
     ],
     "indirect dimension window optimisation skip: no timeline available": [
       "workflow/window_optimize.py:901"
@@ -4544,7 +4541,7 @@
       "backend/script_generator.py:384"
     ],
     "indirect dimension: the amplitude spectrum does not automatically adjust the phase, skip the finalize replica preview and search": [
-      "workflow/phase_routes.py:1884"
+      "workflow/phase_routes.py:1890"
     ],
     "input parameters for automatic processing (YAML/JSON)": [
       "nmrfinesse_api/cli.py:610"
@@ -4688,8 +4685,8 @@
       "nmrfinesse_api/cli.py:727"
     ],
     "memory phase search({p0}) No trace available": [
-      "workflow/phase_routes.py:791",
-      "workflow/phase_routes.py:1941"
+      "workflow/phase_routes.py:806",
+      "workflow/phase_routes.py:1947"
     ],
     "more than {p0} columns per line": [
       "core/data/nus_reader.py:142"
@@ -4992,16 +4989,16 @@
       "workflow/optimization_report.py:239"
     ],
     "phase iteration: indirect dimension {p0} There is no change in the wheel, convergence": [
-      "workflow/phase_routes.py:2260"
+      "workflow/phase_routes.py:2271"
     ],
     "phase optimisation does not produce spectrum": [
       "workflow/stepwise.py:518"
     ],
     "phase optimisation: direct dimension real data final spectrum preview": [
-      "workflow/phase_routes.py:2008"
+      "workflow/phase_routes.py:2014"
     ],
     "phase optimisation: direct dimension real data final spectrum preview completed": [
-      "workflow/phase_routes.py:2049"
+      "workflow/phase_routes.py:2059"
     ],
     "picking produced no peak table: {p0}": [
       "nmrfinesse_api/peaks.py:842"
@@ -5901,8 +5898,8 @@
       "gui/pipeline_panel.py:1635"
     ],
     "window optimisation: switched off externally (params.reference_optimize.window=off), reusing the window configuration supplied by the caller (tests / reproduction only)": [
-      "workflow/phase_routes.py:1380",
-      "workflow/phase_routes.py:1652"
+      "workflow/phase_routes.py:1386",
+      "workflow/phase_routes.py:1658"
     ],
     "window_pts cannot be negative": [
       "nmrfinesse_api/peaks.py:501"
@@ -5984,12 +5981,12 @@
       "workflow/direct_diagnostics.py:725"
     ],
     "{p0} Phase re-search is completed, time-consuming {p1:.1f} Second": [
-      "workflow/phase_routes.py:898",
-      "workflow/phase_routes.py:2252"
+      "workflow/phase_routes.py:917",
+      "workflow/phase_routes.py:2263"
     ],
     "{p0} Phase search is completed, time-consuming {p1:.1f} Second": [
-      "workflow/phase_routes.py:823",
-      "workflow/phase_routes.py:1972"
+      "workflow/phase_routes.py:842",
+      "workflow/phase_routes.py:1978"
     ],
     "{p0} Status: {p1}": [
       "gui/pipeline_panel.py:3039"
@@ -6087,8 +6084,8 @@
       "backend/nmrpipe_backend.py:3218"
     ],
     "{p0}: +/-180° chemical shift partitioning disambiguation {p1} → {p2}": [
-      "workflow/phase_routes.py:798",
-      "workflow/phase_routes.py:1948"
+      "workflow/phase_routes.py:813",
+      "workflow/phase_routes.py:1954"
     ],
     "{p0}: Baseline has been optimised {p1} → {p2} (score={p3:.1f} → {p4:.1f}, +{p5:.1f})": [
       "workflow/baseline_optimize.py:390"
@@ -6097,7 +6094,7 @@
       "backend/bruker_workflow.py:453"
     ],
     "{p0}: Memory phase re-search (iteration {p1}) = ({p2:g}°, {p3:g}°) score={p4:.2f}": [
-      "workflow/phase_routes.py:2239"
+      "workflow/phase_routes.py:2250"
     ],
     "{p0}: The backend interface needs to be implemented and cannot be run yet": [
       "gui/pipeline_panel.py:3303"
@@ -6164,7 +6161,7 @@
       "backend/bruker_workflow.py:1428"
     ],
     "{p0}: in-memory phase re-search (direct dimension fixed) = ({p1:g}°, {p2:g}°) score={p3:.2f}": [
-      "workflow/phase_routes.py:888"
+      "workflow/phase_routes.py:907"
     ],
     "{p0}: indirect dimension window optimisation skip: insufficient points": [
       "workflow/window_optimize.py:869"
@@ -6176,8 +6173,8 @@
       "backend/bruker_workflow.py:434"
     ],
     "{p0}: memory phase = ({p1:g}°, {p2:g}°) score={p3:.2f}": [
-      "workflow/phase_routes.py:814",
-      "workflow/phase_routes.py:1963"
+      "workflow/phase_routes.py:833",
+      "workflow/phase_routes.py:1969"
     ],
     "{p0}: peak_id is empty (delete the blank row)": [
       "nmrfinesse_api/localization_targets.py:74"
@@ -6520,5 +6517,5 @@
     "workflow/ucsf_export.py",
     "workflow/window_optimize.py"
   ],
-  "coverage_floor_zh": 2019
+  "coverage_floor_zh": 2018
 }

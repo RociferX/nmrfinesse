@@ -227,3 +227,27 @@ def test_joint_recheck_row_scoring_matches_full_array() -> None:
     assert abs(best_score - ref_score(best_ref)) < 1e-6
     assert abs(fixed_score - ref_score(fixed)) < 1e-6
     assert abs(zero_score - ref_score({a: (0.0, 0.0) for a in axes})) < 1e-6
+
+
+def test_first_order_phase_uses_separated_peaks_on_different_traces() -> None:
+    n = 256
+    bins = np.arange(n)
+    positions = [26, 52, 87, 119, 155, 191, 226]
+    data = np.zeros((60, n), dtype=complex)
+    for i, peak in enumerate(positions):
+        line = 1 / (1 + 1j * (bins - peak) / 2.2)
+        data[3 + 8*i] = line * (500 if peak == 119 else 1)
+    distortion = np.exp(-1j * np.deg2rad(25 + 120 * bins / n))
+    est = search_axis_memory(data * distortion, axis=1, p1_prior=105.)
+    assert est is not None
+    p0, p1 = est.phase
+    assert abs(p1 - 120) < 4
+    assert abs((p0 - 25 + 180) % 360 - 180) < 3
+
+
+def test_receiver_delay_prior_excludes_digital_filter_group_delay() -> None:
+    from core.optimization.phase_slope import direct_p1_prior
+
+    assert np.isclose(direct_p1_prior({"DIGMOD": 1, "DE": 10, "GRPDLY": 68}, 10_000), 36)
+    assert direct_p1_prior({"DIGMOD": 3, "DE": 10}, 10_000) == 0
+    assert direct_p1_prior({"GRPDLY": 68}, 10_000) is None

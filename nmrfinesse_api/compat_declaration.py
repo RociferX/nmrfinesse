@@ -23,12 +23,12 @@ from typing import Any
 
 #: declared behaviour level (see the module doc; meaning matches nmrfinesse_api.compat)
 DECLARATION: dict[str, Any] = {'schema': 'nmrfinesse_api.compat.declaration.v1',
- 'digest': 'b19f5c11beb5fae71218ccdde8a98942631bb08fa8b073ab9a6ba0a40ab1d4ce',
- 'token_digest': '7bf50512f80322e61dbdbabb2765a0144212f47da32745202a7d3844c663dcfa',
+ 'digest': 'ae75648346faea2a7d4f817e3f6d59ddff73673c64cef8c9e0d7c35b29d09bcb',
+ 'token_digest': '309b2c374122a022f58da637d59d8a30293b567a39290f309cb36bfe8314f311',
  'compat_level': 'behavior_changed',
  'affected': ['reference', 'processing'],
- 'updated': '2026-11-10',
- 'note': 'Global signed window scoring balances sidelobes and resolution.',
+ 'updated': '2026-11-11',
+ 'note': 'First-order phase uses receiver timing and separated spectral peaks.',
  'golden': {'name': 'conformance_v1',
             'spectrum_sha256': '382b330926da93d856feef40ca33c2df1eec21b61e50db471bdf7aa4bb2fb311',
             'peak_table_sha256': 'e9ef45f2cae32bc580fc1bdeea1928ceb8406154848f8aca3c4558285e532242',

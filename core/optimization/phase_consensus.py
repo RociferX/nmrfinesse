@@ -330,6 +330,7 @@ def search_direct_phase_real_ht(
     sign_mode: str = "uniform",
     progress: Callable[[str], None] | None = None,
     cancel: Callable[[], bool] | None = None,
+    p1_prior: float | None = None,
 ) -> tuple[float, float, float] | None:
     """Direct-dimension phase optimisation: take the direct-dimension projection traces from a
     purely
@@ -453,6 +454,25 @@ def search_direct_phase_real_ht(
         a, _sgn = _row_absorption(cplx, pos, heights, p0, p1, radius=1)
         abs_vals.append(a)
     score = 100.0 * float(np.median(abs_vals))
+    from core.optimization.phase_slope import fit_phase_slope
+
+    fit = fit_phase_slope(np.asarray(ht_rows), -1, p1_prior=p1_prior)
+    if fit is not None:
+        fit_p0, fit_p1, anchors, span = fit
+        old_center = p0 + .5 * p1
+        delta = (fit_p0 + .5 * fit_p1 - old_center + 90.) % 180. - 90.
+        fit_p0 = (old_center + delta - .5 * fit_p1) % 360.
+        fit_score = 100.0 * float(np.median([
+            _row_absorption(c, p, h, fit_p0, fit_p1, radius=1)[0]
+            for c, p, h in infos
+        ]))
+        if fit_score >= score - 2.5:
+            p0, p1, score = fit_p0, fit_p1, fit_score
+            if progress is not None:
+                progress(tr(
+                    "First-order phase {p0:.2f}° from {p1} peaks across {p2:.0%} of the spectrum",
+                    p0=p1, p1=anchors, p2=span,
+                ))
     if cancel is not None and cancel():
         raise RuntimeError(
             tr(
