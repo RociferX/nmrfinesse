@@ -139,6 +139,29 @@ Use the [comparison tool](../../scripts/vm_projection_report.py) for candidate s
 comparison include all projections, the 10% height threshold, the dominant-sign rule and the
 recorded axis offsets.
 
+## Agreement with residue assignments
+
+The reference coordinates come from the public BMRB assignments. HSQC uses H and N from the
+same residue. HNCO combines H and N from residue *i* with the deposited carbonyl shift of
+residue *i−1*. The HNCO comparison uses full 3D coordinates. Candidate detection uses a 10%
+peak-height threshold, and assignment matching uses the same joint ppm tolerances as above.
+For bsCopL, a whole-axis offset to the author spectrum was fitted on half the assigned residues;
+55 of 56 held-out coordinates matched at the 5% threshold. The resulting offset is fixed for both
+2D comparisons, with the established author-to-automatic referencing applied.
+
+| Route | Assigned coordinates | Automatic matches / in range | Author matches / in range |
+| --- | --- | --- | --- |
+| Uniform 2D | [BMRB 27493](https://bmrb.io/data_library/summary/?bmrbId=27493) · [HSQC CSV](statistics/assigned-27493-hsqc.csv) | 105/113 | 108/114 |
+| Controlled 2D NUS | Same HSQC assignments | 106/113 | 108/114 |
+| Uniform 3D | [BMRB 15750](https://bmrb.io/data_library/summary/?bmrbId=15750) · [HNCO CSV](statistics/assigned-15750-hnco.csv) | 72/76 | 74/76 |
+| Acquired 3D NUS | [BMRB 52533](https://bmrb.io/data_library/summary/?bmrbId=52533) · [HNCO CSV](statistics/assigned-52533-hnco.csv) | 89/97 | 87/97 |
+
+In the uniform 3D control, adding the F2 SP window was the only processing change. At a 5%
+threshold, it reduced detected candidates from 193 to 116 while retaining the same 74 assigned
+matches. At 10%, the same 72 assignments matched with either setting. The
+[assignment statistics](statistics/assigned-peak-comparison.json) include both thresholds and
+matched residue IDs. An unmatched candidate can be an unassigned signal or an artifact.
+
 ## Peak-picking concordance with POKY/iPick
 
 NMRFinesse and POKY/iPick's UCSFtool route use thresholded local maxima and per-axis three-point

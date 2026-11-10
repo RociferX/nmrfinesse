@@ -105,6 +105,19 @@ F3 使用重构路径的 SP 窗（off 0.45，end 0.98，二次）。SMILE 重构
 
 [比较工具](../../../scripts/vm_projection_report.py)生成匹配统计，[绘图工具](../../../scripts/vm_four_path_figure.py)生成对照图。复核时使用全部投影、10% 峰高阈值、主符号规则和统计文件所列整轴平移。
 
+## 与残基指认的对照
+
+参考坐标来自 BMRB 公开指认。HSQC 采用同一残基的 H 和 N；HNCO 用残基 *i* 的 H、N 配对残基 *i−1* 的羰基 C，并在完整三维谱上核对。下表采用 10% 峰高阈值，沿用上面的联合 ppm 容差。bsCopL 用一半指认残基估计到作者谱的整轴偏移，在 5% 阈值下核对另一半，56 个坐标匹配 55 个。两条 2D 路径共用这一定标，再沿用作者谱到自动谱的整轴偏移。
+
+| 路径 | 指认坐标 | 自动谱匹配数／范围内指认数 | 作者谱匹配数／范围内指认数 |
+| --- | --- | --- | --- |
+| 2D 均匀采样 | [BMRB 27493](https://bmrb.io/data_library/summary/?bmrbId=27493) · [HSQC CSV](../../../docs/evidence/statistics/assigned-27493-hsqc.csv) | 105/113 | 108/114 |
+| 受控 2D NUS | 同一份 HSQC 指认 | 106/113 | 108/114 |
+| 3D 均匀采样 | [BMRB 15750](https://bmrb.io/data_library/summary/?bmrbId=15750) · [HNCO CSV](../../../docs/evidence/statistics/assigned-15750-hnco.csv) | 72/76 | 74/76 |
+| 实采 3D NUS | [BMRB 52533](https://bmrb.io/data_library/summary/?bmrbId=52533) · [HNCO CSV](../../../docs/evidence/statistics/assigned-52533-hnco.csv) | 89/97 | 87/97 |
+
+3D 均匀采样对照只改变 F2 的 SP 窗。5% 阈值下，候选数从 193 降至 116，匹配到的仍是同一组 74 个指认残基；10% 阈值下，两种设置匹配到同一组 72 个。[指认对照统计](../../../docs/evidence/statistics/assigned-peak-comparison.json)列出两档阈值和对应残基。未匹配的候选可能是未指认信号或伪影。
+
 ## 与 POKY/iPick 的选峰结果对照
 
 NMRFinesse 与 POKY/iPick 的 UCSFtool 路径都采用阈值筛选、邻域局部极大值检测和逐轴三点抛物线定位。对 12 张二维 HN 正峰谱使用等效阈值，24 张峰表的候选数全部一致，5,175 条候选记录均在每轴一个网格步内唯一配对。坐标差典型值约为 0.00025 ppm，最大约为 0.00050 ppm，处于 iPick 保留三位小数的精度量级。4 张等阈值表复用结果。
