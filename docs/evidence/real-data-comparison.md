@@ -2,17 +2,11 @@
 
 ## How to read the figures
 
-The automatically processed spectrum is on the left and the reference is on the right. Blue solid
-contours show positive signal and red dashed contours show negative signal. Contours start at 7.5%
-of each panel's maximum absolute intensity. Red dots mark detected candidates and purple crosses
-mark unmatched reference candidates.
-
-Candidates are picked independently at 10% of each spectrum's maximum absolute peak height after
-median centring. The dominant sign is selected from the sum of squared candidate SNRs. Same-sign
-candidates are matched one-to-one within a joint normalized distance of 1, using axis tolerances of
-0.02 ppm for H, 0.20 ppm for N and 0.15 ppm for C. Whole-axis referencing preserves relative peak
-positions. For 3D, both spectra are cropped to a common volume before generating signed
-maximum-absolute-value HN, HC and NC projections. Each projection is picked and matched independently.
+The automatically processed spectrum is on the left and the author spectrum is on the right.
+Blue solid contours show positive signal and red dashed contours show negative signal. Contours
+start at 7.5% of each panel's maximum absolute intensity. The 3D figures show signed
+maximum-absolute-value HN, HC and NC projections over the common volume. Assignment counts use
+the full 3D spectra.
 
 ## Data and references
 
@@ -23,27 +17,51 @@ maximum-absolute-value HN, HC and NC projections. Each projection is picked and 
 | Uniform 3D | Automatic processing compared with a full 3D reference, evaluated through three projections |
 | Acquired 3D NUS | Reconstruction of an acquired NUS schedule compared with a full 3D reference |
 
-## Results overview
+## Agreement with residue assignments
 
-| Route | Matched reference candidates | Comparison statistics |
+The reference coordinates come from the public BMRB assignments. HSQC uses H and N from the
+same residue. HNCO combines H and N from residue *i* with the deposited carbonyl shift of
+residue *i−1*. The HNCO comparison uses full 3D coordinates. Each spectrum is picked independently at 10% of its maximum absolute peak height after median
+centring, using the dominant sign. Candidate peaks are matched one-to-one to assigned coordinates
+in the common range, within a joint normalized distance of 1 (H 0.02 ppm, N 0.20 ppm, C 0.15 ppm).
+For bsCopL, a whole-axis offset to the author spectrum was fitted on half the assigned residues;
+55 of 56 held-out coordinates matched at the 5% threshold. The resulting offset is fixed for both
+2D comparisons, with the established author-to-automatic referencing applied.
+
+| Route | Assigned coordinates | Assignments in common range | Found in automatic spectrum | Found in author spectrum |
+| --- | --- | --- | --- | --- |
+| Uniform 2D | [BMRB 27493](https://bmrb.io/data_library/summary/?bmrbId=27493) · [HSQC CSV](statistics/assigned-27493-hsqc.csv) | 113 | 105 | 107 |
+| Controlled 2D NUS | Same HSQC assignments | 113 | 106 | 107 |
+| Uniform 3D | [BMRB 15750](https://bmrb.io/data_library/summary/?bmrbId=15750) · [HNCO CSV](statistics/assigned-15750-hnco.csv) | 76 | 72 | 74 |
+| Acquired 3D NUS | [BMRB 52533](https://bmrb.io/data_library/summary/?bmrbId=52533) · [HNCO CSV](statistics/assigned-52533-hnco.csv) | 97 | 89 | 87 |
+
+In the uniform 3D control, adding the F2 SP window was the only processing change. At a 5%
+threshold, it reduced detected candidates from 193 to 116 while retaining the same 74 assigned
+matches. At 10%, the same 72 assignments matched with either setting. The
+[assignment statistics](statistics/assigned-peak-comparison.json) include the thresholds,
+matched residue IDs and local checks below.
+
+### Why some assignments were missed
+
+Six route–residue cases matched at 10% in the author spectra but not in the automatic spectra.
+We checked each author peak using cross-sections through its apex and compared it with separate
+processing of the same acquisition. Lowering the automatic threshold to 7.5% recovered two;
+lowering it to 5% recovered no further cases. The assignment tolerance stayed fixed.
+
+| Assignment | Author peak and processing check | Why the automatic count was lower |
 | --- | --- | --- |
-| Uniform 2D | HN 121/126 | [JSON](statistics/uniform2d-comparison.json) |
-| Controlled 2D NUS | HN 123/126 | [JSON](statistics/nus75-comparison.json) |
-| Uniform 3D | HN 82/84, HC 76/81, NC 66/71 | [JSON](statistics/uniform3d-comparison.json) |
-| Acquired 3D NUS | HN 89/89, HC 93/93, NC 79/79 | [JSON](statistics/acquired3d-comparison.json) |
+| Val84 · Uniform 2D | The author peak also appears in the controlled 2D NUS spectrum. | In uniform 2D, the nearest apex is outside tolerance by the joint H and N criterion (deviations 0.026 and 0.249 ppm). |
+| Gly100 · Both 2D routes | The author spectrum separates Gly100 and His194 along N. Reprocessing the full acquisition with EM 3 Hz and no linear prediction also separates the pair. | Both automatic routes show one broad peak in this region. Uniform 2D assigns it to His194; lowering the threshold does not reveal a second apex. |
+| Glu199 · Controlled 2D NUS | The author peak is also present in the uniform 2D spectrum. | The NUS apex is at 8.07% of maximum peak height and is recovered at 7.5%. |
+| Phe14 · Uniform 3D | The author spectrum shows a distinct apex in all three dimensions. The same feature is present with and without the automatic F2 window. | The automatic apex is at 9.88% and is recovered at 7.5%. |
+| Ser71 · Uniform 3D | A distinct apex appears in both 3D spectra at nearly the same position after referencing. | Its distance to the deposited assignment is 0.930 in the author spectrum and 1.020 in the automatic spectrum, just beyond the cutoff of 1. |
 
-Coverage is matched pairs divided by reference candidates. The results measure agreement between
-detected lists. Candidate counts depend on overlap, line shape and the threshold. The same 3D
-signal may appear in several projections, so projection counts cannot be summed as assigned peaks.
+The [Gly100/His194 close-up](figures/gly100-peak-shape.png) shows both assigned positions and the
+effect of changing only the nitrogen-dimension processing in the uniform control.
 
 ## Uniform 2D
 
 ![Uniform 2D comparison](figures/uniform2d.png)
-
-The automatic spectrum has 129 HN candidates, of which 121 match the 126 reference candidates.
-Median absolute differences among matches are H 0.00051 ppm and N 0.00926 ppm. Four of the five
-unmatched reference positions reach the threshold locally without yielding a separate matched
-candidate. One is below the threshold.
 
 ### Processing parameters
 
@@ -59,11 +77,6 @@ time-domain DC correction and the final transform script.
 
 ![Controlled 2D NUS comparison](figures/nus75.png)
 
-The controlled example tests the reconstruction route against a uniform reference. Each spectrum
-has 126 HN candidates and 123 match. Median absolute differences are H 0.00122 ppm and N
-0.00723 ppm. One of the three unmatched reference positions reaches the threshold locally without a
-separate candidate, and two are below the threshold.
-
 ### Processing parameters
 
 | Axis | Window | Baseline polynomial order |
@@ -78,16 +91,6 @@ route's SP setting. The indirect window is applied during finalization.
 
 ![Uniform 3D projection comparison](figures/uniform3d.png)
 
-| Projection | Automatic / reference candidates | Matched | Median absolute ppm differences |
-| --- | --- | --- | --- |
-| HN | 82 / 84 | 82 | H 0.00103, N 0.01398 |
-| HC | 77 / 81 | 76 | H 0.00101, C 0.03087 |
-| NC | 69 / 71 | 66 | N 0.01639, C 0.02770 |
-
-Eight of the 12 unmatched projection entries involve nearby candidates competing for one-to-one
-matches. Two have local responses below the detection threshold, and two have local responses
-without independent candidates.
-
 ### Processing parameters
 
 F3 uses SP with off 0.65, end 1.00 and power 2. F2 and F1 both use SP with off 0.45, end 0.90
@@ -97,15 +100,6 @@ time-domain DC correction. Spectrum-domain baseline correction is off for this c
 ## Acquired 3D NUS
 
 ![Acquired 3D NUS projection comparison](figures/acquired3d.png)
-
-| Projection | Automatic / reference candidates | Matched | Median absolute ppm differences |
-| --- | --- | --- | --- |
-| HN | 94 / 89 | 89 | H 0.00031, N 0.00989 |
-| HC | 98 / 93 | 93 | H 0.00028, C 0.00312 |
-| NC | 84 / 79 | 79 | N 0.01068, C 0.00383 |
-
-All reference candidates match in the three projections. The automatic spectra also contain five
-additional candidates per projection under the same detection rule.
 
 ### Processing parameters
 
@@ -128,39 +122,10 @@ NMRPipe convention. Peak comparison uses the resulting spectra after whole-axis 
 
 ## Methods, records and reproduction
 
-The [processing record](statistics/processing.json) contains the actual conversion and processing
-scripts, applied phase and window settings, and selected scoring rows. The per-route JSON files
-retain crop limits, offsets, tolerances, counts, coordinate differences and line-width measurements.
-The [unmatched-candidate audit](statistics/local-response-audit.json) shows local responses and
-the number of nearby automatic candidates at each unmatched reference position.
-
-Use the [comparison tool](../../scripts/vm_projection_report.py) for candidate statistics and the
-[figure tool](../../scripts/vm_four_path_figure.py) for contour overlays. The options for a repeat
-comparison include all projections, the 10% height threshold, the dominant-sign rule and the
-recorded axis offsets.
-
-## Agreement with residue assignments
-
-The reference coordinates come from the public BMRB assignments. HSQC uses H and N from the
-same residue. HNCO combines H and N from residue *i* with the deposited carbonyl shift of
-residue *i−1*. The HNCO comparison uses full 3D coordinates. Candidate detection uses a 10%
-peak-height threshold, and assignment matching uses the same joint ppm tolerances as above.
-For bsCopL, a whole-axis offset to the author spectrum was fitted on half the assigned residues;
-55 of 56 held-out coordinates matched at the 5% threshold. The resulting offset is fixed for both
-2D comparisons, with the established author-to-automatic referencing applied.
-
-| Route | Assigned coordinates | Automatic matches / in range | Author matches / in range |
-| --- | --- | --- | --- |
-| Uniform 2D | [BMRB 27493](https://bmrb.io/data_library/summary/?bmrbId=27493) · [HSQC CSV](statistics/assigned-27493-hsqc.csv) | 105/113 | 108/114 |
-| Controlled 2D NUS | Same HSQC assignments | 106/113 | 108/114 |
-| Uniform 3D | [BMRB 15750](https://bmrb.io/data_library/summary/?bmrbId=15750) · [HNCO CSV](statistics/assigned-15750-hnco.csv) | 72/76 | 74/76 |
-| Acquired 3D NUS | [BMRB 52533](https://bmrb.io/data_library/summary/?bmrbId=52533) · [HNCO CSV](statistics/assigned-52533-hnco.csv) | 89/97 | 87/97 |
-
-In the uniform 3D control, adding the F2 SP window was the only processing change. At a 5%
-threshold, it reduced detected candidates from 193 to 116 while retaining the same 74 assigned
-matches. At 10%, the same 72 assignments matched with either setting. The
-[assignment statistics](statistics/assigned-peak-comparison.json) include both thresholds and
-matched residue IDs. An unmatched candidate can be an unassigned signal or an artifact.
+The [processing record](statistics/processing.json) contains the conversion and processing scripts,
+phase and window settings, and selected scoring rows. The [assignment statistics](statistics/assigned-peak-comparison.json)
+record the axis offsets, tolerances and residue IDs. The [figure tool](../../scripts/vm_four_path_figure.py)
+draws the contour comparisons using the recorded offsets.
 
 ## Peak-picking concordance with POKY/iPick
 
