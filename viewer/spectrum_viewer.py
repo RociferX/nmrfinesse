@@ -54,7 +54,7 @@ from viewer.overview import SpectrumOverview
 from viewer.spectrum import Spectrum, Spectrum1D, SpectrumAxis
 
 _COLORS = ("#1f77b4", "#d62728", "#2ca02c", "#9467bd", "#ff7f0e", "#17becf")
-_DEFAULT_LEVELS = 8
+_DEFAULT_LEVELS = 12
 
 
 class _ReadoutLabel(QLabel):
@@ -1507,7 +1507,7 @@ class SpectrumViewer(QWidget):
                                      self.hide_positive.isChecked(), self.hide_negative.isChecked())
 
     def restore_contour_state(self, key: str) -> None:
-        """Restore contour state; default to 3%, 8 levels."""
+        """Restore contour state; default to 3%, 12 levels."""
         state = self._contour_states.get(key)
         if state is not None:
             self.set_contour_start(state[0])
@@ -1515,7 +1515,7 @@ class SpectrumViewer(QWidget):
             self.set_contour_signs(hide_positive=state[2], hide_negative=state[3])
         else:
             self.set_contour_start(2.98)
-            self.count_slider.setValue(8)
+            self.count_slider.setValue(_DEFAULT_LEVELS)
             self.set_contour_signs(hide_positive=False, hide_negative=False)
 
     def set_1d_mode(self, active: bool) -> None:

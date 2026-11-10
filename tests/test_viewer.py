@@ -385,17 +385,17 @@ def test_viewer_update_spectrum_data_falls_back(qapp: QApplication) -> None:
 def test_viewer_contour_defaults_and_english_labels(
     qapp: QApplication,
 ) -> None:
-    '0.2.77: contour start defaults to 3% and levels to 8; common terms shown in English.'
+    '0.2.77: contour start defaults to 3% and levels to 12; common terms shown in English.'
     viewer = SpectrumViewer()
     assert viewer.level_slider.value() == 31
-    assert viewer._level_count == 8
-    assert viewer.count_slider.value() == 8
+    assert viewer._level_count == 12
+    assert viewer.count_slider.value() == 12
     assert viewer.level_label.text() == "2.98"
 
     viewer.level_slider.setValue(50)
     assert viewer._level_fraction() < 0.15
     viewer.level_slider.setValue(31)
-    assert viewer.count_label.text() == "8"
+    assert viewer.count_label.text() == "12"
     assert viewer.show_peaks_checkbox.text() == "Show peaks"
     assert viewer.show_1d_button.text() == "1D"
     viewer.close()

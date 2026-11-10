@@ -34,37 +34,36 @@ For bsCopL, a whole-axis offset to the author spectrum was fitted on half the as
 | --- | --- | --- | --- | --- |
 | Uniform 2D | [BMRB 27493](https://bmrb.io/data_library/summary/?bmrbId=27493) · [HSQC CSV](statistics/assigned-27493-hsqc.csv) | 113 | 108 | 108 |
 | Controlled 2D NUS | Same HSQC assignments | 113 | 107 | 108 |
-| Uniform 3D | [BMRB 15750](https://bmrb.io/data_library/summary/?bmrbId=15750) · [HNCO CSV](statistics/assigned-15750-hnco.csv) | 76 | 74 | 75 |
+| Uniform 3D | [BMRB 15750](https://bmrb.io/data_library/summary/?bmrbId=15750) · [HNCO CSV](statistics/assigned-15750-hnco.csv) | 76 | 73 | 75 |
 | Acquired 3D NUS | [BMRB 52533](https://bmrb.io/data_library/summary/?bmrbId=52533) · [HNCO CSV](statistics/assigned-52533-hnco.csv) | 97 | 90 | 88 |
 
-In the uniform 3D control, adding the F2 SP window was the only processing change. At a 5%
-threshold, it reduced detected candidates from 193 to 116 while retaining the same 74 assigned
-matches. The
-[assignment statistics](statistics/assigned-peak-comparison.json) include the thresholds,
-matched residue IDs and local checks below.
+The [assignment statistics](statistics/assigned-peak-comparison.json) record the matched residue
+IDs and the local checks below.
 
 ### Why some assignments were missed
 
-The uniform 2D spectrum recovered the same 108 assignments as the author spectrum. The automatic
-GM 8/15 window separates Gly100 and His194 along N; the SP control merges them. EM 3 Hz also
-separates the pair. At 5%, GM and EM recovered the same 108 assignments, with 208 and 290
-candidates respectively. See the [Gly100/His194 close-up](figures/gly100-peak-shape.png).
+The uniform 2D spectrum recovers the same 108 assignments as the author spectrum. Its selected
+F1 EM 10 Hz window separates Gly100 and His194 along N. The controlled NUS spectrum has one
+broad peak in this region. See the [Gly100/His194 close-up](figures/gly100-peak-shape.png).
 
-At 5%, three assignments were found in the author spectra and missed in their corresponding
-automatic spectra. We checked the author peak apexes against separate processing of the same
-acquisitions and searched the automatic spectra locally at a lower threshold with the same
-coordinate tolerances.
+At 5%, four assignments appear in the author spectra but are not counted in the corresponding
+automatic spectra. Local checks retain the same coordinates and tolerances, lower the detection
+threshold and inspect whether an independent apex exists.
 
 | Assignment | Author peak and processing check | Why the automatic spectrum missed it |
 | --- | --- | --- |
-| Ser93 · Controlled 2D NUS | A distinct peak appears in both the author and automatic uniform spectra, at 6.24% and 6.04% of their maximum peak heights. | The strongest local response within tolerance is 2.45% of maximum and 2.6 times the estimated noise. No distinct apex was recovered in the local check. |
-| Gly100 · Controlled 2D NUS | The author and automatic uniform spectra both separate Gly100 and His194 along N. | The NUS spectrum shows one broad peak in this region. Lowering the threshold did not reveal a second apex. |
-| Ser71 · Uniform 3D | A distinct apex appears in both 3D spectra at nearly the same position after referencing. | Its distance to the deposited assignment is 0.930 in the author spectrum and 1.020 in the automatic spectrum, just beyond the cutoff of 1. |
+| Ser93 · Controlled 2D NUS | Distinct author and automatic uniform peaks reach 6.24% and 5.66% of their respective maxima. | The strongest in-tolerance response is 2.55% of maximum, or 2.65 estimated noise standard deviations. No independent apex was found. |
+| Gly100 · Controlled 2D NUS | The author and automatic uniform spectra both separate Gly100 and His194 along N. | One broad peak remains in the NUS spectrum; lowering the threshold does not reveal a second apex within tolerance. |
+| Ile69 · Uniform 3D | The author apex reaches 6.45% of maximum. The automatic spectrum also has an independent apex at the expected position. | Its automatic height is 4.57% of maximum, below the 5% cutoff, and 32.7 estimated noise standard deviations. A local 4% check recovers it. |
+| Ser71 · Uniform 3D | Distinct apexes occur in both spectra at nearly the same referenced position. | The normalized assignment distance is 0.930 in the author spectrum and 1.0013 in the automatic spectrum, just beyond the cutoff of 1. |
 
-The 5% threshold includes Glu199 in controlled 2D NUS and Phe14 in uniform 3D. With the same
-NUS reconstruction, changing the F1 window left Glu199 at 7.87%–8.15% of the maximum. In uniform
-3D, changing one window at a time left Phe14 below 10% in all tested settings. Its automatic peak
-is 66 times the estimated noise.
+### Author processing and peak separation
+
+The author spectra have narrower peaks and deeper valleys in some regions. The case sections
+below identify the additional operations documented in the author files. LP extends a short FID
+before windowing and can improve truncation artefacts and peak separation together; zero filling
+mainly improves frequency-domain sampling. The automatic spectra use automatic windows without
+LP, with independent apexes and linewidths evaluated separately.
 
 ## Uniform 2D
 
@@ -74,8 +73,14 @@ is 66 times the estimated noise.
 
 | Axis | Window | Baseline polynomial order |
 | --- | --- | --- |
-| F2 | SP, off 0.45, end 0.98, power 2 | 3 |
-| F1 | GM, g1 8 Hz, g2 15 Hz | 3 |
+| F2 | SP, off 0.40, end 0.94, power 2 | 3 |
+| F1 | EM, 10 Hz | 3 |
+
+**Additional author processing.** The author enables forward LP on N (`ME_mod=2`, `NCOEF=32`,
+`LPBIN=356`) from an acquisition with 90 complex indirect increments. Both axes then use the
+squared-sine window (`WDW=4`, `SSB=2`, `FCOR=0.5`), with final `SI=2048/256` for F2/F1.
+The narrower peaks and deeper valleys combine LP and windowing; the window alone does not
+account for the full difference.
 
 The direct dimension is extracted from 10.5 to 6.5 ppm. The processing record includes the
 time-domain DC correction and the final transform script.
@@ -89,10 +94,14 @@ time-domain DC correction and the final transform script.
 | Axis | Window | Baseline polynomial order |
 | --- | --- | --- |
 | F2 | SP, off 0.45, end 0.98, power 1 | 3 |
-| F1 | EM, 3 Hz | 2 |
+| F1 | EM, 5 Hz | 2 |
 
 SMILE reconstructs F1 from the supplied schedule. The final F2 window follows the reconstruction
 route's SP setting. The indirect window is applied during finalization.
+
+This case retains 68 of 90 complex increments (75.56%). The author reference uses the complete
+90-increment acquisition and the F1 LP/window processing described under Uniform 2D. This
+comparison therefore also includes sampling completeness and LP differences.
 
 ## Uniform 3D
 
@@ -100,9 +109,16 @@ route's SP setting. The indirect window is applied during finalization.
 
 ### Processing parameters
 
-F3 uses SP with off 0.65, end 1.00 and power 2. F2 and F1 both use SP with off 0.45, end 0.90
-and power 1. The direct dimension is extracted from 10.0 to 6.0 ppm. The final script uses automatic zero filling and applies
+F3 uses EM at 3 Hz. F2 uses SP with off 0.60, end 0.94 and power 1; F1 uses SP with
+off 0.60, end 0.90 and power 2. The direct dimension is extracted from 10.0 to 6.0 ppm. The final script uses automatic zero filling and applies
 time-domain DC correction. Spectrum-domain baseline correction is off for this case.
+
+**Additional author processing.** Both indirect axes use `LP -fb` with a first-power SP window
+(off 0.50, end 0.98). The direct axis uses second-power SP (off 0.50, end 1.00) and two phase
+corrections, including a 43° first-order phase. The carbon axis is inverse-transformed and
+processed again with LP, windowing and FT. LP and the tailored windows improve narrow peaks
+and valleys; phase correction improves absorptive line shape. The script also applies baseline
+and referencing corrections. A reference-axis translation does not increase resolution.
 
 ## Acquired 3D NUS
 
@@ -111,8 +127,10 @@ time-domain DC correction. Spectrum-domain baseline correction is off for this c
 ### Processing parameters
 
 F3 uses the reconstruction route's SP window (off 0.45, end 0.98, power 2). SMILE reconstructs
-the indirect dimensions, which are finalized with F2 EM at 10 Hz and F1 SP at off 0.65, end 1.00
-and power 2. Spectrum-domain baseline correction is off.
+the indirect dimensions, which are finalized with F2 EM at 20 Hz and F1 EM at 5 Hz. Spectrum-domain baseline correction is off.
+
+The author reference is a deposited spectrum without a corresponding processing script, so
+the specific tailored processing operations are not established for this case.
 
 ## Automatic phase and transform encoding
 

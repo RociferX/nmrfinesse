@@ -1283,13 +1283,13 @@ def test_contour_state_memory(monkeypatch, tmp_path: Path, qapp: QApplication) -
 
     viewer = SpectrumViewer()
     assert viewer.level_slider.value() == 31
-    assert viewer._level_count == 8
+    assert viewer._level_count == 12
     viewer.level_slider.setValue(50)
     viewer.count_slider.setValue(16)
     viewer.save_contour_state('spec1')
     viewer.restore_contour_state('spec2')
     assert viewer.level_slider.value() == 31
-    assert viewer._level_count == 8
+    assert viewer._level_count == 12
     viewer.restore_contour_state('spec1')
     assert viewer.level_slider.value() == 50
     assert viewer._level_count == 16

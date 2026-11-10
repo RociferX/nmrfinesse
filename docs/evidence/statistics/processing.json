@@ -4,7 +4,7 @@
       512,
       1028
     ],
-    "wall_time_s": 43.786064853018615,
+    "wall_time_s": 44.19415143900551,
     "params_used": {
       "ext_lo": "10.5",
       "ext_hi": "6.5",
@@ -45,16 +45,14 @@
       "window": {
         "F2": {
           "type": "sine_bell",
-          "off": 0.45,
-          "end": 0.98,
+          "off": 0.4,
+          "end": 0.94,
           "pow": 2,
           "c": 0.5
         },
         "F1": {
-          "type": "gaussian",
-          "g1": 8.0,
-          "g2": 15.0,
-          "g3": 0.0,
+          "type": "exp",
+          "lb": 10.0,
           "c": 1.0
         }
       },
@@ -105,8 +103,8 @@
       "sha256": "cdf04368145409ada04819ffee693803a90d243c773349ea792d4968ff32796d"
     },
     "automatic_final": {
-      "text": "#!/bin/csh\n# NMRFinesse processing script\n# experiment: d_001\nxyz2pipe -in d_001.fid -x \\\n| nmrPipe -fn POLY -time \\\n| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -size 4096 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 0 -p1 0 -di \\\n| nmrPipe -fn POLY -ord 3 -auto \\\n| nmrPipe -fn EXT -x1 10.5ppm -xn 6.5ppm -sw -round 2 \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn GM -g1 8 -g2 15 \\\n| nmrPipe -fn ZF -size 512 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 265 -p1 0 -di \\\n| nmrPipe -fn POLY -ord 3 -auto \\\n| nmrPipe -fn TP \\\n| pipe2xyz -out d_001.ft2 -x\n",
-      "sha256": "f450f970939b9a32f3142dda366bed08186d9d0708e22622cdba9f67efafc4c3"
+      "text": "#!/bin/csh\n# NMRFinesse processing script\n# experiment: d_001\nxyz2pipe -in d_001.fid -x \\\n| nmrPipe -fn POLY -time \\\n| nmrPipe -fn SP -off 0.4 -end 0.94 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -size 4096 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 0 -p1 0 -di \\\n| nmrPipe -fn POLY -ord 3 -auto \\\n| nmrPipe -fn EXT -x1 10.5ppm -xn 6.5ppm -sw -round 2 \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn EM -lb 10 \\\n| nmrPipe -fn ZF -size 512 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 265 -p1 0 -di \\\n| nmrPipe -fn POLY -ord 3 -auto \\\n| nmrPipe -fn TP \\\n| pipe2xyz -out d_001.ft2 -x\n",
+      "sha256": "17162c2cf1ebc3b50d4005d42599eb83182da1249a10ce451b368377054408be"
     },
     "selected_optimization_rows": [
       {
@@ -165,22 +163,22 @@
         "stage": "window",
         "axis": "F2",
         "source": "direct_preview",
-        "candidate": "SP off=0.45 end=0.98 pow=2 c=0.5",
+        "candidate": "SP off=0.4 end=0.94 pow=2 c=0.5",
         "parameters": {
           "type": "sine_bell",
-          "off": 0.45,
-          "end": 0.98,
+          "off": 0.4,
+          "end": 0.94,
           "pow": 2,
           "c": 0.5
         },
-        "score": 0.5518176158964919,
-        "score_metric": "direct_peak_valley",
+        "score": 0.5115045338071107,
+        "score_metric": "phased_global_window",
         "selected": true,
         "applied": true,
         "status": "scored",
         "reason": "",
         "fwhm": null,
-        "snr": 32.28532028198242,
+        "snr": null,
         "shape": null,
         "merged": null,
         "n_ref": null,
@@ -188,20 +186,17 @@
           "reference_sigma": 12.0,
           "total_traces": 180,
           "scanned_traces": 12,
-          "used_traces": 12,
+          "used_traces": 9,
           "trace_indices": [
-            32,
-            0,
-            2,
-            5,
-            11,
-            7,
-            4,
-            6,
-            33,
-            10,
-            3,
-            1
+            16,
+            23,
+            28,
+            35,
+            41,
+            47,
+            53,
+            59,
+            65
           ],
           "probe_budget": 180,
           "qualified_12": 12,
@@ -209,259 +204,783 @@
           "sampling_reason": "energy_fast_path",
           "budget_exhausted": false,
           "max_height_sigma": 368.8222303801008,
-          "score_profile": "direct_peak_valley",
-          "pair_count": 18,
+          "score_profile": "phased_global_window",
+          "sampled_regions": 12,
+          "pair_count": 6,
           "baseline_window": "SP off=0.45 end=0.98 pow=2 c=0.5",
           "candidate_evidence": [
             {
               "label": "SP off=0.5 end=0.98 pow=2 c=0.5",
-              "valley": 0.4967860984781444,
-              "bridged_pairs": 8,
-              "noise": 25.95560668258667,
-              "snr": 32.704036712646484
-            },
-            {
-              "label": "无窗(线性)",
-              "valley": 0.3335852275561001,
-              "bridged_pairs": 7,
-              "noise": 36.67436851730346,
-              "snr": 25.742080688476562
+              "negative_lobe_ratio": 0.08200923968965956,
+              "positive_lobe_ratio": 0.14352719778989234,
+              "width_ratio": 1.237318987293965,
+              "detection_score": 0.9563492063492064,
+              "preserved_pairs": 5,
+              "score": 0.39534289680423956
             },
             {
               "label": "SP off=0.3 end=0.98 pow=1 c=0.5",
-              "valley": 0.2946936542053759,
-              "bridged_pairs": 7,
-              "noise": 27.66683714904785,
-              "snr": 29.020051956176758
+              "negative_lobe_ratio": 0.12768521975287855,
+              "positive_lobe_ratio": 0.26306125750948206,
+              "width_ratio": 1.0180948806889618,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.49912802330801875
             },
             {
               "label": "SP off=0.45 end=0.98 pow=1 c=0.5",
-              "valley": 0.4154880580128038,
-              "bridged_pairs": 7,
-              "noise": 28.725887545108794,
-              "snr": 30.772098541259766
+              "negative_lobe_ratio": 0.10456389266114827,
+              "positive_lobe_ratio": 0.1927629078480364,
+              "width_ratio": 1.116921642233597,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.5014772753272124
             },
             {
               "label": "SP off=0.45 end=0.9 pow=1 c=0.5",
-              "valley": 0.39521225658863557,
-              "bridged_pairs": 7,
-              "noise": 30.252335955905913,
-              "snr": 29.681869506835938
+              "negative_lobe_ratio": 0.11115687040750614,
+              "positive_lobe_ratio": 0.2603977279277171,
+              "width_ratio": 1.0830385477847717,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.48769245042764425
             },
             {
               "label": "SP off=0.45 end=0.98 pow=2 c=0.5",
-              "valley": 0.4481823841035081,
-              "bridged_pairs": 8,
-              "noise": 26.716813227653503,
-              "snr": 32.28532028198242
+              "negative_lobe_ratio": 0.0910881034091588,
+              "positive_lobe_ratio": 0.1409149086752701,
+              "width_ratio": 1.1802621389348624,
+              "detection_score": 0.9563492063492064,
+              "preserved_pairs": 5,
+              "score": 0.4108206924035378
             },
             {
               "label": "SP off=0.65 end=1 pow=2 c=0.5",
-              "valley": 0.606258414112852,
-              "bridged_pairs": 9,
-              "noise": 18.539819851112366,
-              "snr": 33.8701286315918
+              "negative_lobe_ratio": 0.06421739335337849,
+              "positive_lobe_ratio": 0.13928912491922749,
+              "width_ratio": 1.495966895281798,
+              "detection_score": 0.9563492063492064,
+              "preserved_pairs": 4,
+              "score": 0.2570277573350692
             },
             {
               "label": "GM g1=8 g2=15",
-              "valley": 0.43065778827628304,
-              "bridged_pairs": 8,
-              "noise": 27.675319593858717,
-              "snr": 34.76312255859375
+              "negative_lobe_ratio": 0.11242344035520858,
+              "positive_lobe_ratio": 0.12428297174651062,
+              "width_ratio": 1.2515835268646642,
+              "detection_score": 0.9563492063492064,
+              "preserved_pairs": 5,
+              "score": 0.35996530514825364
             },
             {
               "label": "GM g1=4 g2=8",
-              "valley": 0.3246856552228246,
-              "bridged_pairs": 7,
-              "noise": 33.09501010351181,
-              "snr": 29.90757179260254
+              "negative_lobe_ratio": 0.11976030372636198,
+              "positive_lobe_ratio": 0.26765113157524933,
+              "width_ratio": 1.0331502169363223,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.5001046310887587
             },
             {
               "label": "EM lb=3",
-              "valley": 0.5054220099562772,
-              "bridged_pairs": 8,
-              "noise": 26.577486500072478,
-              "snr": 31.4365234375
+              "negative_lobe_ratio": 0.09340922843390628,
+              "positive_lobe_ratio": 0.2697524815431144,
+              "width_ratio": 1.2169509697209966,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.4384832219520118
             },
             {
               "label": "EM lb=5",
-              "valley": 0.597713806181533,
-              "bridged_pairs": 9,
-              "noise": 23.5479907207489,
-              "snr": 35.4100456237793
+              "negative_lobe_ratio": 0.06883001625117223,
+              "positive_lobe_ratio": 0.22438538053830856,
+              "width_ratio": 1.4413802618260796,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.3761919605526858
             },
             {
               "label": "EM lb=10",
-              "valley": 0.7633544856962919,
-              "bridged_pairs": 10,
-              "noise": 20.0835986492157,
-              "snr": 43.87528991699219
+              "negative_lobe_ratio": 0.05652676145364434,
+              "positive_lobe_ratio": 0.16949538859232194,
+              "width_ratio": 1.998990269272953,
+              "detection_score": 0.9285714285714286,
+              "preserved_pairs": 4,
+              "score": 0.1451222130431432
             },
             {
               "label": "EM lb=20",
-              "valley": 0.9505527974726787,
-              "bridged_pairs": 16,
-              "noise": 17.850791322183607,
-              "snr": 41.434173583984375
+              "negative_lobe_ratio": 0.054001926131492684,
+              "positive_lobe_ratio": 0.06766122104263642,
+              "width_ratio": 3.07187420247987,
+              "detection_score": 0.9285714285714286,
+              "preserved_pairs": 4,
+              "score": 0.06515703003682655
             },
             {
-              "label": "SP off=0.55 end=0.98 pow=1 c=0.5",
-              "valley": 0.46142507117238835,
-              "bridged_pairs": 7,
-              "noise": 27.147520789146423,
-              "snr": 31.325300216674805
+              "label": "SP off=0.4 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.11646429035829928,
+              "positive_lobe_ratio": 0.27760251090705457,
+              "width_ratio": 1.0567860982987127,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.48897249093911066
+            },
+            {
+              "label": "SP off=0.4 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.1098457710133518,
+              "positive_lobe_ratio": 0.20046799284239297,
+              "width_ratio": 1.0820563446772897,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.5103033885790156
+            },
+            {
+              "label": "SP off=0.4 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.1138430134271789,
+              "positive_lobe_ratio": 0.21803702065185068,
+              "width_ratio": 1.0718345307968413,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.5041422186475913
+            },
+            {
+              "label": "SP off=0.4 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.10537921490215782,
+              "positive_lobe_ratio": 0.18385184643601354,
+              "width_ratio": 1.1023992245101961,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.5115045338071107
+            },
+            {
+              "label": "SP off=0.4 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.11133363138840041,
+              "positive_lobe_ratio": 0.20748038497502733,
+              "width_ratio": 1.0877428221171133,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.5026786721156835
+            },
+            {
+              "label": "SP off=0.4 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.10171577318568459,
+              "positive_lobe_ratio": 0.1631069909328976,
+              "width_ratio": 1.1226762276504243,
+              "detection_score": 0.9722222222222222,
+              "preserved_pairs": 5,
+              "score": 0.4241561909294188
+            },
+            {
+              "label": "SP off=0.4 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.10926440357428273,
+              "positive_lobe_ratio": 0.19675567027563268,
+              "width_ratio": 1.0963486055672385,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.5046460996864629
+            },
+            {
+              "label": "SP off=0.4 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.09989446990568741,
+              "positive_lobe_ratio": 0.1630450199206012,
+              "width_ratio": 1.1322693199922926,
+              "detection_score": 0.9563492063492064,
+              "preserved_pairs": 4,
+              "score": 0.37846316369089766
+            },
+            {
+              "label": "SP off=0.5 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.10691763742017293,
+              "positive_lobe_ratio": 0.2391755117399549,
+              "width_ratio": 1.1044642534853466,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.488971728893518
+            },
+            {
+              "label": "SP off=0.5 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.09372258086467179,
+              "positive_lobe_ratio": 0.19549903444805658,
+              "width_ratio": 1.1743718993583527,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.4845506453773654
+            },
+            {
+              "label": "SP off=0.5 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.10365424740117665,
+              "positive_lobe_ratio": 0.20969668478007633,
+              "width_ratio": 1.1230219047846732,
+              "detection_score": 1.0,
+              "preserved_pairs": 5,
+              "score": 0.45648254075718314
+            },
+            {
+              "label": "SP off=0.5 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.08797960302303634,
+              "positive_lobe_ratio": 0.2220793879601184,
+              "width_ratio": 1.2043485784321804,
+              "detection_score": 0.9563492063492064,
+              "preserved_pairs": 6,
+              "score": 0.4468534791511317
+            },
+            {
+              "label": "SP off=0.5 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.09925262173967674,
+              "positive_lobe_ratio": 0.1960650515107842,
+              "width_ratio": 1.1433752818204057,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.4933871158617614
+            },
+            {
+              "label": "SP off=0.5 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.09780556515533088,
+              "positive_lobe_ratio": 0.19571330981489216,
+              "width_ratio": 1.1539959884261353,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.48977324840762015
+            },
+            {
+              "label": "SP off=0.5 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.07871268925484788,
+              "positive_lobe_ratio": 0.14282739855555662,
+              "width_ratio": 1.2556567027179188,
+              "detection_score": 0.9563492063492064,
+              "preserved_pairs": 5,
+              "score": 0.39142402004815474
+            },
+            {
+              "label": "SP off=0.6 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.10208810282894427,
+              "positive_lobe_ratio": 0.24792240940719504,
+              "width_ratio": 1.1340367369691513,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.4768625241561932
+            },
+            {
+              "label": "SP off=0.6 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.08297277464433922,
+              "positive_lobe_ratio": 0.2047445928065553,
+              "width_ratio": 1.2395517825188274,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.4614855499534261
+            },
+            {
+              "label": "SP off=0.6 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.09725492526504523,
+              "positive_lobe_ratio": 0.21652642125447813,
+              "width_ratio": 1.158597694999194,
+              "detection_score": 1.0,
+              "preserved_pairs": 5,
+              "score": 0.4447605795123129
+            },
+            {
+              "label": "SP off=0.6 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.07594156881218032,
+              "positive_lobe_ratio": 0.14865037559911096,
+              "width_ratio": 1.2820060644152738,
+              "detection_score": 0.9563492063492064,
+              "preserved_pairs": 5,
+              "score": 0.3813715175710681
             },
             {
               "label": "SP off=0.6 end=0.98 pow=1 c=0.5",
-              "valley": 0.478194378757709,
-              "bridged_pairs": 7,
-              "noise": 25.611671240615845,
-              "snr": 31.530519485473633
+              "negative_lobe_ratio": 0.09261390202096678,
+              "positive_lobe_ratio": 0.20062460969210655,
+              "width_ratio": 1.185454410539527,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.4783232520212169
             },
             {
-              "label": "SP off=0.65 end=0.98 pow=1 c=0.5",
-              "valley": 0.491548829544841,
-              "bridged_pairs": 8,
-              "noise": 23.646149825191497,
-              "snr": 31.64445686340332
+              "label": "SP off=0.6 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.06692914382378207,
+              "positive_lobe_ratio": 0.14761752776708756,
+              "width_ratio": 1.3344286623750863,
+              "detection_score": 0.9563492063492064,
+              "preserved_pairs": 5,
+              "score": 0.36998148739409864
+            },
+            {
+              "label": "SP off=0.6 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.08982868261235492,
+              "positive_lobe_ratio": 0.2005969263788315,
+              "width_ratio": 1.19999217189733,
+              "detection_score": 1.0,
+              "preserved_pairs": 5,
+              "score": 0.4032555650071149
+            },
+            {
+              "label": "SP off=0.6 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.06564279269737458,
+              "positive_lobe_ratio": 0.14001870634608268,
+              "width_ratio": 1.4501291450545428,
+              "detection_score": 0.9563492063492064,
+              "preserved_pairs": 5,
+              "score": 0.3271914268170983
             }
           ]
         },
-        "raw_score": 0.5518176158964919,
-        "separation_score": 0.5518176158964919
+        "raw_score": 0.5692456339458195,
+        "detection_score": 1.0,
+        "separation_score": 1.0,
+        "sidelobe_score": 0.5692456339458195,
+        "resolution_score": 0.8985655810155856,
+        "width_ratio": 1.1023992245101961,
+        "resolution_weight": 1.0,
+        "negative_lobe_ratio": 0.10537921490215782,
+        "positive_lobe_ratio": 0.18385184643601354,
+        "preserved_pairs": 6
       },
       {
         "stage": "window",
         "axis": "F1",
         "source": "fid",
-        "candidate": "GM g1=8 g2=15",
+        "candidate": "EM lb=10",
         "parameters": {
-          "type": "gaussian",
-          "g1": 8.0,
-          "g2": 15.0,
-          "g3": 0.0,
+          "type": "exp",
+          "lb": 10.0,
           "c": 1.0
         },
-        "score": 0.547429394810395,
-        "score_metric": "window_detection",
+        "score": 0.49279818544783294,
+        "score_metric": "phased_global_window",
         "selected": true,
         "applied": true,
         "status": "scored",
         "reason": "",
-        "fwhm": 2.6993188009986246,
-        "snr": 78.0839543474101,
-        "shape": 0.5,
-        "merged": 0.0,
-        "n_ref": 3.5,
+        "fwhm": null,
+        "snr": null,
+        "shape": null,
+        "merged": null,
+        "n_ref": null,
         "sampling": {
           "reference_sigma": 12.0,
           "total_traces": 1025,
           "scanned_traces": 12,
-          "used_traces": 12,
+          "used_traces": 48,
           "trace_indices": [
-            926,
-            776,
+            141,
+            196,
+            220,
+            239,
+            266,
+            286,
+            315,
+            331,
+            343,
+            367,
+            382,
+            392,
+            398,
+            411,
+            427,
+            442,
+            449,
+            457,
+            469,
+            478,
+            491,
             503,
-            476,
+            526,
+            533,
+            544,
+            562,
+            574,
+            585,
+            603,
+            613,
+            626,
+            644,
+            659,
+            677,
+            689,
+            735,
+            754,
+            761,
             777,
-            775,
-            679,
-            502,
-            477,
-            501,
-            678,
-            478
+            795,
+            821,
+            849,
+            862,
+            890,
+            928,
+            937,
+            961,
+            975
           ],
           "probe_budget": 256,
           "qualified_12": 12,
           "qualified_6": 0,
           "sampling_reason": "energy_fast_path",
           "budget_exhausted": false,
-          "max_height_sigma": 62.27308241118721,
-          "score_profile": "indirect_peak_valley",
-          "pair_count": 4,
+          "max_height_sigma": 64.81233202479795,
+          "score_profile": "phased_global_window",
+          "sampled_regions": 67,
+          "pair_count": 62,
           "baseline_window": "SP off=0.65 end=1 pow=2 c=0.5",
           "candidate_evidence": [
             {
               "label": "SP off=0.3 end=0.98 pow=1 c=0.5",
-              "preserved_pairs": 0,
-              "lost_baseline_pairs": 0
+              "negative_lobe_ratio": 0.2775301714870588,
+              "positive_lobe_ratio": 0.12761352601100792,
+              "width_ratio": 1.2684579927386752,
+              "detection_score": 0.9455725986975988,
+              "preserved_pairs": 44,
+              "score": 0.2874003898443527
             },
             {
               "label": "SP off=0.45 end=0.98 pow=1 c=0.5",
-              "preserved_pairs": 0,
-              "lost_baseline_pairs": 0
+              "negative_lobe_ratio": 0.17608056448308645,
+              "positive_lobe_ratio": 0.16381807835660062,
+              "width_ratio": 1.407805440659858,
+              "detection_score": 0.9591721357346357,
+              "preserved_pairs": 47,
+              "score": 0.3530835489864246
             },
             {
               "label": "SP off=0.45 end=0.9 pow=1 c=0.5",
-              "preserved_pairs": 0,
-              "lost_baseline_pairs": 0
+              "negative_lobe_ratio": 0.17908944805723934,
+              "positive_lobe_ratio": 0.1882909648410842,
+              "width_ratio": 1.2200311946787028,
+              "detection_score": 0.9912749287749287,
+              "preserved_pairs": 56,
+              "score": 0.4297947221550412
             },
             {
               "label": "SP off=0.45 end=0.98 pow=2 c=0.5",
-              "preserved_pairs": 0,
-              "lost_baseline_pairs": 0
+              "negative_lobe_ratio": 0.20064613465261028,
+              "positive_lobe_ratio": 0.1783941813319807,
+              "width_ratio": 1.7274969842159165,
+              "detection_score": 0.9129267144892145,
+              "preserved_pairs": 37,
+              "score": 0.2541056282029996
             },
             {
               "label": "SP off=0.5 end=0.98 pow=2 c=0.5",
-              "preserved_pairs": 0,
-              "lost_baseline_pairs": 0
+              "negative_lobe_ratio": 0.1509994080556171,
+              "positive_lobe_ratio": 0.19498916006695105,
+              "width_ratio": 1.8323303646759195,
+              "detection_score": 0.9077183811558811,
+              "preserved_pairs": 36,
+              "score": 0.27051202792368856
             },
             {
               "label": "SP off=0.65 end=1 pow=2 c=0.5",
-              "preserved_pairs": 0,
-              "lost_baseline_pairs": 0
+              "negative_lobe_ratio": 0.07203125442971219,
+              "positive_lobe_ratio": 0.1274291914653988,
+              "width_ratio": 2.0,
+              "detection_score": 0.8910517144892145,
+              "preserved_pairs": 31,
+              "score": 0.2961656187585187
             },
             {
               "label": "GM g1=8 g2=15",
-              "preserved_pairs": 2,
-              "lost_baseline_pairs": 0
+              "negative_lobe_ratio": 0.3796831340825379,
+              "positive_lobe_ratio": 0.20971220837968216,
+              "width_ratio": 1.0561614252212386,
+              "detection_score": 0.9983974358974358,
+              "preserved_pairs": 60,
+              "score": 0.30958541813654805
             },
             {
               "label": "GM g1=4 g2=8",
-              "preserved_pairs": 4,
-              "lost_baseline_pairs": 0
+              "negative_lobe_ratio": 0.4559255401524732,
+              "positive_lobe_ratio": 0.2623377127125936,
+              "width_ratio": 0.9809628269453003,
+              "detection_score": 1.0,
+              "preserved_pairs": 62,
+              "score": 0.2771964474208801
             },
             {
               "label": "EM lb=3",
-              "preserved_pairs": 2,
-              "lost_baseline_pairs": 0
+              "negative_lobe_ratio": 0.21541146427278365,
+              "positive_lobe_ratio": 0.26638594965474044,
+              "width_ratio": 1.0777501267735838,
+              "detection_score": 1.0,
+              "preserved_pairs": 62,
+              "score": 0.4066670507183542
             },
             {
               "label": "EM lb=5",
-              "preserved_pairs": 2,
-              "lost_baseline_pairs": 0
+              "negative_lobe_ratio": 0.150319878084382,
+              "positive_lobe_ratio": 0.268566034635337,
+              "width_ratio": 1.1398251230626693,
+              "detection_score": 1.0,
+              "preserved_pairs": 62,
+              "score": 0.4616975714405024
             },
             {
               "label": "EM lb=10",
-              "preserved_pairs": 0,
-              "lost_baseline_pairs": 0
+              "negative_lobe_ratio": 0.08316179638688849,
+              "positive_lobe_ratio": 0.2515716189938054,
+              "width_ratio": 1.3424811405668289,
+              "detection_score": 0.9892717236467238,
+              "preserved_pairs": 56,
+              "score": 0.49279818544783294
             },
             {
               "label": "EM lb=20",
-              "preserved_pairs": 0,
-              "lost_baseline_pairs": 0
+              "negative_lobe_ratio": 0.0524210947008045,
+              "positive_lobe_ratio": 0.2654577607156129,
+              "width_ratio": 1.9855946489701475,
+              "detection_score": 0.8947802197802197,
+              "preserved_pairs": 32,
+              "score": 0.2882227721076687
+            },
+            {
+              "label": "SP off=0.4 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.1919365023685351,
+              "positive_lobe_ratio": 0.17871863960255638,
+              "width_ratio": 1.1878610801921567,
+              "detection_score": 0.9829415954415955,
+              "preserved_pairs": 53,
+              "score": 0.41147141810917787
+            },
+            {
+              "label": "SP off=0.4 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.2206121587813516,
+              "positive_lobe_ratio": 0.15111598334777543,
+              "width_ratio": 1.3814441566990308,
+              "detection_score": 0.9377600986975988,
+              "preserved_pairs": 42,
+              "score": 0.29868623041846754
+            },
+            {
+              "label": "SP off=0.4 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.19148585818563832,
+              "positive_lobe_ratio": 0.1572219392077844,
+              "width_ratio": 1.2613493398485047,
+              "detection_score": 0.9653820716320718,
+              "preserved_pairs": 49,
+              "score": 0.3732398767686652
+            },
+            {
+              "label": "SP off=0.4 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.23702883186685403,
+              "positive_lobe_ratio": 0.15010230235888233,
+              "width_ratio": 1.5061361483251774,
+              "detection_score": 0.9169776404151403,
+              "preserved_pairs": 38,
+              "score": 0.2590789793801912
+            },
+            {
+              "label": "SP off=0.4 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.19860926116038133,
+              "positive_lobe_ratio": 0.1512946775440865,
+              "width_ratio": 1.352107755177069,
+              "detection_score": 0.9507809320309321,
+              "preserved_pairs": 44,
+              "score": 0.3292940497037978
+            },
+            {
+              "label": "SP off=0.4 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.32368023456400086,
+              "positive_lobe_ratio": 0.16113346979661183,
+              "width_ratio": 1.6414123862913834,
+              "detection_score": 0.9007739367114368,
+              "preserved_pairs": 37,
+              "score": 0.19923553421307963
+            },
+            {
+              "label": "SP off=0.4 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.2111594828175729,
+              "positive_lobe_ratio": 0.16138612783268869,
+              "width_ratio": 1.4011174659126742,
+              "detection_score": 0.9481767653642654,
+              "preserved_pairs": 44,
+              "score": 0.3129706389669648
+            },
+            {
+              "label": "SP off=0.4 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.34122436479854523,
+              "positive_lobe_ratio": 0.15753831075067054,
+              "width_ratio": 1.723861485529882,
+              "detection_score": 0.8938294922669923,
+              "preserved_pairs": 37,
+              "score": 0.18772393858206873
+            },
+            {
+              "label": "SP off=0.5 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.1663358684333295,
+              "positive_lobe_ratio": 0.19761964063773693,
+              "width_ratio": 1.2417768151258968,
+              "detection_score": 0.9912749287749287,
+              "preserved_pairs": 56,
+              "score": 0.43785063949533215
+            },
+            {
+              "label": "SP off=0.5 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.1378914589079568,
+              "positive_lobe_ratio": 0.14700336835671676,
+              "width_ratio": 1.510294008062161,
+              "detection_score": 0.9617763024013023,
+              "preserved_pairs": 46,
+              "score": 0.38459670745843993
+            },
+            {
+              "label": "SP off=0.5 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.15430223135668766,
+              "positive_lobe_ratio": 0.1557842832301139,
+              "width_ratio": 1.3316360356635044,
+              "detection_score": 0.9725249287749289,
+              "preserved_pairs": 51,
+              "score": 0.41824853917398563
+            },
+            {
+              "label": "SP off=0.5 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.14809856292275084,
+              "positive_lobe_ratio": 0.17898159400109312,
+              "width_ratio": 1.6597871053929278,
+              "detection_score": 0.9268982753357754,
+              "preserved_pairs": 38,
+              "score": 0.30127298876204467
+            },
+            {
+              "label": "SP off=0.5 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.16323331541260083,
+              "positive_lobe_ratio": 0.1667811982417433,
+              "width_ratio": 1.4440543468730627,
+              "detection_score": 0.9673566595441597,
+              "preserved_pairs": 48,
+              "score": 0.3738510567687605
+            },
+            {
+              "label": "SP off=0.5 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.15286889594606465,
+              "positive_lobe_ratio": 0.18230827260956142,
+              "width_ratio": 1.5028422508384724,
+              "detection_score": 0.9549654049654052,
+              "preserved_pairs": 46,
+              "score": 0.3568325628291012
+            },
+            {
+              "label": "SP off=0.5 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.15805823157608895,
+              "positive_lobe_ratio": 0.1944451609240186,
+              "width_ratio": 1.8940214482477902,
+              "detection_score": 0.9042461589336589,
+              "preserved_pairs": 35,
+              "score": 0.2561650081404821
+            },
+            {
+              "label": "SP off=0.6 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.14098252911564596,
+              "positive_lobe_ratio": 0.20610957264905821,
+              "width_ratio": 1.2423303020292769,
+              "detection_score": 0.994480056980057,
+              "preserved_pairs": 59,
+              "score": 0.4692812501276175
+            },
+            {
+              "label": "SP off=0.6 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.08949273503109886,
+              "positive_lobe_ratio": 0.18466749946680916,
+              "width_ratio": 1.5529681812165763,
+              "detection_score": 0.948448310948311,
+              "preserved_pairs": 46,
+              "score": 0.39908626858527857
+            },
+            {
+              "label": "SP off=0.6 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.12654676693995928,
+              "positive_lobe_ratio": 0.16297851754882825,
+              "width_ratio": 1.3439810302496773,
+              "detection_score": 0.9824608262108262,
+              "preserved_pairs": 55,
+              "score": 0.45986008412508944
+            },
+            {
+              "label": "SP off=0.6 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.08529964692568119,
+              "positive_lobe_ratio": 0.2030001269377812,
+              "width_ratio": 1.7770482956587579,
+              "detection_score": 0.9159029049654049,
+              "preserved_pairs": 36,
+              "score": 0.3219321891112382
+            },
+            {
+              "label": "SP off=0.6 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.12282285764550692,
+              "positive_lobe_ratio": 0.15509291287083088,
+              "width_ratio": 1.491337729566148,
+              "detection_score": 0.9685471357346357,
+              "preserved_pairs": 49,
+              "score": 0.4165387874268828
+            },
+            {
+              "label": "SP off=0.6 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.07736751337876857,
+              "positive_lobe_ratio": 0.1264685390748242,
+              "width_ratio": 1.9530486909982856,
+              "detection_score": 0.9072223494098495,
+              "preserved_pairs": 33,
+              "score": 0.3098269185680535
+            },
+            {
+              "label": "SP off=0.6 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.1257464080725581,
+              "positive_lobe_ratio": 0.18214805971627798,
+              "width_ratio": 1.5897487425772252,
+              "detection_score": 0.9601737382987384,
+              "preserved_pairs": 47,
+              "score": 0.38699278424254885
+            },
+            {
+              "label": "SP off=0.6 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.07680528548394157,
+              "positive_lobe_ratio": 0.12805567618491184,
+              "width_ratio": 2.0,
+              "detection_score": 0.8910517144892145,
+              "preserved_pairs": 31,
+              "score": 0.2914369955110779
             }
           ]
         },
-        "raw_score": 0.5572866525504383,
-        "detection_score": 55.350689422869806,
-        "separation_score": 0.953134192699304,
-        "symmetry_score": 0.5,
-        "sidelobe_score": 0.5637396095057752,
-        "resolution_score": 0.9823120512667382,
-        "width_ratio": 1.0739946340394841,
-        "resolution_reference_fwhm": 2.513344774215499,
-        "resolution_weight": 0.25
+        "raw_score": 0.5416771816913282,
+        "detection_score": 0.9892717236467238,
+        "separation_score": 0.9474137931034483,
+        "sidelobe_score": 0.5779433116898511,
+        "resolution_score": 0.9097636047897091,
+        "width_ratio": 1.3424811405668289,
+        "resolution_weight": 0.25,
+        "negative_lobe_ratio": 0.08316179638688849,
+        "positive_lobe_ratio": 0.2515716189938054,
+        "preserved_pairs": 56
       }
-    ]
+    ],
+    "spectrum_sha256": "adab6fa335a7a80641dcce1fd712351de421bc7735554f3252efab3fcbd09738",
+    "author_processing": {
+      "source": "Deposited Bruker procs and proc2s",
+      "F2": {
+        "WDW": 4,
+        "SSB": 2,
+        "FCOR": 0.5,
+        "ME_mod": 0,
+        "SI": 2048
+      },
+      "F1": {
+        "WDW": 4,
+        "SSB": 2,
+        "FCOR": 0.5,
+        "ME_mod": 2,
+        "NCOEF": 32,
+        "LPBIN": 356,
+        "TDeff": 356,
+        "SI": 256
+      }
+    }
   },
   "nus75": {
     "shape": [
       256,
       1028
     ],
-    "wall_time_s": 17.203612226003315,
+    "wall_time_s": 18.189393226988614,
     "params_used": {
       "ext_lo": "10.5",
       "ext_hi": "6.5",
@@ -498,11 +1017,11 @@
       "window": {
         "F1": {
           "type": "exp",
-          "lb": 3.0,
+          "lb": 5.0,
           "c": 1.0
         }
       },
-      "backend_runs": 6,
+      "backend_runs": 7,
       "direct_phase": [
         173.55945363260423,
         -0.0
@@ -526,7 +1045,7 @@
         },
         "apply_poly_time": true,
         "repaired_badpoints": 0,
-        "backup_dir": "<VM>/fid_diag_bak",
+        "backup_dir": "<work>/fid_diag_bak",
         "clean": false
       },
       "phase_seed": {
@@ -571,8 +1090,8 @@
       "sha256": "176c0dfb22b93e74e33ab554af8209bfa5008f9223920f7fce3f4e7544955452"
     },
     "automatic_final": {
-      "text": "#!/bin/csh\n# NMRFinesse 2D NUS SMILE reconstruction (two-stage)\n# experiment: d_001\nmkdir -p nus2d\n# stage 1: direct dim (F2) FT + EXT + POLY, SMILE reconstruct F1\nnmrPipe -in d_001.fid \\\n| nmrPipe -fn POLY -time \\\n| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 1 -c 0.5 \\\n| nmrPipe -fn ZF -zf -size 4096 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn EXT -x1 10.5ppm -xn 6.5ppm -sw -round 2 \\\n| nmrPipe -fn PS -p0 173.559 -p1 -0 -di \\\n| nmrPipe -fn POLY -ord 3 -auto \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn SMILE -nDim 2 \\\n           -sample nuslist -nThread 2 \\\n           -sampleCount 68 -nSigma 5 -off 0 0 -report 1 \\\n           -maxMem 8.51909 \\\n           -scaling 1 \\\n           -maxIter 300 \\\n           -xT 90 \\\n           -xP0 85 -xP1 0 \\\n           -thresh 0.95 \\\n| pipe2xyz -out nus2d/recon.ft1 -x -ov\n\n# stage 2: indirect dim (F1) window + ZF + FT -alt + PS + POLY\nnmrPipe -in nus2d/recon.ft1 \\\n| nmrPipe -fn EM -lb 3 \\\n| nmrPipe -fn ZF -size 256 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 85 -p1 0 -di \\\n| nmrPipe -fn POLY -ord 2 -auto \\\n| nmrPipe -fn TP \\\n  -out d_001.ft2 -ov\n",
-      "sha256": "54e475261f33cbae48c3fcd7f652e923d78c10feb6a731912ed3790f1c0ba5e5"
+      "text": "#!/bin/csh\n# NMRFinesse 2D NUS SMILE reconstruction (two-stage)\n# experiment: d_001\nmkdir -p nus2d\n# stage 1: direct dim (F2) FT + EXT + POLY, SMILE reconstruct F1\nnmrPipe -in d_001.fid \\\n| nmrPipe -fn POLY -time \\\n| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 1 -c 0.5 \\\n| nmrPipe -fn ZF -zf -size 4096 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn EXT -x1 10.5ppm -xn 6.5ppm -sw -round 2 \\\n| nmrPipe -fn PS -p0 173.559 -p1 -0 -di \\\n| nmrPipe -fn POLY -ord 3 -auto \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn SMILE -nDim 2 \\\n           -sample nuslist -nThread 2 \\\n           -sampleCount 68 -nSigma 5 -off 0 0 -report 1 \\\n           -maxMem 9.32427 \\\n           -scaling 1 \\\n           -maxIter 300 \\\n           -xT 90 \\\n           -xP0 85 -xP1 0 \\\n           -thresh 0.95 \\\n| pipe2xyz -out nus2d/recon.ft1 -x -ov\n\n# stage 2: indirect dim (F1) window + ZF + FT -alt + PS + POLY\nnmrPipe -in nus2d/recon.ft1 \\\n| nmrPipe -fn EM -lb 5 \\\n| nmrPipe -fn ZF -size 256 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 85 -p1 0 -di \\\n| nmrPipe -fn POLY -ord 2 -auto \\\n| nmrPipe -fn TP \\\n  -out d_001.ft2 -ov\n",
+      "sha256": "329a607d7b07f654032adb9a3fdc96ce5406c32332929d39545b70cc4781eace"
     },
     "selected_optimization_rows": [
       {
@@ -690,41 +1209,82 @@
         "stage": "window",
         "axis": "F1",
         "source": "reconstruction",
-        "candidate": "EM lb=3",
+        "candidate": "EM lb=5",
         "parameters": {
           "type": "exp",
-          "lb": 3.0,
+          "lb": 5.0,
           "c": 1.0
         },
-        "score": 0.9114794193738469,
-        "score_metric": "window_detection",
+        "score": 0.4700849746240615,
+        "score_metric": "phased_global_window",
         "selected": true,
         "applied": true,
         "status": "scored",
         "reason": "",
-        "fwhm": 3.312250282705416,
-        "snr": 58.97358117179709,
-        "shape": 0.8333333333333333,
-        "merged": 0.0,
-        "n_ref": 3.0,
+        "fwhm": null,
+        "snr": null,
+        "shape": null,
+        "merged": null,
+        "n_ref": null,
         "sampling": {
           "reference_sigma": 12.0,
           "total_traces": 1028,
           "scanned_traces": 12,
-          "used_traces": 12,
+          "used_traces": 53,
           "trace_indices": [
-            754,
-            777,
-            576,
-            644,
-            676,
-            928,
-            776,
-            778,
-            574,
+            63,
+            140,
+            196,
+            220,
+            240,
+            267,
+            286,
+            315,
+            330,
+            343,
+            367,
+            373,
+            379,
+            383,
+            393,
+            398,
+            410,
+            417,
+            427,
+            442,
+            457,
+            471,
+            484,
+            494,
+            503,
+            527,
+            533,
+            544,
+            563,
             575,
-            678,
-            677
+            585,
+            603,
+            613,
+            626,
+            644,
+            660,
+            677,
+            689,
+            735,
+            754,
+            762,
+            777,
+            795,
+            822,
+            856,
+            862,
+            890,
+            916,
+            928,
+            938,
+            975,
+            1011,
+            1020
           ],
           "probe_budget": 256,
           "qualified_12": 12,
@@ -732,19 +1292,361 @@
           "sampling_reason": "energy_fast_path",
           "budget_exhausted": false,
           "max_height_sigma": 52.34104368860257,
-          "score_profile": "indirect_sidelobe_valley"
+          "score_profile": "phased_global_window",
+          "sampled_regions": 81,
+          "pair_count": 21,
+          "baseline_window": "EM lb=3",
+          "candidate_evidence": [
+            {
+              "label": "SP off=0.3 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.22537700449703085,
+              "positive_lobe_ratio": 0.1487950523180182,
+              "width_ratio": 1.1318867440731109,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.4175808502675158
+            },
+            {
+              "label": "SP off=0.45 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.18954508936090805,
+              "positive_lobe_ratio": 0.15830173554759988,
+              "width_ratio": 1.2074595370666206,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.4407373672183238
+            },
+            {
+              "label": "SP off=0.45 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.18664028365007107,
+              "positive_lobe_ratio": 0.16324381915807365,
+              "width_ratio": 1.1335498539758542,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.4516876692520973
+            },
+            {
+              "label": "SP off=0.45 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.20009980707259475,
+              "positive_lobe_ratio": 0.16070649001098763,
+              "width_ratio": 1.3952704037281256,
+              "detection_score": 0.9716981132075472,
+              "preserved_pairs": 18,
+              "score": 0.3486651559834601
+            },
+            {
+              "label": "SP off=0.5 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.20069675645621596,
+              "positive_lobe_ratio": 0.16531016846986923,
+              "width_ratio": 1.4424418261866958,
+              "detection_score": 0.9716981132075472,
+              "preserved_pairs": 17,
+              "score": 0.32725786168755694
+            },
+            {
+              "label": "SP off=0.65 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.1945656061957412,
+              "positive_lobe_ratio": 0.1719836269573624,
+              "width_ratio": 1.613706459113968,
+              "detection_score": 0.9654088050314465,
+              "preserved_pairs": 16,
+              "score": 0.2981854495331223
+            },
+            {
+              "label": "GM g1=8 g2=15",
+              "negative_lobe_ratio": 0.21525646478942753,
+              "positive_lobe_ratio": 0.17194171630579003,
+              "width_ratio": 1.0274850944712963,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.4334225724361171
+            },
+            {
+              "label": "GM g1=4 g2=8",
+              "negative_lobe_ratio": 0.20804142827905292,
+              "positive_lobe_ratio": 0.18130526759243526,
+              "width_ratio": 0.9763312193294217,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.4411429840952764
+            },
+            {
+              "label": "EM lb=3",
+              "negative_lobe_ratio": 0.18031956514075656,
+              "positive_lobe_ratio": 0.17708805620101287,
+              "width_ratio": 1.0699590060078592,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.46261671844692803
+            },
+            {
+              "label": "EM lb=5",
+              "negative_lobe_ratio": 0.16726454043563246,
+              "positive_lobe_ratio": 0.1802484424830082,
+              "width_ratio": 1.1193314048445908,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.4700849746240615
+            },
+            {
+              "label": "EM lb=10",
+              "negative_lobe_ratio": 0.16826879240530576,
+              "positive_lobe_ratio": 0.16291780599501265,
+              "width_ratio": 1.2545960230692246,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.45626082883578617
+            },
+            {
+              "label": "EM lb=20",
+              "negative_lobe_ratio": 0.18061058884857686,
+              "positive_lobe_ratio": 0.16931058575157718,
+              "width_ratio": 1.6088588102712045,
+              "detection_score": 0.9748427672955975,
+              "preserved_pairs": 18,
+              "score": 0.34261488927380873
+            },
+            {
+              "label": "SP off=0.4 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.18989759195774997,
+              "positive_lobe_ratio": 0.16271763681440457,
+              "width_ratio": 1.116265620408831,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.4505369117518634
+            },
+            {
+              "label": "SP off=0.4 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.1954504827407875,
+              "positive_lobe_ratio": 0.15602104479518966,
+              "width_ratio": 1.2069904829686522,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.43538276637760703
+            },
+            {
+              "label": "SP off=0.4 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.1911862340429998,
+              "positive_lobe_ratio": 0.16177046845946672,
+              "width_ratio": 1.1469845996501677,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.4456604291554502
+            },
+            {
+              "label": "SP off=0.4 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.21233680461747645,
+              "positive_lobe_ratio": 0.15957316922607429,
+              "width_ratio": 1.28225730550078,
+              "detection_score": 0.9811320754716981,
+              "preserved_pairs": 19,
+              "score": 0.3699508574508012
+            },
+            {
+              "label": "SP off=0.4 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.19375716569898696,
+              "positive_lobe_ratio": 0.15517203117718664,
+              "width_ratio": 1.1835120292544532,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.44020404372785416
+            },
+            {
+              "label": "SP off=0.4 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.21377261443230225,
+              "positive_lobe_ratio": 0.14758459089329978,
+              "width_ratio": 1.3406986490464936,
+              "detection_score": 0.9811320754716981,
+              "preserved_pairs": 19,
+              "score": 0.36503659055809473
+            },
+            {
+              "label": "SP off=0.4 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.19436350240018754,
+              "positive_lobe_ratio": 0.1504743301174568,
+              "width_ratio": 1.2043603679278687,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.4382016267324926
+            },
+            {
+              "label": "SP off=0.4 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.21395160205426564,
+              "positive_lobe_ratio": 0.14720355938338725,
+              "width_ratio": 1.3703754191549242,
+              "detection_score": 0.9811320754716981,
+              "preserved_pairs": 19,
+              "score": 0.36185585751646365
+            },
+            {
+              "label": "SP off=0.5 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.18668037449204675,
+              "positive_lobe_ratio": 0.1647429926765878,
+              "width_ratio": 1.14637781752324,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.44965515658545707
+            },
+            {
+              "label": "SP off=0.5 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.18526121042786506,
+              "positive_lobe_ratio": 0.15731744121780228,
+              "width_ratio": 1.3009196639004892,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.4337015842377396
+            },
+            {
+              "label": "SP off=0.5 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.18738082526950828,
+              "positive_lobe_ratio": 0.16117644546156323,
+              "width_ratio": 1.1930612180482272,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.44402809751653105
+            },
+            {
+              "label": "SP off=0.5 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.19697117389021868,
+              "positive_lobe_ratio": 0.16726339699619497,
+              "width_ratio": 1.3698682230759895,
+              "detection_score": 0.9716981132075472,
+              "preserved_pairs": 18,
+              "score": 0.35242296682269453
+            },
+            {
+              "label": "SP off=0.5 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.1889224455260688,
+              "positive_lobe_ratio": 0.1584077846714414,
+              "width_ratio": 1.2507391025446255,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.43595122586932983
+            },
+            {
+              "label": "SP off=0.5 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.18899816103400566,
+              "positive_lobe_ratio": 0.1560936080153399,
+              "width_ratio": 1.278989871818726,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.4329456397335766
+            },
+            {
+              "label": "SP off=0.5 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.20215552414036858,
+              "positive_lobe_ratio": 0.16599051147813415,
+              "width_ratio": 1.479297022813215,
+              "detection_score": 0.9654088050314465,
+              "preserved_pairs": 17,
+              "score": 0.32053621643673774
+            },
+            {
+              "label": "SP off=0.6 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.17661147394879756,
+              "positive_lobe_ratio": 0.1676905988775084,
+              "width_ratio": 1.1692827289206078,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.45676247086455785
+            },
+            {
+              "label": "SP off=0.6 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.17128449943114638,
+              "positive_lobe_ratio": 0.15719366011062302,
+              "width_ratio": 1.3333996074280117,
+              "detection_score": 1.0,
+              "preserved_pairs": 19,
+              "score": 0.40924186660227063
+            },
+            {
+              "label": "SP off=0.6 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.17801723323908414,
+              "positive_lobe_ratio": 0.1610550883120581,
+              "width_ratio": 1.2214435998106103,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.45037038011319336
+            },
+            {
+              "label": "SP off=0.6 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.1936498367995415,
+              "positive_lobe_ratio": 0.17525994754561933,
+              "width_ratio": 1.4213176929677933,
+              "detection_score": 0.9716981132075472,
+              "preserved_pairs": 17,
+              "score": 0.33268581134434017
+            },
+            {
+              "label": "SP off=0.6 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.18082546955823794,
+              "positive_lobe_ratio": 0.15822766291007465,
+              "width_ratio": 1.2850122684225498,
+              "detection_score": 1.0,
+              "preserved_pairs": 21,
+              "score": 0.4400513907290948
+            },
+            {
+              "label": "SP off=0.6 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.19505440374073835,
+              "positive_lobe_ratio": 0.1739334182411297,
+              "width_ratio": 1.5156708363613334,
+              "detection_score": 0.9654088050314465,
+              "preserved_pairs": 17,
+              "score": 0.32092153937411827
+            },
+            {
+              "label": "SP off=0.6 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.18196362191257198,
+              "positive_lobe_ratio": 0.1563133122128613,
+              "width_ratio": 1.3216265976398478,
+              "detection_score": 1.0,
+              "preserved_pairs": 20,
+              "score": 0.4175945532768715
+            },
+            {
+              "label": "SP off=0.6 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.19681901645336342,
+              "positive_lobe_ratio": 0.174173395181672,
+              "width_ratio": 1.5694581579582285,
+              "detection_score": 0.9654088050314465,
+              "preserved_pairs": 17,
+              "score": 0.3147511357677863
+            }
+          ]
         },
-        "raw_score": 0.9226839151274853,
-        "detection_score": 45.87681826432758,
-        "separation_score": 0.9379401067842201,
-        "symmetry_score": 1.0,
-        "sidelobe_score": 1.0,
-        "resolution_score": 0.9878566261208853,
-        "width_ratio": 1.0500847005506224,
-        "resolution_reference_fwhm": 3.154269632695919,
-        "resolution_weight": 0.25
+        "raw_score": 0.4850523231704724,
+        "detection_score": 1.0,
+        "separation_score": 1.0,
+        "sidelobe_score": 0.4850523231704724,
+        "resolution_score": 0.9691428164933238,
+        "width_ratio": 1.1193314048445908,
+        "resolution_weight": 0.25,
+        "negative_lobe_ratio": 0.16726454043563246,
+        "positive_lobe_ratio": 0.1802484424830082,
+        "preserved_pairs": 21
       }
-    ]
+    ],
+    "spectrum_sha256": "e798eb95644d9e7f42ef1cf400a1da339674223eeba2c355e284443fba1b1b1d",
+    "author_processing": {
+      "source": "Deposited Bruker procs and proc2s",
+      "F2": {
+        "WDW": 4,
+        "SSB": 2,
+        "FCOR": 0.5,
+        "ME_mod": 0,
+        "SI": 2048
+      },
+      "F1": {
+        "WDW": 4,
+        "SSB": 2,
+        "FCOR": 0.5,
+        "ME_mod": 2,
+        "NCOEF": 32,
+        "LPBIN": 356,
+        "TDeff": 356,
+        "SI": 256
+      }
+    }
   },
   "uniform3d": {
     "shape": [
@@ -752,7 +1654,7 @@
       128,
       548
     ],
-    "wall_time_s": 60.98421312001301,
+    "wall_time_s": 70.79164443799527,
     "params_used": {
       "ext_lo": "10",
       "ext_hi": "6",
@@ -804,28 +1706,26 @@
       },
       "window": {
         "F3": {
-          "type": "sine_bell",
-          "off": 0.65,
-          "end": 1.0,
-          "pow": 2,
-          "c": 0.5
+          "type": "exp",
+          "lb": 3.0,
+          "c": 1.0
         },
         "F2": {
           "type": "sine_bell",
-          "off": 0.45,
-          "end": 0.9,
+          "off": 0.6,
+          "end": 0.94,
           "pow": 1,
           "c": 0.5
         },
         "F1": {
           "type": "sine_bell",
-          "off": 0.45,
+          "off": 0.6,
           "end": 0.9,
-          "pow": 1,
+          "pow": 2,
           "c": 0.5
         }
       },
-      "backend_runs": 7,
+      "backend_runs": 9,
       "direct_phase": [
         15.0,
         0.0
@@ -876,8 +1776,8 @@
       "sha256": "a729754a4d46fbe7798e5c693caa49b003f7b7b634a659382dd7e81f237bb3e8"
     },
     "automatic_final": {
-      "text": "#!/bin/csh\n# NMRFinesse processing script\n# experiment: d_001\nxyz2pipe -in fid/test%03d.fid -x \\\n| nmrPipe -fn POLY -time \\\n| nmrPipe -fn SP -off 0.65 -end 1 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -size 2048 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 15 -p1 0 -di \\\n| nmrPipe -fn EXT -x1 10ppm -xn 6ppm -sw -round 2 \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn SP -off 0.45 -end 0.9 -pow 1 -c 0.5 \\\n| nmrPipe -fn ZF -size 128 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 267.5 -p1 0 -di \\\n| nmrPipe -fn ZTP \\\n| nmrPipe -fn SP -off 0.45 -end 0.9 -pow 1 -c 0.5 \\\n| nmrPipe -fn ZF -size 128 \\\n| nmrPipe -fn FT -alt \\\n| nmrPipe -fn PS -p0 2.5 -p1 0 -di \\\n| nmrPipe -fn TP \\\n| pipe2xyz -out d_001.ft3 -x\n",
-      "sha256": "b51198a9f8d6c61c69077fdf6990408421fb33651af969813f6a403a1443e3dd"
+      "text": "#!/bin/csh\n# NMRFinesse processing script\n# experiment: d_001\nxyz2pipe -in fid/test%03d.fid -x \\\n| nmrPipe -fn POLY -time \\\n| nmrPipe -fn EM -lb 3 \\\n| nmrPipe -fn ZF -size 2048 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 15 -p1 0 -di \\\n| nmrPipe -fn EXT -x1 10ppm -xn 6ppm -sw -round 2 \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn SP -off 0.6 -end 0.94 -pow 1 -c 0.5 \\\n| nmrPipe -fn ZF -size 128 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn PS -p0 267.5 -p1 0 -di \\\n| nmrPipe -fn ZTP \\\n| nmrPipe -fn SP -off 0.6 -end 0.9 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -size 128 \\\n| nmrPipe -fn FT -alt \\\n| nmrPipe -fn PS -p0 2.5 -p1 0 -di \\\n| nmrPipe -fn TP \\\n| pipe2xyz -out d_001.ft3 -x\n",
+      "sha256": "571593b1238138821297470a72b7538cbb3ac5116fcd6c6191d9887244b9c854"
     },
     "selected_optimization_rows": [
       {
@@ -962,22 +1862,20 @@
         "stage": "window",
         "axis": "F3",
         "source": "direct_preview",
-        "candidate": "SP off=0.65 end=1 pow=2 c=0.5",
+        "candidate": "EM lb=3",
         "parameters": {
-          "type": "sine_bell",
-          "off": 0.65,
-          "end": 1.0,
-          "pow": 2,
-          "c": 0.5
+          "type": "exp",
+          "lb": 3.0,
+          "c": 1.0
         },
-        "score": 0.9932260937482495,
-        "score_metric": "direct_peak_valley",
+        "score": 0.41252043086967477,
+        "score_metric": "phased_global_window",
         "selected": true,
         "applied": true,
         "status": "scored",
         "reason": "",
         "fwhm": null,
-        "snr": 14.81445026397705,
+        "snr": null,
         "shape": null,
         "merged": null,
         "n_ref": null,
@@ -985,20 +1883,11 @@
           "reference_sigma": 12.0,
           "total_traces": 4096,
           "scanned_traces": 12,
-          "used_traces": 12,
+          "used_traces": 3,
           "trace_indices": [
-            3199,
-            3215,
-            2544,
-            3198,
-            2169,
-            2468,
-            2642,
-            3227,
-            2469,
-            3222,
-            2175,
-            2683
+            308,
+            312,
+            916
           ],
           "probe_budget": 256,
           "qualified_12": 12,
@@ -1006,168 +1895,453 @@
           "sampling_reason": "energy_fast_path",
           "budget_exhausted": false,
           "max_height_sigma": 53.893308442629724,
-          "score_profile": "direct_peak_valley",
-          "pair_count": 1,
+          "score_profile": "phased_global_window",
+          "sampled_regions": 28,
+          "pair_count": 0,
           "baseline_window": "GM g1=4 g2=8",
           "candidate_evidence": [
             {
               "label": "SP off=0.5 end=0.98 pow=2 c=0.5",
-              "valley": 0.029148934647211407,
-              "bridged_pairs": 0,
-              "noise": 381.02342661437984,
-              "snr": 16.403411865234375
-            },
-            {
-              "label": "无窗(线性)",
-              "valley": 0.002122744811149705,
-              "bridged_pairs": 0,
-              "noise": 774.6533420288085,
-              "snr": 11.84770393371582
+              "negative_lobe_ratio": 0.14419582868535585,
+              "positive_lobe_ratio": 0.16139694139252836,
+              "width_ratio": 1.4074032653854696,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3305589648008831
             },
             {
               "label": "SP off=0.3 end=0.98 pow=1 c=0.5",
-              "valley": 0.011552751720811586,
-              "bridged_pairs": 0,
-              "noise": 475.061305005455,
-              "snr": 16.49826431274414
+              "negative_lobe_ratio": 0.23612072778818885,
+              "positive_lobe_ratio": 0.12945152128491472,
+              "width_ratio": 1.1076817185978238,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.38141519323440576
             },
             {
               "label": "SP off=0.45 end=0.98 pow=1 c=0.5",
-              "valley": 0.05799525889701444,
-              "bridged_pairs": 0,
-              "noise": 461.6154369873047,
-              "snr": 16.34482192993164
+              "negative_lobe_ratio": 0.18996812401474605,
+              "positive_lobe_ratio": 0.1422485340966586,
+              "width_ratio": 1.1909939401071954,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3829020874937923
             },
             {
               "label": "SP off=0.45 end=0.9 pow=1 c=0.5",
-              "valley": 0.04011488441213884,
-              "bridged_pairs": 0,
-              "noise": 535.1793220776558,
-              "snr": 15.067831993103027
+              "negative_lobe_ratio": 0.20757587956223128,
+              "positive_lobe_ratio": 0.13873759101650388,
+              "width_ratio": 1.1217113430271295,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.39789920437275306
             },
             {
               "label": "SP off=0.45 end=0.98 pow=2 c=0.5",
-              "valley": 0.038806592100816516,
-              "bridged_pairs": 0,
-              "noise": 396.84884963335986,
-              "snr": 16.929819107055664
+              "negative_lobe_ratio": 0.16507910829017775,
+              "positive_lobe_ratio": 0.15297571255767262,
+              "width_ratio": 1.354892867153474,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.33486387498597925
             },
             {
               "label": "SP off=0.65 end=1 pow=2 c=0.5",
-              "valley": 0.006773906251750489,
-              "bridged_pairs": 0,
-              "noise": 264.7815327850342,
-              "snr": 14.81445026397705
+              "negative_lobe_ratio": 0.09139082347166966,
+              "positive_lobe_ratio": 0.05993797115294936,
+              "width_ratio": 1.6032806278618446,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3318344676178999
             },
             {
               "label": "GM g1=8 g2=15",
-              "valley": 0.03179304449960937,
-              "bridged_pairs": 0,
-              "noise": 775.8505298268735,
-              "snr": 13.293197631835938
+              "negative_lobe_ratio": 0.2609042103642929,
+              "positive_lobe_ratio": 0.1254905970134821,
+              "width_ratio": 1.0105599884563503,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.4019856539501029
             },
             {
               "label": "GM g1=4 g2=8",
-              "valley": 0.0073381327421286535,
-              "bridged_pairs": 0,
-              "noise": 890.0235878604411,
-              "snr": 11.58110237121582
+              "negative_lobe_ratio": 0.2642101808204117,
+              "positive_lobe_ratio": 0.17464435242487886,
+              "width_ratio": 0.9697825693885543,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3938005794710403
             },
             {
               "label": "EM lb=3",
-              "valley": 0.011902210744551311,
-              "bridged_pairs": 0,
-              "noise": 615.9281578216552,
-              "snr": 12.956438064575195
+              "negative_lobe_ratio": 0.21552212625866732,
+              "positive_lobe_ratio": 0.14387679584304824,
+              "width_ratio": 1.0690597382131082,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.41252043086967477
             },
             {
               "label": "EM lb=5",
-              "valley": 0.016336461966939782,
-              "bridged_pairs": 0,
-              "noise": 537.6154277709961,
-              "snr": 13.587615013122559
+              "negative_lobe_ratio": 0.19277744047010564,
+              "positive_lobe_ratio": 0.15032769918724026,
+              "width_ratio": 1.1170652054784689,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.410983762633458
             },
             {
               "label": "EM lb=10",
-              "valley": 0.02217478768797637,
-              "bridged_pairs": 0,
-              "noise": 406.51407464346886,
-              "snr": 14.625186920166016
+              "negative_lobe_ratio": 0.13780474983353247,
+              "positive_lobe_ratio": 0.15627882111511812,
+              "width_ratio": 1.2556191591165942,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.4017385650820881
             },
             {
               "label": "EM lb=20",
-              "valley": 0.02530565767857338,
-              "bridged_pairs": 0,
-              "noise": 299.61725989837646,
-              "snr": 13.85512638092041
+              "negative_lobe_ratio": 0.06883119219834152,
+              "positive_lobe_ratio": 0.07035686200360487,
+              "width_ratio": 1.607785580035623,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3531651777036537
             },
             {
-              "label": "SP off=0.55 end=0.98 pow=1 c=0.5",
-              "valley": 0.04902928842192121,
-              "bridged_pairs": 0,
-              "noise": 425.0032073181152,
-              "snr": 16.140005111694336
+              "label": "SP off=0.4 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.21931248367747164,
+              "positive_lobe_ratio": 0.13391618612612155,
+              "width_ratio": 1.1030463874517809,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3966223208645646
+            },
+            {
+              "label": "SP off=0.4 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.2022493057030808,
+              "positive_lobe_ratio": 0.13670672938742132,
+              "width_ratio": 1.1903571707307756,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.37361035250435704
+            },
+            {
+              "label": "SP off=0.4 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.2108415500718538,
+              "positive_lobe_ratio": 0.13671073186730137,
+              "width_ratio": 1.1325624177331026,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3907529944394371
+            },
+            {
+              "label": "SP off=0.4 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.19743941923384184,
+              "positive_lobe_ratio": 0.13984854319884432,
+              "width_ratio": 1.2398921266032752,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.35649656147151315
+            },
+            {
+              "label": "SP off=0.4 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.20250674546920155,
+              "positive_lobe_ratio": 0.13947076299001762,
+              "width_ratio": 1.1661267521755312,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3830649049180545
+            },
+            {
+              "label": "SP off=0.4 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.1898900971552685,
+              "positive_lobe_ratio": 0.14343478073638188,
+              "width_ratio": 1.2968989282862229,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3391655842648601
+            },
+            {
+              "label": "SP off=0.4 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.20001368645548384,
+              "positive_lobe_ratio": 0.14079660433348992,
+              "width_ratio": 1.185062934016062,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.37688922973298394
+            },
+            {
+              "label": "SP off=0.4 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.1847909202652933,
+              "positive_lobe_ratio": 0.14513017562556907,
+              "width_ratio": 1.3267409645987593,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3313402812135356
+            },
+            {
+              "label": "SP off=0.5 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.19877351523047698,
+              "positive_lobe_ratio": 0.1425761837684143,
+              "width_ratio": 1.135938112874759,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.39880427246154126
+            },
+            {
+              "label": "SP off=0.5 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.16584064675071647,
+              "positive_lobe_ratio": 0.14989986842590788,
+              "width_ratio": 1.2679917381132413,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3701189493433366
+            },
+            {
+              "label": "SP off=0.5 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.18880840487929051,
+              "positive_lobe_ratio": 0.14617827840375652,
+              "width_ratio": 1.1710388992370173,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3917357201980021
+            },
+            {
+              "label": "SP off=0.5 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.15566739129848223,
+              "positive_lobe_ratio": 0.1563113312905382,
+              "width_ratio": 1.3356970496948517,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3498063797890438
+            },
+            {
+              "label": "SP off=0.5 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.18044977867407191,
+              "positive_lobe_ratio": 0.14594454484211947,
+              "width_ratio": 1.213637883198043,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3809243349273228
+            },
+            {
+              "label": "SP off=0.5 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.17767716863477911,
+              "positive_lobe_ratio": 0.15008859339786906,
+              "width_ratio": 1.238679512220457,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3717804340206134
+            },
+            {
+              "label": "SP off=0.5 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.13747342725617384,
+              "positive_lobe_ratio": 0.16433246709290242,
+              "width_ratio": 1.446703873995141,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.320925271880051
+            },
+            {
+              "label": "SP off=0.6 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.18761025474869675,
+              "positive_lobe_ratio": 0.14751499850217994,
+              "width_ratio": 1.1511374830279795,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.40133112656366904
+            },
+            {
+              "label": "SP off=0.6 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.14291455374495043,
+              "positive_lobe_ratio": 0.1587030701356173,
+              "width_ratio": 1.3133970912557753,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3703222486463757
+            },
+            {
+              "label": "SP off=0.6 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.17389066738430628,
+              "positive_lobe_ratio": 0.1467441196806516,
+              "width_ratio": 1.1961419993584617,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.39455233033804726
+            },
+            {
+              "label": "SP off=0.6 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.12711332266586062,
+              "positive_lobe_ratio": 0.16940203175690166,
+              "width_ratio": 1.4018156020668986,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3462770347811638
             },
             {
               "label": "SP off=0.6 end=0.98 pow=1 c=0.5",
-              "valley": 0.04548877669157035,
-              "bridged_pairs": 0,
-              "noise": 397.9036146220922,
-              "snr": 16.030540466308594
+              "negative_lobe_ratio": 0.16298986582668212,
+              "positive_lobe_ratio": 0.15332410514056297,
+              "width_ratio": 1.2512049543977004,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.379175949831064
             },
             {
-              "label": "SP off=0.65 end=0.98 pow=1 c=0.5",
-              "valley": 0.04240623568332227,
-              "bridged_pairs": 0,
-              "noise": 365.02984744262693,
-              "snr": 15.924454689025879
+              "label": "SP off=0.6 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.11175070530173495,
+              "positive_lobe_ratio": 0.1789693025846801,
+              "width_ratio": 1.5012045515746046,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3201423225252171
+            },
+            {
+              "label": "SP off=0.6 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.1598094907357558,
+              "positive_lobe_ratio": 0.15780778756959296,
+              "width_ratio": 1.284082624339125,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.36703561698606135
+            },
+            {
+              "label": "SP off=0.6 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.10502321518088316,
+              "positive_lobe_ratio": 0.18457163956744196,
+              "width_ratio": 1.5565263077739833,
+              "detection_score": 1.0,
+              "preserved_pairs": 0,
+              "score": 0.3051743740031582
             }
           ]
         },
-        "raw_score": 0.9932260937482495,
-        "separation_score": 0.9932260937482495
+        "raw_score": 0.44297639584281706,
+        "detection_score": 1.0,
+        "separation_score": 1.0,
+        "sidelobe_score": 0.44297639584281706,
+        "resolution_score": 0.9312469800671973,
+        "width_ratio": 1.0690597382131082,
+        "resolution_weight": 1.0,
+        "negative_lobe_ratio": 0.21552212625866732,
+        "positive_lobe_ratio": 0.14387679584304824,
+        "preserved_pairs": 0
       },
       {
         "stage": "window",
         "axis": "F2",
         "source": "fid",
-        "candidate": "SP off=0.45 end=0.9 pow=1 c=0.5",
+        "candidate": "SP off=0.6 end=0.94 pow=1 c=0.5",
         "parameters": {
           "type": "sine_bell",
-          "off": 0.45,
-          "end": 0.9,
+          "off": 0.6,
+          "end": 0.94,
           "pow": 1,
           "c": 0.5
         },
-        "score": 0.023215762767977013,
-        "score_metric": "window_detection",
+        "score": 0.6099293652961836,
+        "score_metric": "phased_global_window",
         "selected": true,
         "applied": true,
         "status": "scored",
         "reason": "",
-        "fwhm": 3.024449146260565,
-        "snr": 145.53239602670527,
-        "shape": 0.3333333333333333,
-        "merged": 0.5,
-        "n_ref": 9.0,
+        "fwhm": null,
+        "snr": null,
+        "shape": null,
+        "merged": null,
+        "n_ref": null,
         "sampling": {
           "reference_sigma": 12.0,
           "total_traces": 4096,
           "scanned_traces": 12,
-          "used_traces": 12,
+          "used_traces": 85,
           "trace_indices": [
-            3198,
-            3199,
-            3227,
-            2642,
-            2468,
-            2175,
-            2544,
-            2469,
-            2169,
-            3215,
-            3222,
-            2683
+            1312,
+            27176,
+            27297,
+            28253,
+            29324,
+            31921,
+            32089,
+            32123,
+            32518,
+            32617,
+            32710,
+            32721,
+            33856,
+            34267,
+            34298,
+            34798,
+            35843,
+            35873,
+            35886,
+            35956,
+            36374,
+            36570,
+            38122,
+            38599,
+            38652,
+            39168,
+            39644,
+            39724,
+            40424,
+            40673,
+            40757,
+            40914,
+            41296,
+            42347,
+            42523,
+            42879,
+            43033,
+            43483,
+            43516,
+            43686,
+            44511,
+            44728,
+            44820,
+            45145,
+            45172,
+            45312,
+            45349,
+            45768,
+            46292,
+            46327,
+            47868,
+            48046,
+            48324,
+            48478,
+            49480,
+            49533,
+            49542,
+            49568,
+            49606,
+            49620,
+            50067,
+            50583,
+            51593,
+            51706,
+            52284,
+            52758,
+            53253,
+            53332,
+            53956,
+            53993,
+            54109,
+            54462,
+            56678,
+            56788,
+            57106,
+            57356,
+            58333,
+            60464,
+            60510,
+            60974,
+            63811,
+            64894,
+            68716,
+            69826,
+            70138
           ],
           "probe_budget": 256,
           "qualified_12": 12,
@@ -1175,59 +2349,454 @@
           "sampling_reason": "energy_fast_path",
           "budget_exhausted": false,
           "max_height_sigma": 99.35531055264873,
-          "score_profile": "indirect_sidelobe_valley"
+          "score_profile": "phased_global_window",
+          "sampled_regions": 128,
+          "pair_count": 4,
+          "baseline_window": "SP off=0.45 end=0.9 pow=1 c=0.5",
+          "candidate_evidence": [
+            {
+              "label": "SP off=0.3 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.18713823958369258,
+              "positive_lobe_ratio": 0.05210853907103527,
+              "width_ratio": 1.2401452395103458,
+              "detection_score": 0.9941176470588236,
+              "preserved_pairs": 1,
+              "score": 0.2909411115915065
+            },
+            {
+              "label": "SP off=0.45 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.12474834656507128,
+              "positive_lobe_ratio": 0.05997001716243523,
+              "width_ratio": 1.310947216688435,
+              "detection_score": 0.9941176470588236,
+              "preserved_pairs": 1,
+              "score": 0.33579751816010384
+            },
+            {
+              "label": "SP off=0.45 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.13571619671049107,
+              "positive_lobe_ratio": 0.06645662954874805,
+              "width_ratio": 1.175545822688999,
+              "detection_score": 1.0,
+              "preserved_pairs": 4,
+              "score": 0.5416397250346271
+            },
+            {
+              "label": "SP off=0.45 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.10907241004577195,
+              "positive_lobe_ratio": 0.04760087497659152,
+              "width_ratio": 1.5666226033890152,
+              "detection_score": 0.9882352941176471,
+              "preserved_pairs": 1,
+              "score": 0.32833717958089575
+            },
+            {
+              "label": "SP off=0.5 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.08521147247667882,
+              "positive_lobe_ratio": 0.04792683118380136,
+              "width_ratio": 1.6169344687547298,
+              "detection_score": 0.9882352941176471,
+              "preserved_pairs": 1,
+              "score": 0.34962905879142686
+            },
+            {
+              "label": "SP off=0.65 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.03572017549655768,
+              "positive_lobe_ratio": 0.060745619615623137,
+              "width_ratio": 1.833034824185686,
+              "detection_score": 0.9882352941176471,
+              "preserved_pairs": 2,
+              "score": 0.4685857071684216
+            },
+            {
+              "label": "GM g1=8 g2=15",
+              "negative_lobe_ratio": 0.2597782706931166,
+              "positive_lobe_ratio": 0.14140793650404793,
+              "width_ratio": 0.9748118151021035,
+              "detection_score": 1.0,
+              "preserved_pairs": 4,
+              "score": 0.4039341123944448
+            },
+            {
+              "label": "GM g1=4 g2=8",
+              "negative_lobe_ratio": 0.24742395669393122,
+              "positive_lobe_ratio": 0.14124042875002352,
+              "width_ratio": 0.9832427172022871,
+              "detection_score": 1.0,
+              "preserved_pairs": 4,
+              "score": 0.41430678910846747
+            },
+            {
+              "label": "EM lb=3",
+              "negative_lobe_ratio": 0.20782883655449683,
+              "positive_lobe_ratio": 0.13175793445346595,
+              "width_ratio": 1.0179363268239294,
+              "detection_score": 1.0,
+              "preserved_pairs": 4,
+              "score": 0.45170527409827516
+            },
+            {
+              "label": "EM lb=5",
+              "negative_lobe_ratio": 0.1955977601219275,
+              "positive_lobe_ratio": 0.12765445118311872,
+              "width_ratio": 1.0302026310011891,
+              "detection_score": 1.0,
+              "preserved_pairs": 4,
+              "score": 0.464253904332586
+            },
+            {
+              "label": "EM lb=10",
+              "negative_lobe_ratio": 0.1670787289945172,
+              "positive_lobe_ratio": 0.12029814217329667,
+              "width_ratio": 1.0623061114714352,
+              "detection_score": 1.0,
+              "preserved_pairs": 4,
+              "score": 0.49557957029918365
+            },
+            {
+              "label": "EM lb=20",
+              "negative_lobe_ratio": 0.10861184622906607,
+              "positive_lobe_ratio": 0.11050921653095669,
+              "width_ratio": 1.1334513882441877,
+              "detection_score": 1.0,
+              "preserved_pairs": 4,
+              "score": 0.5742332022047322
+            },
+            {
+              "label": "SP off=0.4 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.15178861353313425,
+              "positive_lobe_ratio": 0.06316054631862299,
+              "width_ratio": 1.1647627306408217,
+              "detection_score": 0.9970588235294118,
+              "preserved_pairs": 2,
+              "score": 0.3894043729723724
+            },
+            {
+              "label": "SP off=0.4 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.1340764718381538,
+              "positive_lobe_ratio": 0.04790258251670449,
+              "width_ratio": 1.3235334509579477,
+              "detection_score": 0.9941176470588236,
+              "preserved_pairs": 1,
+              "score": 0.3284796503140365
+            },
+            {
+              "label": "SP off=0.4 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.1423714165346155,
+              "positive_lobe_ratio": 0.06533931515834111,
+              "width_ratio": 1.219025642053267,
+              "detection_score": 0.9941176470588236,
+              "preserved_pairs": 1,
+              "score": 0.3265238334867665
+            },
+            {
+              "label": "SP off=0.4 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.1372268827277369,
+              "positive_lobe_ratio": 0.046299013075427164,
+              "width_ratio": 1.4133868217180345,
+              "detection_score": 0.9882352941176471,
+              "preserved_pairs": 1,
+              "score": 0.31567063546590807
+            },
+            {
+              "label": "SP off=0.4 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.14254132650915316,
+              "positive_lobe_ratio": 0.05901886355561592,
+              "width_ratio": 1.288871641017327,
+              "detection_score": 0.9941176470588236,
+              "preserved_pairs": 1,
+              "score": 0.3213333958478709
+            },
+            {
+              "label": "SP off=0.4 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.13861480874190435,
+              "positive_lobe_ratio": 0.04588566486713295,
+              "width_ratio": 1.5130070028424643,
+              "detection_score": 0.9882352941176471,
+              "preserved_pairs": 1,
+              "score": 0.3056493045280159
+            },
+            {
+              "label": "SP off=0.4 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.1459972309907448,
+              "positive_lobe_ratio": 0.057999357168542744,
+              "width_ratio": 1.3323862531184862,
+              "detection_score": 0.9941176470588236,
+              "preserved_pairs": 1,
+              "score": 0.31451364434170587
+            },
+            {
+              "label": "SP off=0.4 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.14089050349737012,
+              "positive_lobe_ratio": 0.04478916355946436,
+              "width_ratio": 1.5649909973181544,
+              "detection_score": 0.9882352941176471,
+              "preserved_pairs": 1,
+              "score": 0.29945896412722434
+            },
+            {
+              "label": "SP off=0.5 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.12325420865950984,
+              "positive_lobe_ratio": 0.066126653840602,
+              "width_ratio": 1.1823302787942394,
+              "detection_score": 1.0,
+              "preserved_pairs": 4,
+              "score": 0.5605692529673515
+            },
+            {
+              "label": "SP off=0.5 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.08074066316201416,
+              "positive_lobe_ratio": 0.06383698661389106,
+              "width_ratio": 1.377264647950653,
+              "detection_score": 0.9941176470588236,
+              "preserved_pairs": 1,
+              "score": 0.3772233278652159
+            },
+            {
+              "label": "SP off=0.5 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.111541733494412,
+              "positive_lobe_ratio": 0.061197230823599194,
+              "width_ratio": 1.2436050045320937,
+              "detection_score": 0.9970588235294118,
+              "preserved_pairs": 2,
+              "score": 0.4282956371093085
+            },
+            {
+              "label": "SP off=0.5 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.07949651289842448,
+              "positive_lobe_ratio": 0.04803277430940076,
+              "width_ratio": 1.4886098449264478,
+              "detection_score": 0.9941176470588236,
+              "preserved_pairs": 1,
+              "score": 0.37184091515751827
+            },
+            {
+              "label": "SP off=0.5 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.11018121171844657,
+              "positive_lobe_ratio": 0.058070585242574885,
+              "width_ratio": 1.328859533971754,
+              "detection_score": 0.9941176470588236,
+              "preserved_pairs": 1,
+              "score": 0.34954430358272015
+            },
+            {
+              "label": "SP off=0.5 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.11319743947682695,
+              "positive_lobe_ratio": 0.06605121107101421,
+              "width_ratio": 1.3820610468773877,
+              "detection_score": 0.9941176470588236,
+              "preserved_pairs": 1,
+              "score": 0.3389863942546864
+            },
+            {
+              "label": "SP off=0.5 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.08592404211241914,
+              "positive_lobe_ratio": 0.046803333187142616,
+              "width_ratio": 1.6849000695341056,
+              "detection_score": 0.9882352941176471,
+              "preserved_pairs": 1,
+              "score": 0.34260233460402983
+            },
+            {
+              "label": "SP off=0.6 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.10840736361516981,
+              "positive_lobe_ratio": 0.07372459973027799,
+              "width_ratio": 1.1826549335295475,
+              "detection_score": 1.0,
+              "preserved_pairs": 4,
+              "score": 0.5827225031465697
+            },
+            {
+              "label": "SP off=0.6 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.047328602851863834,
+              "positive_lobe_ratio": 0.0611897762711396,
+              "width_ratio": 1.3932357728390028,
+              "detection_score": 0.9970588235294118,
+              "preserved_pairs": 2,
+              "score": 0.5105527414991642
+            },
+            {
+              "label": "SP off=0.6 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.09018765182374296,
+              "positive_lobe_ratio": 0.06350804515758585,
+              "width_ratio": 1.253322783742485,
+              "detection_score": 1.0,
+              "preserved_pairs": 4,
+              "score": 0.6099293652961836
+            },
+            {
+              "label": "SP off=0.6 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.04535406768840604,
+              "positive_lobe_ratio": 0.0524957115139929,
+              "width_ratio": 1.5315139099850066,
+              "detection_score": 0.9941176470588236,
+              "preserved_pairs": 1,
+              "score": 0.4142510755471292
+            },
+            {
+              "label": "SP off=0.6 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.08554204756183727,
+              "positive_lobe_ratio": 0.0638122595622075,
+              "width_ratio": 1.354834162280906,
+              "detection_score": 0.9941176470588236,
+              "preserved_pairs": 1,
+              "score": 0.37363513793565345
+            },
+            {
+              "label": "SP off=0.6 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.04880834384588239,
+              "positive_lobe_ratio": 0.05612742722529611,
+              "width_ratio": 1.6996853906737688,
+              "detection_score": 0.9882352941176471,
+              "preserved_pairs": 1,
+              "score": 0.3863714162700824
+            },
+            {
+              "label": "SP off=0.6 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.08905726042807904,
+              "positive_lobe_ratio": 0.07185480313438235,
+              "width_ratio": 1.4212754182814982,
+              "detection_score": 0.9941176470588236,
+              "preserved_pairs": 1,
+              "score": 0.35994383436662647
+            },
+            {
+              "label": "SP off=0.6 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.047710204729153806,
+              "positive_lobe_ratio": 0.05812551963333493,
+              "width_ratio": 1.788695280870131,
+              "detection_score": 0.9882352941176471,
+              "preserved_pairs": 1,
+              "score": 0.3780344867518527
+            }
+          ]
         },
-        "raw_score": 0.023564219016448805,
-        "detection_score": 50.93344894504489,
-        "separation_score": 0.044302569915852796,
-        "symmetry_score": 0.3333333333333333,
-        "sidelobe_score": 1.0,
-        "resolution_score": 0.9852124847325279,
-        "width_ratio": 1.0614031531304005,
-        "resolution_reference_fwhm": 2.849481968600287,
-        "resolution_weight": 0.25
+        "raw_score": 0.653456684498296,
+        "detection_score": 1.0,
+        "separation_score": 1.0,
+        "sidelobe_score": 0.653456684498296,
+        "resolution_score": 0.9333891285609369,
+        "width_ratio": 1.253322783742485,
+        "resolution_weight": 0.25,
+        "negative_lobe_ratio": 0.09018765182374296,
+        "positive_lobe_ratio": 0.06350804515758585,
+        "preserved_pairs": 4
       },
       {
         "stage": "window",
         "axis": "F1",
         "source": "fid",
-        "candidate": "SP off=0.45 end=0.9 pow=1 c=0.5",
+        "candidate": "SP off=0.6 end=0.9 pow=2 c=0.5",
         "parameters": {
           "type": "sine_bell",
-          "off": 0.45,
+          "off": 0.6,
           "end": 0.9,
-          "pow": 1,
+          "pow": 2,
           "c": 0.5
         },
-        "score": 0.9614765714905532,
-        "score_metric": "window_detection",
+        "score": 0.7128129967276928,
+        "score_metric": "phased_global_window",
         "selected": true,
         "applied": true,
         "status": "scored",
         "reason": "",
-        "fwhm": 2.819432201603604,
-        "snr": 16.81310040822943,
-        "shape": 1.0,
-        "merged": 0.0,
-        "n_ref": 1.0,
+        "fwhm": null,
+        "snr": null,
+        "shape": null,
+        "merged": null,
+        "n_ref": null,
         "sampling": {
           "reference_sigma": 12.0,
           "total_traces": 512,
           "scanned_traces": 12,
-          "used_traces": 12,
+          "used_traces": 86,
           "trace_indices": [
-            502,
-            503,
-            511,
-            501,
-            508,
-            500,
-            506,
-            504,
-            505,
-            509,
-            507,
-            510
+            5494,
+            9568,
+            12798,
+            14329,
+            14972,
+            16645,
+            18327,
+            18336,
+            18347,
+            19874,
+            20390,
+            20486,
+            20512,
+            22020,
+            22591,
+            22659,
+            23290,
+            23788,
+            25492,
+            26500,
+            26510,
+            26554,
+            26595,
+            27152,
+            27637,
+            27705,
+            29236,
+            29257,
+            29742,
+            29778,
+            29870,
+            29902,
+            30993,
+            31572,
+            32014,
+            32023,
+            32040,
+            32543,
+            32696,
+            33154,
+            33166,
+            33563,
+            34769,
+            35394,
+            35434,
+            35900,
+            37949,
+            37960,
+            37972,
+            37996,
+            38080,
+            38104,
+            38527,
+            39149,
+            40203,
+            40761,
+            41485,
+            42616,
+            43480,
+            44111,
+            44622,
+            45057,
+            45690,
+            45700,
+            45776,
+            45803,
+            46372,
+            47012,
+            47413,
+            47506,
+            47556,
+            48616,
+            49142,
+            49733,
+            50157,
+            51288,
+            51409,
+            53903,
+            54349,
+            56301,
+            57691,
+            57783,
+            60134,
+            61600,
+            63414,
+            63424
           ],
           "probe_budget": 256,
           "qualified_12": 12,
@@ -1235,19 +2804,346 @@
           "sampling_reason": "energy_fast_path",
           "budget_exhausted": false,
           "max_height_sigma": 16.705783293628517,
-          "score_profile": "indirect_sidelobe_valley"
+          "score_profile": "phased_global_window",
+          "sampled_regions": 128,
+          "pair_count": 6,
+          "baseline_window": "SP off=0.45 end=0.9 pow=1 c=0.5",
+          "candidate_evidence": [
+            {
+              "label": "SP off=0.3 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.1688647079682271,
+              "positive_lobe_ratio": 0.04341588256894065,
+              "width_ratio": 1.2386271125738748,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.49368827514406877
+            },
+            {
+              "label": "SP off=0.45 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.09872817601517603,
+              "positive_lobe_ratio": 0.05195513469535123,
+              "width_ratio": 1.3131891852316497,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.5886627091946397
+            },
+            {
+              "label": "SP off=0.45 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.11953851546782596,
+              "positive_lobe_ratio": 0.06916886879122301,
+              "width_ratio": 1.1798168757888645,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.5658862038133823
+            },
+            {
+              "label": "SP off=0.45 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.07029201914552285,
+              "positive_lobe_ratio": 0.03756446497846254,
+              "width_ratio": 1.5663898716908287,
+              "detection_score": 0.9825581395348837,
+              "preserved_pairs": 5,
+              "score": 0.5095503975515892
+            },
+            {
+              "label": "SP off=0.5 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.04394717839774299,
+              "positive_lobe_ratio": 0.04417220441473272,
+              "width_ratio": 1.6178421254544881,
+              "detection_score": 0.9941860465116279,
+              "preserved_pairs": 5,
+              "score": 0.5573895685581952
+            },
+            {
+              "label": "SP off=0.65 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.02823040267592697,
+              "positive_lobe_ratio": 0.05778120232298638,
+              "width_ratio": 1.8358477645764701,
+              "detection_score": 0.9825581395348837,
+              "preserved_pairs": 3,
+              "score": 0.35298157177890366
+            },
+            {
+              "label": "GM g1=8 g2=15",
+              "negative_lobe_ratio": 0.24163875526769907,
+              "positive_lobe_ratio": 0.13985179453658167,
+              "width_ratio": 0.9776912632733987,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.4196376101105793
+            },
+            {
+              "label": "GM g1=4 g2=8",
+              "negative_lobe_ratio": 0.2292991267431388,
+              "positive_lobe_ratio": 0.13815146400376593,
+              "width_ratio": 0.9867387159506421,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.43118596215621163
+            },
+            {
+              "label": "EM lb=3",
+              "negative_lobe_ratio": 0.20101324960876849,
+              "positive_lobe_ratio": 0.130561046082768,
+              "width_ratio": 1.0129233490693734,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.459700612785674
+            },
+            {
+              "label": "EM lb=5",
+              "negative_lobe_ratio": 0.1927539288491399,
+              "positive_lobe_ratio": 0.1286965496900871,
+              "width_ratio": 1.0217554693316042,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.4680880497831395
+            },
+            {
+              "label": "EM lb=10",
+              "negative_lobe_ratio": 0.16898200453577286,
+              "positive_lobe_ratio": 0.12435599349948556,
+              "width_ratio": 1.0442977378906395,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.4942913522182822
+            },
+            {
+              "label": "EM lb=20",
+              "negative_lobe_ratio": 0.1267206802730994,
+              "positive_lobe_ratio": 0.11783851688953619,
+              "width_ratio": 1.0928832841269565,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.5481039345362054
+            },
+            {
+              "label": "SP off=0.4 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.13587504517669372,
+              "positive_lobe_ratio": 0.06658979538352904,
+              "width_ratio": 1.1680977008318545,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.5424730737270962
+            },
+            {
+              "label": "SP off=0.4 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.10783331711461369,
+              "positive_lobe_ratio": 0.035084811178656236,
+              "width_ratio": 1.3246685744512987,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.577660848799427
+            },
+            {
+              "label": "SP off=0.4 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.1276238258587269,
+              "positive_lobe_ratio": 0.053512685103354614,
+              "width_ratio": 1.2217795779682772,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.5523821174913505
+            },
+            {
+              "label": "SP off=0.4 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.10207224548744263,
+              "positive_lobe_ratio": 0.03220857778733231,
+              "width_ratio": 1.4127689371091885,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.574928387859729
+            },
+            {
+              "label": "SP off=0.4 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.12046953541167434,
+              "positive_lobe_ratio": 0.05017348624499682,
+              "width_ratio": 1.291190943594113,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.5545180070095488
+            },
+            {
+              "label": "SP off=0.4 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.10042985521233405,
+              "positive_lobe_ratio": 0.03230326277300348,
+              "width_ratio": 1.5107051408236136,
+              "detection_score": 0.9883720930232558,
+              "preserved_pairs": 6,
+              "score": 0.5553931313189443
+            },
+            {
+              "label": "SP off=0.4 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.1160040613662594,
+              "positive_lobe_ratio": 0.04803586778866543,
+              "width_ratio": 1.3337074520609518,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.5561178335512998
+            },
+            {
+              "label": "SP off=0.4 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.10046880567025838,
+              "positive_lobe_ratio": 0.03265576963929196,
+              "width_ratio": 1.5613904664848657,
+              "detection_score": 0.9825581395348837,
+              "preserved_pairs": 5,
+              "score": 0.4624078031196625
+            },
+            {
+              "label": "SP off=0.5 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.10550095576058084,
+              "positive_lobe_ratio": 0.07502912952898758,
+              "width_ratio": 1.1880967234618105,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.5864621871571777
+            },
+            {
+              "label": "SP off=0.5 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.04936438191544408,
+              "positive_lobe_ratio": 0.0501819949701187,
+              "width_ratio": 1.3827058499954323,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.6866954943324464
+            },
+            {
+              "label": "SP off=0.5 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.09403690060732821,
+              "positive_lobe_ratio": 0.06232389985431647,
+              "width_ratio": 1.2504662594774099,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.6034221991043488
+            },
+            {
+              "label": "SP off=0.5 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.04376310447654342,
+              "positive_lobe_ratio": 0.04352111517577529,
+              "width_ratio": 1.4922403662666703,
+              "detection_score": 1.0,
+              "preserved_pairs": 5,
+              "score": 0.5817285607057205
+            },
+            {
+              "label": "SP off=0.5 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.08149985573153713,
+              "positive_lobe_ratio": 0.05507025884950395,
+              "width_ratio": 1.3323330796796689,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.6180371214886616
+            },
+            {
+              "label": "SP off=0.5 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.07992591866621705,
+              "positive_lobe_ratio": 0.05332207077281626,
+              "width_ratio": 1.3840773289891648,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.6130510199589702
+            },
+            {
+              "label": "SP off=0.5 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.04478065916358609,
+              "positive_lobe_ratio": 0.044577950290496035,
+              "width_ratio": 1.6830794538188978,
+              "detection_score": 0.9825581395348837,
+              "preserved_pairs": 5,
+              "score": 0.539015080455024
+            },
+            {
+              "label": "SP off=0.6 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.09454265336705812,
+              "positive_lobe_ratio": 0.08469498278570323,
+              "width_ratio": 1.1893290253062876,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.6021204356237242
+            },
+            {
+              "label": "SP off=0.6 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.034173867775851144,
+              "positive_lobe_ratio": 0.0667325786828259,
+              "width_ratio": 1.4027699502086928,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.7128129967276928
+            },
+            {
+              "label": "SP off=0.6 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.07309360044705349,
+              "positive_lobe_ratio": 0.07220061473689245,
+              "width_ratio": 1.2606184369617173,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.6398509602576911
+            },
+            {
+              "label": "SP off=0.6 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.02961328908166801,
+              "positive_lobe_ratio": 0.058860367508980806,
+              "width_ratio": 1.5397471729513337,
+              "detection_score": 0.9941860465116279,
+              "preserved_pairs": 5,
+              "score": 0.5946565170423668
+            },
+            {
+              "label": "SP off=0.6 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.054058953077677996,
+              "positive_lobe_ratio": 0.06130061069689108,
+              "width_ratio": 1.3605395533507618,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.671928356798154
+            },
+            {
+              "label": "SP off=0.6 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.02846959079140043,
+              "positive_lobe_ratio": 0.05808284947166283,
+              "width_ratio": 1.7043806713772618,
+              "detection_score": 0.9941860465116279,
+              "preserved_pairs": 5,
+              "score": 0.571078329339209
+            },
+            {
+              "label": "SP off=0.6 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.05315251254622955,
+              "positive_lobe_ratio": 0.061035950012089106,
+              "width_ratio": 1.4254083650816767,
+              "detection_score": 1.0,
+              "preserved_pairs": 6,
+              "score": 0.6618609540459491
+            },
+            {
+              "label": "SP off=0.6 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.029627962735256388,
+              "positive_lobe_ratio": 0.060872603288413075,
+              "width_ratio": 1.7900634763946772,
+              "detection_score": 0.9883720930232558,
+              "preserved_pairs": 4,
+              "score": 0.45337661526798795
+            }
+          ]
         },
-        "raw_score": 1.0,
-        "detection_score": 16.81310040822943,
+        "raw_score": 0.7972669292735353,
+        "detection_score": 1.0,
         "separation_score": 1.0,
-        "symmetry_score": 1.0,
-        "sidelobe_score": 1.0,
-        "resolution_score": 0.9614765714905532,
-        "width_ratio": 1.170159803298411,
-        "resolution_reference_fwhm": 2.4094420212147725,
-        "resolution_weight": 0.25
+        "sidelobe_score": 0.7972669292735353,
+        "resolution_score": 0.8940706939609343,
+        "width_ratio": 1.4027699502086928,
+        "resolution_weight": 0.25,
+        "negative_lobe_ratio": 0.034173867775851144,
+        "positive_lobe_ratio": 0.0667325786828259,
+        "preserved_pairs": 6
       }
-    ]
+    ],
+    "spectrum_sha256": "8fe9f3ca8ddd2607b0bb845dc3132a4e0015df14a0d5d0157a007323fce110eb",
+    "author_processing": {
+      "source": "Deposited proc.com",
+      "text": "#!/bin/csh\n\nxyz2pipe -in  data/test%03d.fid -x  -verb           \\\n| nmrPipe  -fn POLY -time                           \\\n| nmrPipe  -fn SP -size 512 -off 0.5 -end 1.00 -pow 2 -c 0.5  \\\n| nmrPipe  -fn ZF -auto                             \\\n| nmrPipe  -fn FT                                   \\\n| nmrPipe  -fn PS -p0  3.0 -p1 0                    \\\n| nmrPipe  -fn PS -p0 -4  -p1 43.0 -di               \\\n| nmrPipe  -fn EXT -x1 10.0ppm -xn 6.0ppm -sw       \\\n| pipe2xyz -out data/test%03d.ft3 -x -ov\n \nxyz2pipe -in data/test%03d.ft3 -z -verb               \\\n| nmrPipe  -fn SP -off 0.5 -end 0.98 -pow 1 -c 0.5  \\\n| nmrPipe  -fn ZF -auto                             \\\n| nmrPipe  -fn FT -alt                              \\\n| nmrPipe  -fn PS -p0 0.0 -p1 0.0 -di               \\\n| pipe2xyz -out data/test%03d.ft3 -z -inPlace\n\nxyz2pipe -in data/test%03d.ft3 -y -verb               \\\n| nmrPipe  -fn LP -fb                               \\\n| nmrPipe  -fn SP -off 0.5 -end 0.98 -pow 1 -c 1.0  \\\n| nmrPipe  -fn ZF -auto                             \\\n| nmrPipe  -fn FT                                   \\\n| nmrPipe  -fn PS -p0 -90 -p1 0 -di                   \\\n| nmrPipe  -fn POLY -auto -ord 0                    \\\n| nmrPipe  -fn TP                                   \\\n| nmrPipe  -fn POLY -auto -ord 0                    \\\n| pipe2xyz -out data/test%03d.ft3 -y -inPlace\n\nxyz2pipe -in data/test%03d.ft3 -z -verb               \\\n| nmrPipe  -fn HT  -auto                            \\\n| nmrPipe  -fn PS  -inv -hdr                        \\\n| nmrPipe  -fn FT  -inv                             \\\n| nmrPipe  -fn ZF  -inv                             \\\n#| nmrPipe  -fn LP -pred 32 -ord 8                   \\\n| nmrPipe  -fn LP -fb                               \\\n| nmrPipe  -fn SP  -hdr                             \\\n| nmrPipe  -fn ZF  -auto                            \\\n| nmrPipe  -fn FT                                   \\\n| nmrPipe  -fn PS  -hdr -di                         \\\n| nmrPipe  -fn CS  -ls 3.0ppm   -sw                   \\\n| nmrPipe  -fn POLY -auto -ord 0                    \\\n| pipe2xyz -out data/test%03d.ft3 -z -inPlace\n\nxyz2pipe -in ./data/test%03d.ft3  -y -verb  \\\n  > ./hnco.ft3\n\n",
+      "sha256": "d91babc22a361ccd8237eecf435cf78381da15766e684ed03203caad59e4ba1d"
+    }
   },
   "acquired3d": {
     "shape": [
@@ -1255,7 +3151,7 @@
       256,
       1176
     ],
-    "wall_time_s": 225.44907324697124,
+    "wall_time_s": 228.10023233597167,
     "params_used": {
       "ext_lo": "10",
       "ext_hi": "6",
@@ -1303,19 +3199,17 @@
       },
       "window": {
         "F1": {
-          "type": "sine_bell",
-          "off": 0.65,
-          "end": 1.0,
-          "pow": 2,
-          "c": 0.5
+          "type": "exp",
+          "lb": 5.0,
+          "c": 1.0
         },
         "F2": {
           "type": "exp",
-          "lb": 10.0,
+          "lb": 20.0,
           "c": 1.0
         }
       },
-      "backend_runs": 7,
+      "backend_runs": 9,
       "direct_phase": [
         107.96939244478007,
         -0.0
@@ -1338,13 +3232,13 @@
         },
         "apply_poly_time": false,
         "repaired_badpoints": 0,
-        "backup_dir": "<VM>/fid_diag_bak",
+        "backup_dir": "<work>/fid_diag_bak",
         "clean": false
       },
       "projections": {
-        "F3": "<VM>/d_001_13C-15N.ft2",
-        "F2": "<VM>/d_001_1H-13C.ft2",
-        "F1": "<VM>/d_001_1H-15N.ft2"
+        "F3": "<work>/d_001_13C-15N.ft2",
+        "F2": "<work>/d_001_1H-13C.ft2",
+        "F1": "<work>/d_001_1H-15N.ft2"
       }
     },
     "phase_header": {
@@ -1366,8 +3260,8 @@
       "sha256": "f479822c4413a08394a93661cdbdf21410ad79fd8e3151cfa1628946e1f88d41"
     },
     "automatic_final": {
-      "text": "#!/bin/csh\n# NMRFinesse 3D NUS SMILE reconstruction\n# experiment: d_001\nmkdir -p nus3d_1 nus3d_rc\n# step 1: direct dim (F3) FT + EXT + PS\nxyz2pipe -in d_001.fid -x \\\n| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -zf -size 4096 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn EXT -x1 10ppm -xn 6ppm -sw -round 2 \\\n| nmrPipe -fn PS -p0 107.969 -p1 -0 -di \\\n| pipe2xyz -out nus3d_1/test%04d.ft1 -z\n\n# step 2: SMILE reconstruct indirect dims (F2/F1)\nxyz2pipe -in nus3d_1/test%04d.ft1 -x \\\n| nmrPipe -fn SMILE -nDim 3 \\\n           -sample nuslist -nThread 2 \\\n           -sampleCount 441 -nSigma 5 -off 0 0 -report 1 \\\n           -maxMem 6.86226 \\\n           -scaling 1 \\\n           -maxIter 1500 \\\n           -xP0 182.5 -xP1 0 \\\n           -yP0 0 -yP1 0 \\\n           -xAlt -xNeg \\\n           -yAlt \\\n           -thresh 0.95 \\\n| pipe2xyz -out nus3d_rc/test%04d.ft1 -x\n\n# step 3: indirect dims (F2/F1) window + ZF + FT + PS\nxyz2pipe -in nus3d_rc/test%04d.ft1 -x \\\n| nmrPipe -fn EM -lb 10 \\\n| nmrPipe -fn ZF -size 256 \\\n| nmrPipe -fn FT -alt -neg \\\n| nmrPipe -fn PS -p0 182.5 -p1 0 -di \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn SP -off 0.65 -end 1 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -size 256 \\\n| nmrPipe -fn FT -alt \\\n| nmrPipe -fn PS -p0 0 -p1 0 -di \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn ZTP \\\n| pipe2xyz -out d_001.ft3 -x\n",
-      "sha256": "4414dbfd2d32e6045e7cf1eb13b8c323f2f54308b20bd587f5f5ed552d2c0b13"
+      "text": "#!/bin/csh\n# NMRFinesse 3D NUS SMILE reconstruction\n# experiment: d_001\nmkdir -p nus3d_1 nus3d_rc\n# step 1: direct dim (F3) FT + EXT + PS\nxyz2pipe -in d_001.fid -x \\\n| nmrPipe -fn SP -off 0.45 -end 0.98 -pow 2 -c 0.5 \\\n| nmrPipe -fn ZF -zf -size 4096 \\\n| nmrPipe -fn FT \\\n| nmrPipe -fn EXT -x1 10ppm -xn 6ppm -sw -round 2 \\\n| nmrPipe -fn PS -p0 107.969 -p1 -0 -di \\\n| pipe2xyz -out nus3d_1/test%04d.ft1 -z\n\n# step 2: SMILE reconstruct indirect dims (F2/F1)\nxyz2pipe -in nus3d_1/test%04d.ft1 -x \\\n| nmrPipe -fn SMILE -nDim 3 \\\n           -sample nuslist -nThread 2 \\\n           -sampleCount 441 -nSigma 5 -off 0 0 -report 1 \\\n           -maxMem 9.39731 \\\n           -scaling 1 \\\n           -maxIter 1500 \\\n           -xP0 182.5 -xP1 0 \\\n           -yP0 0 -yP1 0 \\\n           -xAlt -xNeg \\\n           -yAlt \\\n           -thresh 0.95 \\\n| pipe2xyz -out nus3d_rc/test%04d.ft1 -x\n\n# step 3: indirect dims (F2/F1) window + ZF + FT + PS\nxyz2pipe -in nus3d_rc/test%04d.ft1 -x \\\n| nmrPipe -fn EM -lb 20 \\\n| nmrPipe -fn ZF -size 256 \\\n| nmrPipe -fn FT -alt -neg \\\n| nmrPipe -fn PS -p0 182.5 -p1 0 -di \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn EM -lb 5 \\\n| nmrPipe -fn ZF -size 256 \\\n| nmrPipe -fn FT -alt \\\n| nmrPipe -fn PS -p0 0 -p1 0 -di \\\n| nmrPipe -fn TP \\\n| nmrPipe -fn ZTP \\\n| pipe2xyz -out d_001.ft3 -x\n",
+      "sha256": "ed4ca528f0c958648200126e2528e0bf27586cd5ce4eaaaa051a6d50b795377f"
     },
     "selected_optimization_rows": [
       {
@@ -1511,41 +3405,155 @@
         "stage": "window",
         "axis": "F2",
         "source": "reconstruction",
-        "candidate": "EM lb=10",
+        "candidate": "EM lb=20",
         "parameters": {
           "type": "exp",
-          "lb": 10.0,
+          "lb": 20.0,
           "c": 1.0
         },
-        "score": 0.9145331650049848,
-        "score_metric": "window_detection",
+        "score": 0.6316048777589938,
+        "score_metric": "phased_global_window",
         "selected": true,
         "applied": true,
         "status": "scored",
         "reason": "",
-        "fwhm": 3.625717917727041,
-        "snr": 32.351464433195176,
-        "shape": 0.6666666666666666,
-        "merged": 0.0,
-        "n_ref": 2.0,
+        "fwhm": null,
+        "snr": null,
+        "shape": null,
+        "merged": null,
+        "n_ref": null,
         "sampling": {
           "reference_sigma": 12.0,
           "total_traces": 296352,
           "scanned_traces": 12,
-          "used_traces": 12,
+          "used_traces": 126,
           "trace_indices": [
-            41738,
-            48795,
-            47619,
-            40562,
-            47618,
-            47617,
-            48794,
-            87602,
-            88778,
-            48793,
-            88779,
-            93482
+            532,
+            3991,
+            10016,
+            13498,
+            16988,
+            20570,
+            22930,
+            31135,
+            35858,
+            39394,
+            46443,
+            49847,
+            52276,
+            61584,
+            64882,
+            64890,
+            66426,
+            67615,
+            76924,
+            78191,
+            78198,
+            83075,
+            85342,
+            87431,
+            87536,
+            92235,
+            93392,
+            93425,
+            93432,
+            93540,
+            97128,
+            98296,
+            100437,
+            102643,
+            102814,
+            103126,
+            103971,
+            104223,
+            106418,
+            106425,
+            108799,
+            109778,
+            109983,
+            113436,
+            113442,
+            114461,
+            115751,
+            115759,
+            119596,
+            120367,
+            120408,
+            120551,
+            120559,
+            131143,
+            132421,
+            134599,
+            134696,
+            134703,
+            135704,
+            138171,
+            138177,
+            140596,
+            140695,
+            141839,
+            143096,
+            143928,
+            143935,
+            145475,
+            146395,
+            146406,
+            146413,
+            148670,
+            148712,
+            148719,
+            153386,
+            153394,
+            154516,
+            154535,
+            154542,
+            156880,
+            158165,
+            159364,
+            159371,
+            161520,
+            163802,
+            165030,
+            166637,
+            166644,
+            166659,
+            169878,
+            169886,
+            169959,
+            169967,
+            173618,
+            176874,
+            179322,
+            186614,
+            195580,
+            198072,
+            199256,
+            202887,
+            209745,
+            210885,
+            210893,
+            215670,
+            221627,
+            224012,
+            232195,
+            238128,
+            239269,
+            243996,
+            247490,
+            253437,
+            255663,
+            260479,
+            261704,
+            268790,
+            273339,
+            276857,
+            280404,
+            283959,
+            286300,
+            292191,
+            293306,
+            296956,
+            300412
           ],
           "probe_budget": 256,
           "qualified_12": 12,
@@ -1553,59 +3561,494 @@
           "sampling_reason": "energy_fast_path",
           "budget_exhausted": false,
           "max_height_sigma": 37.938084113311305,
-          "score_profile": "indirect_sidelobe_valley"
+          "score_profile": "phased_global_window",
+          "sampled_regions": 128,
+          "pair_count": 7,
+          "baseline_window": "EM lb=10",
+          "candidate_evidence": [
+            {
+              "label": "SP off=0.3 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.13790037675100222,
+              "positive_lobe_ratio": 0.08857972400359973,
+              "width_ratio": 1.1162444763805968,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5387987202996586
+            },
+            {
+              "label": "SP off=0.45 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.10152346372813273,
+              "positive_lobe_ratio": 0.08898991290161733,
+              "width_ratio": 1.1909122713119156,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5868797926162623
+            },
+            {
+              "label": "SP off=0.45 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.10057736168074603,
+              "positive_lobe_ratio": 0.08974363571670764,
+              "width_ratio": 1.119945056534155,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5999631776689089
+            },
+            {
+              "label": "SP off=0.45 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.10197913791105252,
+              "positive_lobe_ratio": 0.08158879158631305,
+              "width_ratio": 1.346294246701485,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5637901759454252
+            },
+            {
+              "label": "SP off=0.5 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.09571768599489758,
+              "positive_lobe_ratio": 0.07599021577916161,
+              "width_ratio": 1.392219806371058,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.569909509620386
+            },
+            {
+              "label": "SP off=0.65 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.07696909460535478,
+              "positive_lobe_ratio": 0.08297511959713304,
+              "width_ratio": 1.5575077227421408,
+              "detection_score": 0.996031746031746,
+              "preserved_pairs": 6,
+              "score": 0.48647611285843523
+            },
+            {
+              "label": "GM g1=8 g2=15",
+              "negative_lobe_ratio": 0.13949931925757142,
+              "positive_lobe_ratio": 0.09295623726931002,
+              "width_ratio": 0.9775304961382415,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5513615647336406
+            },
+            {
+              "label": "GM g1=4 g2=8",
+              "negative_lobe_ratio": 0.1335200094270239,
+              "positive_lobe_ratio": 0.09838900119100195,
+              "width_ratio": 0.9723357973742922,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5584762939203404
+            },
+            {
+              "label": "EM lb=3",
+              "negative_lobe_ratio": 0.09394181931380988,
+              "positive_lobe_ratio": 0.09784893450456238,
+              "width_ratio": 1.0416460442142725,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.6214994319611359
+            },
+            {
+              "label": "EM lb=5",
+              "negative_lobe_ratio": 0.08721011649528615,
+              "positive_lobe_ratio": 0.10134973217469084,
+              "width_ratio": 1.0708428115181252,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.628311204200902
+            },
+            {
+              "label": "EM lb=10",
+              "negative_lobe_ratio": 0.07878692646714014,
+              "positive_lobe_ratio": 0.1028382534002786,
+              "width_ratio": 1.1487903436280607,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.6314152589286786
+            },
+            {
+              "label": "EM lb=20",
+              "negative_lobe_ratio": 0.06821077993095162,
+              "positive_lobe_ratio": 0.0845823253126838,
+              "width_ratio": 1.3271562945052913,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.6316048777589938
+            },
+            {
+              "label": "SP off=0.4 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.12220869287909257,
+              "positive_lobe_ratio": 0.08716741681482995,
+              "width_ratio": 1.103968319350408,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5658141331938524
+            },
+            {
+              "label": "SP off=0.4 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.12609132783159008,
+              "positive_lobe_ratio": 0.08479153256947437,
+              "width_ratio": 1.1925876200545278,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5468785475663319
+            },
+            {
+              "label": "SP off=0.4 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.11516021897387929,
+              "positive_lobe_ratio": 0.0850521049542358,
+              "width_ratio": 1.133606675474588,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5738944558794311
+            },
+            {
+              "label": "SP off=0.4 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.12092321439878126,
+              "positive_lobe_ratio": 0.08592737733223967,
+              "width_ratio": 1.241527304546776,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5470354223479447
+            },
+            {
+              "label": "SP off=0.4 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.11385256974134352,
+              "positive_lobe_ratio": 0.08182228921934158,
+              "width_ratio": 1.168129697272939,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5720239154514826
+            },
+            {
+              "label": "SP off=0.4 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.1270443067971888,
+              "positive_lobe_ratio": 0.08327864726015458,
+              "width_ratio": 1.296237535149515,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5300745823824573
+            },
+            {
+              "label": "SP off=0.4 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.11440517669447153,
+              "positive_lobe_ratio": 0.08203819913150512,
+              "width_ratio": 1.188046686217035,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5678098222423269
+            },
+            {
+              "label": "SP off=0.4 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.12950186395933397,
+              "positive_lobe_ratio": 0.08208322717426188,
+              "width_ratio": 1.3253109581099467,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5224123431970222
+            },
+            {
+              "label": "SP off=0.5 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.09740551048831651,
+              "positive_lobe_ratio": 0.09221543191230888,
+              "width_ratio": 1.1320466026648797,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.6027419151300656
+            },
+            {
+              "label": "SP off=0.5 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.09333197039674473,
+              "positive_lobe_ratio": 0.09216297638782033,
+              "width_ratio": 1.258030212409958,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5892627438411701
+            },
+            {
+              "label": "SP off=0.5 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.09599598180893404,
+              "positive_lobe_ratio": 0.0925011251075363,
+              "width_ratio": 1.1675014571055946,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5993514677698014
+            },
+            {
+              "label": "SP off=0.5 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.0934536328343434,
+              "positive_lobe_ratio": 0.08257989220353683,
+              "width_ratio": 1.3224711223844625,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5826385052073264
+            },
+            {
+              "label": "SP off=0.5 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.09470388852757482,
+              "positive_lobe_ratio": 0.09267689714259152,
+              "width_ratio": 1.2107371713519939,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5944324705249867
+            },
+            {
+              "label": "SP off=0.5 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.09433326617823852,
+              "positive_lobe_ratio": 0.09375183903504586,
+              "width_ratio": 1.2354821253010844,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5904585559462512
+            },
+            {
+              "label": "SP off=0.5 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.09606432737803558,
+              "positive_lobe_ratio": 0.07645153495767305,
+              "width_ratio": 1.4303301711734646,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.5628562470230459
+            },
+            {
+              "label": "SP off=0.6 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.08876054191386283,
+              "positive_lobe_ratio": 0.09168359416088806,
+              "width_ratio": 1.144264895992969,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.6176328294040309
+            },
+            {
+              "label": "SP off=0.6 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.07962930625224829,
+              "positive_lobe_ratio": 0.08520786533995076,
+              "width_ratio": 1.2949641587786076,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.6129685270266937
+            },
+            {
+              "label": "SP off=0.6 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.08864603646149204,
+              "positive_lobe_ratio": 0.09221881104011352,
+              "width_ratio": 1.1878999667505337,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.6101227659268017
+            },
+            {
+              "label": "SP off=0.6 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.07922519871442547,
+              "positive_lobe_ratio": 0.08422845512147575,
+              "width_ratio": 1.3763501161019323,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.6000439346534323
+            },
+            {
+              "label": "SP off=0.6 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.08742010518321969,
+              "positive_lobe_ratio": 0.09442404121240676,
+              "width_ratio": 1.2420090269119013,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.6021422331483353
+            },
+            {
+              "label": "SP off=0.6 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.07980640946500749,
+              "positive_lobe_ratio": 0.08580778710468528,
+              "width_ratio": 1.4673686171901457,
+              "detection_score": 0.996031746031746,
+              "preserved_pairs": 6,
+              "score": 0.4932661985327271
+            },
+            {
+              "label": "SP off=0.6 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.08700451460250028,
+              "positive_lobe_ratio": 0.09563943227459533,
+              "width_ratio": 1.2739387010033851,
+              "detection_score": 1.0,
+              "preserved_pairs": 7,
+              "score": 0.596880965782049
+            },
+            {
+              "label": "SP off=0.6 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.07978941384714061,
+              "positive_lobe_ratio": 0.08141378530337354,
+              "width_ratio": 1.518061225943095,
+              "detection_score": 0.996031746031746,
+              "preserved_pairs": 6,
+              "score": 0.48797373892241697
+            }
+          ]
         },
-        "raw_score": 0.9398112831883407,
-        "detection_score": 32.35146443319517,
-        "separation_score": 0.9921272430992059,
-        "symmetry_score": 0.8333333333333333,
-        "sidelobe_score": 1.0,
-        "resolution_score": 0.9731029849975847,
-        "width_ratio": 1.1152308664383372,
-        "resolution_reference_fwhm": 3.25109179349235,
-        "resolution_weight": 0.25
+        "raw_score": 0.6911892281535061,
+        "detection_score": 1.0,
+        "separation_score": 1.0,
+        "sidelobe_score": 0.6911892281535061,
+        "resolution_score": 0.9137944459092767,
+        "width_ratio": 1.3271562945052913,
+        "resolution_weight": 0.25,
+        "negative_lobe_ratio": 0.06821077993095162,
+        "positive_lobe_ratio": 0.0845823253126838,
+        "preserved_pairs": 7
       },
       {
         "stage": "window",
         "axis": "F1",
         "source": "reconstruction",
-        "candidate": "SP off=0.65 end=1 pow=2 c=0.5",
+        "candidate": "EM lb=5",
         "parameters": {
-          "type": "sine_bell",
-          "off": 0.65,
-          "end": 1.0,
-          "pow": 2,
-          "c": 0.5
+          "type": "exp",
+          "lb": 5.0,
+          "c": 1.0
         },
-        "score": 0.6072368143643104,
-        "score_metric": "window_detection",
+        "score": 0.6023784276341071,
+        "score_metric": "phased_global_window",
         "selected": true,
         "applied": true,
         "status": "scored",
         "reason": "",
-        "fwhm": 4.95195488904254,
-        "snr": 46.66412477520056,
-        "shape": 0.6022117644825397,
-        "merged": 0.0,
-        "n_ref": 8.0,
+        "fwhm": null,
+        "snr": null,
+        "shape": null,
+        "merged": null,
+        "n_ref": null,
         "sampling": {
           "reference_sigma": 12.0,
           "total_traces": 74088,
           "scanned_traces": 12,
-          "used_traces": 12,
+          "used_traces": 128,
           "trace_indices": [
-            12339,
-            13515,
-            2930,
-            14691,
-            11162,
-            1754,
-            4106,
-            15867,
-            2929,
-            1753,
-            2928,
-            4105
+            576,
+            4132,
+            8810,
+            12311,
+            13365,
+            20552,
+            25230,
+            29808,
+            29816,
+            33568,
+            36924,
+            42963,
+            44018,
+            44026,
+            44048,
+            52082,
+            54571,
+            56990,
+            61630,
+            69918,
+            69926,
+            72230,
+            72556,
+            72564,
+            72579,
+            73302,
+            73415,
+            73424,
+            74498,
+            78156,
+            78162,
+            82803,
+            84071,
+            84078,
+            88656,
+            88663,
+            90176,
+            92202,
+            95834,
+            95841,
+            95988,
+            100432,
+            101979,
+            101987,
+            102772,
+            102798,
+            103967,
+            104023,
+            104077,
+            104995,
+            109917,
+            109939,
+            111126,
+            111133,
+            112319,
+            113311,
+            113408,
+            115629,
+            115784,
+            115791,
+            115852,
+            115999,
+            118297,
+            119495,
+            120428,
+            120559,
+            120567,
+            121764,
+            122973,
+            122982,
+            123059,
+            123776,
+            127623,
+            128669,
+            128687,
+            128695,
+            128705,
+            128712,
+            132184,
+            136061,
+            138162,
+            138175,
+            138245,
+            140446,
+            145299,
+            150934,
+            152121,
+            156038,
+            156772,
+            161576,
+            162490,
+            162920,
+            165375,
+            170053,
+            175970,
+            175979,
+            179579,
+            181711,
+            181719,
+            189753,
+            195764,
+            197065,
+            204262,
+            204271,
+            210046,
+            213314,
+            215909,
+            220516,
+            225214,
+            227484,
+            234656,
+            238128,
+            244904,
+            248642,
+            253655,
+            254586,
+            254617,
+            261558,
+            263952,
+            267544,
+            272242,
+            278115,
+            282721,
+            284013,
+            290995,
+            295604,
+            298154,
+            300376
           ],
           "probe_budget": 256,
           "qualified_12": 12,
@@ -1613,18 +4056,340 @@
           "sampling_reason": "energy_fast_path",
           "budget_exhausted": false,
           "max_height_sigma": 40.94324075644184,
-          "score_profile": "indirect_sidelobe_valley"
+          "score_profile": "phased_global_window",
+          "sampled_regions": 128,
+          "pair_count": 20,
+          "baseline_window": "SP off=0.65 end=1 pow=2 c=0.5",
+          "candidate_evidence": [
+            {
+              "label": "SP off=0.3 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.14892010796607089,
+              "positive_lobe_ratio": 0.07524222085473194,
+              "width_ratio": 1.1157524698510823,
+              "detection_score": 1.0,
+              "preserved_pairs": 20,
+              "score": 0.5276089266644752
+            },
+            {
+              "label": "SP off=0.45 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.11509206096779592,
+              "positive_lobe_ratio": 0.07945582710449613,
+              "width_ratio": 1.192741780093565,
+              "detection_score": 0.99609375,
+              "preserved_pairs": 19,
+              "score": 0.5398588172301317
+            },
+            {
+              "label": "SP off=0.45 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.11016665175536001,
+              "positive_lobe_ratio": 0.08143922031062979,
+              "width_ratio": 1.121226211692668,
+              "detection_score": 1.0,
+              "preserved_pairs": 20,
+              "score": 0.5861201327016189
+            },
+            {
+              "label": "SP off=0.45 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.1216151348352108,
+              "positive_lobe_ratio": 0.06701685245234752,
+              "width_ratio": 1.3493528478055248,
+              "detection_score": 0.9921875,
+              "preserved_pairs": 17,
+              "score": 0.4737470158274831
+            },
+            {
+              "label": "SP off=0.5 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.11528698307823176,
+              "positive_lobe_ratio": 0.0638288061984041,
+              "width_ratio": 1.3964708911693482,
+              "detection_score": 0.9869791666666667,
+              "preserved_pairs": 15,
+              "score": 0.45134605463476196
+            },
+            {
+              "label": "SP off=0.65 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.10251758162474711,
+              "positive_lobe_ratio": 0.06252582879339895,
+              "width_ratio": 1.5662739622188298,
+              "detection_score": 0.9830729166666667,
+              "preserved_pairs": 14,
+              "score": 0.42260357755119227
+            },
+            {
+              "label": "GM g1=8 g2=15",
+              "negative_lobe_ratio": 0.14067061472666958,
+              "positive_lobe_ratio": 0.08252879030470164,
+              "width_ratio": 0.968639758718696,
+              "detection_score": 1.0,
+              "preserved_pairs": 20,
+              "score": 0.553552292397767
+            },
+            {
+              "label": "GM g1=4 g2=8",
+              "negative_lobe_ratio": 0.12976537521144638,
+              "positive_lobe_ratio": 0.08751939374794593,
+              "width_ratio": 0.9731171182452075,
+              "detection_score": 1.0,
+              "preserved_pairs": 20,
+              "score": 0.5687550592183092
+            },
+            {
+              "label": "EM lb=3",
+              "negative_lobe_ratio": 0.10559432901533401,
+              "positive_lobe_ratio": 0.09433383365055205,
+              "width_ratio": 1.0348191484556415,
+              "detection_score": 1.0,
+              "preserved_pairs": 20,
+              "score": 0.6022214657764852
+            },
+            {
+              "label": "EM lb=5",
+              "negative_lobe_ratio": 0.10308952826158102,
+              "positive_lobe_ratio": 0.09574754561698719,
+              "width_ratio": 1.0589777585390667,
+              "detection_score": 1.0,
+              "preserved_pairs": 20,
+              "score": 0.6023784276341071
+            },
+            {
+              "label": "EM lb=10",
+              "negative_lobe_ratio": 0.09940357037469806,
+              "positive_lobe_ratio": 0.10124442413528317,
+              "width_ratio": 1.1231908617586528,
+              "detection_score": 1.0,
+              "preserved_pairs": 20,
+              "score": 0.5962899878989323
+            },
+            {
+              "label": "EM lb=20",
+              "negative_lobe_ratio": 0.0847633981815649,
+              "positive_lobe_ratio": 0.08106776861765906,
+              "width_ratio": 1.2665919451173908,
+              "detection_score": 0.9934895833333333,
+              "preserved_pairs": 17,
+              "score": 0.5389023041954605
+            },
+            {
+              "label": "SP off=0.4 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.11544386559006467,
+              "positive_lobe_ratio": 0.07620382494154182,
+              "width_ratio": 1.1047260971521102,
+              "detection_score": 1.0,
+              "preserved_pairs": 20,
+              "score": 0.5817740639393496
+            },
+            {
+              "label": "SP off=0.4 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.12626450357700802,
+              "positive_lobe_ratio": 0.07591564255259886,
+              "width_ratio": 1.1936648048362364,
+              "detection_score": 0.99609375,
+              "preserved_pairs": 18,
+              "score": 0.49946838373373154
+            },
+            {
+              "label": "SP off=0.4 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.11619936652586517,
+              "positive_lobe_ratio": 0.07661924315955854,
+              "width_ratio": 1.134287214978725,
+              "detection_score": 1.0,
+              "preserved_pairs": 20,
+              "score": 0.5756161557538455
+            },
+            {
+              "label": "SP off=0.4 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.13513920880637387,
+              "positive_lobe_ratio": 0.07602662224656717,
+              "width_ratio": 1.2430309655919969,
+              "detection_score": 0.9921875,
+              "preserved_pairs": 18,
+              "score": 0.47825958213449066
+            },
+            {
+              "label": "SP off=0.4 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.11935273014651615,
+              "positive_lobe_ratio": 0.07714624240512696,
+              "width_ratio": 1.1690529519906931,
+              "detection_score": 1.0,
+              "preserved_pairs": 20,
+              "score": 0.5645622240028091
+            },
+            {
+              "label": "SP off=0.4 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.13503138189353708,
+              "positive_lobe_ratio": 0.06693930232937127,
+              "width_ratio": 1.2972539332945356,
+              "detection_score": 0.9921875,
+              "preserved_pairs": 18,
+              "score": 0.47406932466208374
+            },
+            {
+              "label": "SP off=0.4 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.12104215762234424,
+              "positive_lobe_ratio": 0.07745048131582065,
+              "width_ratio": 1.1886395433192163,
+              "detection_score": 1.0,
+              "preserved_pairs": 20,
+              "score": 0.5585590448194594
+            },
+            {
+              "label": "SP off=0.4 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.13498239801243578,
+              "positive_lobe_ratio": 0.06540763388074865,
+              "width_ratio": 1.326678926819244,
+              "detection_score": 0.9921875,
+              "preserved_pairs": 18,
+              "score": 0.4706458813305949
+            },
+            {
+              "label": "SP off=0.5 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.10962074228785411,
+              "positive_lobe_ratio": 0.08572984267439349,
+              "width_ratio": 1.134187890652694,
+              "detection_score": 1.0,
+              "preserved_pairs": 20,
+              "score": 0.5831103805673411
+            },
+            {
+              "label": "SP off=0.5 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.1106759610074854,
+              "positive_lobe_ratio": 0.07275719909386137,
+              "width_ratio": 1.261902050588011,
+              "detection_score": 0.9921875,
+              "preserved_pairs": 18,
+              "score": 0.5122538532251236
+            },
+            {
+              "label": "SP off=0.5 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.1111253717365722,
+              "positive_lobe_ratio": 0.08605012409257298,
+              "width_ratio": 1.170042528476611,
+              "detection_score": 0.99609375,
+              "preserved_pairs": 19,
+              "score": 0.5470940856895359
+            },
+            {
+              "label": "SP off=0.5 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.11218384592438198,
+              "positive_lobe_ratio": 0.0679379260739211,
+              "width_ratio": 1.325871163508836,
+              "detection_score": 0.9895833333333333,
+              "preserved_pairs": 17,
+              "score": 0.489012819725163
+            },
+            {
+              "label": "SP off=0.5 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.11068617473158476,
+              "positive_lobe_ratio": 0.08336351886233792,
+              "width_ratio": 1.2131762219659499,
+              "detection_score": 0.99609375,
+              "preserved_pairs": 18,
+              "score": 0.5172736161110236
+            },
+            {
+              "label": "SP off=0.5 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.1147047367943841,
+              "positive_lobe_ratio": 0.08290666331308653,
+              "width_ratio": 1.2379218266934553,
+              "detection_score": 0.9921875,
+              "preserved_pairs": 18,
+              "score": 0.5056789682729941
+            },
+            {
+              "label": "SP off=0.5 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.11648961849207563,
+              "positive_lobe_ratio": 0.06258225326550619,
+              "width_ratio": 1.4344219456704475,
+              "detection_score": 0.9869791666666667,
+              "preserved_pairs": 15,
+              "score": 0.4452385343548846
+            },
+            {
+              "label": "SP off=0.6 end=0.9 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.10555899339149435,
+              "positive_lobe_ratio": 0.09150065616468579,
+              "width_ratio": 1.1477724412517414,
+              "detection_score": 1.0,
+              "preserved_pairs": 20,
+              "score": 0.5855601183783076
+            },
+            {
+              "label": "SP off=0.6 end=0.9 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.10680191277603794,
+              "positive_lobe_ratio": 0.06889879504407184,
+              "width_ratio": 1.3000735806835333,
+              "detection_score": 0.9895833333333333,
+              "preserved_pairs": 17,
+              "score": 0.500478303202241
+            },
+            {
+              "label": "SP off=0.6 end=0.94 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.10573239665419083,
+              "positive_lobe_ratio": 0.09062194913086581,
+              "width_ratio": 1.191154863316242,
+              "detection_score": 0.99609375,
+              "preserved_pairs": 19,
+              "score": 0.5509027036640816
+            },
+            {
+              "label": "SP off=0.6 end=0.94 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.10601072979738482,
+              "positive_lobe_ratio": 0.0693587053637496,
+              "width_ratio": 1.382434055287971,
+              "detection_score": 0.9869791666666667,
+              "preserved_pairs": 15,
+              "score": 0.46424117431969103
+            },
+            {
+              "label": "SP off=0.6 end=0.98 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.10700362599025245,
+              "positive_lobe_ratio": 0.08166962882245105,
+              "width_ratio": 1.244784971892963,
+              "detection_score": 0.9921875,
+              "preserved_pairs": 18,
+              "score": 0.5170373252709495
+            },
+            {
+              "label": "SP off=0.6 end=0.98 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.10425145450937486,
+              "positive_lobe_ratio": 0.06199810133742073,
+              "width_ratio": 1.4759077775259966,
+              "detection_score": 0.9869791666666667,
+              "preserved_pairs": 15,
+              "score": 0.4570038747810449
+            },
+            {
+              "label": "SP off=0.6 end=1 pow=1 c=0.5",
+              "negative_lobe_ratio": 0.10798136370925321,
+              "positive_lobe_ratio": 0.08149565497183782,
+              "width_ratio": 1.2766227133330754,
+              "detection_score": 0.9921875,
+              "preserved_pairs": 18,
+              "score": 0.5108890707174115
+            },
+            {
+              "label": "SP off=0.6 end=1 pow=2 c=0.5",
+              "negative_lobe_ratio": 0.1031147534181405,
+              "positive_lobe_ratio": 0.06282875090449809,
+              "width_ratio": 1.5250288069068956,
+              "detection_score": 0.9869791666666667,
+              "preserved_pairs": 14,
+              "score": 0.4283689555833188
+            }
+          ]
         },
-        "raw_score": 0.6678760825548727,
-        "detection_score": 35.60083846714846,
-        "separation_score": 0.9353487815459934,
-        "symmetry_score": 1.0,
-        "sidelobe_score": 0.7943046138500038,
-        "resolution_score": 0.9092058096187623,
-        "width_ratio": 1.4633600400282498,
-        "resolution_reference_fwhm": 3.383962082869875,
-        "resolution_weight": 0.25
+        "raw_score": 0.6115713931070985,
+        "detection_score": 1.0,
+        "separation_score": 1.0,
+        "sidelobe_score": 0.6115713931070985,
+        "resolution_score": 0.9849682873061044,
+        "width_ratio": 1.0589777585390667,
+        "resolution_weight": 0.25,
+        "negative_lobe_ratio": 0.10308952826158102,
+        "positive_lobe_ratio": 0.09574754561698719,
+        "preserved_pairs": 20
       }
-    ]
+    ],
+    "spectrum_sha256": "4ee65c7549a4f5e32c5d0f2b6b6e6923ab2fb98ca82a76ceeafd121f33cd1839"
   }
 }

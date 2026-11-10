@@ -52,7 +52,7 @@ from ui_support.theme import TEXT_MUTED
 from ui_support.title_layout import spectrum_tooltip
 from viewer.spectrum3d_panel import Spectrum3DPanel
 from viewer.spectrum_overlay import validate_spectra
-from viewer.spectrum_viewer import SpectrumViewer
+from viewer.spectrum_viewer import _DEFAULT_LEVELS, SpectrumViewer
 
 _ASSIGNMENT_WIDGET_BUFFER = 12
 
@@ -755,7 +755,7 @@ class SpectrumPanel(QWidget):
             defaults = {
                 "level_slider": 31,
                 "level_percent": None,
-                "level_count": 8,
+                "level_count": _DEFAULT_LEVELS,
                 "aspect": 0,
                 "peak_size": 0.5,
                 "hide_positive": False,
@@ -793,7 +793,7 @@ class SpectrumPanel(QWidget):
                 value = max(1, min(100, int(state.get("level_slider", 31))))
                 self.viewer.set_contour_start((value / 100.0) ** 3 * 100.0)
             self.viewer.count_slider.setValue(
-                int(state.get("level_count", 8))
+                int(state.get("level_count", _DEFAULT_LEVELS))
             )
             self.viewer.aspect_slider.setValue(
                 int(state.get("aspect", 0))

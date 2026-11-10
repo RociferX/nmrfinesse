@@ -2833,7 +2833,7 @@ def test_spectrum_display_settings_isolated_per_data(
     panel.set_context(exp.id, d1_id)
     assert panel.load_current_spectrum() is True
     panel.viewer.level_slider.setValue(60)
-    panel.viewer.count_slider.setValue(12)
+    panel.viewer.count_slider.setValue(16)
     panel.viewer.aspect_slider.setValue(80)
     panel.peak_size_spin.setValue(2.0)
     assert panel._display_states[(exp.id, d1_id)]["level_slider"] == 60
@@ -2845,7 +2845,7 @@ def test_spectrum_display_settings_isolated_per_data(
     panel.set_context(exp.id, d2.id)
     assert panel.load_current_spectrum() is True
     assert panel.viewer.level_slider.value() == 31
-    assert panel.viewer.count_slider.value() == 8
+    assert panel.viewer.count_slider.value() == 12
     assert panel.viewer.aspect_slider.value() == 0
     assert panel.peak_size_spin.value() == 0.5
     assert not panel.viewer.hide_positive.isChecked()
@@ -2855,7 +2855,7 @@ def test_spectrum_display_settings_isolated_per_data(
     assert panel.load_current_spectrum() is True
     assert panel.viewer.level_slider.value() == 60
     assert panel.viewer.level_label.value() == 21.7
-    assert panel.viewer.count_slider.value() == 12
+    assert panel.viewer.count_slider.value() == 16
     assert panel.viewer.aspect_slider.value() == 80
     assert panel.peak_size_spin.value() == 2.0
     assert panel.viewer.hide_negative.isChecked()

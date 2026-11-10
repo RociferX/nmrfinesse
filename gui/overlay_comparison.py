@@ -31,7 +31,7 @@ from viewer.spectrum_overlay import (
     spectrum_axes,
     validate_spectra,
 )
-from viewer.spectrum_viewer import SpectrumViewer, _ContourSigns
+from viewer.spectrum_viewer import _DEFAULT_LEVELS, SpectrumViewer, _ContourSigns
 
 
 class _SpectrumControls(QWidget):
@@ -54,7 +54,7 @@ class _SpectrumControls(QWidget):
         self.start.setSingleStep(.1)
         self.levels = CommitSpinBox()
         self.levels.setRange(5, 60)
-        self.levels.setValue(8)
+        self.levels.setValue(_DEFAULT_LEVELS)
         self.slider = QSlider(Qt.Orientation.Horizontal)
         self.slider.setRange(1, 100)
         self.slider.setValue(31)
@@ -75,7 +75,7 @@ class _SpectrumControls(QWidget):
         row.addWidget(self.levels)
         self.count_slider = QSlider(Qt.Orientation.Horizontal)
         self.count_slider.setRange(5, 60)
-        self.count_slider.setValue(8)
+        self.count_slider.setValue(_DEFAULT_LEVELS)
         self.count_slider.valueChanged.connect(self.levels.setValue)
         self.levels.valueChanged.connect(self.count_slider.setValue)
         row.addWidget(self.count_slider, 1)
